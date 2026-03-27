@@ -29,12 +29,16 @@
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod ops;
 pub mod process;
+pub mod state;
 pub mod types;
 
 // Flat re-exports
 pub use client::CassandraClient;
 pub use config::CassandraConfig;
 pub use error::CassandraFault;
+pub use events::CassandraQueryExecuted;
+pub use state::CassandraPoolState;
 pub use types::CassandraResult;

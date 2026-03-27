@@ -2,16 +2,18 @@
 // vil_ws::error — WsFault
 // =============================================================================
 //
-// VIL-compliant plain enum fault type for WebSocket server operations.
+// VIL-compliant fault type for WebSocket server operations.
 // No thiserror, no String fields — COMPLIANCE.md §4 (Semantic Type Compliance).
 // All string-derived context is stored as u32 FxHash via register_str().
 // =============================================================================
+
+use vil_connector_macros::connector_fault;
 
 /// Fault type for all WebSocket server operations.
 ///
 /// All string-derived fields (addr, room names) are stored as u32 FxHash
 /// values registered via `vil_log::dict::register_str()`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum WsFault {
     /// The server failed to bind to the configured address.
     BindFailed {

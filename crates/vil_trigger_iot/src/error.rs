@@ -2,12 +2,14 @@
 // vil_trigger_iot::error — IotFault
 // =============================================================================
 //
-// VIL-compliant plain enum fault for MQTT IoT trigger operations.
+// VIL-compliant fault for MQTT IoT trigger operations.
 // No thiserror, no String fields — COMPLIANCE.md §4.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for all MQTT IoT trigger operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum IotFault {
     /// Failed to connect to the MQTT broker.
     ConnectionFailed {

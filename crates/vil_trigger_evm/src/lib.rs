@@ -15,9 +15,13 @@
 
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod process;
 pub mod source;
+pub mod state;
 
 pub use config::EvmConfig;
 pub use error::EvmFault;
+pub use events::LogEmitted;
 pub use source::EvmTrigger;
+pub use state::EvmTriggerState;

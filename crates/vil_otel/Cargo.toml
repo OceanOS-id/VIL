@@ -7,7 +7,8 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-vil_log = { workspace = true }
+vil_log              = { workspace = true }
+vil_connector_macros = { workspace = true }
 tokio = { workspace = true }
 opentelemetry = "0.28"
 opentelemetry_sdk = { version = "0.28", features = ["rt-tokio"] }

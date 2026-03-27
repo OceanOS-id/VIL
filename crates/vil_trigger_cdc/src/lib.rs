@@ -15,9 +15,13 @@
 
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod process;
 pub mod source;
+pub mod state;
 
 pub use config::CdcConfig;
 pub use error::CdcFault;
+pub use events::RowChanged;
 pub use source::CdcTrigger;
+pub use state::CdcTriggerState;

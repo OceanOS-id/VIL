@@ -1,12 +1,14 @@
 // =============================================================================
-// vil_mq_rabbitmq::error — RabbitFault (plain enum, u32 fields only)
+// vil_mq_rabbitmq::error — RabbitFault
 // =============================================================================
+
+use vil_connector_macros::connector_fault;
 
 /// RabbitMQ operation faults.
 ///
 /// Plain enum with u32-only fields per VIL compliance (no String/heap types).
 /// Hashes are produced via `vil_log::dict::register_str` at the call site.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum RabbitFault {
     /// Connection to broker failed.
     ConnectionFailed {

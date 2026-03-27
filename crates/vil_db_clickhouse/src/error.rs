@@ -7,12 +7,14 @@
 // No heap types — compliant with vil_fault layout requirements.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// ClickHouse operation fault type.
 ///
 /// All string identifiers (URL, table, query, operation) are stored as
 /// 32-bit FxHash values computed via `vil_log::dict::register_str()`.
 /// This keeps the error type allocation-free on the hot path.
-#[derive(Debug, Clone, Copy)]
+#[connector_fault]
 pub enum ChFault {
     /// TCP/HTTP connection to ClickHouse failed.
     ConnectionFailed {
@@ -48,27 +50,6 @@ pub enum ChFault {
         elapsed_ms: u32,
     },
 }
-
-impl std::fmt::Display for ChFault {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ChFault::ConnectionFailed { url_hash, reason_code } => {
-                write!(f, "ChFault::ConnectionFailed(url={url_hash:#010x}, code={reason_code})")
-            }
-            ChFault::QueryFailed { query_hash, reason_code } => {
-                write!(f, "ChFault::QueryFailed(query={query_hash:#010x}, code={reason_code})")
-            }
-            ChFault::InsertFailed { table_hash, rows, reason_code } => {
-                write!(f, "ChFault::InsertFailed(table={table_hash:#010x}, rows={rows}, code={reason_code})")
-            }
-            ChFault::Timeout { operation_hash, elapsed_ms } => {
-                write!(f, "ChFault::Timeout(op={operation_hash:#010x}, elapsed={elapsed_ms}ms)")
-            }
-        }
-    }
-}
-
-impl std::error::Error for ChFault {}
 
 // ---------------------------------------------------------------------------
 // Internal helpers

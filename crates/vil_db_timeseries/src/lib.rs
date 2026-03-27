@@ -46,12 +46,16 @@
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod ops;
 pub mod process;
+pub mod state;
 pub mod types;
 
 // Flat re-exports
 pub use client::TimeseriesClient;
 pub use config::TimeseriesConfig;
 pub use error::TimeseriesFault;
+pub use events::TimeseriesPointsWritten;
+pub use state::TimeseriesClientState;
 pub use types::TimeseriesResult;

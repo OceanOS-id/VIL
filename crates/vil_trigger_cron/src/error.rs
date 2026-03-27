@@ -6,10 +6,12 @@
 // Mirrors the #[vil_fault] style prescribed in COMPLIANCE.md §4.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault codes specific to the cron trigger.
 ///
 /// All variants carry only primitive types — no heap allocation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum CronFault {
     /// The supplied cron schedule expression could not be parsed.
     /// `expr_hash` is the FxHash-32 of the offending expression string.
@@ -33,22 +35,6 @@ impl From<CronFault> for vil_trigger_core::TriggerFault {
                     kind_hash: vil_log::dict::register_str("cron"),
                     os_code: 0,
                 }
-            }
-        }
-    }
-}
-
-impl core::fmt::Display for CronFault {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::InvalidSchedule { expr_hash } => {
-                write!(f, "CronFault::InvalidSchedule(expr={expr_hash:#x})")
-            }
-            Self::TaskCancelled { trigger_id } => {
-                write!(f, "CronFault::TaskCancelled(id={trigger_id})")
-            }
-            Self::ChannelClosed { trigger_id } => {
-                write!(f, "CronFault::ChannelClosed(id={trigger_id})")
             }
         }
     }

@@ -6,11 +6,13 @@
 // No String fields, no thiserror — only u32/u64 numeric codes.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for all Cassandra/ScyllaDB operations.
 ///
 /// All string-derived context is stored as u32 FxHash values registered via
 /// `vil_log::dict::register_str()`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum CassandraFault {
     /// Failed to connect to the cluster.
     ConnectionFailed {
@@ -52,18 +54,4 @@ pub enum CassandraFault {
         /// Numeric reason code.
         reason_code: u32,
     },
-}
-
-impl CassandraFault {
-    /// Return a stable numeric error code for log `error_code` fields.
-    pub fn as_error_code(&self) -> u32 {
-        match self {
-            CassandraFault::ConnectionFailed { .. } => 1,
-            CassandraFault::PrepareFailed { .. } => 2,
-            CassandraFault::ExecuteFailed { .. } => 3,
-            CassandraFault::QueryFailed { .. } => 4,
-            CassandraFault::BatchFailed { .. } => 5,
-            CassandraFault::PagedFailed { .. } => 6,
-        }
-    }
 }

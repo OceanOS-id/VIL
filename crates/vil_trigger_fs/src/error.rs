@@ -6,8 +6,10 @@
 // Mirrors the #[vil_fault] style prescribed in COMPLIANCE.md §4.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault codes specific to the filesystem trigger.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum FsFault {
     /// The watch path could not be registered with the OS watcher.
     /// `path_hash` is the FxHash-32 of the watch path string.
@@ -43,23 +45,6 @@ impl From<FsFault> for vil_trigger_core::TriggerFault {
                     kind_hash: vil_log::dict::register_str("fs"),
                     os_code: 1,
                 }
-            }
-        }
-    }
-}
-
-impl core::fmt::Display for FsFault {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::WatchFailed { path_hash, os_code } => {
-                write!(f, "FsFault::WatchFailed(path={path_hash:#x}, os={os_code})")
-            }
-            Self::WatcherChannelClosed => write!(f, "FsFault::WatcherChannelClosed"),
-            Self::TaskCancelled { trigger_id } => {
-                write!(f, "FsFault::TaskCancelled(id={trigger_id})")
-            }
-            Self::NotifyError { kind_code } => {
-                write!(f, "FsFault::NotifyError(kind={kind_code})")
             }
         }
     }

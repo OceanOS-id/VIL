@@ -7,7 +7,8 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-vil_log          = { workspace = true }
+vil_log              = { workspace = true }
+vil_connector_macros = { workspace = true }
 vil_trigger_core = { path = "../vil_trigger_core" }
 tokio            = { workspace = true }
 rumqttc          = "0.24"

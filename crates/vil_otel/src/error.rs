@@ -2,10 +2,11 @@
 // vil_otel::error — OtelFault
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
 use vil_log::dict::register_str;
 
 /// Faults that can occur in the VIL OTel bridge.
-#[derive(Debug)]
+#[connector_fault]
 pub enum OtelFault {
     /// OTLP exporter initialization failed.
     InitFailed,
@@ -31,17 +32,3 @@ impl OtelFault {
         }
     }
 }
-
-impl std::fmt::Display for OtelFault {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            OtelFault::InitFailed          => write!(f, "OtelFault::InitFailed"),
-            OtelFault::InvalidEndpoint     => write!(f, "OtelFault::InvalidEndpoint"),
-            OtelFault::PipelineFailed      => write!(f, "OtelFault::PipelineFailed"),
-            OtelFault::MetricsExportFailed => write!(f, "OtelFault::MetricsExportFailed"),
-            OtelFault::TracesExportFailed  => write!(f, "OtelFault::TracesExportFailed"),
-        }
-    }
-}
-
-impl std::error::Error for OtelFault {}

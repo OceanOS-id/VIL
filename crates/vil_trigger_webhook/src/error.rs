@@ -2,12 +2,14 @@
 // vil_trigger_webhook::error — WebhookFault
 // =============================================================================
 //
-// VIL-compliant plain enum fault for webhook trigger operations.
+// VIL-compliant fault for webhook trigger operations.
 // No thiserror, no String fields — COMPLIANCE.md §4.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for all webhook trigger operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum WebhookFault {
     /// Failed to bind the HTTP listener socket.
     BindFailed {

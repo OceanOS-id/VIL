@@ -13359,6 +13359,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil_connector_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "vil_consensus"
 version = "0.1.0"
 dependencies = [
@@ -13446,6 +13455,7 @@ dependencies = [
  "scylla",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -13456,6 +13466,7 @@ dependencies = [
  "clickhouse",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -13467,6 +13478,7 @@ dependencies = [
  "aws-sdk-dynamodb",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -13479,6 +13491,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -13501,6 +13514,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -13511,6 +13525,7 @@ dependencies = [
  "neo4rs",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -13581,6 +13596,7 @@ dependencies = [
  "influxdb2",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -13650,6 +13666,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_yaml",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -13969,6 +13986,7 @@ version = "0.1.0"
 dependencies = [
  "tokio",
  "tokio-modbus",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14062,6 +14080,7 @@ dependencies = [
  "google-cloud-pubsub 0.25.0",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14075,6 +14094,7 @@ dependencies = [
  "pulsar",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14088,6 +14108,7 @@ dependencies = [
  "lapin",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14101,6 +14122,7 @@ dependencies = [
  "aws-sdk-sqs",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14202,6 +14224,7 @@ version = "0.1.0"
 dependencies = [
  "opcua",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14229,6 +14252,7 @@ dependencies = [
  "opentelemetry-otlp",
  "opentelemetry_sdk",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14685,6 +14709,7 @@ dependencies = [
  "quick-xml 0.36.2",
  "reqwest 0.12.28",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14730,6 +14755,7 @@ dependencies = [
  "futures-util",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14741,6 +14767,7 @@ dependencies = [
  "google-cloud-storage",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14754,6 +14781,7 @@ dependencies = [
  "bytes",
  "serde",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14836,6 +14864,7 @@ dependencies = [
  "async-trait",
  "tokio",
  "tokio-postgres",
+ "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
 ]
@@ -14846,6 +14875,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
 ]
 
@@ -14857,6 +14887,7 @@ dependencies = [
  "chrono",
  "cron",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
 ]
@@ -14871,6 +14902,7 @@ dependencies = [
  "native-tls",
  "tokio",
  "tokio-native-tls",
+ "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
 ]
@@ -14883,6 +14915,7 @@ dependencies = [
  "async-trait",
  "futures-util",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
 ]
@@ -14894,6 +14927,7 @@ dependencies = [
  "async-trait",
  "notify",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
 ]
@@ -14905,6 +14939,7 @@ dependencies = [
  "async-trait",
  "rumqttc",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
 ]
@@ -14918,6 +14953,7 @@ dependencies = [
  "hmac",
  "sha2",
  "tokio",
+ "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
 ]
@@ -15003,6 +15039,7 @@ dependencies = [
  "futures-util",
  "tokio",
  "tokio-tungstenite 0.24.0",
+ "vil_connector_macros",
  "vil_log",
 ]
 

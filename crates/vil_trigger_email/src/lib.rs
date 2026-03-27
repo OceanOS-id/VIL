@@ -15,9 +15,13 @@
 
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod process;
 pub mod source;
+pub mod state;
 
 pub use config::EmailConfig;
 pub use error::EmailFault;
+pub use events::EmailReceived;
 pub use source::EmailTrigger;
+pub use state::EmailTriggerState;

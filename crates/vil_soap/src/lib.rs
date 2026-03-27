@@ -16,8 +16,12 @@ pub mod config;
 pub mod client;
 pub mod envelope;
 pub mod error;
+pub mod events;
 pub mod process;
+pub mod state;
 
 pub use config::SoapConfig;
 pub use client::SoapClient;
 pub use error::SoapFault;
+pub use events::ActionCalled;
+pub use state::SoapClientState;

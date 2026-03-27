@@ -2,12 +2,14 @@
 // vil_trigger_email::error — EmailFault
 // =============================================================================
 //
-// VIL-compliant plain enum fault for IMAP trigger operations.
+// VIL-compliant fault for IMAP trigger operations.
 // No thiserror, no String fields — COMPLIANCE.md §4.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for all IMAP email trigger operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum EmailFault {
     /// TLS connection to the IMAP server failed.
     TlsConnectFailed {

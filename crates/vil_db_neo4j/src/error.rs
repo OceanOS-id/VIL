@@ -6,11 +6,13 @@
 // No String fields, no thiserror — only u32/u64 numeric codes.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for all Neo4j operations.
 ///
 /// All string-derived context is stored as u32 FxHash values registered via
 /// `vil_log::dict::register_str()`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum Neo4jFault {
     /// Failed to connect to the Neo4j instance.
     ConnectionFailed {
@@ -45,17 +47,4 @@ pub enum Neo4jFault {
         /// Numeric reason code.
         reason_code: u32,
     },
-}
-
-impl Neo4jFault {
-    /// Return a stable numeric error code for log `error_code` fields.
-    pub fn as_error_code(&self) -> u32 {
-        match self {
-            Neo4jFault::ConnectionFailed { .. } => 1,
-            Neo4jFault::ExecuteFailed { .. } => 2,
-            Neo4jFault::TransactionFailed { .. } => 3,
-            Neo4jFault::CreateNodeFailed { .. } => 4,
-            Neo4jFault::MatchFailed { .. } => 5,
-        }
-    }
 }

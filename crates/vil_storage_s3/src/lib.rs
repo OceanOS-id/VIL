@@ -39,9 +39,13 @@
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod process;
+pub mod state;
 pub mod stream;
 
 pub use client::{ObjectMeta, PutResult, S3Client};
 pub use config::S3Config;
 pub use error::S3Fault;
+pub use events::{S3ObjectCreated, S3ObjectDeleted};
+pub use state::S3ClientState;

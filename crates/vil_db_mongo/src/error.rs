@@ -8,11 +8,13 @@
 // no String fields.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for all MongoDB operations.
 ///
 /// All string-derived context (URI, collection names) is stored as u32 FxHash
 /// values registered via `vil_log::dict::register_str()`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum MongoFault {
     /// Failed to establish a connection to MongoDB.
     ConnectionFailed {
@@ -61,19 +63,4 @@ pub enum MongoFault {
         /// FxHash of the collection name.
         collection_hash: u32,
     },
-}
-
-impl MongoFault {
-    /// Return a stable numeric error code suitable for log `error_code` fields.
-    pub fn as_error_code(&self) -> u32 {
-        match self {
-            MongoFault::ConnectionFailed { .. } => 1,
-            MongoFault::QueryFailed { .. } => 2,
-            MongoFault::InsertFailed { .. } => 3,
-            MongoFault::UpdateFailed { .. } => 4,
-            MongoFault::DeleteFailed { .. } => 5,
-            MongoFault::Timeout { .. } => 6,
-            MongoFault::DeserializeFailed { .. } => 7,
-        }
-    }
 }

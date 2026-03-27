@@ -1,0 +1,15 @@
+[package]
+name = "vil_connector_macros"
+description = "VIL Connector Macros — lightweight #[connector_fault/event/state] for connector crates"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"

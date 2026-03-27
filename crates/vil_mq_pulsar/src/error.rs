@@ -1,11 +1,13 @@
 // =============================================================================
-// vil_mq_pulsar::error — PulsarFault (plain enum, u32 fields only)
+// vil_mq_pulsar::error — PulsarFault
 // =============================================================================
+
+use vil_connector_macros::connector_fault;
 
 /// Apache Pulsar operation faults.
 ///
 /// Plain enum with u32-only fields per VIL compliance.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum PulsarFault {
     /// Connection to broker failed.
     ConnectionFailed {

@@ -34,8 +34,12 @@
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod process;
+pub mod state;
 
 pub use client::{GcsBlobMeta, GcsClient, GcsUploadResult};
 pub use config::GcsConfig;
 pub use error::GcsFault;
+pub use events::{GcsObjectCreated, GcsObjectDeleted};
+pub use state::GcsClientState;

@@ -39,6 +39,9 @@ members = [
     "crates/vil_cli",
     "crates/vil_new_http",
 
+    # --- Connector Macros ---
+    "crates/vil_connector_macros",
+
     # --- SDK & Extensions ---
     "crates/vil_sdk",
     "crates/vil_plugin_sdk",
@@ -292,6 +295,7 @@ vil_ir           = { path = "crates/vil_ir" }
 vil_diag         = { path = "crates/vil_diag" }
 vil_validate     = { path = "crates/vil_validate" }
 vil_macros       = { path = "crates/vil_macros" }
+vil_connector_macros = { path = "crates/vil_connector_macros" }
 vil_codegen_rust = { path = "crates/vil_codegen_rust" }
 vil_codegen_c    = { path = "crates/vil_codegen_c" }
 

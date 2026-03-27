@@ -6,11 +6,13 @@
 // `#[vil_fault]` conventions: no heap strings, only u32 hashes and numeric codes.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for Elasticsearch / OpenSearch operations.
 ///
 /// All string data is represented as u32 FxHash values produced via
 /// `vil_log::dict::register_str`. Resolve hashes using `vil_log::dict::lookup`.
-#[derive(Debug, Clone, Copy)]
+#[connector_fault]
 pub enum ElasticFault {
     /// Could not establish a connection to the Elasticsearch node.
     ConnectionFailed {
@@ -70,39 +72,3 @@ pub enum ElasticFault {
         message_hash: u32,
     },
 }
-
-impl std::fmt::Display for ElasticFault {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ElasticFault::ConnectionFailed { url_hash, reason_code } => {
-                write!(f, "Elastic connection failed (url_hash={url_hash}, reason={reason_code})")
-            }
-            ElasticFault::NotFound { index_hash, id_hash } => {
-                write!(f, "Elastic document not found (index_hash={index_hash}, id_hash={id_hash})")
-            }
-            ElasticFault::IndexNotFound { index_hash } => {
-                write!(f, "Elastic index not found (index_hash={index_hash})")
-            }
-            ElasticFault::AccessDenied { index_hash } => {
-                write!(f, "Elastic access denied (index_hash={index_hash})")
-            }
-            ElasticFault::IndexFailed { index_hash, id_hash } => {
-                write!(f, "Elastic index failed (index_hash={index_hash}, id_hash={id_hash})")
-            }
-            ElasticFault::SearchFailed { index_hash, query_hash } => {
-                write!(f, "Elastic search failed (index_hash={index_hash}, query_hash={query_hash})")
-            }
-            ElasticFault::BulkFailed { index_hash, failed_count } => {
-                write!(f, "Elastic bulk failed (index_hash={index_hash}, failed={failed_count})")
-            }
-            ElasticFault::Timeout { operation_hash, elapsed_ms } => {
-                write!(f, "Elastic timeout (op_hash={operation_hash}, elapsed={elapsed_ms}ms)")
-            }
-            ElasticFault::Unknown { message_hash } => {
-                write!(f, "Elastic unknown error (message_hash={message_hash})")
-            }
-        }
-    }
-}
-
-impl std::error::Error for ElasticFault {}

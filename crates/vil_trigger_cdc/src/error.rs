@@ -2,13 +2,15 @@
 // vil_trigger_cdc::error — CdcFault
 // =============================================================================
 //
-// VIL-compliant plain enum fault type for CDC operations.
+// VIL-compliant fault type for CDC operations.
 // No thiserror, no String fields — COMPLIANCE.md §4.
 // All string context stored as u32 FxHash via register_str().
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for all PostgreSQL CDC trigger operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum CdcFault {
     /// Failed to connect to PostgreSQL.
     ConnectionFailed {

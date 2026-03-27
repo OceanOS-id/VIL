@@ -2,16 +2,18 @@
 // vil_modbus::error — ModbusFault
 // =============================================================================
 //
-// VIL-compliant plain enum fault type for Modbus operations.
+// VIL-compliant fault type for Modbus operations.
 // No thiserror, no String fields — COMPLIANCE.md §4 (Semantic Type Compliance).
 // All string-derived context is stored as u32 FxHash via register_str().
 // =============================================================================
+
+use vil_connector_macros::connector_fault;
 
 /// Fault type for all Modbus TCP/RTU client operations.
 ///
 /// All string-derived fields (host, addresses) are stored as u32 FxHash
 /// values registered via `vil_log::dict::register_str()`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum ModbusFault {
     /// Failed to establish a TCP connection to the Modbus gateway.
     ConnectionFailed {

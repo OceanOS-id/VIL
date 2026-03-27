@@ -6,11 +6,13 @@
 // conventions: no heap strings, only u32 hashes and numeric codes.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for Google Cloud Storage operations.
 ///
 /// All string data is represented as u32 FxHash values produced via
 /// `vil_log::dict::register_str`. Resolve hashes using `vil_log::dict::lookup`.
-#[derive(Debug, Clone, Copy)]
+#[connector_fault]
 pub enum GcsFault {
     /// Could not establish a connection to the GCS endpoint.
     ConnectionFailed {
@@ -54,33 +56,3 @@ pub enum GcsFault {
         message_hash: u32,
     },
 }
-
-impl std::fmt::Display for GcsFault {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            GcsFault::ConnectionFailed { endpoint_hash, reason_code } => {
-                write!(f, "GCS connection failed (endpoint_hash={endpoint_hash}, reason={reason_code})")
-            }
-            GcsFault::NotFound { name_hash } => {
-                write!(f, "GCS object not found (name_hash={name_hash})")
-            }
-            GcsFault::AccessDenied { name_hash } => {
-                write!(f, "GCS access denied (name_hash={name_hash})")
-            }
-            GcsFault::BucketNotFound { bucket_hash } => {
-                write!(f, "GCS bucket not found (bucket_hash={bucket_hash})")
-            }
-            GcsFault::UploadFailed { name_hash, size } => {
-                write!(f, "GCS upload failed (name_hash={name_hash}, size={size})")
-            }
-            GcsFault::Timeout { operation_hash, elapsed_ms } => {
-                write!(f, "GCS timeout (op_hash={operation_hash}, elapsed={elapsed_ms}ms)")
-            }
-            GcsFault::Unknown { message_hash } => {
-                write!(f, "GCS unknown error (message_hash={message_hash})")
-            }
-        }
-    }
-}
-
-impl std::error::Error for GcsFault {}

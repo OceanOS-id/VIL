@@ -27,7 +27,9 @@ pub mod batch;
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod process;
+pub mod state;
 
 // ---------------------------------------------------------------------------
 // Flat re-exports
@@ -37,3 +39,5 @@ pub use batch::BatchInserter;
 pub use client::ChClient;
 pub use config::ClickHouseConfig;
 pub use error::ChFault;
+pub use events::ChBatchInserted;
+pub use state::ChClientState;

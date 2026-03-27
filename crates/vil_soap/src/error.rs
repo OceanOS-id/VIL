@@ -2,16 +2,18 @@
 // vil_soap::error — SoapFault
 // =============================================================================
 //
-// VIL-compliant plain enum fault type for SOAP operations.
+// VIL-compliant fault type for SOAP operations.
 // No thiserror, no String fields — COMPLIANCE.md §4 (Semantic Type Compliance).
 // All string-derived context is stored as u32 FxHash via register_str().
 // =============================================================================
+
+use vil_connector_macros::connector_fault;
 
 /// Fault type for all SOAP/WSDL client operations.
 ///
 /// All string-derived fields (action name, endpoint, etc.) are stored as u32
 /// FxHash values registered via `vil_log::dict::register_str()`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum SoapFault {
     /// Failed to build the HTTP connection or TLS handshake.
     ConnectionFailed {

@@ -7,11 +7,13 @@
 // and numeric codes.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for Azure Blob Storage operations.
 ///
 /// All string data is represented as u32 FxHash values produced via
 /// `vil_log::dict::register_str`. Resolve hashes using `vil_log::dict::lookup`.
-#[derive(Debug, Clone, Copy)]
+#[connector_fault]
 pub enum AzureFault {
     /// Could not establish a connection to the Azure storage endpoint.
     ConnectionFailed {
@@ -55,33 +57,3 @@ pub enum AzureFault {
         message_hash: u32,
     },
 }
-
-impl std::fmt::Display for AzureFault {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AzureFault::ConnectionFailed { account_hash, reason_code } => {
-                write!(f, "Azure connection failed (account_hash={account_hash}, reason={reason_code})")
-            }
-            AzureFault::NotFound { name_hash } => {
-                write!(f, "Azure blob not found (name_hash={name_hash})")
-            }
-            AzureFault::AccessDenied { name_hash } => {
-                write!(f, "Azure access denied (name_hash={name_hash})")
-            }
-            AzureFault::ContainerNotFound { container_hash } => {
-                write!(f, "Azure container not found (container_hash={container_hash})")
-            }
-            AzureFault::UploadFailed { name_hash, size } => {
-                write!(f, "Azure upload failed (name_hash={name_hash}, size={size})")
-            }
-            AzureFault::Timeout { operation_hash, elapsed_ms } => {
-                write!(f, "Azure timeout (op_hash={operation_hash}, elapsed={elapsed_ms}ms)")
-            }
-            AzureFault::Unknown { message_hash } => {
-                write!(f, "Azure unknown error (message_hash={message_hash})")
-            }
-        }
-    }
-}
-
-impl std::error::Error for AzureFault {}

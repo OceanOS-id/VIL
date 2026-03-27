@@ -2,12 +2,14 @@
 // vil_trigger_evm::error — EvmFault
 // =============================================================================
 //
-// VIL-compliant plain enum fault for EVM trigger operations.
+// VIL-compliant fault for EVM trigger operations.
 // No thiserror, no String fields — COMPLIANCE.md §4.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for all EVM blockchain trigger operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum EvmFault {
     /// Failed to connect to the JSON-RPC endpoint.
     ConnectionFailed {

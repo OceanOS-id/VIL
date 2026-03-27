@@ -33,12 +33,16 @@
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod ops;
 pub mod process;
+pub mod state;
 pub mod types;
 
 // Flat re-exports
 pub use client::Neo4jClient;
 pub use config::Neo4jConfig;
 pub use error::Neo4jFault;
+pub use events::{Neo4jNodeCreated, Neo4jRelationCreated};
+pub use state::Neo4jSessionState;
 pub use types::Neo4jResult;

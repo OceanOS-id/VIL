@@ -15,10 +15,12 @@
 
 pub mod config;
 pub mod process;
+pub mod state;
 pub mod traits;
 pub mod types;
 
 pub use config::{TriggerConfig, TriggerKind};
 pub use process::create_trigger;
+pub use state::TriggerState;
 pub use traits::{EventCallback, TriggerSource};
 pub use types::{TriggerEvent, TriggerFault};

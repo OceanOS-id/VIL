@@ -24,10 +24,12 @@ pub mod config;
 pub mod error;
 pub mod metrics;
 pub mod process;
+pub mod state;
 pub mod traces;
 
 pub use config::{OtelConfig, OtelProtocol};
 pub use error::OtelFault;
 pub use metrics::{CounterSnapshot, MetricsBridge};
 pub use process::OtelBridge;
+pub use state::OtelExportState;
 pub use traces::{InferredSpanKind, LogSlotHeader, TracesBridge};

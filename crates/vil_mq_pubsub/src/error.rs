@@ -1,11 +1,13 @@
 // =============================================================================
-// vil_mq_pubsub::error — PubSubFault (plain enum, u32 fields only)
+// vil_mq_pubsub::error — PubSubFault
 // =============================================================================
+
+use vil_connector_macros::connector_fault;
 
 /// Google Cloud Pub/Sub operation faults.
 ///
 /// Plain enum with u32-only fields per VIL compliance.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum PubSubFault {
     /// Client initialization failed.
     ClientInitFailed {

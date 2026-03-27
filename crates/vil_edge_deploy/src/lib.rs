@@ -26,10 +26,12 @@ pub mod config;
 pub mod error;
 pub mod process;
 pub mod profile;
+pub mod state;
 pub mod targets;
 
 pub use config::{EdgeConfig, SchedulerMode};
 pub use error::EdgeFault;
 pub use process::create;
 pub use profile::EdgeProfile;
+pub use state::EdgeDeployState;
 pub use targets::EdgeTarget;

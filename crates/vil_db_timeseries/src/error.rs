@@ -6,11 +6,13 @@
 // No String fields, no thiserror — only u32/u64 numeric codes.
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
+
 /// Fault type for all time-series operations.
 ///
 /// All string-derived context is stored as u32 FxHash values registered via
 /// `vil_log::dict::register_str()`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum TimeseriesFault {
     /// Failed to connect to the backend.
     ConnectionFailed {
@@ -38,16 +40,4 @@ pub enum TimeseriesFault {
         /// FxHash of the feature name.
         feature_hash: u32,
     },
-}
-
-impl TimeseriesFault {
-    /// Return a stable numeric error code for log `error_code` fields.
-    pub fn as_error_code(&self) -> u32 {
-        match self {
-            TimeseriesFault::ConnectionFailed { .. } => 1,
-            TimeseriesFault::WriteFailed { .. } => 2,
-            TimeseriesFault::QueryFailed { .. } => 3,
-            TimeseriesFault::FeatureNotEnabled { .. } => 4,
-        }
-    }
 }

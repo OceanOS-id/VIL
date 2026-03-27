@@ -34,12 +34,16 @@
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod ops;
 pub mod process;
+pub mod state;
 pub mod types;
 
 // Flat re-exports
 pub use client::DynamoClient;
 pub use config::DynamoConfig;
 pub use error::DynamoFault;
+pub use events::{DynamoItemDeleted, DynamoItemPut};
+pub use state::DynamoClientState;
 pub use types::DynamoResult;

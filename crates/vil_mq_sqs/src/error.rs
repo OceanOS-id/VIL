@@ -1,11 +1,13 @@
 // =============================================================================
-// vil_mq_sqs::error — SqsFault (plain enum, u32 fields only)
+// vil_mq_sqs::error — SqsFault
 // =============================================================================
+
+use vil_connector_macros::connector_fault;
 
 /// AWS SQS/SNS operation faults.
 ///
 /// Plain enum with u32-only fields per VIL compliance.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[connector_fault]
 pub enum SqsFault {
     /// Failed to load AWS config.
     ConfigLoadFailed {

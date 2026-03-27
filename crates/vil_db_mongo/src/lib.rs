@@ -58,11 +58,15 @@ pub mod client;
 pub mod config;
 pub mod crud;
 pub mod error;
+pub mod events;
 pub mod process;
+pub mod state;
 pub mod types;
 
 // Flat re-exports
 pub use client::MongoClient;
 pub use config::MongoConfig;
 pub use error::MongoFault;
+pub use events::{MongoDocumentDeleted, MongoDocumentInserted, MongoDocumentUpdated};
+pub use state::MongoPoolState;
 pub use types::MongoResult;

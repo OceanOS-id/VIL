@@ -14,8 +14,12 @@
 pub mod config;
 pub mod client;
 pub mod error;
+pub mod events;
 pub mod process;
+pub mod state;
 
 pub use config::OpcUaConfig;
 pub use client::OpcUaClient;
 pub use error::OpcUaFault;
+pub use events::{NodeRead, NodeWritten, ValueSubscribed};
+pub use state::OpcUaSessionState;

@@ -35,8 +35,12 @@
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod process;
+pub mod state;
 
 pub use client::{ElasticClient, IndexResult, SearchResult};
 pub use config::ElasticConfig;
 pub use error::ElasticFault;
+pub use events::{ElasticDocumentIndexed, ElasticSearchExecuted};
+pub use state::ElasticClientState;

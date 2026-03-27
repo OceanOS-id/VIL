@@ -8,6 +8,7 @@ authors.workspace = true
 
 [dependencies]
 vil_log                    = { workspace = true }
+vil_connector_macros       = { workspace = true }
 tokio                      = { version = "1", features = ["full"] }
 google-cloud-pubsub        = "0.25"
 google-cloud-googleapis    = { version = "0.13", features = ["pubsub"] }

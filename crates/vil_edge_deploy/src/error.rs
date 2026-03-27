@@ -2,10 +2,11 @@
 // vil_edge_deploy::error — EdgeFault
 // =============================================================================
 
+use vil_connector_macros::connector_fault;
 use vil_log::dict::register_str;
 
 /// Faults that can occur in edge deployment operations.
-#[derive(Debug)]
+#[connector_fault]
 pub enum EdgeFault {
     /// The YAML config file could not be read.
     ConfigReadFailed,
@@ -34,18 +35,3 @@ impl EdgeFault {
         }
     }
 }
-
-impl std::fmt::Display for EdgeFault {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            EdgeFault::ConfigReadFailed  => write!(f, "EdgeFault::ConfigReadFailed"),
-            EdgeFault::ConfigParseFailed => write!(f, "EdgeFault::ConfigParseFailed"),
-            EdgeFault::SerializeFailed   => write!(f, "EdgeFault::SerializeFailed"),
-            EdgeFault::UnsupportedTarget => write!(f, "EdgeFault::UnsupportedTarget"),
-            EdgeFault::InvalidProfile    => write!(f, "EdgeFault::InvalidProfile"),
-            EdgeFault::MissingField      => write!(f, "EdgeFault::MissingField"),
-        }
-    }
-}
-
-impl std::error::Error for EdgeFault {}

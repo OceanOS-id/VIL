@@ -35,8 +35,12 @@
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod process;
+pub mod state;
 
 pub use client::{AzureBlobMeta, AzureClient, AzureUploadResult};
 pub use config::AzureConfig;
 pub use error::AzureFault;
+pub use events::{AzureBlobCreated, AzureBlobDeleted};
+pub use state::AzureClientState;

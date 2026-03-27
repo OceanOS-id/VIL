@@ -26,10 +26,14 @@
 
 pub mod config;
 pub mod error;
+pub mod events;
 pub mod process;
 pub mod source;
+pub mod state;
 
 pub use config::{FsConfig, FsEventMask};
 pub use error::FsFault;
+pub use events::FileChanged;
 pub use process::create_fs_trigger;
 pub use source::FsTrigger;
+pub use state::FsTriggerState;
