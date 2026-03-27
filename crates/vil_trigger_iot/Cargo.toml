@@ -1,0 +1,14 @@
+[package]
+name = "vil_trigger_iot"
+description = "VIL Phase 3 — IoT device event trigger via MQTT subscription (rumqttc)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log          = { workspace = true }
+vil_trigger_core = { path = "../vil_trigger_core" }
+tokio            = { workspace = true }
+rumqttc          = "0.24"
+async-trait      = { workspace = true }

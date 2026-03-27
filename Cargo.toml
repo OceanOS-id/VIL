@@ -98,6 +98,16 @@ members = [
     "crates/vil_mq_pulsar",
     "crates/vil_mq_pubsub",
 
+    # --- Phase 3 Trigger Crates ---
+    "crates/vil_trigger_core",
+    "crates/vil_trigger_cron",
+    "crates/vil_trigger_fs",
+    "crates/vil_trigger_cdc",
+    "crates/vil_trigger_email",
+    "crates/vil_trigger_iot",
+    "crates/vil_trigger_evm",
+    "crates/vil_trigger_webhook",
+
     # --- Phase 2 Protocol Crates ---
     "crates/vil_soap",
     "crates/vil_opcua",
@@ -316,6 +326,16 @@ vil_mq_sqs         = { path = "crates/vil_mq_sqs" }
 vil_mq_pulsar      = { path = "crates/vil_mq_pulsar" }
 vil_mq_pubsub      = { path = "crates/vil_mq_pubsub" }
 
+# Phase 3 Trigger Crates
+vil_trigger_core    = { path = "crates/vil_trigger_core" }
+vil_trigger_cron    = { path = "crates/vil_trigger_cron" }
+vil_trigger_fs      = { path = "crates/vil_trigger_fs" }
+vil_trigger_cdc     = { path = "crates/vil_trigger_cdc" }
+vil_trigger_email   = { path = "crates/vil_trigger_email" }
+vil_trigger_iot     = { path = "crates/vil_trigger_iot" }
+vil_trigger_evm     = { path = "crates/vil_trigger_evm" }
+vil_trigger_webhook = { path = "crates/vil_trigger_webhook" }
+
 # Phase 2 Protocol Crates
 vil_soap           = { path = "crates/vil_soap" }
 vil_opcua          = { path = "crates/vil_opcua" }
@@ -324,7 +344,9 @@ vil_ws             = { path = "crates/vil_ws" }
 
 
 # Common dependencies
-serde              = { version = "1.0", features = ["derive"] }
+# Pin to =1.0.218 — alloy-consensus 0.15.x uses serde::__private which was
+# renamed to serde::__private{PATCH} in serde 1.0.219+.
+serde              = { version = "=1.0.218", features = ["derive"] }
 serde_json         = "1.0"
 serde_yaml         = "0.9"
 dashmap            = "5.5"
@@ -336,6 +358,8 @@ tower              = { version = "0.4" }
 tower-http         = { version = "0.5", features = ["cors", "trace", "compression-gzip", "limit", "fs"] }
 tracing            = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+async-trait        = "0.1"
+futures-util       = "0.3"
 
 # =============================================================================
 # Release Profile — Optimized for community distribution

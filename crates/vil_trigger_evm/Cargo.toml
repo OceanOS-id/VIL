@@ -1,0 +1,17 @@
+[package]
+name = "vil_trigger_evm"
+description = "VIL Phase 3 — Blockchain EVM log event trigger via Ethereum JSON-RPC (alloy)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log          = { workspace = true }
+vil_trigger_core = { path = "../vil_trigger_core" }
+tokio            = { workspace = true }
+# alloy 0.15 — pubsub for eth_subscribe, provider-ws for WebSocket, rpc-types for Filter/Log.
+# Note: serde is pinned to =1.0.218 in workspace to avoid serde::__private rename in 1.0.219+.
+alloy            = { version = "0.15", features = ["providers", "transports", "rpc-types", "pubsub", "provider-ws"] }
+futures-util     = { workspace = true }
+async-trait      = { workspace = true }

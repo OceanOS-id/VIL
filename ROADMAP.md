@@ -108,15 +108,18 @@ All 9 crates: `vil_log` integrated, `mq_log!`/`db_log!` auto-emit, COMPLIANCE.md
 
 ---
 
-## Phase 3 — Q1 2027: Trigger & Event Source
+## Phase 3 — Q1 2027: Trigger & Event Source ✅ COMPLETED
 
-- [ ] Cron / Schedule trigger (`vil_trigger_cron`)
-- [ ] File / S3 watcher trigger (`vil_trigger_fs`)
-- [ ] Database CDC trigger (`vil_trigger_cdc`) — Debezium-compatible
-- [ ] Email trigger (`vil_trigger_email`) — IMAP/SMTP
-- [ ] IoT device event trigger (`vil_trigger_iot`)
-- [ ] Blockchain event trigger (`vil_trigger_evm`) — EVM log subscription
-- [ ] Webhook enrichment (`vil_trigger_webhook`) — auth, transform, retry
+- [x] Trigger core (`vil_trigger_core`) — TriggerSource trait, EventCallback, TriggerEvent
+- [x] Cron / Schedule trigger (`vil_trigger_cron`) — cron expressions, missed-fire policy
+- [x] File / S3 watcher trigger (`vil_trigger_fs`) — notify crate, glob patterns, debounce
+- [x] Database CDC trigger (`vil_trigger_cdc`) — PostgreSQL logical replication
+- [x] Email trigger (`vil_trigger_email`) — IMAP IDLE via async-imap
+- [x] IoT device event trigger (`vil_trigger_iot`) — MQTT via rumqttc
+- [x] Blockchain event trigger (`vil_trigger_evm`) — alloy, EVM log subscription
+- [x] Webhook receiver (`vil_trigger_webhook`) — axum + HMAC verification
+
+All 8 crates: `vil_log` + `mq_log!` auto-emit, `TriggerSource` trait, COMPLIANCE.md §8 verified.
 
 ---
 

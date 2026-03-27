@@ -1,0 +1,12 @@
+[package]
+name = "vil_trigger_core"
+description = "VIL Phase 3 — Shared trigger infrastructure: TriggerSource trait, TriggerEvent, TriggerConfig, TriggerProcess"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log     = { workspace = true }
+tokio       = { workspace = true }
+async-trait = { workspace = true }

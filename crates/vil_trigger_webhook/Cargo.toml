@@ -1,0 +1,16 @@
+[package]
+name = "vil_trigger_webhook"
+description = "VIL Phase 3 — HTTP webhook receiver trigger with HMAC signature verification"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log          = { workspace = true }
+vil_trigger_core = { path = "../vil_trigger_core" }
+tokio            = { workspace = true }
+axum             = { workspace = true }
+hmac             = "0.12"
+sha2             = "0.10"
+async-trait      = { workspace = true }

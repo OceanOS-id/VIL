@@ -1,0 +1,15 @@
+[package]
+name = "vil_trigger_cron"
+description = "VIL Phase 3 — Cron / scheduled interval trigger source"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log          = { workspace = true }
+vil_trigger_core = { workspace = true }
+tokio            = { workspace = true }
+async-trait      = { workspace = true }
+cron             = "0.13"
+chrono           = { version = "0.4" }

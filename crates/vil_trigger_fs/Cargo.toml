@@ -1,0 +1,14 @@
+[package]
+name = "vil_trigger_fs"
+description = "VIL Phase 3 — Filesystem / directory watcher trigger source"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log          = { workspace = true }
+vil_trigger_core = { workspace = true }
+tokio            = { workspace = true }
+async-trait      = { workspace = true }
+notify           = "7"
