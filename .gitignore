@@ -35,3 +35,4 @@ wasm-modules/out/*.wasm
 *.profraw
 lcov.info
 tarpaulin-report.html
+docs-internal/
