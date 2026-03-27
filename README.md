@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="docs/assets/vil-logo.svg" alt="VIL Logo" width="200"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/vil-logo-dark.svg"/>
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/vil-logo-light.svg"/>
+    <img src="docs/assets/vil-logo-dark.svg" alt="VIL Logo" width="200"/>
+  </picture>
 </p>
 
 <h1 align="center">VIL — Vastar Intermediate Language</h1>
