@@ -1,0 +1,64 @@
+# =============================================================================
+# 005 — Core Banking Data Ingestion — Server Configuration
+# =============================================================================
+# Business: 3-service mesh for credit portfolio ingestion. Gateway receives
+# bulk data requests, processor enriches NDJSON records with risk metrics,
+# analytics aggregates results. SHM sized for typical batch: 16MB data lane.
+# =============================================================================
+
+server:
+  name: "multiservice-mesh"
+  port: 8080
+  host: "0.0.0.0"
+  metrics_port: 9090
+  request_timeout_secs: 30
+
+logging:
+  level: info
+
+shm:
+  enabled: true
+  pool_size: "64MB"
+
+services:
+  - name: gateway
+    visibility: public
+    prefix: /gw
+  - name: processor
+    visibility: internal
+  - name: analytics
+    visibility: internal
+
+mesh:
+  mode: unified
+  routes:
+    - from: gateway
+      to: processor
+      lane: data
+    - from: processor
+      to: analytics
+      lane: data
+    - from: analytics
+      to: gateway
+      lane: control
+  channels:
+    trigger:
+      buffer_size: 1024
+      shm_region_size: "4MB"
+    data:
+      buffer_size: 1024
+      shm_region_size: "16MB"
+    control:
+      buffer_size: 256
+      shm_region_size: "1MB"
+  discovery:
+    mode: shm
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive
+  request_tracker:
+    enabled: true
+  handler_metrics:
+    enabled: true

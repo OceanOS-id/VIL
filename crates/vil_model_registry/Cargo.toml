@@ -1,0 +1,19 @@
+[package]
+name = "vil_model_registry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "I10 — Model Registry: versioned model management with promotion and rollback"
+
+[dependencies]
+vil_sdk          = { workspace = true }
+vil_server_core  = { workspace = true }
+vil_server       = { workspace = true }
+vil_macros       = { workspace = true }
+axum               = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+dashmap = { workspace = true }
+
+[dev-dependencies]

@@ -1,0 +1,49 @@
+{
+  "name": "vil-lsp",
+  "displayName": "VIL Language Support",
+  "description": "Language support for VIL (Vastar Intermediate Language) — diagnostics, completions, and hover for VIL macros in Rust files",
+  "version": "0.1.0",
+  "publisher": "oceanos-id",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OceanOS-id/VIL"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": ["Programming Languages", "Linters"],
+  "activationEvents": [
+    "onLanguage:rust"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "VIL",
+      "properties": {
+        "vil.lsp.path": {
+          "type": "string",
+          "default": "vil-lsp",
+          "description": "Path to the vil-lsp binary. If not in PATH, provide the full path (e.g., /path/to/vil/target/release/vil-lsp)"
+        },
+        "vil.lsp.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable VIL Language Server"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.0.0",
+    "vscode-languageclient": "^9.0.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.0"
+  }
+}

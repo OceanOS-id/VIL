@@ -1,0 +1,45 @@
+# VIL Examples — Infrastructure Services
+# Start: docker compose -f examples/docker-compose.yml up -d
+# Stop:  docker compose -f examples/docker-compose.yml down
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: vil-postgres
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_PASSWORD: vilpass
+      POSTGRES_DB: vil_demo
+    volumes:
+      - ./init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:7-alpine
+    container_name: vil-redis
+    ports: ["6380:6379"]
+
+  nats:
+    image: nats:latest
+    container_name: vil-nats
+    ports: ["4222:4222", "8222:8222"]
+    command: --js --http_port 8222
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: vil-redpanda
+    ports: ["9092:9092", "9644:9644"]
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 512M
+      - --overprovisioned
+      - --node-id 0
+      - --kafka-addr 0.0.0.0:9092
+      - --advertise-kafka-addr localhost:9092
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: vil-mosquitto
+    ports: ["1883:1883"]
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf

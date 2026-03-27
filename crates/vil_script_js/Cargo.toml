@@ -1,0 +1,15 @@
+[package]
+name = "vil_script_js"
+version = "0.1.0"
+edition = "2021"
+description = "VIL JavaScript script runtime — sandboxed JS execution for workflow tasks"
+publish = false
+
+[features]
+default = []
+js = ["boa_engine"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+boa_engine = { version = "0.20", optional = true }

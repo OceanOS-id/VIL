@@ -1,0 +1,25 @@
+[package]
+name = "vil_macros"
+description = "VIL frontend parsing (stub — masa depan: #[v_message], #[v_process], dll)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1.0"
+syn = { version = "2.0", features = ["full", "parsing"] }
+proc-macro2 = "1.0"
+vil_ir = { path = "../vil_ir", features = ["proc-macro"] }
+vil_validate = { path = "../vil_validate" }
+vil_types = { path = "../vil_types" }
+
+[dev-dependencies]
+vil_server_core = { path = "../vil_server_core" }
+vil_json = { path = "../vil_json" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+bytes = "1.0"

@@ -1,0 +1,45 @@
+vil_version: "6.0.0"
+name: mqtt-iot-gateway
+port: 8080
+message_queue:
+  mqtt:
+    broker_url: "mqtt://localhost"
+    client_id: vil-iot-gateway
+    qos: 1
+    subscriptions:
+      - "sensors/+/+"
+      - "sensors/temperature/#"
+      - "commands/+/+"
+    bridge:
+      target_service: sensor-analytics
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: root ---
+  - method: GET
+    path: /
+    handler: index
+  # --- ServiceProcess: mqtt-iot (prefix: /api) ---
+  - method: POST
+    path: /api/sensors/data
+    handler: receive_sensor_data
+  - method: GET
+    path: /api/sensors
+    handler: list_sensors
+  - method: GET
+    path: /api/mqtt/config
+    handler: mqtt_config
+  - method: GET
+    path: /api/mqtt/topics
+    handler: mqtt_topics

@@ -1,0 +1,19 @@
+[package]
+name = "vil_ir"
+description = "VIL canonical semantic IR (stub — masa depan: pusat kebenaran compiler)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+proc-macro = ["quote", "proc-macro2"]
+
+[dependencies]
+vil_types = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+quote = { version = "1.0", optional = true }
+proc-macro2 = { version = "1.0", optional = true }

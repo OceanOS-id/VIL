@@ -1,0 +1,944 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  VIL Workflow Showcase — ALL Features, Workflow-First Design            ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+#
+# This YAML is the SINGLE SOURCE OF TRUTH for a VIL application.
+# It compiles to: WorkflowBuilder API → WorkflowIR → validated → native binary
+#
+# NO vil_workflow! macro needed — this YAML replaces it entirely.
+#
+#   vil compile vil-workflow-showcase.vil.yaml  → native binary
+#   vil viz     vil-workflow-showcase.vil.yaml  → Mermaid/DOT graph
+#   vil run     vil-workflow-showcase.vil.yaml  → run directly
+#
+# Compilation chain:
+#   YAML → manifest parse → WorkflowBuilder → WorkflowIR → validate → codegen → cargo build
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+vil_version: "6.0.0"
+name: ai-commerce-gateway
+port: 8080
+metrics_port: 9090
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 1. MESSAGES — typed data contracts that flow between nodes
+# ═══════════════════════════════════════════════════════════════════════════════
+# Maps to: WorkflowBuilder::add_message() → MessageIR
+# Each message has: layout, delivery guarantee, memory class, semantic kind
+
+messages:
+  - name: InferenceRequest
+    kind: message                      # message | state | event | fault | decision
+    memory_class: PagedExchange        # PagedExchange | PinnedRemote | ControlHeap | LocalScratch
+    layout: Relative                   # Relative (zero-copy safe) | Absolute
+    delivery: AtLeastOnce              # AtLeastOnce | AtMostOnce | ExactlyOnce
+    fields:
+      - name: prompt
+        type: string
+        required: true
+      - name: model
+        type: string
+        required: true
+      - name: temperature
+        type: f64
+      - name: max_tokens
+        type: u32
+      - name: session_id
+        type: u64
+        required: true
+
+  - name: InferenceResponse
+    kind: message
+    memory_class: PagedExchange
+    fields:
+      - name: content
+        type: string
+      - name: model
+        type: string
+      - name: tokens_used
+        type: u32
+      - name: latency_us
+        type: u64
+      - name: session_id
+        type: u64
+
+  - name: OrderPayload
+    kind: message
+    memory_class: PagedExchange
+    fields:
+      - name: customer_name
+        type: string
+        required: true
+      - name: items
+        type: array
+        items_type: object
+        required: true
+      - name: total_cents
+        type: u64
+
+  - name: ControlSignal
+    kind: message
+    memory_class: ControlHeap          # small, high-priority control messages
+    layout: Absolute
+    delivery: ExactlyOnce
+    fields:
+      - name: signal_type
+        type: string
+      - name: session_id
+        type: u64
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 2. SEMANTIC TYPES — domain-specific typed constructs
+# ═══════════════════════════════════════════════════════════════════════════════
+# Maps to: #[vil_state], #[vil_event], #[vil_fault], #[vil_decision]
+
+semantic_types:
+  # Mutable state for tracking inference sessions
+  - name: InferenceState
+    kind: state
+    fields:
+      - { name: request_id, type: u64 }
+      - { name: tokens_received, type: u32 }
+      - { name: latency_us, type: u64 }
+      - { name: stream_active, type: bool }
+
+  # Immutable event — emitted after inference completes
+  - name: InferenceCompleted
+    kind: event
+    fields:
+      - { name: request_id, type: u64 }
+      - { name: total_tokens, type: u32 }
+      - { name: duration_us, type: u64 }
+      - { name: model, type: string }
+      - { name: status_code, type: u16 }
+
+  # Immutable event — order lifecycle
+  - name: OrderCompleted
+    kind: event
+    fields:
+      - { name: order_id, type: u64 }
+      - { name: amount_cents, type: u64 }
+      - { name: timestamp_us, type: u64 }
+
+  # Known failure modes
+  - name: GatewayFault
+    kind: fault
+    variants:
+      - UpstreamTimeout
+      - SseParseError
+      - ModelUnavailable
+      - PaymentDeclined
+      - RateLimited
+      - ShmWriteFailed
+
+  # Routing decision for model selection
+  - name: ModelRoutingDecision
+    kind: decision
+    fields:
+      - { name: target_model, type: string }
+      - { name: priority, type: u8 }
+      - { name: confidence, type: u32 }
+      - { name: use_fallback, type: bool }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 3. ERRORS — typed error variants
+# ═══════════════════════════════════════════════════════════════════════════════
+
+errors:
+  - { name: upstream_timeout, status: 504, code: UPSTREAM_TIMEOUT, retry: true }
+  - { name: model_unavailable, status: 503, code: MODEL_UNAVAILABLE, retry: true }
+  - { name: rate_limited, status: 429, code: RATE_LIMITED, retry: true }
+  - { name: payment_failed, status: 402, code: PAYMENT_FAILED, retry: false }
+  - name: validation_error
+    status: 400
+    code: VALIDATION_ERROR
+    fields:
+      - { name: field_name, type: string, required: true }
+      - { name: reason, type: string, required: true }
+  - { name: internal_error, status: 500, code: INTERNAL_ERROR }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 4. SSE + WebSocket EVENTS — typed real-time events
+# ═══════════════════════════════════════════════════════════════════════════════
+
+sse_events:
+  - name: StreamChunk
+    topic: ai.stream
+    fields:
+      - { name: chunk_id, type: u64 }
+      - { name: content, type: string }
+      - { name: model, type: string }
+
+  - name: OrderStatusUpdate
+    topic: orders.status
+    fields:
+      - { name: order_id, type: u64 }
+      - { name: new_status, type: string }
+      - { name: timestamp_us, type: u64 }
+
+ws_events:
+  - name: ChatMessage
+    topic: chat.room
+    fields:
+      - { name: sender_id, type: u64 }
+      - { name: room_id, type: string }
+      - { name: content, type: string }
+
+  - name: PresenceUpdate
+    topic: chat.presence
+    fields:
+      - { name: user_id, type: u64 }
+      - { name: online, type: bool }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 5. NODES — the processes in the workflow graph
+# ═══════════════════════════════════════════════════════════════════════════════
+# Maps to: WorkflowBuilder::add_process() + add_interface()
+# Each node has typed ports (in/out), exec class, and optional host affinity.
+#
+# This replaces the old singular "pipeline.sink" / "pipeline.source" design.
+# Supports N sinks, N sources, N transforms — any DAG topology.
+
+nodes:
+  # ── TRIGGERS (HttpSink nodes — receive inbound requests) ──────────────────
+
+  api_gateway:
+    type: http-sink
+    port: 8080
+    path: /api/v1/infer
+    exec_class: AsyncTask
+    ports:
+      trigger_out: { direction: out, message: InferenceRequest, lane: trigger }
+      data_in:     { direction: in,  message: InferenceResponse, lane: data }
+      ctrl_in:     { direction: in,  message: ControlSignal, lane: control }
+
+  webhook_trigger:
+    type: http-sink
+    port: 3080
+    path: /webhook/order
+    exec_class: AsyncTask
+    ports:
+      trigger_out: { direction: out, message: OrderPayload, lane: trigger }
+      data_in:     { direction: in,  message: InferenceResponse, lane: data }
+      ctrl_in:     { direction: in,  message: ControlSignal, lane: control }
+
+  admin_trigger:
+    type: http-sink
+    port: 9091
+    path: /admin/batch
+    exec_class: DedicatedThread       # long-running batch jobs
+    ports:
+      trigger_out: { direction: out, message: InferenceRequest, lane: trigger }
+      data_in:     { direction: in,  message: InferenceResponse, lane: data }
+      ctrl_in:     { direction: in,  message: ControlSignal, lane: control }
+
+  # ── TRANSFORM / ROUTING (processing nodes) ───────────────────────────────
+
+  model_router:
+    type: transform
+    exec_class: AsyncTask
+    code:
+      mode: handler
+      handler: route_by_model          # → src/handlers/route_by_model.rs
+      async: true
+      state_access: read               # none | read | read_write
+    ports:
+      in:          { direction: in,  message: InferenceRequest, lane: trigger }
+      openai_out:  { direction: out, message: InferenceRequest, lane: data }
+      claude_out:  { direction: out, message: InferenceRequest, lane: data }
+      local_out:   { direction: out, message: InferenceRequest, lane: data }
+    decision: ModelRoutingDecision     # semantic decision type drives multi-output routing
+
+  content_filter:
+    type: transform
+    exec_class: AsyncTask
+    code:
+      mode: expr                       # inline expression — compiled inline, zero overhead
+      expr: "!input.content.contains(\"blocked\")"
+    ports:
+      in:          { direction: in,  message: InferenceResponse, lane: data }
+      clean_out:   { direction: out, message: InferenceResponse, lane: data }
+      flagged_out: { direction: out, message: InferenceResponse, lane: data }
+      ctrl_out:    { direction: out, message: ControlSignal, lane: control }
+
+  response_merger:
+    type: transform
+    exec_class: AsyncTask
+    code:
+      mode: handler
+      handler: merge_responses
+    gather:
+      strategy: WaitAny               # WaitAll | WaitAny | WaitQuorum | Timeout
+      min_results: 1                   # proceed after at least 1 result
+      timeout_secs: 30
+    ports:
+      openai_in:   { direction: in,  message: InferenceResponse, lane: data }
+      claude_in:   { direction: in,  message: InferenceResponse, lane: data }
+      local_in:    { direction: in,  message: InferenceResponse, lane: data }
+      merged_out:  { direction: out, message: InferenceResponse, lane: data }
+
+  analytics_sink:
+    type: transform
+    exec_class: BlockingTask           # CPU-bound aggregation
+    code:
+      mode: script                     # embedded script — hot-reloadable
+      runtime: lua
+      source_inline: |
+        local out = {}
+        out.logged = true
+        out.model = input.model
+        out.tokens = input.tokens_used
+        ctx.log("info", "analytics: " .. tostring(input.tokens_used) .. " tokens")
+        return out
+      sandbox:
+        timeout_ms: 10
+        max_memory_mb: 16
+      hot_reload: true
+    ports:
+      in:          { direction: in, message: InferenceResponse, lane: data }
+
+  # ── UPSTREAM SOURCES (HttpSource nodes — call external APIs) ──────────────
+
+  openai_source:
+    type: http-source
+    url: "http://api.openai.com/v1/chat/completions"
+    format: sse
+    json_tap: "choices[0].delta.content"
+    exec_class: AsyncTask
+    ports:
+      trigger_in:  { direction: in,  message: InferenceRequest, lane: trigger }
+      data_out:    { direction: out, message: InferenceResponse, lane: data }
+      ctrl_out:    { direction: out, message: ControlSignal, lane: control }
+    post_body:
+      model: "${msg.model}"
+      messages:
+        - role: "user"
+          content: "${msg.prompt}"
+      stream: true
+      max_tokens: "${msg.max_tokens}"
+
+  claude_source:
+    type: http-source
+    url: "http://api.anthropic.com/v1/messages"
+    format: sse
+    json_tap: "delta.text"
+    exec_class: AsyncTask
+    ports:
+      trigger_in:  { direction: in,  message: InferenceRequest, lane: trigger }
+      data_out:    { direction: out, message: InferenceResponse, lane: data }
+      ctrl_out:    { direction: out, message: ControlSignal, lane: control }
+    post_body:
+      model: "${msg.model}"
+      messages:
+        - role: "user"
+          content: "${msg.prompt}"
+      stream: true
+
+  local_llama_source:
+    type: http-source
+    url: "http://localhost:4545/v1/chat/completions"
+    format: sse
+    json_tap: "choices[0].delta.content"
+    exec_class: AsyncTask
+    ports:
+      trigger_in:  { direction: in,  message: InferenceRequest, lane: trigger }
+      data_out:    { direction: out, message: InferenceResponse, lane: data }
+      ctrl_out:    { direction: out, message: ControlSignal, lane: control }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 6. ROUTES — edges in the workflow graph
+# ═══════════════════════════════════════════════════════════════════════════════
+# Maps to: WorkflowBuilder::route() / route_ext() → RouteIR
+# Supports: fan-in (N→1), fan-out (1→N), any DAG topology.
+#
+# Visual (this IS the workflow):
+#
+#   api_gateway ──┐
+#   webhook    ───┼──▶ model_router ──┬──▶ openai_source ──┐
+#   admin      ──┘                    ├──▶ claude_source ───┼──▶ response_merger ──▶ content_filter ──▶ api_gateway
+#                                     └──▶ local_llama  ───┘                                      └──▶ analytics_sink
+#
+
+routes:
+  # ── Fan-in: 3 triggers → 1 router ────────────────────────────────────────
+  - from: api_gateway.trigger_out
+    to: model_router.in
+    mode: LoanWrite
+  - from: webhook_trigger.trigger_out
+    to: model_router.in
+    mode: LoanWrite
+  - from: admin_trigger.trigger_out
+    to: model_router.in
+    mode: LoanWrite
+
+  # ── Fan-out: router → 3 upstream sources ─────────────────────────────────
+  - from: model_router.openai_out
+    to: openai_source.trigger_in
+    mode: LoanWrite
+  - from: model_router.claude_out
+    to: claude_source.trigger_in
+    mode: LoanWrite
+  - from: model_router.local_out
+    to: local_llama_source.trigger_in
+    mode: LoanWrite
+
+  # ── Fan-in: 3 sources → 1 merger (scatter-gather) ───────────────────────
+  - from: openai_source.data_out
+    to: response_merger.openai_in
+    mode: LoanWrite
+  - from: claude_source.data_out
+    to: response_merger.claude_in
+    mode: LoanWrite
+  - from: local_llama_source.data_out
+    to: response_merger.local_in
+    mode: LoanWrite
+
+  # ── Sequential: merger → filter → response back ─────────────────────────
+  - from: response_merger.merged_out
+    to: content_filter.in
+    mode: LoanWrite
+  - from: content_filter.clean_out
+    to: api_gateway.data_in
+    mode: LoanWrite
+
+  # ── Side-channel: filter → analytics (detached background branch) ───────
+  - from: content_filter.clean_out
+    to: analytics_sink.in
+    mode: Copy
+    detach: true                       # non-blocking — caller continues immediately
+
+  # ── Control lane: sources → triggers (DONE/error signals) ───────────────
+  - from: openai_source.ctrl_out
+    to: api_gateway.ctrl_in
+    mode: Copy
+  - from: claude_source.ctrl_out
+    to: api_gateway.ctrl_in
+    mode: Copy
+  - from: local_llama_source.ctrl_out
+    to: api_gateway.ctrl_in
+    mode: Copy
+  - from: content_filter.ctrl_out
+    to: api_gateway.ctrl_in
+    mode: Copy
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 7. FAILOVER — automatic backup routing on failure
+# ═══════════════════════════════════════════════════════════════════════════════
+# Maps to: WorkflowBuilder::failover()
+
+failover:
+  entries:
+    - primary: openai_source
+      backup: local_llama_source
+      strategy: "retry:3"
+      condition: UpstreamTimeout
+    - primary: claude_source
+      backup: local_llama_source
+      strategy: immediate
+      condition: ModelUnavailable
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 8. TOPOLOGY — distributed host placement
+# ═══════════════════════════════════════════════════════════════════════════════
+# Maps to: WorkflowBuilder::add_host(), ProcessIR::host_affinity
+
+topology:
+  hosts:
+    edge_us:  "10.0.1.1:9000"
+    edge_eu:  "10.0.2.1:9000"
+    gpu_pool: "10.0.3.1:9000"
+
+  placement:
+    api_gateway:        { host: edge_us }
+    webhook_trigger:    { host: edge_us }
+    admin_trigger:      { host: edge_eu }
+    model_router:       { host: edge_us }
+    openai_source:      { host: edge_us }
+    claude_source:      { host: edge_eu }
+    local_llama_source: { host: gpu_pool }
+    response_merger:    { host: edge_us }
+    content_filter:     { host: edge_us }
+    analytics_sink:     { host: edge_eu }
+
+  # Cross-host routes auto-detect transport:
+  #   same host → SHM (zero-copy)
+  #   cross host → TCP/QUIC
+  transport_override:
+    - from: model_router
+      to: claude_source
+      transport: quic                  # edge_us → edge_eu
+    - from: model_router
+      to: local_llama_source
+      transport: tcp                   # edge_us → gpu_pool
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 9. WASM FUNCTION MODULES
+# ═══════════════════════════════════════════════════════════════════════════════
+# Declare WASM functions callable from any node's code: { mode: wasm } block.
+# Build with: vil wasm build <this-file>
+# Scaffold with: vil wasm scaffold <name> --language rust
+
+vil_wasm:
+  - name: pricing
+    language: rust
+    source_dir: wasm-src/pricing/
+    pool_size: 4
+    sandbox:
+      timeout_ms: 5000
+      max_memory_mb: 16
+    functions:
+      - name: calculate_price
+        input: { amount: i32, discount_percent: i32 }
+        output: i32
+        description: "Calculate discounted price"
+      - name: apply_tax
+        input: { amount: i32, tax_rate_bps: i32 }
+        output: i32
+        description: "Apply tax in basis points"
+      - name: validate_order
+        input: { total: i32, max_allowed: i32 }
+        output: bool
+        description: "Validate order total within limit"
+
+  - name: content_transform
+    language: rust
+    wasm_path: wasm-modules/out/transform.wasm    # pre-compiled
+    pool_size: 2
+    functions:
+      - name: to_uppercase
+        description: "Convert text to uppercase"
+      - name: reverse_bytes
+        description: "Reverse byte order"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 10. WORKFLOW DAG — per-request task orchestration INSIDE a node
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# KEY INSIGHT: Nodes+Routes (section 5-6) and Workflow DAGs are TWO LAYERS,
+# not two alternatives. They coexist:
+#
+#   Layer 1 — TOPOLOGY (nodes + routes):
+#     Long-running persistent processes connected by Tri-Lane channels.
+#     Always on. Like Docker Compose services.
+#     Runtime: VastarRuntimeWorld → world.register_process()
+#
+#   Layer 2 — TASK DAG (workflow):
+#     One-shot tasks with deps, executed PER REQUEST inside a node.
+#     Ephemeral. Like a CI/CD pipeline that runs on each trigger.
+#     Runtime: WorkflowScheduler::submit(tasks) → Tokio spawn per layer
+#
+# ┌──────────────────── Layer 1: Topology (always-on) ──────────────────────┐
+# │                                                                         │
+# │  api_gw ──▶ model_router ──▶ openai ──▶ merger ──▶ filter ──▶ api_gw  │
+# │                   │                                                     │
+# │                   │  ┌── Layer 2: DAG (per-request) ──────┐            │
+# │                   └──│                                     │            │
+# │                      │  validate ──▶ embed ──┬▶ search_a  │            │
+# │                      │                       ├▶ search_b  │            │
+# │                      │                       ▼            │            │
+# │                      │              rerank ──▶ generate   │            │
+# │                      └─────────────────────────────────────┘            │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+# Visualization has zoom levels:
+#   vil viz --level topology   →  Nodes + Routes only
+#   vil viz --level dag        →  Expand DAG inside target node
+#   vil viz --level full       →  Both layers in one diagram (subgraphs)
+#
+# Maps to: vil_workflow_v2::WorkflowScheduler + vil_ai_compiler::PipelineDag
+
+workflows:
+  # A workflow is BOUND to a specific node. When that node receives a message,
+  # it executes this task DAG before producing output.
+  #
+  # Multiple nodes can each have their own workflow.
+
+  model_router:                        # ← attached to the model_router node
+    retry:                             # workflow-level retry default
+      max: 2
+      backoff: exponential
+      base_delay_ms: 100
+      max_delay_ms: 5000
+    tasks:
+      - id: validate_input
+        name: "Validate & sanitize"
+        code:                          # inline expression — compiled, zero overhead
+          mode: expr
+          expr: "input.prompt.len() > 0 && input.prompt.len() < 10000"
+        timeout_ms: 1000
+
+      - id: classify_intent
+        name: "Classify user intent"
+        code:
+          mode: handler
+          handler: classify_intent     # → src/handlers/classify_intent.rs
+          async: true
+          state_access: read
+        deps: [validate_input]
+        config: { classifier: "intent-v2" }
+        timeout_ms: 2000
+        retry:                         # task-level retry override
+          max: 3
+          backoff: fixed
+          base_delay_ms: 200
+          on: [UpstreamTimeout]        # only retry on specific faults
+
+      - id: select_model
+        name: "Pick best model"
+        code:
+          mode: handler
+          handler: select_model
+        deps: [classify_intent]
+        config: { strategy: "cost_optimized" }
+        timeout_ms: 500
+
+      - id: log_routing
+        name: "Log routing decision"
+        code:
+          mode: script                 # task-level script (Gap 1)
+          runtime: lua
+          source_inline: |
+            ctx.log("info", "routed to " .. tostring(input.target_model))
+            return input
+          sandbox: { timeout_ms: 5 }
+        deps:
+          - { task: select_model, detach: true }  # detached — doesn't block hot path
+
+    branches:
+      - id: route_gate
+        type: Branch
+        condition: "intent.complexity > 0.7"
+        deps: [classify_intent]
+        on_true: select_model          # complex → smart routing
+        on_false: fast_route           # simple → default model
+
+      # Switch example (Gap 2): multi-condition routing
+      - id: model_selector
+        type: Switch
+        expr: "intent.category"
+        deps: [classify_intent]
+        cases:
+          - { value: "code", target: select_model }
+          - { value: "chat", target: fast_route }
+          - { value: "vision", target: select_model }
+        default: fast_route
+
+      - id: fast_route
+        type: Transform
+        name: "Default model (fast path)"
+        code:
+          mode: expr
+          expr: "{ target_model: \"gpt-4o-mini\", priority: 1 }"
+
+  response_merger:                     # ← attached to the response_merger node
+    tasks:
+      - id: collect_responses
+        name: "Collect upstream results"
+        type: Transform
+        timeout_ms: 30000
+
+      - id: deduplicate
+        name: "Deduplicate content"
+        type: Filter
+        deps: [collect_responses]
+        config: { predicate: "similarity < 0.95" }
+        timeout_ms: 2000
+
+      - id: rank_quality
+        name: "Rank by quality score"
+        type: Rerank
+        deps: [deduplicate]
+        config: { model: "quality-scorer-v1", top_n: 1 }
+        timeout_ms: 3000
+
+  # Standalone workflow — not bound to a topology node.
+  # Used for batch/ETL jobs triggered by admin_trigger.
+  rag_pipeline:
+    trigger: admin_trigger             # ← which node triggers this workflow
+    input: InferenceRequest            # typed contract
+    output: InferenceResponse
+    error: GatewayFault
+    retry:
+      max: 2
+      backoff: exponential
+      base_delay_ms: 500
+    on_complete:                        # auto-trigger after completion
+      success: workflows/cache_result.vil.yaml
+      failure: workflows/alerting.vil.yaml
+    tasks:
+      - id: embed_query
+        name: "Embed user query"
+        type: Embed
+        code:
+          mode: handler
+          handler: embed_query
+        config: { model: "text-embedding-3-large", dimensions: 1536 }
+        timeout_ms: 5000
+
+      - id: search_products
+        name: "Vector search products"
+        type: Search
+        deps: [embed_query]
+        config: { index: "products", top_k: 20 }
+        timeout_ms: 3000
+
+      - id: search_docs
+        name: "Vector search docs"
+        type: Search
+        deps: [embed_query]           # parallel with search_products
+        config: { index: "documentation", top_k: 10 }
+        timeout_ms: 3000
+
+      - id: rerank
+        name: "Rerank merged results"
+        type: Rerank
+        deps: [search_products, search_docs]
+        config: { model: "cohere-rerank-v3", top_n: 5 }
+        timeout_ms: 5000
+
+      - id: generate_answer
+        name: "Generate response"
+        type: Generate
+        deps:
+          - { task: rerank, on: success }    # only generate if rerank succeeded
+        config: { model: "gpt-4", max_tokens: 1024, temperature: 0.7 }
+        timeout_ms: 30000
+
+      - id: log_result
+        name: "Log to analytics"
+        deps:
+          - { task: generate_answer, detach: true }  # background — doesn't block response
+        code:
+          mode: script
+          runtime: lua
+          source_inline: |
+            ctx.log("info", "RAG completed: " .. tostring(input.tokens_used) .. " tokens")
+            return input
+          sandbox: { timeout_ms: 5 }
+
+    branches:
+      - id: quality_gate
+        type: Branch
+        condition: "confidence > 0.8"
+        deps: [rerank]
+        on_true: generate_answer
+        on_false: fallback_search
+
+      - id: fallback_search
+        name: "Broader fallback search"
+        type: Search
+        config: { index: "products", top_k: 50 }
+        timeout_ms: 5000
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 10. STATE — service-scoped mutable state
+# ═══════════════════════════════════════════════════════════════════════════════
+
+state:
+  type: private_heap
+  fields:
+    - { name: total_requests, type: u64 }
+    - { name: active_streams, type: u32 }
+    - { name: total_tokens, type: u64 }
+    - { name: error_count, type: u32 }
+    - { name: model_usage, type: object }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 11. DATABASE — connection pools + entity definitions
+# ═══════════════════════════════════════════════════════════════════════════════
+
+database:
+  pools:
+    primary:
+      driver: postgres
+      url: "${ENV:DATABASE_URL}"
+      max_connections: 20
+      min_connections: 5
+      ssl_mode: prefer
+    analytics:
+      driver: sqlite
+      url: "sqlite://analytics.db"
+      max_connections: 5
+
+entities:
+  - name: Order
+    source: primary
+    table: orders
+    fields:
+      - { name: id, type: i64, primary_key: true }
+      - { name: customer_id, type: i64 }
+      - { name: total_cents, type: u64 }
+      - { name: status, type: string }
+      - { name: created_at, type: string, nullable: true }
+
+  - name: InferenceLog
+    source: analytics
+    table: inference_logs
+    fields:
+      - { name: id, type: i64, primary_key: true }
+      - { name: model, type: string }
+      - { name: tokens_used, type: u32 }
+      - { name: latency_ms, type: u64 }
+      - { name: cost_usd, type: f64 }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 12. CACHE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+cache:
+  backend: redis
+  url: "redis://localhost:6379"
+  default_ttl_secs: 300
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 13. MESSAGE QUEUES — NATS, Kafka, MQTT
+# ═══════════════════════════════════════════════════════════════════════════════
+
+message_queue:
+  nats:
+    url: "nats://localhost:4222"
+    subjects: ["orders.*", "analytics.*", "ai.inference.*"]
+    jetstream: true
+    credentials:
+      token: "${ENV:NATS_TOKEN}"
+  kafka:
+    brokers: ["localhost:9092"]
+    consumer_group: "vil-ai-gateway"
+    acks: "all"
+  mqtt:
+    broker_url: "mqtt://localhost"
+    port: 1883
+    qos: 1
+    keepalive_secs: 60
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 14. SIDECARS — external process integration via SHM + UDS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+sidecars:
+  - name: python_ml
+    command: "python3 sidecars/ml_service.py"
+    shm_size: "64MB"
+    pool_size: 4
+    timeout_ms: 30000
+    health_interval_ms: 5000
+    failover:
+      fallback_wasm: "wasm-out/ml_fallback.wasm"
+      failure_threshold: 5
+      cooldown_secs: 30
+    retry:
+      max: 3
+      backoff: exponential
+      base_delay_ms: 100
+
+  - name: go_payments
+    command: "go run sidecars/payments/main.go"
+    shm_size: "32MB"
+    pool_size: 2
+    timeout_ms: 10000
+    failover:
+      backup: go_payments_backup
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 15. RUNTIME CONFIG — server, SHM, middleware, security, etc.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+server:
+  name: "ai-commerce-gateway"
+  host: "0.0.0.0"
+  workers: 0
+  request_timeout_secs: 60
+  max_body_size: "10MB"
+  graceful_shutdown_timeout_secs: 30
+
+logging:
+  level: info
+  format: json
+  modules:
+    vil_server: debug
+    tower_http: info
+
+shm:
+  enabled: true
+  pool_size: "128MB"
+  reset_threshold_pct: 80
+  query_cache:
+    enabled: true
+    region_size: "32MB"
+    default_ttl_secs: 120
+    max_entries: 50000
+
+middleware:
+  request_tracker: { enabled: true }
+  handler_metrics: { enabled: true, sample_rate: 1 }
+  tracing:         { enabled: true, sample_rate: 1, propagation: w3c }
+  cors:            { enabled: true, mode: permissive }
+  compression:     { enabled: true, min_body_size: 256 }
+  timeout:         { enabled: true, duration_secs: 60 }
+  security_headers: { enabled: true }
+
+security:
+  jwt:          { enabled: true, secret: "${ENV:JWT_SECRET}", algorithm: HS256 }
+  rate_limit:   { enabled: true, max_requests: 5000, window_secs: 60, per: ip }
+  csrf:         { enabled: true, exempt_paths: [/api/webhook, /health] }
+  brute_force:  { enabled: true, max_attempts: 10, block_duration_secs: 600 }
+
+session:
+  enabled: true
+  cookie_name: "vil-session"
+  ttl_secs: 1800
+  same_site: Lax
+
+observability:
+  error_tracker:  { enabled: true, max_recent: 1000 }
+  span_collector: { max_spans: 10000 }
+  profiler:       { enabled: true }
+  prometheus:     { enabled: true, path: /metrics }
+  healthcheck:    { enabled: true, path: /health }
+
+performance:
+  metrics_sample_rate: 1
+  idempotency: { enabled: true, ttl_secs: 86400, max_entries: 10000 }
+
+grpc:
+  enabled: true
+  port: 50051
+  health_check: true
+  reflection: true
+
+graphql:
+  enabled: true
+  playground: true
+  path: /graphql
+  max_depth: 10
+  introspection: true
+
+feature_flags:
+  hot_reload: true
+  flags:
+    enable_multi_model: true
+    enable_content_filter: true
+    experimental_quic: false
+
+scheduler:
+  jobs:
+    - { name: cleanup_sessions, every_secs: 300 }
+    - { name: flush_analytics, every_secs: 60 }
+    - { name: health_check_upstreams, every_secs: 30 }
+
+plugins:
+  active:
+    - { name: vil_db_sqlx, config_file: plugins/db.yaml }
+    - { name: vil_mq_nats, config_file: plugins/nats.yaml }
+    - { name: vil_cache_redis, config_file: plugins/redis.yaml }
+
+rolling_restart:
+  enabled: true
+  drain_timeout_secs: 30
+
+admin:
+  enabled: true
+  playground: true
+  diagnostics: true
+  hot_reload: true

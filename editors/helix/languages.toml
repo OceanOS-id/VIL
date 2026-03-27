@@ -1,0 +1,12 @@
+# VIL Language Server configuration for Helix
+#
+# Add this to your ~/.config/helix/languages.toml
+# or merge with your existing Rust language server config.
+
+[[language]]
+name = "rust"
+language-servers = ["rust-analyzer", "vil-lsp"]
+
+[language-server.vil-lsp]
+command = "vil-lsp"
+args = []

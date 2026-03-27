@@ -1,0 +1,86 @@
+# ╔═════════════════════════════════════════════════════════════════════════╗
+# ║  008 — Credit Data Quality Assurance Pipeline                          ║
+# ║                                                                         ║
+# ║  Business Context:                                                      ║
+# ║    Validates credit data quality from Core Banking before it enters    ║
+# ║    downstream systems (SLIK reporting, risk analytics, provisioning).  ║
+# ║    Checks: NIK format, collectability range, balance vs limit,         ║
+# ║    negative amounts, missing borrower names. Each record annotated     ║
+# ║    with PASS/FAIL quality score and specific issue codes.              ║
+# ║                                                                         ║
+# ║  Build:  vil compile --from yaml --input pipeline.vil.yaml          ║
+# ║  Run:    vil run --file pipeline.vil.yaml                           ║
+# ╚═════════════════════════════════════════════════════════════════════════╝
+
+vil_version: "6.0.0"
+name: ai-content-moderator
+port: 3082
+token: shm
+
+semantic_types:
+  - name: ModeratorState
+    kind: state
+    fields:
+      - { name: request_id, type: u64 }
+      - { name: texts_moderated, type: u32 }
+      - { name: redactions_applied, type: u32 }
+
+  - name: ModerationCompleted
+    kind: event
+    fields:
+      - { name: request_id, type: u64 }
+      - { name: redaction_count, type: u32 }
+      - { name: latency_us, type: u64 }
+
+  - name: ModeratorFault
+    kind: fault
+    variants:
+      - UpstreamTimeout
+      - SseParseError
+      - ContentTooLong
+      - ShmWriteFailed
+
+nodes:
+  moderator_sink:
+    type: http-sink
+    port: 3082
+    path: /moderate
+    ports:
+      trigger_out:      { direction: out, lane: trigger }
+      response_data_in: { direction: in,  lane: data }
+      response_ctrl_in: { direction: in,  lane: control }
+
+  moderator_source:
+    type: http-source
+    url: "http://127.0.0.1:4545/v1/chat/completions"
+    format: sse
+    # ── SSE Dialect ─────────────────────────────────────────────────────
+    #   openai     — done: "data: [DONE]"              tap: choices[0].delta.content
+    #   anthropic  — done: "event: message_stop"       tap: delta.text
+    #   ollama     — done: {"done": true} in JSON      tap: message.content
+    #   cohere     — done: "event: message-end"         tap: text
+    #   gemini     — done: TCP EOF                      tap: candidates[0].content.parts[0].text
+    #   standard   — done: TCP EOF                      tap: (none, raw data)
+    #   custom     — provide your own: dialect_done_marker, dialect_done_event, dialect_done_json
+    dialect: openai
+    json_tap: "choices[0].delta.content"
+    ports:
+      trigger_in:        { direction: in,  lane: trigger }
+      response_data_out: { direction: out, lane: data }
+      response_ctrl_out: { direction: out, lane: control }
+    post_body:
+      model: "gpt-4"
+      messages:
+        - role: "system"
+          content: >
+            You are a strict content moderator. Scan the provided text and
+            output ONLY safe content. Replace harmful, toxic, or inappropriate
+            words with [REDACTED]. Preserve sentence structure. No commentary.
+        - role: "user"
+          content: "Moderate this text for safety."
+      stream: true
+
+routes:
+  - { from: moderator_sink.trigger_out, to: moderator_source.trigger_in, mode: LoanWrite }
+  - { from: moderator_source.response_data_out, to: moderator_sink.response_data_in, mode: LoanWrite }
+  - { from: moderator_source.response_ctrl_out, to: moderator_sink.response_ctrl_in, mode: Copy }

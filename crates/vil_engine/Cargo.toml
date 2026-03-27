@@ -1,0 +1,22 @@
+[package]
+name = "vil_engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "VIL Core Engine - Unified Binary Wrapper (Closed Source Strategry)"
+
+[lib]
+name = "vil_engine"
+# SOURCE MODE (default): crate-type = rlib saja — tidak ada .a file yang di-generate
+# Gunakan mode ini saat `cargo build` dari source workspace
+crate-type = ["staticlib", "rlib"]
+# ─────────────────────────────────────────────────────────────────────────────
+
+[dependencies]
+vil_types = { path = "../vil_types" }
+vil_rt = { path = "../vil_rt" }
+vil_shm = { path = "../vil_shm" }
+vil_queue = { path = "../vil_queue" }
+vil_registry = { path = "../vil_registry" }
+vil_obs = { path = "../vil_obs" }

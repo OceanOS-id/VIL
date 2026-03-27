@@ -1,0 +1,237 @@
+// =============================================================================
+// VIL Server — Main server builder and runner
+// =============================================================================
+//
+// VilServer is the primary entry point for building a vil-server application.
+// It wraps Axum with VIL features: auto health endpoints, request tracking,
+// structured logging, graceful shutdown, and service-aware routing.
+
+use axum::middleware as axum_mw;
+use axum::Router;
+use std::net::SocketAddr;
+use tower_http::cors::CorsLayer;
+use tower_http::trace::TraceLayer;
+use tracing::info;
+
+use crate::health;
+use crate::middleware;
+use crate::router::{merge_services, ServiceDef};
+use crate::state::AppState;
+
+/// Builder for a VIL server instance.
+///
+/// # Example (minimal — 5 lines)
+/// ```no_run
+/// use vil_server_core::*;
+///
+/// #[tokio::main]
+/// async fn main() {
+///     VilServer::new("my-app")
+///         .port(8080)
+///         .route("/", get(|| async { "Hello from vil-server!" }))
+///         .run()
+///         .await;
+/// }
+/// ```
+pub struct VilServer {
+    name: String,
+    port: u16,
+    metrics_port: Option<u16>,
+    app_router: Router<AppState>,
+    services: Vec<ServiceDef>,
+    cors: bool,
+}
+
+impl VilServer {
+    /// Create a new server builder with the given application name.
+    pub fn new(name: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            port: 8080,
+            metrics_port: None,
+            app_router: Router::new(),
+            services: Vec::new(),
+            cors: true,
+        }
+    }
+
+    /// Set the listening port (default: 8080).
+    pub fn port(mut self, port: u16) -> Self {
+        self.port = port;
+        self
+    }
+
+    /// Set a separate metrics port (default: same as main port).
+    /// When set, /health, /ready, /metrics, /info are served on this port instead.
+    pub fn metrics_port(mut self, port: u16) -> Self {
+        self.metrics_port = Some(port);
+        self
+    }
+
+    /// Add a route to the server (same as Axum Router::route).
+    pub fn route(mut self, path: &str, method_router: axum::routing::MethodRouter<AppState>) -> Self {
+        self.app_router = self.app_router.route(path, method_router);
+        self
+    }
+
+    /// Nest a sub-router under a path prefix.
+    pub fn nest(mut self, path: &str, router: Router<AppState>) -> Self {
+        self.app_router = self.app_router.nest(path, router);
+        self
+    }
+
+    /// Register a named service with its own route namespace.
+    /// Services get isolated metrics and can communicate via mesh.
+    pub fn service(mut self, name: impl Into<String>, router: Router<AppState>) -> Self {
+        self.services.push(ServiceDef::new(name, router));
+        self
+    }
+
+    /// Register a named service with custom prefix and visibility.
+    pub fn service_def(mut self, def: ServiceDef) -> Self {
+        self.services.push(def);
+        self
+    }
+
+    /// Merge an existing Axum router (for Axum migration compatibility).
+    pub fn merge(mut self, router: Router<AppState>) -> Self {
+        self.app_router = self.app_router.merge(router);
+        self
+    }
+
+    /// Disable CORS (enabled by default with permissive settings).
+    pub fn no_cors(mut self) -> Self {
+        self.cors = false;
+        self
+    }
+
+    /// Build the final Axum application with all middleware and health endpoints.
+    fn build(self) -> (Router, AppState, u16, Option<u16>) {
+        let state = AppState::new(&self.name);
+
+        // Merge service routers
+        let service_router = if !self.services.is_empty() {
+            merge_services(self.services)
+        } else {
+            Router::new()
+        };
+
+        // Build the main application router
+        let mut app = self
+            .app_router
+            .merge(service_router);
+
+        // Health endpoints on main port (unless separate metrics port)
+        if self.metrics_port.is_none() {
+            app = app.merge(health::health_router());
+        }
+
+        // Admin endpoints (capsule, diagnostics, reload, playground, plugins)
+        app = app
+            .merge(crate::capsule_handler::capsule_admin_router())
+            .merge(crate::diagnostics::diagnostics_router())
+            .merge(crate::hot_reload::reload_router())
+            .merge(crate::playground::playground_router())
+            .merge(crate::plugin_api::plugin_router())
+            .merge(crate::plugin_detail_gui::plugin_detail_router());
+
+        // Add VIL middleware stack (order: outermost layer runs first)
+        app = app
+            .layer(axum_mw::from_fn_with_state(
+                state.clone(),
+                crate::trace_middleware::tracing_middleware,
+            ))
+            .layer(axum_mw::from_fn_with_state(
+                state.clone(),
+                crate::obs_middleware::handler_metrics,
+            ))
+            .layer(axum_mw::from_fn_with_state(
+                state.clone(),
+                middleware::request_tracker,
+            ))
+            .layer(TraceLayer::new_for_http());
+
+        // CORS
+        if self.cors {
+            app = app.layer(CorsLayer::permissive());
+        }
+
+        // Attach state
+        let app = app.with_state(state.clone());
+
+        (app, state, self.port, self.metrics_port)
+    }
+
+    /// Run the server (blocking).
+    /// Automatically sets up:
+    /// - Structured logging (tracing)
+    /// - Health/ready/metrics endpoints
+    /// - Request ID propagation
+    /// - Request metrics tracking
+    /// - Graceful shutdown on SIGTERM/SIGINT
+    pub async fn run(self) {
+        // Initialize tracing
+        tracing_subscriber::fmt()
+            .with_env_filter(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| "info,tower_http=debug".into()),
+            )
+            .with_target(false)
+            .init();
+
+        let name = self.name.clone();
+        let (app, state, port, metrics_port) = self.build();
+
+        let addr = SocketAddr::from(([0, 0, 0, 0], port));
+
+        info!(
+            name = %name,
+            port = port,
+            "vil-server starting"
+        );
+
+        println!();
+        println!("  vil-server: {}", name);
+        println!("  Listening:    http://0.0.0.0:{}", port);
+        println!("  Health:       http://localhost:{}/health", metrics_port.unwrap_or(port));
+        println!("  Readiness:    http://localhost:{}/ready", metrics_port.unwrap_or(port));
+        println!("  Metrics:      http://localhost:{}/metrics", metrics_port.unwrap_or(port));
+        println!("  Info:         http://localhost:{}/info", metrics_port.unwrap_or(port));
+        println!();
+        println!("  Press Ctrl+C to stop");
+        println!();
+
+        // Start metrics server on separate port if configured
+        if let Some(mp) = metrics_port {
+            let metrics_state = state.clone();
+            tokio::spawn(async move {
+                let metrics_app = health::health_router().with_state(metrics_state);
+                let metrics_addr = SocketAddr::from(([0, 0, 0, 0], mp));
+                info!(port = mp, "metrics server starting");
+                let listener = match tokio::net::TcpListener::bind(metrics_addr).await {
+                    Ok(l) => l,
+                    Err(e) => {
+                        tracing::warn!(port = mp, error = %e, "Failed to bind metrics port, metrics served on main port");
+                        return;
+                    }
+                };
+                axum::serve(listener, metrics_app)
+                    .with_graceful_shutdown(crate::shutdown::shutdown_signal())
+                    .await
+                    .expect("Metrics server error");
+            });
+        }
+
+        // Start main server
+        let listener = tokio::net::TcpListener::bind(addr)
+            .await
+            .expect("Failed to bind port");
+
+        axum::serve(listener, app)
+            .with_graceful_shutdown(crate::shutdown::shutdown_signal())
+            .await
+            .expect("Server error");
+
+        info!("vil-server shut down gracefully");
+    }
+}

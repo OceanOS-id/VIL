@@ -1,0 +1,119 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  001 — AI Inference Gateway (Production LLM Proxy)                     ║
+# ║                                                                         ║
+# ║  Business Context:                                                      ║
+# ║    Production-grade AI inference gateway that proxies LLM requests      ║
+# ║    from internal services to upstream providers (OpenAI, Anthropic,     ║
+# ║    Ollama). Enables centralized API key management, usage metering,    ║
+# ║    and request/response streaming via SSE. Typical deployment:          ║
+# ║    internal microservices POST to /trigger, gateway streams the         ║
+# ║    LLM response back in real-time with zero-copy SHM transport.        ║
+# ║                                                                         ║
+# ║  Architecture: Webhook → SSE Streaming Pipeline (Tri-Lane)             ║
+# ║  This YAML is the COMPLETE application definition.                      ║
+# ║  Compile:  vil compile --from yaml --input pipeline.vil.yaml        ║
+# ║  Run:      vil run --file pipeline.vil.yaml                         ║
+# ║  Viz:      vil viz pipeline.vil.yaml --format html --open           ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+vil_version: "6.0.0"
+name: ai-gateway
+port: 3080
+# Token type: "shm" (default) for multi-pipeline zero-copy, "generic" for single pipeline
+token: shm
+
+# ── Semantic Types ────────────────────────────────────────────────────────
+# Domain-specific types for this pipeline.
+# These compile to #[vil_state], #[vil_event], #[vil_fault] structs.
+
+# Semantic types model the business domain for LLM inference tracking.
+# InferenceState tracks per-request metrics (token count, latency).
+# InferenceCompleted is the audit event for billing and SLA monitoring.
+# InferenceFault covers upstream provider failures and transport errors.
+semantic_types:
+  - name: InferenceState
+    kind: state
+    fields:
+      - { name: request_id, type: u64 }        # Unique correlation ID for distributed tracing
+      - { name: tokens_received, type: u32 }    # Running count of SSE tokens streamed back
+      - { name: latency_us, type: u64 }         # End-to-end latency in microseconds
+      - { name: stream_active, type: bool }     # Whether the SSE stream is still open
+
+  # Immutable event emitted to the audit log for billing and SLA dashboards
+  - name: InferenceCompleted
+    kind: event
+    fields:
+      - { name: request_id, type: u64 }        # Matches InferenceState.request_id
+      - { name: total_tokens, type: u32 }       # Final token count (used for cost calculation)
+      - { name: duration_us, type: u64 }        # Total inference time (provider latency + network)
+      - { name: status_code, type: u16 }        # HTTP status from upstream (200, 429, 503, etc.)
+
+  # Fault variants for operational alerting — each triggers a different severity
+  - name: InferenceFault
+    kind: fault
+    variants:
+      - UpstreamTimeout       # LLM provider did not respond within SLA (e.g., 30s)
+      - SseParseError         # Malformed SSE frame from provider (protocol violation)
+      - ShmWriteFailed        # ExchangeHeap write failed (memory pressure)
+      - ConnectionRefused     # Provider endpoint unreachable (DNS, firewall, down)
+
+# ── Nodes ─────────────────────────────────────────────────────────────────
+# Two nodes form the inference gateway:
+#   webhook  — HTTP Sink: receives POST requests from internal services
+#   inference — HTTP Source: forwards to LLM provider, streams SSE response
+# The gateway acts as a reverse proxy with zero-copy SHM transport.
+
+nodes:
+  webhook:
+    type: http-sink
+    port: 3080
+    path: /trigger
+    # Port names MUST match HttpSink internal conventions:
+    #   trigger_out, response_data_in, response_ctrl_in
+    ports:
+      trigger_out:      { direction: out, lane: trigger }
+      response_data_in: { direction: in,  lane: data }
+      response_ctrl_in: { direction: in,  lane: control }
+
+  inference:
+    type: http-source
+    url: "http://127.0.0.1:4545/v1/chat/completions"
+    format: sse
+    dialect: openai            # openai | anthropic | ollama | cohere | gemini | standard
+    json_tap: "choices[0].delta.content"
+    # Port names MUST match HttpSource internal conventions:
+    #   trigger_in, response_data_out, response_ctrl_out
+    ports:
+      trigger_in:        { direction: in,  lane: trigger }
+      response_data_out: { direction: out, lane: data }
+      response_ctrl_out: { direction: out, lane: control }
+    # POST body sent to the SSE endpoint on every trigger.
+    # Without this, the source sends GET and gets no SSE stream.
+    post_body:
+      model: "gpt-4"
+      messages:
+        - role: "user"
+          content: "Benchmark performance test via VIL"
+      stream: true
+
+# ── Routes ────────────────────────────────────────────────────────────────
+# Tri-Lane wiring separates concerns into three logical lanes:
+#   Trigger lane — initiates the inference request (client -> LLM)
+#   Data lane    — streams SSE tokens back (LLM -> client), zero-copy via SHM
+#   Control lane — signals stream completion or error (separate from data)
+
+routes:
+  # Trigger: webhook forwards client request to SSE source
+  - from: webhook.trigger_out
+    to: inference.trigger_in
+    mode: LoanWrite
+
+  # Data: SSE chunks stream back to webhook (zero-copy SHM)
+  - from: inference.response_data_out
+    to: webhook.response_data_in
+    mode: LoanWrite
+
+  # Control: DONE/error signals (separate from data lane)
+  - from: inference.response_ctrl_out
+    to: webhook.response_ctrl_in
+    mode: Copy

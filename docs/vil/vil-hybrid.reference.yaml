@@ -1,0 +1,165 @@
+# =============================================================================
+# VIL Hybrid Custom Code — Reference YAML
+# =============================================================================
+# Demonstrates all 3 execution modes: Native, WASM, Sidecar
+# Compile: vil compile --input vil-hybrid.yaml --output my-app --release
+# Run:     vil run vil-hybrid.yaml
+# =============================================================================
+
+vil_version: "0.6.0"
+name: hybrid-example
+port: 8080
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# WASM Modules — sandboxed, hot-deployable, ~1-5μs overhead
+# ═══════════════════════════════════════════════════════════════════════════════
+vil_wasm:
+  - name: pricing
+    language: rust
+    wasm_path: ./wasm-modules/out/pricing.wasm
+    pool_size: 4
+    functions:
+      - name: calculate_price
+        input: { base: i32, quantity: i32 }
+        output: i32
+        description: "Volume-discounted price calculation"
+      - name: apply_tax
+        input: { amount: i32, rate_bps: i32 }
+        output: i32
+    sandbox:
+      timeout_ms: 5000
+      max_memory_mb: 64
+
+  - name: validation
+    language: rust
+    wasm_path: ./wasm-modules/out/validation.wasm
+    pool_size: 4
+    functions:
+      - name: validate_record
+        description: "Validate credit record (NIK, amounts, dates)"
+      - name: validate_order
+        input: { amount: i32, limit: i32 }
+        output: i32
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Sidecar Processes — any language, ~12μs overhead
+# ═══════════════════════════════════════════════════════════════════════════════
+sidecars:
+  - name: ml-scorer
+    command: python3
+    script: ./sidecars/ml_scorer.py
+    protocol: uds
+    methods:
+      - predict
+      - score_batch
+    auto_restart: true
+    max_concurrent: 10
+    startup_timeout_ms: 5000
+
+  - name: fraud-detector
+    command: go run
+    script: ./sidecars/fraud_detector.go
+    protocol: uds
+    methods:
+      - check_fraud
+      - risk_score
+    auto_restart: true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Endpoints — mix of Native, WASM, and Sidecar handlers
+# ═══════════════════════════════════════════════════════════════════════════════
+endpoints:
+  # ── Native Rust (compiled in, 0 overhead) ──
+  - method: GET
+    path: /api/credits
+    handler: list_credits
+    exec_class: AsyncTask
+    output:
+      type: CreditList
+      fields:
+        - { name: records, type: "Vec<CreditRecord>" }
+
+  - method: POST
+    path: /api/credits/enrich
+    handler: enrich_credits
+    exec_class: AsyncTask
+    input:
+      type: EnrichRequest
+      fields:
+        - { name: records, type: "Vec<CreditRecord>", required: true }
+    output:
+      type: EnrichedResult
+
+  # ── WASM (sandboxed pricing rules) ──
+  - method: POST
+    path: /api/pricing
+    handler: pricing_handler
+    exec_class: WasmFaaS
+
+  - method: POST
+    path: /api/validate
+    handler: validation_handler
+    exec_class: WasmFaaS
+
+  # ── Sidecar (Python ML, Go fraud detection) ──
+  - method: POST
+    path: /api/score
+    handler: score_handler
+    exec_class: SidecarProcess
+
+  - method: POST
+    path: /api/fraud-check
+    handler: fraud_handler
+    exec_class: SidecarProcess
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Mesh — inter-service Tri-Lane routing
+# ═══════════════════════════════════════════════════════════════════════════════
+mesh:
+  routes:
+    - from: hybrid-example
+      to: hybrid-example
+      lane: data
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Failover — Native → WASM → Sidecar chain
+# ═══════════════════════════════════════════════════════════════════════════════
+failover:
+  entries:
+    - primary: enrich_credits
+      backup: validation_handler
+      strategy: instant
+    - primary: pricing_handler
+      backup: score_handler
+      strategy: instant
+      condition: WasmExecutionFailed
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Semantic Types
+# ═══════════════════════════════════════════════════════════════════════════════
+semantic_types:
+  - name: CreditRecord
+    kind: state
+    fields:
+      - { name: id, type: String }
+      - { name: nik, type: String }
+      - { name: nama_lengkap, type: String }
+      - { name: jumlah_kredit, type: i64 }
+      - { name: kolektabilitas, type: u8 }
+
+  - name: EnrichedResult
+    kind: event
+    fields:
+      - { name: records, type: "Vec<CreditRecord>" }
+      - { name: risk_scores, type: "Vec<f64>" }
+
+errors:
+  - name: ValidationFailed
+    status: 400
+    code: VALIDATION_FAILED
+  - name: WasmExecutionFailed
+    status: 502
+    code: WASM_EXEC_FAILED
+  - name: SidecarTimeout
+    status: 504
+    code: SIDECAR_TIMEOUT

@@ -1,0 +1,96 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  007 — Non-Performing Loan Detection System                            ║
+# ║                                                                         ║
+# ║  Business Context:                                                      ║
+# ║    Streams credit records from Core Banking and filters for NPL         ║
+# ║    (Non-Performing Loans). Records with kolektabilitas >= 3 are         ║
+# ║    flagged per OJK regulation: 3=Kurang Lancar, 4=Diragukan,          ║
+# ║    5=Macet. Output feeds provisioning calculations and SLIK reports.   ║
+# ║                                                                         ║
+# ║  Build:  vil compile --from yaml --input pipeline.vil.yaml          ║
+# ║  Run:    vil run --file pipeline.vil.yaml                           ║
+# ║  Viz:    vil viz pipeline.vil.yaml --open                           ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+vil_version: "6.0.0"
+name: ai-stream-filter
+port: 3081
+token: shm
+
+# ── Semantic Types ────────────────────────────────────────────────────────
+
+semantic_types:
+  - name: FilterState
+    kind: state
+    fields:
+      - { name: request_id, type: u64 }
+      - { name: matches_found, type: u32 }
+      - { name: tokens_scanned, type: u32 }
+      - { name: stream_active, type: bool }
+
+  - name: KeywordMatch
+    kind: event
+    fields:
+      - { name: request_id, type: u64 }
+      - { name: match_count, type: u32 }
+      - { name: keyword_mask, type: u32 }
+      - { name: timestamp_us, type: u64 }
+
+  - name: FilterFault
+    kind: fault
+    variants:
+      - UpstreamTimeout
+      - NoMatchesFound
+      - SseParseError
+      - ShmWriteFailed
+
+# ── Nodes ─────────────────────────────────────────────────────────────────
+
+nodes:
+  filter_sink:
+    type: http-sink
+    port: 3081
+    path: /filter
+    ports:
+      trigger_out:      { direction: out, lane: trigger }
+      response_data_in: { direction: in,  lane: data }
+      response_ctrl_in: { direction: in,  lane: control }
+
+  filter_source:
+    type: http-source
+    url: "http://127.0.0.1:4545/v1/chat/completions"
+    format: sse
+    # ── SSE Dialect ─────────────────────────────────────────────────────
+    #   openai     — done: "data: [DONE]"              tap: choices[0].delta.content
+    #   anthropic  — done: "event: message_stop"       tap: delta.text
+    #   ollama     — done: {"done": true} in JSON      tap: message.content
+    #   cohere     — done: "event: message-end"         tap: text
+    #   gemini     — done: TCP EOF                      tap: candidates[0].content.parts[0].text
+    #   standard   — done: TCP EOF                      tap: (none, raw data)
+    #   custom     — provide your own: dialect_done_marker, dialect_done_event, dialect_done_json
+    dialect: openai
+    json_tap: "choices[0].delta.content"
+    ports:
+      trigger_in:        { direction: in,  lane: trigger }
+      response_data_out: { direction: out, lane: data }
+      response_ctrl_out: { direction: out, lane: control }
+    post_body:
+      model: "gpt-4"
+      messages:
+        - role: "system"
+          content: >
+            You are a keyword extraction engine. Given input text, output ONLY
+            the sentences containing: rust, performance, zero-copy, latency.
+            No commentary. If no matches, output: NO_MATCHES_FOUND
+        - role: "user"
+          content: >
+            Analyze: Rust achieves zero-copy parsing with minimal latency.
+            Java uses GC. Rust performance is excellent.
+      stream: true
+
+# ── Routes ────────────────────────────────────────────────────────────────
+
+routes:
+  - { from: filter_sink.trigger_out, to: filter_source.trigger_in, mode: LoanWrite }
+  - { from: filter_source.response_data_out, to: filter_sink.response_data_in, mode: LoanWrite }
+  - { from: filter_source.response_ctrl_out, to: filter_sink.response_ctrl_in, mode: Copy }

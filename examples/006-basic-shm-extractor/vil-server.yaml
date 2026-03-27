@@ -1,0 +1,36 @@
+# =============================================================================
+# 006 — High-Frequency Trading Data Processor — Server Configuration
+# =============================================================================
+# Business: Zero-copy data ingestion for market data feeds. SHM pool (64MB)
+# sized for tick-by-tick price data. Query cache (32MB, 60s TTL) avoids
+# redundant ExchangeHeap lookups for repeated instrument queries.
+# Reset threshold at 80% prevents memory pressure during market spikes.
+# =============================================================================
+
+server:
+  name: "shm-extractor"
+  port: 8080
+  host: "0.0.0.0"
+  request_timeout_secs: 60
+
+logging:
+  level: info
+
+shm:
+  enabled: true
+  pool_size: "64MB"
+  reset_threshold_pct: 80
+  query_cache:
+    enabled: true
+    region_size: "32MB"
+    default_ttl_secs: 60
+    max_entries: 10000
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive
+  request_tracker:
+    enabled: true
+  handler_metrics:
+    enabled: true

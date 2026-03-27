@@ -1,0 +1,25 @@
+[package]
+name = "vil_db_sea_orm"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Database Plugin — Full ORM via sea-orm (Entity, Migration, Query Builder)"
+license = "Apache-2.0"
+
+[features]
+default = ["sqlite"]
+postgres = ["sea-orm/sqlx-postgres"]
+mysql = ["sea-orm/sqlx-mysql"]
+sqlite = ["sea-orm/sqlx-sqlite"]
+all = ["postgres", "mysql", "sqlite"]
+
+[dependencies]
+vil_server_db = { path = "../vil_server_db" }
+vil_server_core = { path = "../vil_server_core" }
+
+sea-orm = { version = "1", features = ["runtime-tokio-rustls"] }
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+dashmap = "5.5"

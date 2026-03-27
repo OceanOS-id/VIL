@@ -1,0 +1,59 @@
+vil_version: "6.0.0"
+name: plugin-database
+port: 8080
+database:
+  pools:
+    primary:
+      driver: postgres
+      url: "postgres://user:****@localhost:5432/app_db"
+      max_connections: 20
+      min_connections: 5
+      connect_timeout_secs: 10
+    analytics:
+      driver: postgres
+      url: "postgres://user:****@localhost:5432/analytics_db"
+      max_connections: 10
+      min_connections: 2
+      connect_timeout_secs: 30
+    cache_db:
+      driver: sqlite
+      url: "sqlite://local_cache.db"
+      max_connections: 5
+      min_connections: 1
+entities:
+  - name: User
+    fields:
+      - { name: id, type: u64 }
+      - { name: name, type: String }
+      - { name: email, type: String }
+      - { name: role, type: String }
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: plugin-db (prefix: /api/plugin-db) ---
+  - method: GET
+    path: /api/plugin-db/
+    handler: index
+  - method: GET
+    path: /api/plugin-db/plugins
+    handler: list_plugins
+  - method: GET
+    path: /api/plugin-db/config
+    handler: show_config
+  - method: POST
+    path: /api/plugin-db/query
+    handler: simulated_query
+  - method: GET
+    path: /api/plugin-db/pool-stats
+    handler: pool_stats

@@ -1,0 +1,13 @@
+[package]
+name = "vil_registry"
+description = "VIL ownership registry — sample tracking, epoch management, crash reclaim"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_types = { workspace = true }
+vil_shm = { workspace = true }
+vil_obs = { workspace = true }
+dashmap = "5.5.3"

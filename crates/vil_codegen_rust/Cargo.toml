@@ -1,0 +1,13 @@
+[package]
+name = "vil_codegen_rust"
+description = "VIL code generation (stub — masa depan: IR → generated Rust)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+quote = "1.0"
+proc-macro2 = "1.0"
+vil_ir = { workspace = true }
+vil_types = { workspace = true }

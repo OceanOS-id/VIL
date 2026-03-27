@@ -1,0 +1,293 @@
+# =============================================================================
+# VIL Full Source Community Workspace
+# =============================================================================
+# This is the FULL source code workspace for community adoption.
+# ALL crates and examples are exposed - no IP protection.
+#
+# This workspace contains everything needed to build, run, and extend VIL.
+# =============================================================================
+
+[workspace]
+resolver = "2"
+members = [
+    # --- Core Runtime ---
+    "crates/vil_types",
+    "crates/vil_shm",
+    "crates/vil_queue",
+    "crates/vil_registry",
+    "crates/vil_rt",
+    "crates/vil_obs",
+    "crates/vil_net",
+    "crates/vil_engine",
+
+    # --- Semantic Compiler ---
+    "crates/vil_ir",
+    "crates/vil_diag",
+    "crates/vil_validate",
+    "crates/vil_macros",
+    "crates/vil_codegen_rust",
+    "crates/vil_codegen_c",
+
+    # --- Visualization ---
+    "crates/vil_viz",
+
+    # --- Script Runtimes ---
+    "crates/vil_script_lua",
+    "crates/vil_script_js",
+    # --- Tooling ---
+    "crates/vil_cli",
+    "crates/vil_new_http",
+
+    # --- SDK & Extensions ---
+    "crates/vil_sdk",
+    "crates/vil_plugin_sdk",
+    "crates/vil_topo",
+    "crates/vil_capsule",
+    "crates/vil_sidecar",
+    "crates/vil_observer",
+
+    # --- VIL Server ---
+    "crates/vil_server_core",
+    "crates/vil_server_web",
+    "crates/vil_server_config",
+    "crates/vil_server_mesh",
+    "crates/vil_server_auth",
+    "crates/vil_server_db",
+    "crates/vil_server_test",
+    "crates/vil_server_macros",
+    "crates/vil_server",
+
+    # --- Database Plugins ---
+    "crates/vil_db_sqlx",
+    "crates/vil_db_sea_orm",
+    "crates/vil_db_redis",
+
+    # --- DB Semantic Layer ---
+    "crates/vil_db_semantic",
+    "crates/vil_db_macros",
+    "crates/vil_cache",
+
+    # --- GraphQL + K8s Operator ---
+    "crates/vil_graphql",
+    "crates/vil_operator",
+
+    # --- JSON Abstraction ---
+    "crates/vil_json",
+
+    # --- Protocol + Serialization ---
+    "crates/vil_grpc",
+    "crates/vil_server_format",
+    "crates/vil_mq_kafka",
+    "crates/vil_mq_mqtt",
+    "crates/vil_mq_nats",
+
+    # --- LSP ---
+    "crates/vil_lsp",
+
+    # --- vflow-server (VLB Provisioning Host — licensed separately) ---
+
+    # --- AI Plugins (Process-Oriented) ---
+    "crates/vil_llm",
+    "crates/vil_rag",
+    "crates/vil_agent",
+    "crates/vil_tokenizer",
+    "crates/vil_llm_proxy",
+    "crates/vil_embedder",
+    "crates/vil_inference",
+    "crates/vil_vectordb",
+    "crates/vil_realtime_rag",
+    "crates/vil_tensor_shm",
+    "crates/vil_speculative",
+    "crates/vil_ai_compiler",
+    "crates/vil_semantic_router",
+    "crates/vil_prompt_shield",
+    "crates/vil_context_optimizer",
+    "crates/vil_quantized",
+    "crates/vil_consensus",
+    "crates/vil_memory_graph",
+    "crates/vil_feature_store",
+    "crates/vil_streaming_rag",
+    "crates/vil_ai_gateway",
+    "crates/vil_model_serving",
+    "crates/vil_multi_agent",
+    "crates/vil_chunker",
+    "crates/vil_doc_parser",
+    "crates/vil_reranker",
+    "crates/vil_prompts",
+    "crates/vil_llm_cache",
+    "crates/vil_doc_layout",
+    "crates/vil_guardrails",
+    "crates/vil_eval",
+
+    # --- AI Plugins (I01-I10 Process-Oriented) ---
+    "crates/vil_crawler",
+    "crates/vil_graphrag",
+    "crates/vil_audio",
+    "crates/vil_vision",
+    "crates/vil_sql_agent",
+    "crates/vil_doc_extract",
+    "crates/vil_workflow_v2",
+    "crates/vil_ab_test",
+    "crates/vil_cost_tracker",
+    "crates/vil_model_registry",
+
+    # --- AI Plugins (N01-N12 Final Batch) ---
+    "crates/vil_data_prep",
+    "crates/vil_synthetic",
+    "crates/vil_rlhf_data",
+    "crates/vil_bench_llm",
+    "crates/vil_multimodal",
+    "crates/vil_index_updater",
+    "crates/vil_federated_rag",
+    "crates/vil_private_rag",
+    "crates/vil_edge",
+    "crates/vil_output_parser",
+    "crates/vil_ai_trace",
+    "crates/vil_prompt_optimizer",
+
+    # --- Tier 1: Basic (001-026) ---
+    "examples/001-basic-ai-gw-demo",
+    "examples/002-basic-vilapp-gateway",
+    "examples/003-basic-hello-server",
+    "examples/004-basic-rest-crud",
+    "examples/005-basic-multiservice-mesh-ndjson",
+    "examples/006-basic-shm-extractor",
+    "examples/007-basic-credit-npl-filter",
+    "examples/008-basic-credit-quality-monitor",
+    "examples/009-basic-credit-regulatory-slik",
+    "examples/010-basic-websocket-chat",
+    "examples/011-basic-graphql-api",
+    "examples/012-basic-plugin-database",
+    "examples/013-basic-nats-worker",
+    "examples/014-basic-kafka-stream",
+    "examples/015-basic-mqtt-iot-gateway",
+    "examples/016-basic-ai-rag-gateway",
+    "examples/017-basic-production-fullstack",
+    "examples/018-basic-ai-multi-model-router",
+    "examples/019-basic-ai-multi-model-advanced",
+    "examples/020-basic-ai-ab-testing",
+    "examples/021-basic-wasm-faas",
+    "examples/022-basic-sidecar-python",
+    "examples/023-basic-hybrid-wasm-sidecar",
+    "examples/024-basic-llm-chat",
+    "examples/025-basic-rag-service",
+    "examples/026-basic-ai-agent",
+    "examples/027-basic-vilserver-minimal",
+    "examples/028-basic-sse-hub-streaming",
+    "examples/029-basic-vil-handler-endpoint",
+    "examples/030-basic-trilane-messaging",
+    "examples/031-basic-mesh-routing",
+    "examples/032-basic-failover-ha",
+    "examples/033-basic-shm-write-through",
+    "examples/034-basic-blocking-task",
+    "examples/035-basic-vil-service-module",
+    "examples/036-basic-sse-event-builder",
+    "examples/037-basic-vilmodel-derive",
+    "examples/038-basic-vil-app-dsl",
+    "examples/106-pipeline-sse-standard-dialect",
+    "examples/107-pipeline-process-traced",
+    "examples/206-llm-decision-routing",
+    "examples/306-rag-ai-event-tracking",
+    "examples/406-agent-vil-handler-shm",
+    # --- Tier 2: Pipeline (101-105) ---
+    "examples/101-pipeline-3node-transform-chain",
+    "examples/102-pipeline-fanout-scatter",
+    "examples/103-pipeline-fanin-gather",
+    "examples/104-pipeline-diamond-topology",
+    "examples/105-pipeline-multi-workflow",
+    # --- Tier 3: LLM (201-205) ---
+    "examples/201-llm-basic-chat",
+    "examples/202-llm-multi-model-routing",
+    "examples/203-llm-code-review-with-tools",
+    "examples/204-llm-streaming-translator",
+    "examples/205-llm-chunked-summarizer",
+    # --- Tier 4: RAG (301-305) ---
+    "examples/301-rag-basic-vector-search",
+    "examples/302-rag-multi-source-fanin",
+    "examples/303-rag-hybrid-exact-semantic",
+    "examples/304-rag-citation-extraction",
+    "examples/305-rag-guardrail-pipeline",
+    # --- Tier 5: Agent (401-405) ---
+    "examples/401-agent-calculator",
+    "examples/402-agent-http-researcher",
+    "examples/403-agent-code-file-reviewer",
+    "examples/404-agent-data-csv-analyst",
+    "examples/405-agent-react-multi-tool",
+]
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+license = "Apache-2.0"
+authors = ["VIL Community"]
+
+[workspace.dependencies]
+# Core runtime
+vil_types        = { path = "crates/vil_types" }
+vil_shm          = { path = "crates/vil_shm" }
+vil_queue        = { path = "crates/vil_queue" }
+vil_registry     = { path = "crates/vil_registry" }
+vil_rt           = { path = "crates/vil_rt" }
+vil_obs          = { path = "crates/vil_obs" }
+vil_net          = { path = "crates/vil_net" }
+vil_engine       = { path = "crates/vil_engine" }
+
+# Semantic compiler
+vil_ir           = { path = "crates/vil_ir" }
+vil_diag         = { path = "crates/vil_diag" }
+vil_validate     = { path = "crates/vil_validate" }
+vil_macros       = { path = "crates/vil_macros" }
+vil_codegen_rust = { path = "crates/vil_codegen_rust" }
+vil_codegen_c    = { path = "crates/vil_codegen_c" }
+
+# Tooling
+vil_cli          = { path = "crates/vil_cli" }
+vil_ffi          = { path = "crates/vil_ffi" }
+vil_new_http     = { path = "crates/vil_new_http" }
+
+# SDK & extensions
+vil_sdk          = { path = "crates/vil_sdk" }
+vil_topo         = { path = "crates/vil_topo" }
+vil_capsule      = { path = "crates/vil_capsule" }
+
+# VIL Server
+vil_server       = { path = "crates/vil_server" }
+vil_server_core  = { path = "crates/vil_server_core" }
+vil_server_web   = { path = "crates/vil_server_web" }
+vil_server_config = { path = "crates/vil_server_config" }
+vil_server_mesh  = { path = "crates/vil_server_mesh" }
+vil_server_auth  = { path = "crates/vil_server_auth" }
+vil_server_db    = { path = "crates/vil_server_db" }
+vil_server_test  = { path = "crates/vil_server_test" }
+vil_server_macros = { path = "crates/vil_server_macros" }
+
+# Common dependencies
+serde              = { version = "1.0", features = ["derive"] }
+serde_json         = "1.0"
+serde_yaml         = "0.9"
+dashmap            = "5.5"
+memmap2            = "0.9"
+nix                = { version = "0.27", features = ["fs", "mman", "event"] }
+tokio              = { version = "1", features = ["full"] }
+axum               = { version = "0.7", features = ["macros"] }
+tower              = { version = "0.4" }
+tower-http         = { version = "0.5", features = ["cors", "trace", "compression-gzip", "limit", "fs"] }
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# =============================================================================
+# Release Profile — Optimized for community distribution
+# =============================================================================
+[profile.release]
+opt-level       = 3
+lto             = "thin"
+codegen-units   = 16
+debug           = false
+overflow-checks = false
+
+# =============================================================================
+# Dev Profile — For local development
+# =============================================================================
+[profile.dev]
+opt-level       = 0
+debug           = true

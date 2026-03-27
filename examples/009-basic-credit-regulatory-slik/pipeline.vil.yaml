@@ -1,0 +1,87 @@
+# ╔═════════════════════════════════════════════════════════════════════════╗
+# ║  009 — OJK SLIK Regulatory Reporting Pipeline                          ║
+# ║                                                                         ║
+# ║  Business Context:                                                      ║
+# ║    Transforms Core Banking credit records into the OJK SLIK v2.1       ║
+# ║    regulatory schema for mandatory monthly submission. Field mapping:  ║
+# ║    id->no_rekening, nik->nik_debitur, jumlah_kredit->plafon,          ║
+# ║    saldo_outstanding->baki_debet, kolektabilitas->kualitas_kredit.    ║
+# ║    All amounts denominated in IDR. Non-compliance carries regulatory  ║
+# ║    penalties from OJK (Indonesian Financial Services Authority).        ║
+# ║                                                                         ║
+# ║  Build:  vil compile --from yaml --input pipeline.vil.yaml          ║
+# ║  Run:    vil run --file pipeline.vil.yaml                           ║
+# ╚═════════════════════════════════════════════════════════════════════════╝
+
+vil_version: "6.0.0"
+name: ai-summarizer
+port: 3083
+token: shm
+
+semantic_types:
+  - name: SummarizerState
+    kind: state
+    fields:
+      - { name: request_id, type: u64 }
+      - { name: texts_summarized, type: u32 }
+      - { name: avg_input_tokens, type: u32 }
+
+  - name: SummarizationCompleted
+    kind: event
+    fields:
+      - { name: request_id, type: u64 }
+      - { name: bullet_count, type: u8 }
+      - { name: latency_us, type: u64 }
+
+  - name: SummarizerFault
+    kind: fault
+    variants:
+      - UpstreamTimeout
+      - SseParseError
+      - InputTooLong
+      - ShmWriteFailed
+
+nodes:
+  summarizer_sink:
+    type: http-sink
+    port: 3083
+    path: /summarize
+    ports:
+      trigger_out:      { direction: out, lane: trigger }
+      response_data_in: { direction: in,  lane: data }
+      response_ctrl_in: { direction: in,  lane: control }
+
+  summarizer_source:
+    type: http-source
+    url: "http://127.0.0.1:4545/v1/chat/completions"
+    format: sse
+    # ── SSE Dialect ─────────────────────────────────────────────────────
+    #   openai     — done: "data: [DONE]"              tap: choices[0].delta.content
+    #   anthropic  — done: "event: message_stop"       tap: delta.text
+    #   ollama     — done: {"done": true} in JSON      tap: message.content
+    #   cohere     — done: "event: message-end"         tap: text
+    #   gemini     — done: TCP EOF                      tap: candidates[0].content.parts[0].text
+    #   standard   — done: TCP EOF                      tap: (none, raw data)
+    #   custom     — provide your own: dialect_done_marker, dialect_done_event, dialect_done_json
+    dialect: openai
+    json_tap: "choices[0].delta.content"
+    ports:
+      trigger_in:        { direction: in,  lane: trigger }
+      response_data_out: { direction: out, lane: data }
+      response_ctrl_out: { direction: out, lane: control }
+    post_body:
+      model: "gpt-4"
+      messages:
+        - role: "system"
+          content: >
+            You are a concise summarizer. Given any text, provide a summary
+            in exactly 3 bullet points. Each bullet point one sentence.
+            Format: - Bullet 1\n- Bullet 2\n- Bullet 3. No extra commentary.
+        - role: "user"
+          content: "Summarize the following text in 3 bullet points."
+      stream: true
+
+routes:
+  - { from: summarizer_sink.trigger_out, to: summarizer_source.trigger_in, mode: LoanWrite }
+  - { from: summarizer_source.response_data_out, to: summarizer_sink.response_data_in, mode: LoanWrite }
+  - { from: summarizer_source.response_ctrl_out, to: summarizer_sink.response_ctrl_in, mode: Copy }

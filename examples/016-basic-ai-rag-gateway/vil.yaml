@@ -1,0 +1,30 @@
+# =============================================================================
+# 016 — Enterprise Knowledge Search Gateway — RAG Pipeline Configuration
+# =============================================================================
+# Business: Internal knowledge search for engineering teams and support staff.
+# Flow: query -> retrieve relevant documents -> enrich prompt with context ->
+#       AI stream generates grounded answer -> cache result for repeat queries.
+# Typical use: "How do I configure VPN?" searches internal wiki/Confluence.
+#
+# This is a vil_sdk pipeline example (NOT vil_server), so the config
+# uses the gateway format rather than the server format.
+# =============================================================================
+
+gateway:
+  port: 3084
+  path: "/rag"
+  upstream:
+    url: "http://localhost:4545/v1/chat/completions"
+    timeout_secs: 30
+    format: sse
+    json_tap: "choices[0].delta.content"
+
+runtime:
+  mode: shared
+  shm:
+    enabled: true
+    pool_size: "32MB"
+
+logging:
+  level: info
+  format: text

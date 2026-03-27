@@ -1,0 +1,13 @@
+[package]
+name = "vil_codegen_c"
+description = "VIL C-Header Generator (IDL Interop)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_types = { workspace = true }
+vil_ir = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }

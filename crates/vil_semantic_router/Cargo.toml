@@ -1,0 +1,17 @@
+[package]
+name = "vil_semantic_router"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Semantic Router — route queries to specialized models/pipelines based on intent"
+license = "Apache-2.0"
+
+[dependencies]
+vil_macros       = { path = "../vil_macros" }
+vil_server_core  = { path = "../vil_server_core" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+async-trait = "0.1"
+vil_sdk = { path = "../vil_sdk" }
+vil_server = { path = "../vil_server" }
+axum = { version = "0.7", features = ["macros"] }

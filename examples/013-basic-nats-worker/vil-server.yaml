@@ -1,0 +1,72 @@
+# =============================================================================
+# basic-usage-nats-worker — NATS pub/sub + JetStream + KV configuration
+# =============================================================================
+#
+# Configures NATS Core, JetStream persistent streams, and KV store.
+# The NatsBridge forwards messages to the Tri-Lane SHM mesh for
+# zero-copy inter-service delivery.
+
+server:
+  name: "nats-worker"
+  port: 8080
+  host: "0.0.0.0"
+  request_timeout_secs: 30
+
+logging:
+  level: info
+
+shm:
+  enabled: true
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive
+  request_tracker:
+    enabled: true
+
+nats:
+  url: "nats://localhost:4222"
+  client_name: "vil-nats-worker"
+  tls: false
+  max_reconnects: 60
+  buffer_size: 65536
+  # credentials:
+  #   token: "${NATS_TOKEN}"
+  #   # OR username/password:
+  #   # username: "vil-worker"
+  #   # password: "${NATS_PASSWORD}"
+
+  jetstream:
+    streams:
+      - name: "ORDERS"
+        subjects:
+          - "events.order.>"
+        retention: limits
+        max_msgs: -1
+        max_bytes: -1
+
+      - name: "NOTIFICATIONS"
+        subjects:
+          - "notifications.>"
+        retention: limits
+        max_msgs: 100000
+        max_bytes: 104857600  # 100 MB
+
+    consumers:
+      - stream: "ORDERS"
+        durable_name: "order-processor"
+        filter_subject: "events.order.created"
+        ack_policy: explicit
+        deliver_policy: all
+
+  kv:
+    buckets:
+      - name: "vil-config"
+        description: "Service configuration and feature flags"
+      - name: "vil-sessions"
+        description: "Session data with TTL"
+
+  bridge:
+    target_service: "order-service"
+    enabled: true

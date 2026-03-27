@@ -1,0 +1,15 @@
+[project]
+name = "vil"
+version = "0.1.0"
+description = "VIL Python SDK — Zero-copy streaming pipelines for Python via FFI"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.8"
+authors = [
+    {name = "VIL Core Team", email = "team@vastar.ai"},
+]
+keywords = ["vil", "zero-copy", "streaming", "ffi"]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

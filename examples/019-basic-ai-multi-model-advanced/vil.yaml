@@ -1,0 +1,33 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  019 — Multi-Provider AI Aggregator                                    ║
+# ║  Advanced Multi-Model Routing Pipeline Configuration                   ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# Business: Enterprise AI aggregator that routes to multiple LLM providers
+# (OpenAI, Anthropic, Ollama) with automatic failover. Primary model handles
+# requests; if unavailable, falls back to secondary. Tracks per-model latency
+# and confidence scores for cost optimization and SLA monitoring.
+# Uses vil_sdk pipeline format (NOT vil-server.yaml).
+#
+# Key differences from basic multi-model-router:
+#   - Higher SHM pool (32MB) for model metadata caching
+#   - Longer timeout for fallback retry scenarios
+#   - Debug logging for latency tracking visibility
+
+gateway:
+  port: 3086
+  path: "/route-advanced"
+  upstream:
+    url: "http://localhost:4545/v1/chat/completions"
+    timeout_secs: 45
+    format: sse
+    json_tap: "choices[0].delta.content"
+
+runtime:
+  mode: shared
+  shm:
+    enabled: true
+    pool_size: "32MB"
+
+logging:
+  level: info
+  format: text

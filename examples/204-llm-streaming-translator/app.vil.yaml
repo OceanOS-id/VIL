@@ -1,0 +1,14 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  204 — Real-time Document Translation Service                          ║
+# ║  Business: Batch translation for multilingual content teams.           ║
+# ║  Input: array of texts + target language code (e.g., "id", "ja").     ║
+# ║  Output: per-item translation results with status tracking.            ║
+# ║  Typical use: translating product descriptions, support articles.      ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: llm-translator
+port: 3103
+endpoints:
+  - method: POST
+    path: /api/translate
+    handler: translate_handler

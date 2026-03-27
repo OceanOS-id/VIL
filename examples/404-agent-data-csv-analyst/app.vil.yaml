@@ -1,0 +1,7 @@
+vil_version: "6.0.0"
+name: data-analyst-agent
+port: 3123
+endpoints:
+  - method: POST
+    path: /api/analyze
+    handler: analyze_handler

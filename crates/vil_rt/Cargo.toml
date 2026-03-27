@@ -1,0 +1,20 @@
+[package]
+name = "vil_rt"
+description = "VIL runtime facade — loan/publish/recv lifecycle, process registration, metrics"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+vil_types    = { workspace = true }
+vil_shm      = { workspace = true }
+vil_queue    = { workspace = true }
+vil_registry = { workspace = true }
+vil_obs      = { workspace = true }
+vil_net      = { workspace = true }
+dashmap        = "5.5.3"
+tokio          = { version = "1.0", features = ["sync", "rt", "macros"] }

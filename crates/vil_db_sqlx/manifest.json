@@ -1,0 +1,87 @@
+{
+  "name": "vil_db_sqlx",
+  "version": "0.1.0",
+  "description": "PostgreSQL, MySQL, SQLite via sqlx — compile-time checked queries, connection pooling, multi-tenant pools",
+  "type": "database",
+  "tier": "official",
+  "author": "VIL Core Team",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/OceanOS-id/VIL",
+
+  "config_schema": {
+    "driver": {
+      "type": "enum",
+      "values": ["postgres", "mysql", "sqlite"],
+      "default": "sqlite",
+      "label": "Database Driver",
+      "description": "Database engine to connect to"
+    },
+    "url": {
+      "type": "string",
+      "required": true,
+      "secret": true,
+      "label": "Connection URL",
+      "placeholder": "postgres://user:pass@localhost:5432/dbname",
+      "description": "Database connection string (encrypted at rest)"
+    },
+    "max_connections": {
+      "type": "integer",
+      "default": 10,
+      "min": 1,
+      "max": 200,
+      "label": "Max Connections"
+    },
+    "min_connections": {
+      "type": "integer",
+      "default": 1,
+      "min": 0,
+      "max": 50,
+      "label": "Min Idle Connections"
+    },
+    "connect_timeout_secs": {
+      "type": "integer",
+      "default": 5,
+      "min": 1,
+      "max": 60,
+      "label": "Connect Timeout (seconds)"
+    },
+    "idle_timeout_secs": {
+      "type": "integer",
+      "default": 300,
+      "min": 30,
+      "max": 3600,
+      "label": "Idle Timeout (seconds)"
+    },
+    "ssl_mode": {
+      "type": "enum",
+      "values": ["disable", "prefer", "require"],
+      "default": "prefer",
+      "label": "SSL Mode"
+    }
+  },
+
+  "health_check": {
+    "enabled": true,
+    "interval_secs": 30,
+    "timeout_secs": 5,
+    "query": "SELECT 1"
+  },
+
+  "metrics": [
+    { "name": "vil_db_queries_total", "type": "counter", "label": "Total Queries" },
+    { "name": "vil_db_query_errors", "type": "counter", "label": "Query Errors" },
+    { "name": "vil_db_query_avg_us", "type": "gauge", "label": "Avg Query Latency (µs)" },
+    { "name": "vil_db_acquires_total", "type": "counter", "label": "Pool Acquires" },
+    { "name": "vil_db_health_ok", "type": "counter", "label": "Health Checks OK" },
+    { "name": "vil_db_health_fail", "type": "counter", "label": "Health Checks Failed" }
+  ],
+
+  "admin_ui": {
+    "icon": "database",
+    "category": "Database",
+    "color": "#336791"
+  },
+
+  "provides": ["DbPool", "HealthCheck", "Metrics"],
+  "requires": []
+}

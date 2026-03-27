@@ -1,0 +1,15 @@
+[package]
+name = "vil_grpc"
+version = "0.1.0"
+edition = "2021"
+description = "VIL gRPC — tonic-based gRPC server for vil pipeline and vil-server"
+license = "Apache-2.0"
+
+[dependencies]
+tonic = "0.12"
+prost = "0.13"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dashmap = "5.5"

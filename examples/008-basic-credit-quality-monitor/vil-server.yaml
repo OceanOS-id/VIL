@@ -1,0 +1,23 @@
+# =============================================================================
+# 008 — Credit Data Quality Assurance — Server Configuration
+# =============================================================================
+# Business: Data quality validation for credit portfolio. 120s timeout for
+# full-portfolio scans. SHM enabled for zero-copy record validation.
+# =============================================================================
+
+server:
+  name: "ai-content-moderator"
+  port: 8086
+  host: "0.0.0.0"
+  request_timeout_secs: 120
+
+logging:
+  level: info
+
+shm:
+  enabled: true
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive

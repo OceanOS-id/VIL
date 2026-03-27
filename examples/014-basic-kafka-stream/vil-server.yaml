@@ -1,0 +1,61 @@
+# =============================================================================
+# basic-usage-kafka-stream — Kafka consumer -> process -> produce configuration
+# =============================================================================
+#
+# Configures Kafka broker connections, consumer groups, and the KafkaBridge
+# for forwarding messages to the Tri-Lane SHM mesh.
+
+server:
+  name: "kafka-stream"
+  port: 8080
+  host: "0.0.0.0"
+  request_timeout_secs: 30
+
+logging:
+  level: info
+
+shm:
+  enabled: true
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive
+  request_tracker:
+    enabled: true
+
+kafka:
+  brokers: "localhost:9092,localhost:9093,localhost:9094"
+  security_protocol: plaintext
+  # sasl:
+  #   mechanism: "SCRAM-SHA-256"
+  #   username: "${KAFKA_USER}"
+  #   password: "${KAFKA_PASSWORD}"
+
+  producer:
+    acks: all
+    timeout_ms: 30000
+    compression: snappy
+
+  consumer:
+    group_id: "order-processor-group"
+    topic: "events.orders"
+    auto_offset_reset: earliest
+    enable_auto_commit: true
+
+  topics:
+    - name: "events.orders"
+      partitions: 6
+      replication_factor: 3
+
+    - name: "events.payments"
+      partitions: 3
+      replication_factor: 3
+
+    - name: "events.notifications"
+      partitions: 3
+      replication_factor: 2
+
+  bridge:
+    target_service: "notification-service"
+    enabled: true

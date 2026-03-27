@@ -1,0 +1,20 @@
+[package]
+name = "vil_crawler"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Web Crawler — async concurrent BFS crawling with robots.txt support (I01)"
+
+[dependencies]
+vil_sdk          = { path = "../vil_sdk" }
+vil_server_core  = { path = "../vil_server_core" }
+vil_server       = { path = "../vil_server" }
+vil_macros       = { path = "../vil_macros" }
+axum               = { version = "0.7", features = ["macros"] }
+reqwest = { version = "0.12", features = ["rustls-tls"], default-features = false }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1"
+async-trait = "0.1"
+tracing = "0.1"
+dashmap = "5.5"

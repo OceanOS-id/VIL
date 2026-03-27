@@ -1,0 +1,38 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  004 — Task Management System (Project Management Tool)                ║
+# ║  Business: Full CRUD API for task/sprint management                    ║
+# ║  Consumers: Admin SPA, CLI tools, CI/CD pipelines                      ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: crud-service
+port: 8080
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: tasks (prefix: /api) ---
+  - method: GET
+    path: /api/tasks
+    handler: list_tasks
+  - method: POST
+    path: /api/tasks
+    handler: create_task
+  - method: GET
+    path: /api/tasks/:id
+    handler: get_task
+  - method: PUT
+    path: /api/tasks/:id
+    handler: update_task
+  - method: DELETE
+    path: /api/tasks/:id
+    handler: delete_task

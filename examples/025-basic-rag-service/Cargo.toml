@@ -1,0 +1,16 @@
+[package]
+name = "vil-basic-rag-service"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+vil_sdk = { path = "../../crates/vil_sdk" }
+vil_json = { path = "../../crates/vil_json" }
+bytes = "1"
+vil_server = { path = "../../crates/vil_server" }
+vil_server_core = { path = "../../crates/vil_server_core" }
+vil_rag = { path = "../../crates/vil_rag" }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

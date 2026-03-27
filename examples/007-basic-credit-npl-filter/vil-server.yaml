@@ -1,0 +1,23 @@
+# =============================================================================
+# 007 — Non-Performing Loan Detection System — Server Configuration
+# =============================================================================
+# Business: NPL detection endpoint. Timeout set to 120s for large portfolio
+# scans (100K+ records). SHM enabled for zero-copy NDJSON transport.
+# =============================================================================
+
+server:
+  name: "ai-stream-filter"
+  port: 8085
+  host: "0.0.0.0"
+  request_timeout_secs: 120
+
+logging:
+  level: info
+
+shm:
+  enabled: true
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive

@@ -1,0 +1,222 @@
+# =============================================================================
+# vil-server.yaml — Complete Reference Configuration
+# =============================================================================
+#
+# This file documents ALL configurable options with defaults.
+# Copy and modify for your use case. Remove sections you don't need.
+#
+# Environment override: VIL_* prefix (e.g., VIL_SERVER_PORT=3000)
+# Profile override: vil-server.{VIL_PROFILE}.yaml
+
+# ============================================================
+# Server
+# ============================================================
+server:
+  name: "vil-server"          # Server display name
+  port: 8080                    # HTTP listen port
+  host: "0.0.0.0"              # Bind address
+  metrics_port: null            # Separate metrics port (null = same as main)
+  workers: 0                    # Worker threads (0 = num_cpus)
+  request_timeout_secs: 30      # Max request processing time
+  max_body_size: "1MB"          # Request body limit
+  graceful_shutdown_timeout_secs: 30
+
+# ============================================================
+# Logging
+# ============================================================
+logging:
+  level: info                   # trace | debug | info | warn | error
+  format: text                  # text | json
+  modules:                      # Per-module override
+    tower_http: debug
+    sqlx: warn
+
+# ============================================================
+# SHM (Shared Memory)
+# ============================================================
+shm:
+  enabled: true
+  pool_size: "64MB"             # Pre-allocated HTTP I/O pool
+  reset_threshold_pct: 80       # Auto-reset when utilization exceeds
+  query_cache:
+    enabled: true
+    region_size: "32MB"
+    default_ttl_secs: 60
+    max_entries: 10000
+
+# ============================================================
+# Tri-Lane Mesh
+# ============================================================
+mesh:
+  mode: unified                 # unified | standalone
+  channels:
+    trigger:
+      buffer_size: 1024         # mpsc channel capacity
+      shm_region_size: "4MB"
+    data:
+      buffer_size: 1024
+      shm_region_size: "16MB"
+    control:
+      buffer_size: 256          # Smaller, high priority
+      shm_region_size: "1MB"
+  discovery:
+    mode: shm                   # shm | config
+  routes: []                    # Define per-service routes
+
+# ============================================================
+# Services
+# ============================================================
+services: []
+# - name: auth
+#   visibility: public
+#   prefix: /auth
+# - name: orders
+#   visibility: public
+#   prefix: /api
+
+# ============================================================
+# Middleware
+# ============================================================
+middleware:
+  request_tracker:
+    enabled: true
+  handler_metrics:
+    enabled: true
+    sample_rate: 1              # 1=all, 10=every 10th
+  tracing:
+    enabled: true
+    sample_rate: 1              # 1=all, 100=every 100th
+    propagation: w3c
+  cors:
+    enabled: true
+    mode: permissive
+  compression:
+    enabled: false
+    min_body_size: 256
+  timeout:
+    enabled: true
+    duration_secs: 30
+  security_headers:
+    enabled: true
+  hsts:
+    enabled: false
+    max_age_secs: 31536000
+
+# ============================================================
+# Security
+# ============================================================
+security:
+  jwt:
+    enabled: false
+    secret: "${ENV:JWT_SECRET}"
+    algorithm: HS256
+  rate_limit:
+    enabled: false
+    max_requests: 1000
+    window_secs: 60
+    per: ip
+  csrf:
+    enabled: false
+    exempt_paths: [/api/webhook, /health]
+  brute_force:
+    enabled: false
+    max_attempts: 5
+    block_duration_secs: 300
+
+# ============================================================
+# Session
+# ============================================================
+session:
+  enabled: false
+  cookie_name: "vil-session"
+  ttl_secs: 1800
+  http_only: true
+  secure: false
+  same_site: Lax
+
+# ============================================================
+# Observability
+# ============================================================
+observability:
+  error_tracker:
+    enabled: true
+    max_recent: 1000
+  span_collector:
+    max_spans: 10000
+  profiler:
+    enabled: true
+
+# ============================================================
+# Performance
+# ============================================================
+performance:
+  metrics_sample_rate: 1
+  trace_sample_rate: 1
+  idempotency:
+    enabled: false
+    ttl_secs: 86400
+    max_entries: 10000
+
+# ============================================================
+# gRPC
+# ============================================================
+grpc:
+  enabled: false
+  port: 50051
+  max_message_size: "4MB"
+  health_check: true
+  reflection: true
+
+# ============================================================
+# GraphQL
+# ============================================================
+graphql:
+  enabled: false
+  playground: true
+  max_depth: 10
+  max_complexity: 1000
+  introspection: true
+  default_page_size: 20
+  max_page_size: 100
+
+# ============================================================
+# Feature Flags
+# ============================================================
+feature_flags:
+  flags: {}
+  # file: feature_flags.json
+
+# ============================================================
+# Scheduler
+# ============================================================
+scheduler:
+  jobs: []
+  # - name: cleanup_sessions
+  #   every_secs: 300
+
+# ============================================================
+# Plugins
+# ============================================================
+plugins:
+  directory: "~/.vil/plugins"
+  encryption_key: "~/.vil/secrets/encryption.key"
+  active: []
+  # - name: vil_db_sqlx
+  #   config_file: plugins/vil_db_sqlx.yaml
+  # - name: vil_mq_kafka
+  #   config_file: plugins/vil_mq_kafka.yaml
+
+# ============================================================
+# Rolling Restart
+# ============================================================
+rolling_restart:
+  drain_timeout_secs: 30
+
+# ============================================================
+# Admin
+# ============================================================
+admin:
+  playground: true
+  diagnostics: true
+  hot_reload: true
+  plugin_gui: true

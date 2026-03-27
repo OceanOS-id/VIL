@@ -1,0 +1,46 @@
+vil_version: "6.0.0"
+name: websocket-chat
+port: 8080
+ws_events:
+  - name: chat_message
+    topic: chat.message
+    struct: ChatMessage
+    fields:
+      - { name: from, type: String }
+      - { name: message, type: String }
+      - { name: timestamp, type: String }
+  - name: user_joined
+    topic: chat.presence
+    struct: UserJoined
+    fields:
+      - { name: username, type: String }
+  - name: user_left
+    topic: chat.presence
+    struct: UserLeft
+    fields:
+      - { name: username, type: String }
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: chat (prefix: /api/chat) ---
+  - method: GET
+    path: /api/chat/
+    handler: index
+  - method: GET
+    path: /api/chat/ws
+    handler: ws_handler
+    protocol: websocket
+  - method: GET
+    path: /api/chat/stats
+    handler: stats

@@ -1,0 +1,19 @@
+[package]
+name = "vil_doc_extract"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "I06 — Data Extraction Pipeline: rule-based field extraction from text"
+
+[dependencies]
+vil_sdk          = { workspace = true }
+vil_server_core  = { workspace = true }
+vil_server       = { workspace = true }
+vil_macros       = { workspace = true }
+axum               = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+regex = "1"
+
+[dev-dependencies]

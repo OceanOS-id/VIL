@@ -1,0 +1,18 @@
+[package]
+name = "vil_embedder"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Embedding Engine — high-performance text embeddings with batching and SIMD similarity"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+async-trait = "0.1"
+tracing = "0.1"
+vil_sdk = { path = "../vil_sdk" }
+vil_server_core = { path = "../vil_server_core" }
+vil_server = { path = "../vil_server" }
+vil_macros = { path = "../vil_macros" }
+axum = { version = "0.7", features = ["macros"] }

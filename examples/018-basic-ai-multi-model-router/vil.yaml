@@ -1,0 +1,24 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  basic-usage-ai-multi-model-router — Multi-Model AI Routing Pipeline   ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# Business: Route prompt to different AI models, stream results back.
+# Uses vil_sdk pipeline format (NOT vil-server.yaml).
+
+gateway:
+  port: 3085
+  path: "/route"
+  upstream:
+    url: "http://localhost:4545/v1/chat/completions"
+    timeout_secs: 30
+    format: sse
+    json_tap: "choices[0].delta.content"
+
+runtime:
+  mode: shared
+  shm:
+    enabled: true
+    pool_size: "16MB"
+
+logging:
+  level: info
+  format: text

@@ -1,0 +1,22 @@
+[package]
+name = "vil_agent"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Agent Plugin — tool-calling AI agent with ReAct loop"
+
+[dependencies]
+vil_sdk = { path = "../vil_sdk" }
+vil_server_core = { path = "../vil_server_core" }
+vil_server = { path = "../vil_server" }
+vil_llm = { path = "../vil_llm" }
+vil_rag = { path = "../vil_rag" }
+vil_json = { path = "../vil_json" }
+vil_macros = { path = "../vil_macros" }
+
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+async-trait = "0.1"
+tracing = "0.1"
+axum = { version = "0.7", features = ["macros"] }
+reqwest = { version = "0.12", features = ["json"] }

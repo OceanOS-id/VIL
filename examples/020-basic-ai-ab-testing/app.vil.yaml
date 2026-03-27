@@ -1,0 +1,39 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  020 — Marketing Campaign A/B Testing Gateway                          ║
+# ║  Business: Split traffic between model versions for campaign           ║
+# ║  optimization. Model A (stable) gets 80% traffic, Model B (canary)   ║
+# ║  gets 20%. Track conversion rates, latency, error rates per model.    ║
+# ║  Endpoints: /api/ab/infer (route), /api/ab/metrics (dashboard),       ║
+# ║  /api/ab/config (adjust split without redeploy).                       ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: ai-ab-testing-gateway
+port: 8080
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: root ---
+  - method: GET
+    path: /
+    handler: index
+  # --- ServiceProcess: ab (prefix: /api/ab) ---
+  - method: POST
+    path: /api/ab/infer
+    handler: infer
+  - method: GET
+    path: /api/ab/metrics
+    handler: metrics
+  - method: POST
+    path: /api/ab/config
+    handler: update_config

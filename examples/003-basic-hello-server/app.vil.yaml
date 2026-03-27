@@ -1,0 +1,30 @@
+vil_version: "6.0.0"
+name: hello-server
+port: 8080
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: hello (prefix: /api/hello) ---
+  - method: GET
+    path: /api/hello/
+    handler: hello
+  - method: GET
+    path: /api/hello/greet/:name
+    handler: greet
+  - method: POST
+    path: /api/hello/echo
+    handler: echo
+  - method: GET
+    path: /api/hello/shm-info
+    handler: shm_info

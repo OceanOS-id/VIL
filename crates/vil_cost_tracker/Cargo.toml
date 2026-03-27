@@ -1,0 +1,20 @@
+[package]
+name = "vil_cost_tracker"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "I09 — Rate Limiter + Cost Tracker: LLM usage tracking with budget enforcement"
+
+[dependencies]
+vil_sdk          = { workspace = true }
+vil_server_core  = { workspace = true }
+vil_server       = { workspace = true }
+vil_macros       = { workspace = true }
+axum               = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+dashmap = { workspace = true }
+parking_lot = "0.12"
+
+[dev-dependencies]

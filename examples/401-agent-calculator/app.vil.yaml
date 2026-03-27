@@ -1,0 +1,13 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  401 — Financial Calculator Agent                                      ║
+# ║  Business: AI agent with calculator tool for financial computations.   ║
+# ║  Handles loan amortization, compound interest, ROI calculations.       ║
+# ║  LLM decides when to invoke the calculator tool based on user query.  ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: calculator-agent
+port: 3120
+endpoints:
+  - method: POST
+    path: /api/calc
+    handler: calc_handler

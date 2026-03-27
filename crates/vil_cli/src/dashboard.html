@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIL | Live Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #38bdf8;
+            --accent: #f472b6;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card);
+            padding-bottom: 1rem;
+        }
+        .vil-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+        }
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            color: var(--primary);
+        }
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        @media (max-width: 1024px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        canvas {
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="vil-logo">VIL DATA PLANE</div>
+        <div id="status" style="color: #22c55e;">● LIVE</div>
+    </header>
+
+    <div class="stats-grid">
+        <div class="card">
+            <div class="stat-label">Total Publishes</div>
+            <div id="total-pub" class="stat-value">0</div>
+        </div>
+        <div class="card">
+            <div class="stat-label">Total Receives</div>
+            <div id="total-recv" class="stat-value">0</div>
+        </div>
+        <div class="card">
+            <div class="stat-label">System Throughput</div>
+            <div id="throughput" class="stat-value">0 <span style="font-size: 0.9rem; color: var(--muted)">sps</span></div>
+        </div>
+        <div class="card">
+            <div class="stat-label">Mean Latency</div>
+            <div id="mean-latency" class="stat-value">0 <span style="font-size: 0.9rem; color: var(--muted)">ns</span></div>
+        </div>
+    </div>
+
+    <div class="charts-container">
+        <div class="card">
+            <div class="stat-label" style="margin-bottom: 1rem;">Throughput Trend (sps)</div>
+            <canvas id="throughputChart"></canvas>
+        </div>
+        <div class="card">
+            <div class="stat-label" style="margin-bottom: 1rem;">Latency Distribution (Buckets)</div>
+            <canvas id="latencyChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let lastPublishes = 0;
+        const throughputData = [];
+        const throughputLabels = [];
+        
+        const throughputCtx = document.getElementById('throughputChart').getContext('2d');
+        const throughputChart = new Chart(throughputCtx, {
+            type: 'line',
+            data: {
+                labels: throughputLabels,
+                datasets: [{
+                    label: 'Samples per Second',
+                    data: throughputData,
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#334155' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        const latencyCtx = document.getElementById('latencyChart').getContext('2d');
+        const latencyChart = new Chart(latencyCtx, {
+            type: 'bar',
+            data: {
+                labels: ["<1µs", "1-10µs", "10-100µs", "100µs-1ms", "1-10ms", "10-100ms", "100ms-1s", "1-10s", "≥10s"],
+                datasets: [{
+                    label: 'Sample Count',
+                    data: new Array(9).fill(0),
+                    backgroundColor: '#f472b6',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { type: 'logarithmic', grid: { color: '#334155' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        async function update() {
+            try {
+                const res = await fetch('/api/metrics');
+                const data = await res.json();
+                
+                document.getElementById('total-pub').innerText = data.counters.publishes.toLocaleString();
+                document.getElementById('total-recv').innerText = data.counters.receives.toLocaleString();
+                document.getElementById('mean-latency').innerText = (data.latency.mean_ns / 1000).toFixed(1) + " µs";
+                
+                // Throughput calculation
+                const currentPub = data.counters.publishes;
+                const sps = (currentPub - lastPublishes);
+                lastPublishes = currentPub;
+                
+                document.getElementById('throughput').innerText = sps.toLocaleString() + " sps";
+                
+                // Update Line Chart
+                const now = new Date().toLocaleTimeString();
+                throughputLabels.push(now);
+                throughputData.push(sps);
+                if (throughputData.length > 30) {
+                    throughputLabels.shift();
+                    throughputData.shift();
+                }
+                throughputChart.update();
+
+                // Update Bar Chart
+                latencyChart.data.datasets[0].data = data.latency.bucket_counts;
+                latencyChart.update();
+
+                document.getElementById('status').innerText = "● LIVE";
+                document.getElementById('status').style.color = "#22c55e";
+            } catch (e) {
+                document.getElementById('status').innerText = "○ OFFLINE";
+                document.getElementById('status').style.color = "#ef4444";
+            }
+        }
+
+        setInterval(update, 1000);
+        update();
+    </script>
+</body>
+</html>

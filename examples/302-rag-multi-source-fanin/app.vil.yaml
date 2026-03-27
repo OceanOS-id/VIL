@@ -1,0 +1,7 @@
+vil_version: "6.0.0"
+name: rag-tech-docs
+port: 3111
+endpoints:
+  - method: POST
+    path: /api/tech
+    handler: tech_handler

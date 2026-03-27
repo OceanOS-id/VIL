@@ -1,0 +1,41 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  022 — ML Fraud Scoring Sidecar                                        ║
+# ║  Business: Integrates a Python ML fraud detection model as a sidecar   ║
+# ║  process. The Rust host handles HTTP routing, SHM transport, and       ║
+# ║  health monitoring. The Python sidecar runs scikit-learn/XGBoost       ║
+# ║  fraud scoring models. Communication via SHM (64MB shared region).     ║
+# ║  Timeout: 30s for complex scoring on large transaction batches.        ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: sidecar-python-example
+port: 8080
+sidecars:
+  - name: fraud-checker
+    command: "python examples-sdk/sidecar/python/fraud_checker.py"
+    timeout_ms: 30000
+    shm_size: 67108864  # 64 MB
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: root ---
+  - method: GET
+    path: /
+    handler: index
+  # --- ServiceProcess: fraud (prefix: /api/fraud) ---
+  - method: GET
+    path: /api/fraud/status
+    handler: fraud_status
+  - method: POST
+    path: /api/fraud/check
+    handler: fraud_check

@@ -1,0 +1,37 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  006 — High-Frequency Trading Data Processor — App Manifest            ║
+# ║  Business: Ingest market data, compute analytics, monitor SHM health   ║
+# ║  /api/shm-demo/ingest  — receive tick data via SHM zero-copy           ║
+# ║  /api/shm-demo/compute — CPU-bound analytics (VWAP, order book)       ║
+# ║  /api/shm-demo/shm-stats — monitor ExchangeHeap memory utilization    ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: shm-extractor-demo
+port: 8080
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: shm-demo (prefix: /api/shm-demo) ---
+  - method: POST
+    path: /api/shm-demo/ingest
+    handler: ingest
+  - method: POST
+    path: /api/shm-demo/compute
+    handler: compute
+  - method: GET
+    path: /api/shm-demo/shm-stats
+    handler: shm_stats
+  - method: GET
+    path: /api/shm-demo/benchmark
+    handler: benchmark

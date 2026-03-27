@@ -1,0 +1,7 @@
+vil_version: "6.0.0"
+name: multi-model-pipeline-gpt4
+port: 3101
+endpoints:
+  - method: POST
+    path: /multi
+    handler: chat_sink

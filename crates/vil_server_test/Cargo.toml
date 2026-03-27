@@ -1,0 +1,27 @@
+[package]
+name = "vil_server_test"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Server Test — Integration test harness and benchmark suite"
+license = "Apache-2.0"
+
+[dependencies]
+vil_server_core = { path = "../vil_server_core" }
+vil_server = { path = "../vil_server" }
+
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+hyper = { version = "1.0", features = ["full"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+tower = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+bytes = "1.0"
+http-body-util = "0.1"
+
+[dev-dependencies]
+vil_server_auth = { path = "../vil_server_auth" }
+vil_server_mesh = { path = "../vil_server_mesh" }
+vil_server_web = { path = "../vil_server_web" }
+vil_db_semantic = { path = "../vil_db_semantic" }

@@ -1,0 +1,21 @@
+vil_version: "6.0.0"
+name: rag-service
+port: 3091
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: rag (prefix: /api) ---
+  - method: POST
+    path: /api/rag
+    handler: rag_handler

@@ -1,0 +1,63 @@
+# =============================================================================
+# basic-usage-plugin-database — Plugin manager + DB sqlx configuration
+# =============================================================================
+#
+# Demonstrates multi-pool database configuration with the vil_db_sqlx plugin.
+# Pools are named and can be assigned to specific services. Secrets use
+# encrypted format in production: ENC[AES256:...]
+
+server:
+  name: "plugin-database"
+  port: 8080
+  host: "0.0.0.0"
+  request_timeout_secs: 30
+
+logging:
+  level: info
+
+shm:
+  enabled: true
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive
+  request_tracker:
+    enabled: true
+  handler_metrics:
+    enabled: true
+
+plugins:
+  enabled: true
+  auto_discover: true
+  manifest_dir: "./plugins"
+
+database:
+  pools:
+    primary:
+      driver: postgres
+      url: "postgres://user:${DB_PASSWORD}@localhost:5432/app_db"
+      max_connections: 20
+      min_connections: 5
+      connect_timeout_secs: 10
+      idle_timeout_secs: 300
+      ssl_mode: prefer
+      services: ["*"]
+
+    analytics:
+      driver: postgres
+      url: "postgres://user:${DB_PASSWORD}@localhost:5432/analytics_db"
+      max_connections: 10
+      min_connections: 2
+      connect_timeout_secs: 30
+      idle_timeout_secs: 600
+      ssl_mode: prefer
+      services: ["analytics-service"]
+
+    cache_db:
+      driver: sqlite
+      url: "sqlite://local_cache.db"
+      max_connections: 5
+      min_connections: 1
+      connect_timeout_secs: 5
+      idle_timeout_secs: 300

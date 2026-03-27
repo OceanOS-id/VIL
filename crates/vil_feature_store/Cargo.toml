@@ -1,0 +1,20 @@
+[package]
+name = "vil_feature_store"
+description = "D16 - Real-Time Feature Store for VIL"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+dashmap = { workspace = true }
+parking_lot = "0.12"
+vil_sdk         = { path = "../vil_sdk" }
+vil_server_core = { path = "../vil_server_core" }
+vil_server      = { path = "../vil_server" }
+vil_macros      = { path = "../vil_macros" }
+axum              = { version = "0.7", features = ["json"] }
+
+[dev-dependencies]

@@ -1,0 +1,21 @@
+[package]
+name = "vil_prompt_optimizer"
+description = "N12 — Auto-Prompt Optimizer: candidate evaluation, variation generation"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+async-trait = "0.1"
+
+vil_sdk = { path = "../vil_sdk" }
+vil_server_core = { path = "../vil_server_core" }
+vil_server = { path = "../vil_server" }
+vil_macros = { path = "../vil_macros" }
+axum = { version = "0.7", features = ["macros"] }
+[dev-dependencies]
+tokio = { version = "1", features = ["full", "test-util"] }

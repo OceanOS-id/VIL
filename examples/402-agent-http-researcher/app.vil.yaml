@@ -1,0 +1,14 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  402 — Market Research Agent                                           ║
+# ║  Business: AI agent with HTTP fetch tool for real-time market data.    ║
+# ║  Queries product catalogs, pricing APIs, and inventory systems.        ║
+# ║  Computes aggregate statistics (avg price, inventory levels) using     ║
+# ║  built-in calculator. Real I/O — not just LLM prompts.                ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: research-agent
+port: 3121
+endpoints:
+  - method: POST
+    path: /api/research
+    handler: research_handler

@@ -1,0 +1,21 @@
+[package]
+name = "vil_ab_test"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "I08 — A/B Test Framework: experiment management with statistical significance"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+vil_sdk          = { workspace = true }
+vil_server_core  = { workspace = true }
+vil_server       = { workspace = true }
+vil_macros       = { workspace = true }
+axum               = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+dashmap = { workspace = true }
+parking_lot = "0.12"
+
+[dev-dependencies]

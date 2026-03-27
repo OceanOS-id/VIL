@@ -1,0 +1,14 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  301 — Internal Wiki Search Engine (RAG Vector Search)                 ║
+# ║  Business: Semantic search over internal documentation (wiki, guides,  ║
+# ║  runbooks). Employees POST natural language queries; the system        ║
+# ║  retrieves top-k relevant documents via cosine similarity, augments   ║
+# ║  the LLM prompt with context, and returns a grounded answer.          ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: rag-basic-query
+port: 3110
+endpoints:
+  - method: POST
+    path: /api/rag
+    handler: rag_handler

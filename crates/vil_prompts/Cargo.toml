@@ -1,0 +1,18 @@
+[package]
+name = "vil_prompts"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "VIL Prompt Template Engine — compile-time validated templates with fluent builder API"
+
+[dependencies]
+vil_sdk = { path = "../vil_sdk" }
+vil_server_core = { path = "../vil_server_core" }
+vil_server = { path = "../vil_server" }
+vil_macros = { path = "../vil_macros" }
+axum = { version = "0.7", features = ["macros"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]

@@ -1,0 +1,43 @@
+vil_version: "6.0.0"
+name: nats-worker
+port: 8080
+message_queue:
+  nats:
+    url: "nats://localhost:4222"
+    client_name: vil-nats-worker
+    jetstream: true
+    kv:
+      bucket: vil-config
+    bridge:
+      target_service: order-service
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: root ---
+  - method: GET
+    path: /
+    handler: index
+  # --- ServiceProcess: nats (prefix: /api) ---
+  - method: GET
+    path: /api/nats/config
+    handler: nats_config
+  - method: POST
+    path: /api/nats/send
+    handler: nats_send_message
+  - method: GET
+    path: /api/nats/jetstream
+    handler: jetstream_info
+  - method: GET
+    path: /api/nats/kv
+    handler: kv_demo

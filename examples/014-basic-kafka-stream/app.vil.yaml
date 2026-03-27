@@ -1,0 +1,57 @@
+vil_version: "6.0.0"
+name: kafka-stream
+port: 8080
+message_queue:
+  kafka:
+    brokers:
+      - "localhost:9092"
+      - "localhost:9093"
+      - "localhost:9094"
+    producer:
+      acks: all
+    consumer:
+      group_id: order-processor-group
+      topic: events.orders
+    topics:
+      - name: events.orders
+        partitions: 6
+        replication_factor: 3
+      - name: events.payments
+        partitions: 3
+        replication_factor: 3
+      - name: events.notifications
+        partitions: 3
+        replication_factor: 2
+    bridge:
+      target_service: notification-service
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: root ---
+  - method: GET
+    path: /
+    handler: index
+  # --- ServiceProcess: kafka (prefix: /api) ---
+  - method: GET
+    path: /api/kafka/config
+    handler: kafka_config
+  - method: POST
+    path: /api/kafka/produce
+    handler: kafka_produce
+  - method: GET
+    path: /api/kafka/consumer
+    handler: consumer_info
+  - method: GET
+    path: /api/kafka/bridge
+    handler: bridge_status

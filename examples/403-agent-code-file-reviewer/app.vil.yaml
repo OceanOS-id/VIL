@@ -1,0 +1,7 @@
+vil_version: "6.0.0"
+name: code-review-agent
+port: 3122
+endpoints:
+  - method: POST
+    path: /api/review
+    handler: review_handler

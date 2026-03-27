@@ -1,0 +1,31 @@
+[package]
+name = "vil_new_http"
+description = "Thin HTTP adapter for VIL using core reactive session primitives (VL-RFC-0003)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+vil_json = { path = "../vil_json", features = ["simd"] }
+vil_types = { workspace = true }
+vil_rt    = { workspace = true }
+vil_ir    = { workspace = true }
+
+reqwest = { version = "0.12", features = ["stream", "json"] }
+axum = { version = "0.7", features = ["macros"] }
+hyper = { version = "1", features = ["full"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "net"] }
+futures-util = "0.3"
+bytes = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio-stream = "0.1"
+async-stream = "0.3"
+socket2 = "0.5"

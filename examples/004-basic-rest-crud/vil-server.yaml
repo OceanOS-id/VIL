@@ -1,0 +1,28 @@
+# =============================================================================
+# 004 — Task Management System (Project Management Tool) — Server Config
+# =============================================================================
+# Business Context:
+#   Internal project management tool for engineering teams. Provides a REST
+#   API for creating, reading, updating, and deleting tasks within sprints.
+#   Typical consumers: React/Vue SPA frontends, CLI tools, CI/CD pipelines.
+#   CORS is permissive for development; production deployments should
+#   restrict origins to the admin SPA domain.
+# =============================================================================
+
+server:
+  name: "crud-service"
+  port: 8080
+  host: "0.0.0.0"
+  request_timeout_secs: 30
+
+logging:
+  level: info
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive
+  request_tracker:
+    enabled: true
+  handler_metrics:
+    enabled: true

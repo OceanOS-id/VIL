@@ -1,0 +1,13 @@
+[package]
+name = "vil_shm"
+description = "VIL shared exchange heap — sample store and region management"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_types = { workspace = true }
+dashmap = "5.5.3"
+memmap2 = { workspace = true }
+nix = { workspace = true }

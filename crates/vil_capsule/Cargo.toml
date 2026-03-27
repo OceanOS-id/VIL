@@ -1,0 +1,21 @@
+[package]
+name = "vil_capsule"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+# Enable this feature to load and run WASM plugins via wasmtime
+wasm = ["dep:wasmtime"]
+# Enable WASI Preview 2 capabilities (filesystem, env, clock) for WASM capsules
+wasi = ["wasm", "dep:wasmtime-wasi"]
+
+[dependencies]
+vil_types = { path = "../vil_types" }
+vil_ir = { path = "../vil_ir" }
+
+# Feature-gated WASM runtime
+wasmtime = { version = "24", optional = true }
+wasmtime-wasi = { version = "24", optional = true }
+dashmap = "5.5"

@@ -1,0 +1,19 @@
+[package]
+name = "vil_graphql"
+version = "0.1.0"
+edition = "2021"
+description = "VIL GraphQL Plugin — auto-generated schema from VlangEntity, CRUD resolvers, subscriptions"
+license = "Apache-2.0"
+
+[dependencies]
+vil_db_semantic = { path = "../vil_db_semantic" }
+vil_server_core = { path = "../vil_server_core" }
+
+async-graphql = "7"
+async-graphql-axum = "7"
+axum = { version = "0.7", features = ["ws"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+dashmap = "5.5"

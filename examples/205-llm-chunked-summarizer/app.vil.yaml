@@ -1,0 +1,14 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  205 — Legal Document Summarization Pipeline                           ║
+# ║  Business: Summarizes long legal documents (contracts, regulations,    ║
+# ║  compliance policies). Splits document into chunks at sentence         ║
+# ║  boundaries, summarizes each chunk via LLM, then merges into a         ║
+# ║  final executive summary. Handles documents up to 100K+ characters.   ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: llm-summarizer
+port: 3104
+endpoints:
+  - method: POST
+    path: /api/summarize
+    handler: summarize_handler

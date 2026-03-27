@@ -1,0 +1,22 @@
+[package]
+name = "vil_workflow_v2"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "I07 — AI Workflow Scheduler: DAG-based parallel task execution"
+
+[dependencies]
+vil_sdk          = { workspace = true }
+vil_server_core  = { workspace = true }
+vil_server       = { workspace = true }
+vil_macros       = { workspace = true }
+axum               = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+dashmap = { workspace = true }
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full", "test-util"] }

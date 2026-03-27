@@ -1,0 +1,18 @@
+[package]
+name = "vil_net"
+description = "VIL cluster networking substrate — RDMA/DPDK simulation and kernel-bypass abstractions"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_types = { workspace = true }
+vil_shm = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+dashmap = { workspace = true }
+nix = { workspace = true }
+tokio = { version = "1.32", features = ["full"] }
+socket2 = "0.5"
+bytes = "1.5"

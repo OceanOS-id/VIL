@@ -1,0 +1,37 @@
+# =============================================================================
+# basic-usage-graphql-api — GraphQL auto-generated from entity definitions
+# =============================================================================
+#
+# This configuration enables the GraphQL plugin with playground, introspection,
+# and pagination controls. Entity definitions registered via VilSchemaBuilder
+# auto-generate types, queries, and mutations.
+
+server:
+  name: "graphql-api"
+  port: 8080
+  host: "0.0.0.0"
+  request_timeout_secs: 30
+
+logging:
+  level: info
+
+shm:
+  enabled: true
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive
+  request_tracker:
+    enabled: true
+
+graphql:
+  enabled: true
+  playground: true
+  introspection: true
+  max_depth: 10
+  max_complexity: 1000
+  default_page_size: 20
+  max_page_size: 100
+  # In production, entities auto-register from #[derive(VilEntity)]
+  # The schema builder generates: query, mutation, subscription per entity

@@ -1,0 +1,141 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  basic-usage-production-fullstack — Full VIL Server Configuration   ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# Demonstrates ALL VIL server features configured together:
+# REST, gRPC, NATS, DB, GraphQL, SHM, Mesh, Security, Observability.
+#
+# This is a vil_server example — config uses the server format.
+# Every section below maps to a subsystem in FullServerConfig.
+
+server:
+  name: "production-fullstack"
+  port: 8080
+  host: "0.0.0.0"
+  metrics_port: 9090
+  workers: 0
+  request_timeout_secs: 60
+  max_body_size: "10MB"
+  graceful_shutdown_timeout_secs: 30
+
+logging:
+  level: info
+  format: json
+  modules:
+    vil_server: debug
+    vil_grpc: info
+    vil_mq_nats: info
+
+shm:
+  enabled: true
+  pool_size: "128MB"
+  reset_threshold_pct: 80
+  query_cache:
+    enabled: true
+    region_size: "32MB"
+    default_ttl_secs: 120
+    max_entries: 50000
+
+mesh:
+  mode: unified
+  channels:
+    trigger:
+      buffer_size: 2048
+      shm_region_size: "8MB"
+    data:
+      buffer_size: 2048
+      shm_region_size: "32MB"
+    control:
+      buffer_size: 512
+      shm_region_size: "2MB"
+  discovery:
+    mode: shm
+
+services:
+  - name: api
+    visibility: public
+    prefix: /api
+  - name: admin
+    visibility: internal
+    prefix: /internal/admin
+  - name: health
+    visibility: public
+    prefix: /
+
+middleware:
+  request_tracker:
+    enabled: true
+  handler_metrics:
+    enabled: true
+    sample_rate: 1
+  tracing:
+    enabled: true
+    sample_rate: 1
+    propagation: w3c
+  cors:
+    enabled: true
+    mode: permissive
+  compression:
+    enabled: true
+    min_body_size: 256
+  timeout:
+    enabled: true
+    duration_secs: 60
+  security_headers:
+    enabled: true
+  hsts:
+    enabled: false
+
+security:
+  jwt:
+    enabled: false
+    algorithm: HS256
+  rate_limit:
+    enabled: true
+    max_requests: 5000
+    window_secs: 60
+    per: ip
+  csrf:
+    enabled: false
+  brute_force:
+    enabled: true
+    max_attempts: 10
+    block_duration_secs: 600
+
+session:
+  enabled: false
+
+observability:
+  prometheus:
+    enabled: true
+    path: /metrics
+  healthcheck:
+    enabled: true
+    path: /health
+
+performance:
+  thread_pool:
+    size: 0
+
+grpc:
+  enabled: true
+  port: 50051
+
+graphql:
+  enabled: true
+  playground: true
+  path: /graphql
+
+feature_flags:
+  hot_reload: true
+
+scheduler:
+  enabled: false
+
+plugins:
+  enabled: false
+
+rolling_restart:
+  enabled: false
+
+admin:
+  enabled: false

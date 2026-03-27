@@ -1,0 +1,23 @@
+# =============================================================================
+# 009 — OJK SLIK Regulatory Reporting — Server Configuration
+# =============================================================================
+# Business: Regulatory data submission pipeline. 180s timeout for large
+# portfolio transformations (500K+ records per monthly batch).
+# =============================================================================
+
+server:
+  name: "ai-summarizer-pipeline"
+  port: 8087
+  host: "0.0.0.0"
+  request_timeout_secs: 180
+
+logging:
+  level: info
+
+shm:
+  enabled: true
+
+middleware:
+  cors:
+    enabled: true
+    mode: permissive

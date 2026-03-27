@@ -1,0 +1,54 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  023 — Order Validation + ML Pricing Pipeline (Hybrid)                 ║
+# ║  Business: E-commerce order processing with three execution classes:   ║
+# ║    native    — order validation (Rust, <100us latency)                ║
+# ║    wasm_faas — price calculation (WASM sandboxed, hot-deployable)     ║
+# ║    sidecar   — fraud scoring (Python ML, scikit-learn/XGBoost)        ║
+# ║  Full order flow: validate -> price -> fraud check -> process          ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: hybrid-pipeline
+port: 8080
+vil_wasm:
+  - name: pricing
+    wasm_path: wasm-modules/out/pricing.wasm
+    pool_size: 4
+    functions:
+      - { name: calculate_price }
+sidecars:
+  - name: fraud-checker
+    timeout_ms: 30000
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: pipeline (mixed execution classes) ---
+  - method: GET
+    path: /
+    handler: index
+  - method: POST
+    path: /validate
+    handler: validate_order
+    exec_class: native
+  - method: POST
+    path: /price
+    handler: calculate_price
+    exec_class: wasm_faas
+  - method: POST
+    path: /fraud
+    handler: fraud_check
+    exec_class: sidecar
+  - method: POST
+    path: /order
+    handler: process_order
+    exec_class: native

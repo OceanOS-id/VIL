@@ -1,0 +1,17 @@
+{
+  "lsp": {
+    "vil-lsp": {
+      "binary": {
+        "path": "vil-lsp",
+        "arguments": []
+      },
+      "languages": ["Rust"],
+      "initialization_options": {}
+    }
+  },
+  "languages": {
+    "Rust": {
+      "language_servers": ["rust-analyzer", "vil-lsp"]
+    }
+  }
+}

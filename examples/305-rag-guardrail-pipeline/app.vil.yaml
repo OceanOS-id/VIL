@@ -1,0 +1,7 @@
+vil_version: "6.0.0"
+name: rag-medical-qa
+port: 3114
+endpoints:
+  - method: POST
+    path: /api/medical
+    handler: medical_handler

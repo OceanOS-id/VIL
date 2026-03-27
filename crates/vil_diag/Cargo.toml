@@ -1,0 +1,7 @@
+[package]
+name = "vil_diag"
+description = "VIL diagnostics (stub — masa depan: error rendering, IR dump)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true

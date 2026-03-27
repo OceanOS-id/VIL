@@ -1,0 +1,18 @@
+[package]
+name = "vil_private_rag"
+description = "N08 — Privacy-Preserving RAG: PII redaction, anonymization, audit logging"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+regex = "1"
+
+vil_sdk = { path = "../vil_sdk" }
+vil_server_core = { path = "../vil_server_core" }
+vil_server = { path = "../vil_server" }
+vil_macros = { path = "../vil_macros" }
+axum = { version = "0.7", features = ["macros"] }

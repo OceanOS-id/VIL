@@ -1,0 +1,23 @@
+[package]
+name = "vil_server_mesh"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Server Mesh — Tri-Lane SHM service mesh with TCP fallback"
+license = "Apache-2.0"
+
+[dependencies]
+vil_server_core = { path = "../vil_server_core" }
+
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+tracing = "0.1"
+dashmap = "5.5"
+bytes = "1.0"
+async-trait = "0.1"
+
+# VIL internal
+vil_types = { path = "../vil_types" }
+vil_shm = { path = "../vil_shm" }
+vil_rt = { path = "../vil_rt" }

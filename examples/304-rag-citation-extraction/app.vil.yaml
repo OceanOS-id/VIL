@@ -1,0 +1,14 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  304 — Academic Research Assistant (RAG with Citation Extraction)      ║
+# ║  Business: Searches academic/legal document corpus and generates       ║
+# ║  answers with precise source citations ([DocN] format). Used by        ║
+# ║  researchers, legal teams, and compliance officers who need            ║
+# ║  traceable, verifiable answers grounded in specific documents.         ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: rag-legal-search
+port: 3113
+endpoints:
+  - method: POST
+    path: /api/legal
+    handler: legal_handler

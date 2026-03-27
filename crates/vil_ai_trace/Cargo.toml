@@ -1,0 +1,19 @@
+[package]
+name = "vil_ai_trace"
+description = "N11 — AI Observability + Tracing: trace spans, AI metrics, JSON export"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_macros      = { workspace = true }
+vil_server_core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+dashmap = { workspace = true }
+parking_lot = "0.12"
+
+vil_sdk = { path = "../vil_sdk" }
+vil_server = { path = "../vil_server" }
+axum = { version = "0.7", features = ["macros"] }

@@ -1,0 +1,11 @@
+[package]
+name = "vil_validate"
+description = "VIL validation passes (stub — masa depan: layout/ownership/boundary legality)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_types = { workspace = true }
+vil_ir = { workspace = true }

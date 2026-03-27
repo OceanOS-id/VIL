@@ -1,0 +1,10 @@
+[package]
+name = "vil-llm-multi-model-routing"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+vil_sdk = { path = "../../crates/vil_sdk" }
+vil_llm = { path = "../../crates/vil_llm" }
+serde_json = "1.0"

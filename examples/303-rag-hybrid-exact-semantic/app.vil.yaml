@@ -1,0 +1,16 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  303 — FAQ + Knowledge Base Hybrid Search                              ║
+# ║  Business: Two-tier search for customer support knowledge base:        ║
+# ║    Tier 1 (Exact): keyword match against FAQ database — instant,      ║
+# ║    no LLM call needed, zero latency for common questions.              ║
+# ║    Tier 2 (Semantic): vector similarity fallback — triggers LLM        ║
+# ║    for complex/novel questions not in the FAQ database.                ║
+# ║  Exact hits save ~2s latency and ~$0.01/query in LLM costs.          ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: rag-faq-bot
+port: 3112
+endpoints:
+  - method: POST
+    path: /api/faq
+    handler: faq_handler

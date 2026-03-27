@@ -1,0 +1,24 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  009 — OJK SLIK Regulatory Reporting — Runtime Config                  ║
+# ║  Business: Monthly SLIK submission to OJK. Transforms credit records   ║
+# ║  into regulatory format (v2.1). Bulk mode for full-portfolio batch.    ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# Layer 1: http_gateway (5-line API!)
+gateway:
+  port: 3083
+  path: "/summarize"
+  upstream:
+    url: "http://localhost:4545/v1/chat/completions"
+    timeout_secs: 30
+    format: sse
+    json_tap: "choices[0].delta.content"
+
+runtime:
+  mode: shared
+  shm:
+    enabled: true
+    pool_size: "16MB"
+
+logging:
+  level: info
+  format: text

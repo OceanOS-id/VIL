@@ -1,0 +1,17 @@
+[package]
+name = "vil_prompt_shield"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Prompt Shield — real-time prompt injection detection (<100µs)"
+
+[dependencies]
+vil_macros       = { path = "../vil_macros" }
+vil_sdk          = { path = "../vil_sdk" }
+vil_server_core  = { path = "../vil_server_core" }
+vil_server       = { path = "../vil_server" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1"
+aho-corasick = "1"
+axum = { version = "0.7", features = ["macros"] }
+tracing = "0.1"

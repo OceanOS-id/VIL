@@ -1,0 +1,60 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  021 — Business Rules Engine (WASM Sandboxed)                          ║
+# ║  Business: Executes pricing, validation, and transformation rules in   ║
+# ║  sandboxed WASM modules. Rules are hot-deployable without restart.     ║
+# ║  Modules:                                                               ║
+# ║    pricing    — calculate_price, apply_discount (commerce rules)       ║
+# ║    validation — validate_input (order/payment validation)              ║
+# ║    transform  — transform_data (format conversion, normalization)      ║
+# ║  Pool size 4 = pre-warmed instances for concurrent execution.          ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+vil_version: "6.0.0"
+name: wasm-faas-example
+port: 8080
+vil_wasm:
+  - name: pricing
+    wasm_path: wasm-modules/out/pricing.wasm
+    pool_size: 4
+    functions:
+      - { name: calculate_price }
+      - { name: apply_discount }
+  - name: validation
+    wasm_path: wasm-modules/out/validation.wasm
+    pool_size: 4
+    functions:
+      - { name: validate_input }
+  - name: transform
+    wasm_path: wasm-modules/out/transform.wasm
+    pool_size: 4
+    functions:
+      - { name: transform_data }
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: wasm-faas ---
+  - method: GET
+    path: /
+    handler: index
+  - method: GET
+    path: /wasm/modules
+    handler: list_modules
+  - method: POST
+    path: /wasm/pricing
+    handler: invoke_pricing
+  - method: POST
+    path: /wasm/validation
+    handler: invoke_validation
+  - method: POST
+    path: /wasm/transform
+    handler: invoke_transform

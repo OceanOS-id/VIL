@@ -1,0 +1,17 @@
+[package]
+name = "vil_server_format"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Server Format — Multi-format response (JSON + Protobuf) with content negotiation"
+license = "Apache-2.0"
+
+[features]
+default = []
+protobuf = ["dep:prost"]
+
+[dependencies]
+axum = "0.7"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+prost = { version = "0.13", optional = true }
+bytes = "1.0"

@@ -1,0 +1,7 @@
+vil_version: "6.0.0"
+name: multi-tool-agent
+port: 3124
+endpoints:
+  - method: POST
+    path: /api/multi
+    handler: multi_handler

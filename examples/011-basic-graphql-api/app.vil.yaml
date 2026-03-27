@@ -1,0 +1,58 @@
+vil_version: "6.0.0"
+name: graphql-api
+port: 8080
+entities:
+  - name: Order
+    table: orders
+    source: primary
+    primary_key: id
+    fields:
+      - { name: id, type: i64 }
+      - { name: customer_id, type: i64 }
+      - { name: total, type: f64 }
+      - { name: status, type: string }
+      - { name: created_at, type: string }
+  - name: Customer
+    table: customers
+    source: primary
+    primary_key: id
+    fields:
+      - { name: id, type: i64 }
+      - { name: name, type: string }
+      - { name: email, type: string }
+      - { name: tier, type: string }
+graphql:
+  enabled: true
+  playground: true
+  introspection: true
+  max_depth: 10
+  max_complexity: 1000
+  default_page_size: 20
+  max_page_size: 100
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: graphql (prefix: /api/graphql) ---
+  - method: GET
+    path: /api/graphql/
+    handler: index
+  - method: GET
+    path: /api/graphql/schema
+    handler: schema_info
+  - method: GET
+    path: /api/graphql/entities
+    handler: list_entities
+  - method: POST
+    path: /api/graphql/query
+    handler: graphql_query

@@ -1,0 +1,21 @@
+vil_version: "6.0.0"
+name: ai-agent
+port: 3092
+endpoints:
+  # --- Built-in (auto-provided by VilApp) ---
+  - method: GET
+    path: /health
+    handler: health_check
+  - method: GET
+    path: /ready
+    handler: readiness_probe
+  - method: GET
+    path: /metrics
+    handler: prometheus_metrics
+  - method: GET
+    path: /info
+    handler: server_info
+  # --- ServiceProcess: agent (prefix: /api) ---
+  - method: POST
+    path: /api/agent
+    handler: agent_handler
