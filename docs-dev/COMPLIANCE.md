@@ -90,26 +90,41 @@ Most connectors don't need new macros. They should:
 | Messages use correct semantic macro (`#[vil_state]`, `#[vil_event]`, `#[vil_fault]`, `#[vil_decision]`) | ☐ |
 | Layout profile declared (Flat / Relative / External) | ☐ |
 | No heap types (`String`, `Vec`, `Box`) in Flat/Relative layouts | ☐ |
-| Error types use `#[vil_fault]`, not ad-hoc enums | ☐ |
+| Error types use `#[vil_fault]` or `#[connector_fault]`, not plain enums | ☐ |
 | Config types may use External profile (acceptable for setup-time data) | ☐ |
 
 ### Per crate type:
 
 **Database connector errors:**
 ```rust
-// CORRECT
-#[vil_fault]
+// CORRECT — connector crate (lightweight macro)
+#[connector_fault]
 pub enum MongoFault {
-    ConnectionFailed { uri_hash: u64, elapsed_ms: u64 },
-    QueryTimeout { collection_hash: u64, elapsed_ms: u64 },
-    AuthFailed { reason_code: u32 },
+    ConnectionFailed { uri_hash: u32, reason_code: u32 },
+    QueryFailed { collection_hash: u32, reason_code: u32 },
+    Timeout { collection_hash: u32, elapsed_ms: u32 },
 }
+// Generates: Display, error_code(), kind(), is_retryable()
 
-// INCORRECT
+// CORRECT — core/server crate (full IR validation)
+#[vil_fault]
+pub enum PipelineFault {
+    TransferFailed { port: u64, reason_code: u32 },
+    LaneTimeout { lane: u64, elapsed_ms: u64 },
+}
+// Generates: FaultHandler trait, Control Lane integration, IR entry
+
+// INCORRECT — plain enum without derive
+pub enum MongoFault {
+    ConnectionFailed { uri_hash: u32, reason_code: u32 },
+}
+// Missing: Display, error_code(), kind() — breaks diagnostics
+
+// INCORRECT — thiserror with String
 #[derive(Debug, thiserror::Error)]
 pub enum MongoError {
-    #[error("Connection failed: {uri}")] // String in fault!
-    ConnectionFailed { uri: String },
+    #[error("Connection failed: {uri}")]
+    ConnectionFailed { uri: String },  // heap allocation in fault!
 }
 ```
 
@@ -413,7 +428,7 @@ Before any roadmap crate is merged, reviewer must verify:
 - [ ] **No `serde_json::Value` on zero-copy paths**
 - [ ] **No `tokio::spawn` for business logic**
 - [ ] **No manual `tracing::info!` for structural metrics**
-- [ ] **`vil_fault` for all error types, not `thiserror`**
+- [ ] **`#[vil_fault]` or `#[connector_fault]` for all error types — no plain enums, no `thiserror`**
 
 ---
 

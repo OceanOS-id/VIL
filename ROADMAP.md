@@ -145,6 +145,31 @@ All 8 crates: `vil_log` + `mq_log!` auto-emit, `TriggerSource` trait, COMPLIANCE
 - [x] Grafana dashboard templates (6 dashboards + 3 alert rules)
 - [x] Edge deployment (`vil_edge_deploy`) — ARM64, ARMv7, RISC-V profiles
 
+## Phase 6 — Semantic Completion (all crates fully VIL Way)
+
+### Stream 1: vil_connector_macros (lightweight proc-macro)
+- [ ] `#[connector_fault]` — Display, error_code(), is_retryable()
+- [ ] `#[connector_event]` — #[repr(C)], ≤192B, size guard
+- [ ] `#[connector_state]` — atomic counters, health metrics
+
+### Stream 2: Events & State for all 28 connectors
+- [ ] events.rs + state.rs per crate
+- [ ] Fault enums annotated with `#[connector_fault]`
+
+### Stream 3: YAML Codegen for connectors
+- [ ] `connectors:` / `triggers:` / `logging:` in YAML manifest
+- [ ] Rust codegen from YAML → connector init code
+- [ ] SDK transpile support (all 9 languages)
+
+### Stream 4: 4 new templates + examples
+- [ ] Template 9: Data Pipeline (S3 → Mongo → ClickHouse)
+- [ ] Template 10: Event-Driven (RabbitMQ → process → publish)
+- [ ] Template 11: IoT Gateway (MQTT → TimeSeries → alert)
+- [ ] Template 12: Scheduled ETL (Cron → S3 → Elasticsearch)
+- [ ] Examples 601-804 per category
+
+---
+
 ## Phase 5b — Commercial (separate repo)
 
 - [ ] Multi-tenancy & namespace isolation
