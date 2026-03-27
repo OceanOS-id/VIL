@@ -14,8 +14,8 @@
 
 <p align="center">
   <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License"></a>
-  <img src="https://img.shields.io/badge/crates-102-green" alt="Crates">
-  <img src="https://img.shields.io/badge/examples-63-orange" alt="Examples">
+  <img src="https://img.shields.io/badge/crates-130%2B-green" alt="Crates">
+  <img src="https://img.shields.io/badge/examples-71-orange" alt="Examples">
   <img src="https://img.shields.io/badge/tests-1425%2B-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/rust-1.93%2B-orange" alt="Rust">
 </p>
@@ -36,8 +36,8 @@ Developer writes:          VIL generates:
 - **Zero-copy by default** — ShmSlice body extraction, ExchangeHeap, no intermediate buffers
 - **Tri-Lane Protocol** — Trigger / Data / Control physically separated (no head-of-line blocking)
 - **3 execution modes** — Native Rust (0 overhead), WASM sandbox (~1-5μs), Sidecar any language (~12μs)
-- **YAML → Native binary** — write in Python/Go/Java/TypeScript, compile to Rust binary (transpile SDK)
-- **51 AI plugin crates** — LLM, RAG, Agent, embeddings, vector DB — all use VIL Way patterns
+- **YAML → Native binary** — write in Python/Go/Java/TypeScript/C#/Kotlin/Swift/Zig, compile to Rust binary (transpile SDK)
+- **51 AI plugin crates + 30 connector/trigger crates** — LLM, RAG, Agent, embeddings, vector DB — all use VIL Way patterns
 - **5 SSE dialects** — OpenAI, Anthropic, Ollama, Cohere, Gemini with correct done-signal handling
 - **Production config** — profiles (dev/staging/prod), 30+ env vars, SHM pool P99 tuning
 
@@ -180,8 +180,15 @@ pipeline.source(url="http://ai-provider:4545/v1/chat", format="sse")
 | **AI Plugins** | vil_llm, vil_rag, vil_agent + 48 more | LLM, RAG, Agent, embeddings, vector DB — 51 crates, VIL Way |
 | **SDK** | vil_sdk, vil_plugin_sdk, vil_cli | Pipeline SDK, plugin interface, CLI tooling |
 | **Execution** | vil_capsule, vil_sidecar | WASM sandbox, sidecar protocol (UDS + SHM) |
+| **Storage** | vil_storage_s3, vil_storage_gcs, vil_storage_azure | S3/MinIO, GCS, Azure Blob — all with db_log! auto-emit |
+| **Database+** | vil_db_mongo, vil_db_clickhouse, vil_db_dynamodb, + 4 more | MongoDB, ClickHouse, DynamoDB, Cassandra, TimescaleDB, Neo4j, Elasticsearch |
+| **MQ+** | vil_mq_rabbitmq, vil_mq_sqs, vil_mq_pulsar, vil_mq_pubsub | RabbitMQ, SQS/SNS, Pulsar, Pub/Sub — all with mq_log! |
+| **Protocol+** | vil_soap, vil_opcua, vil_modbus, vil_ws | SOAP/WSDL, OPC-UA, Modbus, WebSocket server |
+| **Triggers** | vil_trigger_cron/fs/cdc/email/iot/evm/webhook | Cron, filesystem, CDC, email, IoT, blockchain, webhook |
+| **Observability** | vil_log, vil_otel | Semantic log (4.5-6.2x faster than tracing), OpenTelemetry export |
+| **Edge** | vil_edge_deploy | ARM64, ARMv7, RISC-V deployment profiles |
 
-**102 crates** | **63 examples** | **5 tiers** | **34 LLM knowledge files**
+**130+ crates** | **71 examples** | **9 SDK languages** | **6 Grafana dashboards**
 
 ## Examples (5 Tiers)
 
@@ -192,6 +199,7 @@ pipeline.source(url="http://ai-provider:4545/v1/chat", format="sse")
 | **LLM** (201-206) | 6 | VX_APP + SDK | Chat, multi-model, tools, batch translate, decision routing |
 | **RAG** (301-306) | 6 | VX_APP | Vector search, multi-source, hybrid, citation, guardrail |
 | **Agent** (401-406) | 6 | VX_APP | Calculator, HTTP fetch, file review, CSV, ReAct, handler+SHM |
+| **VIL Log** (501-509) | 9 | vil_log | Stdout, file, multi-drain, benchmark, tracing bridge, structured events, file drain bench, multi-thread, Phase 1 integration |
 
 ```bash
 # Run any example
@@ -225,7 +233,7 @@ cargo run --release -p vil-basic-credit-npl-filter
 | `body.json::<T>()` | `serde_json` | SIMD JSON (sonic-rs) |
 | `VilResponse::ok(data)` | `Json(data)` | SIMD serialization + SHM write-through |
 
-All 51 AI plugins + all 63 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
+All 51 AI plugins + all 71 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
 
 ## Documentation
 
@@ -234,11 +242,13 @@ All 51 AI plugins + all 63 examples use these patterns. Zero `Extension<T>`, zer
 | Architecture Overview | [docs/ARCHITECTURE_OVERVIEW.md](docs/ARCHITECTURE_OVERVIEW.md) |
 | Design Principles | [docs/vil/VIL_CONCEPT.md](docs/vil/VIL_CONCEPT.md) |
 | Custom Code (Native/WASM/Sidecar) | [docs/vil/CUSTOM_CODE_GUIDE.md](docs/vil/CUSTOM_CODE_GUIDE.md) |
-| Developer Guide (6 parts) | [docs/vil/001-VIL-Developer_Guide-Overview.md](docs/vil/001-VIL-Developer_Guide-Overview.md) |
+| VIL Guide (7 parts) | [docs/vil/001-VIL-Developer_Guide-Overview.md](docs/vil/001-VIL-Developer_Guide-Overview.md) |
 | Server Framework | [docs/vil-server/vil-server-guide.md](docs/vil-server/vil-server-guide.md) |
 | API Reference | [docs/vil-server/API-REFERENCE-SERVER.md](docs/vil-server/API-REFERENCE-SERVER.md) |
 | Config Reference | [vil-server.reference.yaml](vil-server.reference.yaml) |
 | LLM Knowledge Base | [llm_knowledge/](llm_knowledge/index.md) |
+| Semantic Log System | [docs/vil/007-VIL-Developer_Guide-Semantic-Log.md](docs/vil/007-VIL-Developer_Guide-Semantic-Log.md) |
+| Roadmap | [ROADMAP.md](ROADMAP.md) |
 
 ## Editor Support
 
