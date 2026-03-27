@@ -34,6 +34,17 @@ Developer writes:          VIL generates:
 | NDJSON transform (1K rec/req) | **895 req/s** | 183ms | 895K records/s with `.transform()` |
 | Multi-pipeline (shared SHM) | **3,700 req/s** | 46ms | ShmToken zero-copy cross-workflow |
 
+**What this means:** If you build a custom API gateway or data pipeline using VIL, you can expect performance in the same class as dedicated infrastructure software:
+
+| Use Case | VIL Estimate | Comparable To |
+|----------|-------------|---------------|
+| Custom REST gateway (routing + auth + transform) | ~30,000-40,000 req/s | Envoy, Nginx reverse proxy |
+| AI inference proxy (SSE streaming) | ~3,500 req/s | Kong, AWS API Gateway (single node) |
+| NDJSON data pipeline (parse + enrich + validate) | ~800-1,000 req/s = 800K-1M records/s | Kafka Streams, Flink per-record transform |
+| Multi-service mesh (Tri-Lane SHM) | ~3,700 req/s | Service mesh sidecar (Linkerd, Istio dataplane) |
+
+The difference: Envoy/Nginx are C/C++ infrastructure with no business logic. VIL delivers similar throughput **while executing your custom business logic** (validation, enrichment, routing decisions) inside the pipeline — not just proxying bytes.
+
 Full benchmark with overhead analysis: [examples/BENCHMARK_REPORT.md](examples/BENCHMARK_REPORT.md)
 
 ## Quick Start
