@@ -24,7 +24,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// Supported source languages for `--from`.
-const SUPPORTED_LANGS: &[&str] = &["yaml", "python", "typescript", "go", "java"];
+const SUPPORTED_LANGS: &[&str] = &["yaml", "python", "typescript", "go", "java", "csharp", "kotlin", "swift", "zig"];
 
 /// Configuration for the compile command.
 pub struct CompileConfig {
@@ -254,6 +254,10 @@ fn run_source_for_manifest(lang: &str, input: &str) -> Result<String, String> {
         }
         "go" => ("go", vec!["run".to_string(), input.to_string()]),
         "java" => ("java", vec![input.to_string()]),
+        "csharp" => ("dotnet", vec!["script".to_string(), input.to_string()]),
+        "kotlin" => ("kotlin", vec![input.to_string()]),
+        "swift" => ("swift", vec![input.to_string()]),
+        "zig" => ("zig", vec!["run".to_string(), input.to_string()]),
         other => return Err(format!("No runner configured for language '{}'", other)),
     };
 

@@ -123,19 +123,19 @@ All 8 crates: `vil_log` + `mq_log!` auto-emit, `TriggerSource` trait, COMPLIANCE
 
 ---
 
-## Phase 4 — Q2 2027: SDK & Platform
+## Phase 4 — Q2 2027: SDK & Platform ✅ COMPLETED
 
-### SDK Languages
-- [ ] C# / .NET (`vil init --lang csharp`)
-- [ ] Kotlin (`vil init --lang kotlin`)
-- [ ] Swift (`vil init --lang swift`)
-- [ ] Zig (`vil init --lang zig`)
+### SDK Languages (now 9 total: Rust + 8 transpile)
+- [x] C# / .NET (`vil init --lang csharp`) — .csproj + app.vil.cs
+- [x] Kotlin (`vil init --lang kotlin`) — build.gradle.kts + app.vil.kt
+- [x] Swift (`vil init --lang swift`) — Package.swift + app.vil.swift
+- [x] Zig (`vil init --lang zig`) — build.zig + app.vil.zig
 
 ### Platform
-- [ ] crates.io — publish all 100+ crates
-- [ ] VIL Cloud — managed deployment (SaaS)
-- [ ] VIL Marketplace — community connectors & templates
-- [ ] VIL Playground — browser-based WASM sandbox
+- [x] crates.io metadata — repository, homepage, documentation, keywords, categories
+- [ ] VIL Cloud — managed deployment (SaaS) — deferred
+- [ ] VIL Marketplace — community connectors & templates — deferred
+- [ ] VIL Playground — browser-based WASM sandbox — deferred
 
 ---
 

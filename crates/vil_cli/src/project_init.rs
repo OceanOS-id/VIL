@@ -28,6 +28,10 @@ const SUPPORTED_LANGS: &[(&str, &str)] = &[
     ("go", "Go (generates VIL SDK Go module)"),
     ("java", "Java (generates VIL SDK Java source)"),
     ("typescript", "TypeScript (generates VIL SDK TS source)"),
+    ("csharp", "C# (generates VIL SDK C# source)"),
+    ("kotlin", "Kotlin (generates VIL SDK Kotlin source)"),
+    ("swift", "Swift (generates VIL SDK Swift source)"),
+    ("zig", "Zig (generates VIL SDK Zig source)"),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -277,6 +281,10 @@ fn generate_project(
         "go" => "target/\n*.wasm\nwasm-out/\nvendor/\n",
         "java" => "target/\n*.wasm\nwasm-out/\n*.class\nbuild/\n.gradle/\n",
         "typescript" => "target/\n*.wasm\nwasm-out/\nnode_modules/\ndist/\n",
+        "csharp" => "target/\n*.wasm\nwasm-out/\nbin/\nobj/\n.vs/\n",
+        "kotlin" => "target/\n*.wasm\nwasm-out/\nbuild/\n.gradle/\n.kotlin/\n",
+        "swift" => "target/\n*.wasm\nwasm-out/\n.build/\n.swiftpm/\nPackage.resolved\n",
+        "zig" => "target/\n*.wasm\nwasm-out/\nzig-out/\nzig-cache/\n",
         _ => "target/\n*.wasm\nwasm-out/\n",
     };
     std::fs::write(project_dir.join(".gitignore"), gitignore)
@@ -316,6 +324,22 @@ fn generate_project(
         "typescript" => {
             let src = format!("app.vil.ts");
             println!("    vil compile --from typescript --input {} --output {}  # compile to native binary", src, config.name);
+            println!("    ./{}", config.name);
+        }
+        "csharp" => {
+            println!("    vil compile --from csharp --input app.vil.cs --output {}  # compile to native binary", config.name);
+            println!("    ./{}", config.name);
+        }
+        "kotlin" => {
+            println!("    vil compile --from kotlin --input app.vil.kt --output {}  # compile to native binary", config.name);
+            println!("    ./{}", config.name);
+        }
+        "swift" => {
+            println!("    vil compile --from swift --input app.vil.swift --output {}  # compile to native binary", config.name);
+            println!("    ./{}", config.name);
+        }
+        "zig" => {
+            println!("    vil compile --from zig --input app.vil.zig --output {}  # compile to native binary", config.name);
             println!("    ./{}", config.name);
         }
         _ => {}
@@ -396,6 +420,10 @@ fn generate_sdk_project(
         "go" => ("main.go", "GO"),
         "java" => ("App.java", "JAVA"),
         "typescript" => ("app.vil.ts", "TS"),
+        "csharp" => ("app.vil.cs", "CSHARP"),
+        "kotlin" => ("app.vil.kt", "KOTLIN"),
+        "swift" => ("app.vil.swift", "SWIFT"),
+        "zig" => ("app.vil.zig", "ZIG"),
         _ => return Err(format!("Unsupported SDK language: {}", config.lang)),
     };
 
@@ -445,6 +473,30 @@ fn generate_sdk_project(
                 .map_err(|e| format!("Failed to write package.json: {}", e))?;
             println!("  {} package.json", "NPM".green());
         }
+        "csharp" => {
+            let csproj = generate_csharp_csproj(config);
+            std::fs::write(project_dir.join(format!("{}.csproj", config.name)), &csproj)
+                .map_err(|e| format!("Failed to write .csproj: {}", e))?;
+            println!("  {} {}.csproj", "CSPROJ".green(), config.name);
+        }
+        "kotlin" => {
+            let gradle = generate_kotlin_gradle(config);
+            std::fs::write(project_dir.join("build.gradle.kts"), &gradle)
+                .map_err(|e| format!("Failed to write build.gradle.kts: {}", e))?;
+            println!("  {} build.gradle.kts", "GRADLE".green());
+        }
+        "swift" => {
+            let pkg = generate_swift_package(config);
+            std::fs::write(project_dir.join("Package.swift"), &pkg)
+                .map_err(|e| format!("Failed to write Package.swift: {}", e))?;
+            println!("  {} Package.swift", "SWIFT".green());
+        }
+        "zig" => {
+            let build_zig = generate_zig_build(config);
+            std::fs::write(project_dir.join("build.zig"), &build_zig)
+                .map_err(|e| format!("Failed to write build.zig: {}", e))?;
+            println!("  {} build.zig", "ZIG".green());
+        }
         _ => {}
     }
 
@@ -457,6 +509,10 @@ fn generate_sdk_source(config: &ProjectConfig, template: &Template) -> String {
         "go" => generate_go_sdk(config, template),
         "java" => generate_java_sdk(config, template),
         "typescript" => generate_ts_sdk(config, template),
+        "csharp" => generate_csharp_sdk(config, template),
+        "kotlin" => generate_kotlin_sdk(config, template),
+        "swift" => generate_swift_sdk(config, template),
+        "zig" => generate_zig_sdk(config, template),
         _ => String::new(),
     }
 }
@@ -583,6 +639,112 @@ p.trigger(httpTrigger({{ port: {port}, path: '/api/{path}'{response_mode} }}));
         response_mode = sdk_response_mode(template.id, "typescript"),
         imports = sdk_imports(template.id, "typescript"),
         steps = steps,
+    )
+}
+
+fn generate_csharp_sdk(config: &ProjectConfig, _template: &Template) -> String {
+    format!(
+        r#"// {name} — VIL SDK Pipeline
+// Generated by: vil init {name} --lang csharp
+//
+// Compile: vil compile --from csharp --input app.vil.cs --output {name}
+// Run:     ./{name}
+
+using Vil.Sdk;
+
+var pipeline = new VilPipeline("{name}")
+    .Port({port})
+    .Source(new HttpSource("ingest")
+        .Method(HttpMethod.Post)
+        .Path("/trigger"))
+    .Sink(new HttpSink("upstream")
+        .Url("http://localhost:4545"))
+    .Build();
+
+VilRunner.Run(pipeline);
+"#,
+        name = config.name,
+        port = config.port,
+    )
+}
+
+fn generate_kotlin_sdk(config: &ProjectConfig, _template: &Template) -> String {
+    format!(
+        r#"// {name} — VIL SDK Pipeline
+// Generated by: vil init {name} --lang kotlin
+//
+// Compile: vil compile --from kotlin --input app.vil.kt --output {name}
+// Run:     ./{name}
+
+import id.vastar.vil.sdk.*
+
+fun main() {{
+    vilPipeline("{name}") {{
+        port({port})
+        source(httpSource("ingest") {{
+            method(HttpMethod.POST)
+            path("/trigger")
+        }})
+        sink(httpSink("upstream") {{
+            url("http://localhost:4545")
+        }})
+    }}.run()
+}}
+"#,
+        name = config.name,
+        port = config.port,
+    )
+}
+
+fn generate_swift_sdk(config: &ProjectConfig, _template: &Template) -> String {
+    format!(
+        r#"// {name} — VIL SDK Pipeline
+// Generated by: vil init {name} --lang swift
+//
+// Compile: vil compile --from swift --input app.vil.swift --output {name}
+// Run:     ./{name}
+
+import VilSDK
+
+let pipeline = VilPipeline("{name}")
+    .port({port})
+    .source(HttpSource("ingest")
+        .method(.post)
+        .path("/trigger"))
+    .sink(HttpSink("upstream")
+        .url("http://localhost:4545"))
+
+VilRunner.run(pipeline)
+"#,
+        name = config.name,
+        port = config.port,
+    )
+}
+
+fn generate_zig_sdk(config: &ProjectConfig, _template: &Template) -> String {
+    format!(
+        r#"// {name} — VIL SDK Pipeline
+// Generated by: vil init {name} --lang zig
+//
+// Compile: vil compile --from zig --input app.vil.zig --output {name}
+// Run:     ./{name}
+
+const vil = @import("vil-sdk");
+
+pub fn main() !void {{
+    var pipeline = vil.Pipeline.init("{name}")
+        .port({port})
+        .source(vil.HttpSource.init("ingest")
+            .method(.post)
+            .path("/trigger"))
+        .sink(vil.HttpSink.init("upstream")
+            .url("http://localhost:4545"));
+
+    try vil.run(pipeline);
+}}
+"#,
+        name = config.name,
+        port = config.port,
     )
 }
 
@@ -738,6 +900,105 @@ fn generate_java_pom(config: &ProjectConfig) -> String {
     )
 }
 
+fn generate_csharp_csproj(config: &ProjectConfig) -> String {
+    format!(
+        r#"<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>{name}</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="vil-sdk" Version="1.0.0">
+      <PackageName>vil-sdk</PackageName>
+    </PackageReference>
+  </ItemGroup>
+</Project>
+"#,
+        name = config.name
+    )
+}
+
+fn generate_kotlin_gradle(config: &ProjectConfig) -> String {
+    format!(
+        r#"plugins {{
+    kotlin("jvm") version "1.9.0"
+    application
+}}
+
+application {{
+    mainClass.set("MainKt")
+}}
+
+group = "id.vastar.vil"
+version = "1.0.0"
+description = "{name}"
+
+repositories {{
+    mavenCentral()
+    maven("https://repo.vastar.id/releases")
+}}
+
+dependencies {{
+    implementation("id.vastar:vil-sdk:1.0.0")
+}}
+"#,
+        name = config.name
+    )
+}
+
+fn generate_swift_package(config: &ProjectConfig) -> String {
+    format!(
+        r#"// swift-tools-version: 5.9
+import PackageDescription
+
+let package = Package(
+    name: "{name}",
+    dependencies: [
+        .package(url: "https://github.com/OceanOS-id/vil-sdk-swift.git", from: "1.0.0"),
+    ],
+    targets: [
+        .executableTarget(
+            name: "{name}",
+            dependencies: [
+                .product(name: "VilSDK", package: "vil-sdk-swift"),
+            ]
+        ),
+    ]
+)
+"#,
+        name = config.name
+    )
+}
+
+fn generate_zig_build(config: &ProjectConfig) -> String {
+    format!(
+        r#"const std = @import("std");
+
+pub fn build(b: *std.Build) void {{
+    const target = b.standardTargetOptions(.{{}});
+    const optimize = b.standardOptimizeOption(.{{}});
+
+    const vil_sdk = b.dependency("vil-sdk", .{{
+        .target = target,
+        .optimize = optimize,
+    }});
+
+    const exe = b.addExecutable(.{{
+        .name = "{name}",
+        .root_source_file = b.path("app.vil.zig"),
+        .target = target,
+        .optimize = optimize,
+    }});
+    exe.root_module.addImport("vil-sdk", vil_sdk.module("vil-sdk"));
+
+    b.installArtifact(exe);
+}}
+"#,
+        name = config.name
+    )
+}
+
 fn validate_lang(lang: &str) -> Result<String, String> {
     let normalized = lang.to_lowercase();
     let valid = match normalized.as_str() {
@@ -746,9 +1007,13 @@ fn validate_lang(lang: &str) -> Result<String, String> {
         "go" | "golang" => "go",
         "java" => "java",
         "typescript" | "ts" => "typescript",
+        "csharp" | "cs" | "c#" => "csharp",
+        "kotlin" | "kt" => "kotlin",
+        "swift" => "swift",
+        "zig" => "zig",
         _ => {
             return Err(format!(
-                "Unsupported language '{}'. Available: rust, python, go, java, typescript",
+                "Unsupported language '{}'. Available: rust, python, go, java, typescript, csharp, kotlin, swift, zig",
                 lang
             ))
         }
@@ -1447,6 +1712,46 @@ vil compile --from typescript --input app.vil.ts --output {name}
 ```"#,
             name = config.name
         ),
+        "csharp" => format!(
+            r#"```bash
+# Compile to native binary
+vil compile --from csharp --input app.vil.cs --output {name}
+
+# Run
+./{name}
+```"#,
+            name = config.name
+        ),
+        "kotlin" => format!(
+            r#"```bash
+# Compile to native binary
+vil compile --from kotlin --input app.vil.kt --output {name}
+
+# Run
+./{name}
+```"#,
+            name = config.name
+        ),
+        "swift" => format!(
+            r#"```bash
+# Compile to native binary
+vil compile --from swift --input app.vil.swift --output {name}
+
+# Run
+./{name}
+```"#,
+            name = config.name
+        ),
+        "zig" => format!(
+            r#"```bash
+# Compile to native binary
+vil compile --from zig --input app.vil.zig --output {name}
+
+# Run
+./{name}
+```"#,
+            name = config.name
+        ),
         _ => format!(
             r#"```bash
 # Visualize
@@ -1501,6 +1806,46 @@ vil run --file app.vil.yaml
 ├── app.vil.yaml          <- YAML manifest
 ├── app.vil.ts            <- TypeScript SDK pipeline (edit this)
 ├── package.json
+└── README.md
+```"#,
+            name = config.name
+        ),
+        "csharp" => format!(
+            r#"```
+{name}/
+├── app.vil.yaml          <- YAML manifest
+├── app.vil.cs            <- C# SDK pipeline (edit this)
+├── {name}.csproj
+└── README.md
+```"#,
+            name = config.name
+        ),
+        "kotlin" => format!(
+            r#"```
+{name}/
+├── app.vil.yaml          <- YAML manifest
+├── app.vil.kt            <- Kotlin SDK pipeline (edit this)
+├── build.gradle.kts
+└── README.md
+```"#,
+            name = config.name
+        ),
+        "swift" => format!(
+            r#"```
+{name}/
+├── app.vil.yaml          <- YAML manifest
+├── app.vil.swift         <- Swift SDK pipeline (edit this)
+├── Package.swift
+└── README.md
+```"#,
+            name = config.name
+        ),
+        "zig" => format!(
+            r#"```
+{name}/
+├── app.vil.yaml          <- YAML manifest
+├── app.vil.zig           <- Zig SDK pipeline (edit this)
+├── build.zig
 └── README.md
 ```"#,
             name = config.name
