@@ -139,10 +139,14 @@ All 8 crates: `vil_log` + `mq_log!` auto-emit, `TriggerSource` trait, COMPLIANCE
 
 ---
 
-## Phase 5 — H2 2027: Enterprise
+## Phase 5a — H2 2027: Open-Source Enterprise ✅ COMPLETED
+
+- [x] OpenTelemetry export (`vil_otel`) — OTLP gRPC/HTTP, metrics + traces bridge
+- [x] Grafana dashboard templates (6 dashboards + 3 alert rules)
+- [x] Edge deployment (`vil_edge_deploy`) — ARM64, ARMv7, RISC-V profiles
+
+## Phase 5b — Commercial (separate repo)
 
 - [ ] Multi-tenancy & namespace isolation
 - [ ] Compliance connectors — audit trail, GDPR tooling
-- [ ] OpenTelemetry native export + Grafana dashboard templates
-- [ ] Edge deployment — ARM / RISC-V optimized builds
 - [ ] Plugin marketplace with community review system

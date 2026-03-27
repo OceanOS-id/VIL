@@ -1,0 +1,29 @@
+groups:
+  - name: vil-pipeline
+    rules:
+      - alert: VilPipelineStall
+        expr: rate(vil_pipeline_events_per_second[2m]) == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: vil
+        annotations:
+          summary: "VIL pipeline has stalled — zero events for 2 minutes"
+          description: >-
+            The pipeline event rate has been zero for at least 2 minutes.
+            This indicates a complete stall. Check pipeline worker health,
+            upstream data sources, and SHM ring queue depth.
+          runbook_url: "https://docs.vil.internal/runbooks/pipeline-stall"
+
+      - alert: VilPipelineLowThroughput
+        expr: vil_pipeline_events_per_second < 1
+        for: 2m
+        labels:
+          severity: warning
+          team: vil
+        annotations:
+          summary: "VIL pipeline throughput critically low (< 1 event/s)"
+          description: >-
+            Pipeline throughput has been below 1 event/s for 2 minutes.
+            May indicate a partial stall or upstream bottleneck.
+          runbook_url: "https://docs.vil.internal/runbooks/pipeline-stall"

@@ -1,0 +1,36 @@
+groups:
+  - name: vil-errors
+    rules:
+      - alert: VilHighPipelineErrorRate
+        expr: >
+          100 * rate(vil_pipeline_errors_total[3m])
+          /
+          rate(vil_pipeline_requests_total[3m]) > 5
+        for: 3m
+        labels:
+          severity: critical
+          team: vil
+        annotations:
+          summary: "VIL pipeline error rate > 5%"
+          description: >-
+            The pipeline error rate has exceeded 5% for more than 3 minutes.
+            Current rate: {{ $value | printf "%.2f" }}%.
+            Investigate recent deployments, upstream data quality, and pipeline logs.
+          runbook_url: "https://docs.vil.internal/runbooks/high-error-rate"
+
+      - alert: VilHighDbErrorRate
+        expr: >
+          100 * rate(vil_db_errors_total[3m])
+          /
+          rate(vil_db_queries_total[3m]) > 5
+        for: 3m
+        labels:
+          severity: critical
+          team: vil
+        annotations:
+          summary: "VIL database error rate > 5%"
+          description: >-
+            The database error rate has exceeded 5% for more than 3 minutes.
+            Current rate: {{ $value | printf "%.2f" }}%.
+            Check database connectivity, pool exhaustion, and query logs.
+          runbook_url: "https://docs.vil.internal/runbooks/high-error-rate"

@@ -164,6 +164,10 @@ members = [
     "crates/vil_cost_tracker",
     "crates/vil_model_registry",
 
+    # --- Phase 5a: Open-Source Enterprise ---
+    "crates/vil_otel",
+    "crates/vil_edge_deploy",
+
     # --- AI Plugins (N01-N12 Final Batch) ---
     "crates/vil_data_prep",
     "crates/vil_synthetic",
@@ -348,6 +352,10 @@ vil_opcua          = { path = "crates/vil_opcua" }
 vil_modbus         = { path = "crates/vil_modbus" }
 vil_ws             = { path = "crates/vil_ws" }
 
+
+# Phase 5a: Open-Source Enterprise
+vil_otel          = { path = "crates/vil_otel" }
+vil_edge_deploy   = { path = "crates/vil_edge_deploy" }
 
 # Common dependencies
 # Pin to =1.0.218 — alloy-consensus 0.15.x uses serde::__private which was

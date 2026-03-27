@@ -1,0 +1,16 @@
+groups:
+  - name: vil-shm
+    rules:
+      - alert: VilShmExhaustion
+        expr: vil_shm_used_bytes / vil_shm_total_bytes > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          team: vil
+        annotations:
+          summary: "VIL SHM usage > 90%"
+          description: >-
+            Shared memory utilization has exceeded 90% for more than 5 minutes.
+            Current value: {{ printf "%.1f" (mul (div (query "vil_shm_used_bytes" | first | value) (query "vil_shm_total_bytes" | first | value)) 100) }}%.
+            Investigate allocation patterns or increase SHM capacity.
+          runbook_url: "https://docs.vil.internal/runbooks/shm-exhaustion"

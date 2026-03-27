@@ -1,0 +1,47 @@
+// =============================================================================
+// vil_otel::error — OtelFault
+// =============================================================================
+
+use vil_log::dict::register_str;
+
+/// Faults that can occur in the VIL OTel bridge.
+#[derive(Debug)]
+pub enum OtelFault {
+    /// OTLP exporter initialization failed.
+    InitFailed,
+    /// Invalid endpoint URL.
+    InvalidEndpoint,
+    /// Pipeline build failed.
+    PipelineFailed,
+    /// Metrics export error.
+    MetricsExportFailed,
+    /// Traces export error.
+    TracesExportFailed,
+}
+
+impl OtelFault {
+    /// Returns the registered hash for this fault variant's name.
+    pub fn code_hash(&self) -> u32 {
+        match self {
+            OtelFault::InitFailed          => register_str("otel.fault.init_failed"),
+            OtelFault::InvalidEndpoint     => register_str("otel.fault.invalid_endpoint"),
+            OtelFault::PipelineFailed      => register_str("otel.fault.pipeline_failed"),
+            OtelFault::MetricsExportFailed => register_str("otel.fault.metrics_export_failed"),
+            OtelFault::TracesExportFailed  => register_str("otel.fault.traces_export_failed"),
+        }
+    }
+}
+
+impl std::fmt::Display for OtelFault {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OtelFault::InitFailed          => write!(f, "OtelFault::InitFailed"),
+            OtelFault::InvalidEndpoint     => write!(f, "OtelFault::InvalidEndpoint"),
+            OtelFault::PipelineFailed      => write!(f, "OtelFault::PipelineFailed"),
+            OtelFault::MetricsExportFailed => write!(f, "OtelFault::MetricsExportFailed"),
+            OtelFault::TracesExportFailed  => write!(f, "OtelFault::TracesExportFailed"),
+        }
+    }
+}
+
+impl std::error::Error for OtelFault {}

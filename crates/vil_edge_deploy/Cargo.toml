@@ -1,0 +1,12 @@
+[package]
+name = "vil_edge_deploy"
+description = "VIL Edge Deployment — ARM/RISC-V build profiles and minimal runtime config"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }

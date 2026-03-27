@@ -1,0 +1,14 @@
+[package]
+name = "vil_otel"
+description = "VIL OpenTelemetry Export — bridge vil_obs metrics and vil_log to OTLP"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log = { workspace = true }
+tokio = { workspace = true }
+opentelemetry = "0.28"
+opentelemetry_sdk = { version = "0.28", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.28", features = ["grpc-tonic"] }
