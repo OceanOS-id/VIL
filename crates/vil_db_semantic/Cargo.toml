@@ -6,7 +6,7 @@ description = "VIL DB Semantic Layer — Provider-neutral, compile-time IR, runt
 license = "Apache-2.0"
 
 [dependencies]
-vil_server_db = { path = "../vil_server_db" }
+vil_server_db = { version = "0.1.0", path = "../vil_server_db" }
 vil_log = { workspace = true }
 async-trait = "0.1"
 serde = { version = "1.0", features = ["derive"] }

@@ -6,7 +6,7 @@ description = "VIL Server Web — Handler utilities, validation, error handling,
 license = "Apache-2.0"
 
 [dependencies]
-vil_server_core = { path = "../vil_server_core" }
+vil_server_core = { version = "0.1.0", path = "../vil_server_core" }
 
 axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }

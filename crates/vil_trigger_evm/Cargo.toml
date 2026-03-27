@@ -9,7 +9,7 @@ authors.workspace = true
 [dependencies]
 vil_log              = { workspace = true }
 vil_connector_macros = { workspace = true }
-vil_trigger_core = { path = "../vil_trigger_core" }
+vil_trigger_core = { version = "0.1.0", path = "../vil_trigger_core" }
 tokio            = { workspace = true }
 # alloy 0.15 — pubsub for eth_subscribe, provider-ws for WebSocket, rpc-types for Filter/Log.
 # Note: serde is pinned to =1.0.218 in workspace to avoid serde::__private rename in 1.0.219+.

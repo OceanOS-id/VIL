@@ -9,7 +9,7 @@ authors.workspace = true
 [dependencies]
 vil_log              = { workspace = true }
 vil_connector_macros = { workspace = true }
-vil_trigger_core = { path = "../vil_trigger_core" }
+vil_trigger_core = { version = "0.1.0", path = "../vil_trigger_core" }
 tokio            = { workspace = true }
 axum             = { workspace = true }
 hmac             = "0.12"

@@ -27,7 +27,7 @@ dashmap = "5.5"
 tracing = "0.1"
 
 # VIL internal
-vil_types = { path = "../vil_types" }
+vil_types = { version = "0.1.0", path = "../vil_types" }
 
 [features]
 default = []

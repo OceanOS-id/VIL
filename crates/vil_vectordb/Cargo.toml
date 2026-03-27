@@ -11,8 +11,8 @@ dashmap = "5.5"
 rand = "0.8"
 parking_lot = "0.12"
 thiserror = "1.0"
-vil_sdk = { path = "../vil_sdk" }
-vil_server_core = { path = "../vil_server_core" }
-vil_server = { path = "../vil_server" }
-vil_macros = { path = "../vil_macros" }
+vil_sdk = { version = "0.1.0", path = "../vil_sdk" }
+vil_server_core = { version = "0.1.0", path = "../vil_server_core" }
+vil_server = { version = "0.1.0", path = "../vil_server" }
+vil_macros = { version = "0.1.0", path = "../vil_macros" }
 axum = { version = "0.7", features = ["macros"] }

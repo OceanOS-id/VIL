@@ -1,5 +1,6 @@
 [package]
 name = "vil_capsule"
+description = "VIL WASM Capsule — sandboxed WebAssembly execution with wasmtime pool"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -12,8 +13,8 @@ wasm = ["dep:wasmtime"]
 wasi = ["wasm", "dep:wasmtime-wasi"]
 
 [dependencies]
-vil_types = { path = "../vil_types" }
-vil_ir = { path = "../vil_ir" }
+vil_types = { version = "0.1.0", path = "../vil_types" }
+vil_ir = { version = "0.1.0", path = "../vil_ir" }
 
 # Feature-gated WASM runtime
 wasmtime = { version = "24", optional = true }

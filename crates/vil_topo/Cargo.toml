@@ -1,5 +1,6 @@
 [package]
 name = "vil_topo"
+description = "VIL Topology — pipeline DAG analysis and visualization helpers"
 edition.workspace = true
 version.workspace = true
 license.workspace = true
