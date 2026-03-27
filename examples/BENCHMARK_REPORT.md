@@ -4,11 +4,28 @@
 **Rust:** 1.93.1 | **JSON:** sonic-rs SIMD | **Load tool:** oha
 **Date:** 2026-03-27 | **Note:** Machine under normal dev workload (load avg ~1.3) during all benchmarks
 
-## Baseline
+## 001 AI Gateway — Scaling (validated 2026-03-27)
+
+Simulator: [ai-endpoint-simulator](https://github.com/Vastar-AI/ai-endpoint-simulator) on :4545, `AI_SIM_DELAY_MS=0`, release mode.
+
+| Concurrent | Via VIL (req/s) | Direct (req/s) | Overhead | P50 | P99 | Success |
+|-----------|----------------|----------------|----------|-----|-----|---------|
+| 100 | 2,111 | — | — | 43ms | 83ms | 100% |
+| 200 | 3,875 | 4,734 | 18% | 45ms | 77ms | 100% |
+| 300 | 5,780 | — | — | 46ms | 71ms | 100% |
+| **400** | **6,466** | — | — | **56ms** | **88ms** | **100%** |
+| **500** | **6,519** | **7,785** | **16%** | **72ms** | **112ms** | **100%** |
+| 600 | 6,195 | — | — | 91ms | 120ms | 100% |
+| 800 | 6,065 | — | — | 123ms | 186ms | 100% |
+| 1000 | 6,239 | — | — | 152ms | 189ms | 100% |
+
+**Sweet spot: c400-500 — ~6,500 req/s, 16% overhead, P99 <112ms.**
+
+## Baseline (previous runs, c200 n2000)
 
 | Example | Pattern | req/s | P50 | P99 | Notes |
 |---------|---------|-------|-----|-----|-------|
-| **001 AI Gateway** | SSE Pipeline | **3,473** | 47ms | 92ms | Upstream: AI Sim :4545 |
+| **001 AI Gateway** | SSE Pipeline | **3,875** | 45ms | 77ms | c200, Upstream: AI Sim :4545 |
 
 ## VX_APP (HTTP Server — no external I/O)
 
