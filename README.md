@@ -27,12 +27,12 @@ Developer writes:          VIL generates:
 
 > Intel i9-11900F (8C/16T), 32GB RAM, Ubuntu 22.04, Rust 1.93.1
 
-| Benchmark | Throughput | records/s | Latency (P50) | Notes |
-|-----------|-----------|-----------|---------------|-------|
-| VX_APP HTTP server | **41,000 req/s** | — | 0.5ms | Pure VIL overhead <1ms |
-| AI Gateway (SSE proxy) | **6,500 req/s** | — | 56ms | Sweet spot c400-500, 100% success |
-| NDJSON transform (1K rec/req) | **895 req/s** | **895K rec/s** | 183ms | Parse + enrich/filter + re-serialize |
-| Multi-pipeline (shared SHM) | **3,700 req/s** | — | 46ms | ShmToken zero-copy cross-workflow |
+| Benchmark | Throughput | records/s | P50 | P99 | Notes |
+|-----------|-----------|-----------|-----|-----|-------|
+| VX_APP HTTP server | **41,000 req/s** | — | 0.5ms | 26ms | Pure VIL overhead <1ms |
+| AI Gateway (SSE proxy) | **6,200 req/s** | — | 76ms | 116ms | Sweet spot c500, 16% overhead vs direct |
+| NDJSON transform (1K rec/req) | **895 req/s** | **895K rec/s** | 183ms | 246ms | Parse + enrich/filter + re-serialize |
+| Multi-pipeline (shared SHM) | **3,700 req/s** | — | 46ms | 85ms | ShmToken zero-copy cross-workflow |
 
 ### AI Gateway (001) — Scaling & Overhead (validated 2026-03-27)
 
