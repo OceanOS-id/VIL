@@ -1,0 +1,13 @@
+[package]
+name = "vil_db_cassandra"
+description = "VIL Database Plugin — Apache Cassandra/ScyllaDB with semantic logging"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log = { workspace = true }
+tokio   = { workspace = true }
+serde   = { workspace = true }
+scylla  = "0.14"

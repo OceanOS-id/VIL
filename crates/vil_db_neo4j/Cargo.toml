@@ -1,0 +1,13 @@
+[package]
+name = "vil_db_neo4j"
+description = "VIL Database Plugin — Neo4j graph database with semantic logging"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log = { workspace = true }
+tokio   = { workspace = true }
+serde   = { workspace = true }
+neo4rs  = "0.8"

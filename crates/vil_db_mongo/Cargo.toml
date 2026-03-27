@@ -1,0 +1,16 @@
+[package]
+name = "vil_db_mongo"
+description = "VIL Database Plugin — MongoDB with semantic logging and Tri-Lane bridge"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log = { workspace = true }
+mongodb = { version = "3.1" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+bson = "2.13"
+futures-util = "0.3"

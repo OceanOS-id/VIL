@@ -1,0 +1,13 @@
+[package]
+name = "vil_soap"
+description = "VIL SOAP/WSDL Client — RPC-style SOAP over HTTP with semantic logging and Tri-Lane bridge"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log     = { workspace = true }
+tokio       = { workspace = true }
+quick-xml   = "0.36"
+reqwest     = { version = "0.12", features = ["rustls-tls"] }

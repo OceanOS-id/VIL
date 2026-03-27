@@ -1,0 +1,19 @@
+[package]
+name = "vil_mq_rabbitmq"
+version.workspace = true
+edition.workspace = true
+description = "VIL RabbitMQ Adapter — AMQP publish/consume with Tri-Lane bridge"
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log        = { workspace = true }
+tokio          = { version = "1", features = ["full"] }
+lapin          = "2.5"
+async-trait    = "0.1"
+serde          = { version = "1.0", features = ["derive"] }
+bytes          = "1.0"
+futures        = "0.3"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

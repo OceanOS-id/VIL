@@ -1,0 +1,18 @@
+[package]
+name = "vil_db_timeseries"
+description = "VIL Database Plugin — Time-series backends (InfluxDB / TimescaleDB) with semantic logging"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[features]
+influxdb  = ["dep:influxdb2", "dep:futures"]
+timescale = []  # uses vil_db_sqlx under the hood
+
+[dependencies]
+vil_log    = { workspace = true }
+tokio      = { workspace = true }
+serde      = { workspace = true }
+influxdb2  = { version = "0.5", optional = true }
+futures    = { version = "0.3", optional = true }

@@ -29,6 +29,7 @@ pub mod config;
 pub mod dict;
 pub mod drain;
 pub mod emit;
+pub mod resolve;
 pub mod runtime;
 pub mod types;
 

@@ -22,9 +22,15 @@ const DIM:   &str  = "\x1b[2m";
 /// Output format for `StdoutDrain`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StdoutFormat {
+    /// Multi-line colored output with raw hashes (machine-friendly debug).
     Pretty,
+    /// Single-line colored output with raw hashes.
     Compact,
+    /// JSON Lines with raw hashes.
     Json,
+    /// Human-readable resolved output. Hashes are resolved to strings via DictRegistry.
+    /// This is the recommended mode for developer terminals and diagnostics.
+    Resolved,
 }
 
 /// Drain that writes to stdout with optional ANSI coloring.
@@ -37,9 +43,10 @@ impl StdoutDrain {
         Self { format }
     }
 
-    pub fn pretty()  -> Self { Self::new(StdoutFormat::Pretty) }
-    pub fn compact() -> Self { Self::new(StdoutFormat::Compact) }
-    pub fn json()    -> Self { Self::new(StdoutFormat::Json) }
+    pub fn pretty()   -> Self { Self::new(StdoutFormat::Pretty) }
+    pub fn compact()  -> Self { Self::new(StdoutFormat::Compact) }
+    pub fn json()     -> Self { Self::new(StdoutFormat::Json) }
+    pub fn resolved() -> Self { Self::new(StdoutFormat::Resolved) }
 }
 
 impl Default for StdoutDrain {
@@ -118,6 +125,13 @@ fn format_slot_json(slot: &LogSlot, out: &mut impl Write) {
     let _ = writeln!(out, "{}", map);
 }
 
+fn format_slot_resolved(slot: &LogSlot, out: &mut impl Write) {
+    let level = LogLevel::from(slot.header.level);
+    let color = level.ansi_color();
+    let human = crate::resolve::format_human(slot);
+    let _ = writeln!(out, "{}{}{}{}", color, BOLD, human, RESET);
+}
+
 #[async_trait]
 impl LogDrain for StdoutDrain {
     fn name(&self) -> &'static str {
@@ -130,9 +144,10 @@ impl LogDrain for StdoutDrain {
 
         for slot in batch {
             match self.format {
-                StdoutFormat::Pretty  => format_slot_pretty(slot, &mut handle),
-                StdoutFormat::Compact => format_slot_compact(slot, &mut handle),
-                StdoutFormat::Json    => format_slot_json(slot, &mut handle),
+                StdoutFormat::Pretty   => format_slot_pretty(slot, &mut handle),
+                StdoutFormat::Compact  => format_slot_compact(slot, &mut handle),
+                StdoutFormat::Json     => format_slot_json(slot, &mut handle),
+                StdoutFormat::Resolved => format_slot_resolved(slot, &mut handle),
             }
         }
         Ok(())

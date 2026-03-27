@@ -1,0 +1,14 @@
+[package]
+name = "vil_db_dynamodb"
+description = "VIL Database Plugin — AWS DynamoDB with semantic logging"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log          = { workspace = true }
+tokio            = { workspace = true }
+serde            = { workspace = true }
+aws-sdk-dynamodb = "1.55"
+aws-config       = { version = "1.5", features = ["behavior-version-latest"] }

@@ -1,0 +1,12 @@
+[package]
+name = "vil_modbus"
+description = "VIL Modbus TCP/RTU Client — industrial Modbus protocol with semantic logging and Tri-Lane bridge"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log       = { workspace = true }
+tokio         = { workspace = true }
+tokio-modbus  = "0.14"

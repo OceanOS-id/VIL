@@ -1,0 +1,14 @@
+[package]
+name = "vil_ws"
+description = "VIL WebSocket Server — dedicated WS server with room management, semantic logging and Tri-Lane bridge"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log            = { workspace = true }
+tokio              = { workspace = true }
+tokio-tungstenite  = "0.24"
+futures-util       = "0.3"
+dashmap            = { version = "5.5" }

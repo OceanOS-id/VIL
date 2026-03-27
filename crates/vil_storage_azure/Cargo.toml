@@ -1,0 +1,17 @@
+[package]
+name = "vil_storage_azure"
+description = "VIL Storage Plugin — Azure Blob Storage"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log              = { workspace = true }
+azure_storage_blobs  = "0.21"
+azure_storage        = "0.21"
+azure_core           = "0.21"
+futures-util         = "0.3"
+tokio                = { workspace = true }
+serde                = { workspace = true }
+bytes                = "1"

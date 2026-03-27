@@ -1,0 +1,19 @@
+[package]
+name = "vil_mq_sqs"
+version.workspace = true
+edition.workspace = true
+description = "VIL AWS SQS/SNS Adapter — send, receive, delete, SNS publish"
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+vil_log        = { workspace = true }
+tokio          = { version = "1", features = ["full"] }
+aws-sdk-sqs    = "1.52"
+aws-sdk-sns    = "1.53"
+aws-config     = { version = "1.5", features = ["behavior-version-latest"] }
+async-trait    = "0.1"
+serde          = { version = "1.0", features = ["derive"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
