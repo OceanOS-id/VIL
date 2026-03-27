@@ -50,33 +50,63 @@ impl KafkaProducer {
 
     /// Publish a message to a topic.
     pub async fn publish(&self, topic: &str, payload: &[u8]) -> Result<(), String> {
+        let __mq_start = std::time::Instant::now();
         let record: FutureRecord<'_, str, [u8]> = FutureRecord::to(topic)
             .payload(payload);
-        self.producer.send(record, Duration::from_millis(self.config.timeout_ms))
+        let result = self.producer.send(record, Duration::from_millis(self.config.timeout_ms))
             .await
             .map_err(|(e, _)| {
                 self.errors.fetch_add(1, Ordering::Relaxed);
                 format!("Kafka publish failed: {}", e)
-            })?;
-        self.messages_sent.fetch_add(1, Ordering::Relaxed);
+            });
+        if result.is_ok() {
+            self.messages_sent.fetch_add(1, Ordering::Relaxed);
+        }
+        let __elapsed = __mq_start.elapsed();
+        {
+            use vil_log::{mq_log, types::MqPayload};
+            mq_log!(Info, MqPayload {
+                broker_hash: register_str("kafka"),
+                topic_hash: register_str(topic),
+                message_bytes: payload.len() as u32,
+                e2e_latency_us: __elapsed.as_micros() as u32,
+                op_type: 0,
+                ..Default::default()
+            });
+        }
         tracing::debug!(topic = %topic, size = payload.len(), "kafka publish");
-        Ok(())
+        result.map(|_| ())
     }
 
     /// Publish with key (for partitioning).
     pub async fn publish_keyed(&self, topic: &str, key: &str, payload: &[u8]) -> Result<(), String> {
+        let __mq_start = std::time::Instant::now();
         let record = FutureRecord::to(topic)
             .payload(payload)
             .key(key);
-        self.producer.send(record, Duration::from_millis(self.config.timeout_ms))
+        let result = self.producer.send(record, Duration::from_millis(self.config.timeout_ms))
             .await
             .map_err(|(e, _)| {
                 self.errors.fetch_add(1, Ordering::Relaxed);
                 format!("Kafka publish_keyed failed: {}", e)
-            })?;
-        self.messages_sent.fetch_add(1, Ordering::Relaxed);
+            });
+        if result.is_ok() {
+            self.messages_sent.fetch_add(1, Ordering::Relaxed);
+        }
+        let __elapsed = __mq_start.elapsed();
+        {
+            use vil_log::{mq_log, types::MqPayload};
+            mq_log!(Info, MqPayload {
+                broker_hash: register_str("kafka"),
+                topic_hash: register_str(topic),
+                message_bytes: payload.len() as u32,
+                e2e_latency_us: __elapsed.as_micros() as u32,
+                op_type: 0,
+                ..Default::default()
+            });
+        }
         tracing::debug!(topic = %topic, key = %key, size = payload.len(), "kafka publish keyed");
-        Ok(())
+        result.map(|_| ())
     }
 
     pub fn messages_sent(&self) -> u64 { self.messages_sent.load(Ordering::Relaxed) }

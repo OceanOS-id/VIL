@@ -14,6 +14,7 @@ members = [
     "crates/vil_types",
     "crates/vil_shm",
     "crates/vil_queue",
+    "crates/vil_log",
     "crates/vil_registry",
     "crates/vil_rt",
     "crates/vil_obs",
@@ -213,6 +214,16 @@ members = [
     "examples/403-agent-code-file-reviewer",
     "examples/404-agent-data-csv-analyst",
     "examples/405-agent-react-multi-tool",
+
+    # --- Tier 6: VIL Log System (501-506) ---
+    "examples/501-villog-stdout-dev",
+    "examples/502-villog-file-rolling",
+    "examples/503-villog-multi-drain",
+    "examples/504-villog-benchmark-comparison",
+    "examples/505-villog-tracing-bridge",
+    "examples/506-villog-structured-events",
+    "examples/507-villog-bench-file-drain",
+    "examples/508-villog-bench-multithread",
 ]
 
 [workspace.package]
@@ -226,6 +237,7 @@ authors = ["VIL Community"]
 vil_types        = { path = "crates/vil_types" }
 vil_shm          = { path = "crates/vil_shm" }
 vil_queue        = { path = "crates/vil_queue" }
+vil_log          = { path = "crates/vil_log" }
 vil_registry     = { path = "crates/vil_registry" }
 vil_rt           = { path = "crates/vil_rt" }
 vil_obs          = { path = "crates/vil_obs" }

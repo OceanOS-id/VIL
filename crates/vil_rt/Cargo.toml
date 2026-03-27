@@ -16,5 +16,6 @@ vil_queue    = { workspace = true }
 vil_registry = { workspace = true }
 vil_obs      = { workspace = true }
 vil_net      = { workspace = true }
+vil_log      = { workspace = true }
 dashmap        = "5.5.3"
 tokio          = { version = "1.0", features = ["sync", "rt", "macros"] }

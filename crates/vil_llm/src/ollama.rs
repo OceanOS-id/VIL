@@ -46,6 +46,7 @@ impl OllamaProvider {
 #[async_trait]
 impl LlmProvider for OllamaProvider {
     async fn chat(&self, messages: &[ChatMessage]) -> Result<ChatResponse, LlmError> {
+        let __ai_start = std::time::Instant::now();
         let api_messages: Vec<serde_json::Value> = messages.iter().map(|msg| {
             let role = match msg.role {
                 Role::System => "system",
@@ -91,6 +92,26 @@ impl LlmProvider for OllamaProvider {
             .as_str()
             .unwrap_or(&self.config.model)
             .to_string();
+
+        {
+            use vil_log::{ai_log, types::AiPayload};
+            let __elapsed = __ai_start.elapsed();
+            ai_log!(Info, AiPayload {
+                model_hash: vil_log::dict::register_str(self.model()),
+                provider_hash: vil_log::dict::register_str(self.provider_name()),
+                input_tokens: 0,
+                output_tokens: 0,
+                latency_us: __elapsed.as_micros() as u32,
+                cost_micro_usd: 0,
+                provider_status: 200,
+                op_type: 0,
+                streaming: 0,
+                retries: 0,
+                cache_hit: 0,
+                _pad: [0; 2],
+                meta_bytes: [0; 160],
+            });
+        }
 
         Ok(ChatResponse {
             content,

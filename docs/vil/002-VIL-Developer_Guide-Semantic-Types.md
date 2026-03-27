@@ -1,6 +1,6 @@
 # VIL Developer Guide — Part 2: Semantic Types & Memory Model
 
-**Series:** VIL Developer Guide (2 of 6)
+**Series:** VIL Developer Guide (2 of 7)
 **Previous:** [Part 1 — Overview & Architecture](./001-VIL-Developer_Guide-Overview.md)
 **Next:** [Part 3 — Server Framework](./003-VIL-Developer_Guide-Server-Framework.md)
 **Last updated:** 2026-03-26

@@ -31,6 +31,7 @@ pub mod __private {
     pub use vil_server_core::response;
     pub use vil_server_core::axum;
     pub use vil_server_core::tracing;
+    pub use vil_log;
 }
 pub use vil_server_web as web;
 pub use vil_server_config as config;

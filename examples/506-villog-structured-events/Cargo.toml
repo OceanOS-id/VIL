@@ -1,0 +1,11 @@
+[package]
+name = "example-506-villog-structured-events"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_log    = { workspace = true }
+tokio      = { workspace = true }
+serde_json = { workspace = true }
+rmp-serde  = "1.3"

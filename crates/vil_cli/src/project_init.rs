@@ -15,11 +15,20 @@ use std::path::Path;
 pub struct InitArgs {
     pub name: Option<String>,
     pub template: Option<String>,
+    pub lang: Option<String>,
     pub token: Option<String>,
     pub port: Option<u16>,
     pub upstream: Option<String>,
     pub wizard: bool,
 }
+
+const SUPPORTED_LANGS: &[(&str, &str)] = &[
+    ("rust", "Rust (native — generates Cargo.toml + src/main.rs)"),
+    ("python", "Python (generates VIL SDK pipeline script)"),
+    ("go", "Go (generates VIL SDK Go module)"),
+    ("java", "Java (generates VIL SDK Java source)"),
+    ("typescript", "TypeScript (generates VIL SDK TS source)"),
+];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Templates
@@ -38,6 +47,7 @@ struct Template {
 
 struct ProjectConfig {
     name: String,
+    lang: String,
     port: u16,
     upstream: String,
     token: String,
@@ -134,7 +144,7 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
     println!("{}", "VIL Project Initializer".cyan().bold());
     println!();
 
-    let (name, template_id, token, port, upstream) = if args.wizard {
+    let (name, template_id, lang, token, port, upstream) = if args.wizard {
         run_wizard(&args)?
     } else {
         let name = args
@@ -142,10 +152,11 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
             .ok_or("Project name is required. Usage: vil init <name> --template <template>")?;
         let tmpl = args.template.unwrap_or("ai-gateway".into());
         let template = find_template(&tmpl)?;
+        let lang = validate_lang(&args.lang.unwrap_or("rust".into()))?;
         let token = args.token.unwrap_or("shm".into());
         let port = args.port.unwrap_or(template.default_port);
         let upstream = args.upstream.unwrap_or(template.default_upstream.into());
-        (name, tmpl, token, port, upstream)
+        (name, tmpl, lang, token, port, upstream)
     };
 
     let template = find_template(&template_id)?;
@@ -157,6 +168,7 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
         .to_string();
     let config = ProjectConfig {
         name: project_name.clone(),
+        lang: lang.clone(),
         port,
         upstream: upstream.clone(),
         token: token.clone(),
@@ -202,12 +214,18 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
                 // Re-create config with new name
                 let config = ProjectConfig {
                     name: project_name,
+                    lang: lang.clone(),
                     port,
                     upstream: upstream.clone(),
                     token: token.clone(),
                 };
-                std::fs::create_dir_all(project_dir.join("src/handlers"))
-                    .map_err(|e| format!("Failed to create directory: {}", e))?;
+                if config.lang == "rust" {
+                    std::fs::create_dir_all(project_dir.join("src/handlers"))
+                        .map_err(|e| format!("Failed to create directory: {}", e))?;
+                } else {
+                    std::fs::create_dir_all(project_dir)
+                        .map_err(|e| format!("Failed to create directory: {}", e))?;
+                }
                 println!("  {} Creating project: {}", "DIR".green(), name);
                 return generate_project(project_dir, &config, template);
             }
@@ -217,8 +235,13 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
             }
         }
     }
-    std::fs::create_dir_all(project_dir.join("src/handlers"))
-        .map_err(|e| format!("Failed to create directory: {}", e))?;
+    if config.lang == "rust" {
+        std::fs::create_dir_all(project_dir.join("src/handlers"))
+            .map_err(|e| format!("Failed to create directory: {}", e))?;
+    } else {
+        std::fs::create_dir_all(project_dir)
+            .map_err(|e| format!("Failed to create directory: {}", e))?;
+    }
     println!("  {} Creating project: {}", "DIR".green(), project_name);
 
     generate_project(project_dir, &config, template)
@@ -236,8 +259,78 @@ fn generate_project(
         .map_err(|e| format!("Failed to write YAML: {}", e))?;
     println!("  {} {}", "YAML".green(), yaml_path.display());
 
-    // 2. Generate Rust source from YAML
-    let manifest = WorkflowManifest::from_yaml(&yaml_content)?;
+    if config.lang == "rust" {
+        generate_rust_project(project_dir, config, template, &yaml_content)?;
+    } else {
+        generate_sdk_project(project_dir, config, template)?;
+    }
+
+    // Generate README
+    let readme = generate_readme(config, template);
+    std::fs::write(project_dir.join("README.md"), &readme)
+        .map_err(|e| format!("Failed to write README: {}", e))?;
+    println!("  {} README.md", "DOC".green());
+
+    // Generate .gitignore
+    let gitignore = match config.lang.as_str() {
+        "python" => "target/\n*.wasm\nwasm-out/\n__pycache__/\n*.pyc\n.venv/\n",
+        "go" => "target/\n*.wasm\nwasm-out/\nvendor/\n",
+        "java" => "target/\n*.wasm\nwasm-out/\n*.class\nbuild/\n.gradle/\n",
+        "typescript" => "target/\n*.wasm\nwasm-out/\nnode_modules/\ndist/\n",
+        _ => "target/\n*.wasm\nwasm-out/\n",
+    };
+    std::fs::write(project_dir.join(".gitignore"), gitignore)
+        .map_err(|e| format!("Failed to write .gitignore: {}", e))?;
+
+    // Summary
+    println!();
+    println!(
+        "{} Project '{}' created! ({})",
+        "DONE".green().bold(),
+        config.name,
+        config.lang
+    );
+    println!();
+    println!("  Next steps:");
+    println!("    cd {}", config.name);
+    match config.lang.as_str() {
+        "rust" => {
+            println!("    vil viz app.vil.yaml --open           # visualize");
+            println!("    vil check app.vil.yaml                # validate");
+            println!("    vil compile --from yaml --input app.vil.yaml --release  # build");
+            println!("    vil run --file app.vil.yaml           # run");
+        }
+        "python" => {
+            let src = format!("app.vil.py");
+            println!("    vil compile --from python --input {} --output {}  # compile to native binary", src, config.name);
+            println!("    ./{}", config.name);
+        }
+        "go" => {
+            println!("    vil compile --from go --input main.go --output {}  # compile to native binary", config.name);
+            println!("    ./{}", config.name);
+        }
+        "java" => {
+            println!("    vil compile --from java --input App.java --output {}  # compile to native binary", config.name);
+            println!("    ./{}", config.name);
+        }
+        "typescript" => {
+            let src = format!("app.vil.ts");
+            println!("    vil compile --from typescript --input {} --output {}  # compile to native binary", src, config.name);
+            println!("    ./{}", config.name);
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn generate_rust_project(
+    project_dir: &Path,
+    config: &ProjectConfig,
+    template: &Template,
+    yaml_content: &str,
+) -> Result<(), String> {
+    let manifest = WorkflowManifest::from_yaml(yaml_content)?;
 
     let crate_prefix = if crate::sdk_manager::is_sdk_installed() {
         crate::sdk_manager::sdk_current_path()
@@ -272,7 +365,6 @@ fn generate_project(
         .map_err(|e| format!("Failed to write Cargo.toml: {}", e))?;
     println!("  {} Cargo.toml", "TOML".green());
 
-    // 3. Generate handler stubs
     if template.has_handler && !template.handler_name.is_empty() {
         let handler_content = generate_handler_stub(template.handler_name, config);
         let handler_path = project_dir.join(format!("src/handlers/{}.rs", template.handler_name));
@@ -290,48 +382,405 @@ fn generate_project(
         );
     }
 
-    // 4. Generate README
-    let readme = generate_readme(config, template);
-    std::fs::write(project_dir.join("README.md"), &readme)
-        .map_err(|e| format!("Failed to write README: {}", e))?;
-    println!("  {} README.md", "DOC".green());
+    Ok(())
+}
 
-    // 5. Generate .gitignore
-    std::fs::write(
-        project_dir.join(".gitignore"),
-        "target/\n*.wasm\nwasm-out/\n",
-    )
-    .map_err(|e| format!("Failed to write .gitignore: {}", e))?;
+fn generate_sdk_project(
+    project_dir: &Path,
+    config: &ProjectConfig,
+    template: &Template,
+) -> Result<(), String> {
+    let sdk_source = generate_sdk_source(config, template);
+    let (filename, lang_label) = match config.lang.as_str() {
+        "python" => ("app.vil.py", "PYTHON"),
+        "go" => ("main.go", "GO"),
+        "java" => ("App.java", "JAVA"),
+        "typescript" => ("app.vil.ts", "TS"),
+        _ => return Err(format!("Unsupported SDK language: {}", config.lang)),
+    };
 
-    // Summary
-    println!();
-    println!(
-        "{} Project '{}' created!",
-        "DONE".green().bold(),
-        config.name
-    );
-    println!();
-    println!("  Next steps:");
-    println!("    cd {}", config.name);
-    println!("    vil viz app.vil.yaml --open           # visualize");
-    println!("    vil check app.vil.yaml                # validate");
-    println!("    vil compile --from yaml --input app.vil.yaml --release  # build");
-    println!("    vil run --file app.vil.yaml           # run");
+    std::fs::write(project_dir.join(filename), &sdk_source)
+        .map_err(|e| format!("Failed to write {}: {}", filename, e))?;
+    println!("  {} {} (VIL SDK pipeline definition)", lang_label.green(), filename);
+
+    // Language-specific project files
+    match config.lang.as_str() {
+        "python" => {
+            std::fs::write(
+                project_dir.join("requirements.txt"),
+                "vil-sdk>=1.0.0\n",
+            )
+            .map_err(|e| format!("Failed to write requirements.txt: {}", e))?;
+            println!("  {} requirements.txt", "PIP".green());
+        }
+        "go" => {
+            let go_mod = format!(
+                "module {}\n\ngo 1.21\n\nrequire github.com/OceanOS-id/vil-sdk-go v1.0.0\n",
+                config.name
+            );
+            std::fs::write(project_dir.join("go.mod"), &go_mod)
+                .map_err(|e| format!("Failed to write go.mod: {}", e))?;
+            println!("  {} go.mod", "GO".green());
+        }
+        "java" => {
+            let pom = generate_java_pom(config);
+            std::fs::write(project_dir.join("pom.xml"), &pom)
+                .map_err(|e| format!("Failed to write pom.xml: {}", e))?;
+            println!("  {} pom.xml", "MAVEN".green());
+        }
+        "typescript" => {
+            let pkg = format!(
+                r#"{{
+  "name": "{}",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {{
+    "@vastar/vil-sdk": "^1.0.0"
+  }}
+}}
+"#,
+                config.name
+            );
+            std::fs::write(project_dir.join("package.json"), &pkg)
+                .map_err(|e| format!("Failed to write package.json: {}", e))?;
+            println!("  {} package.json", "NPM".green());
+        }
+        _ => {}
+    }
 
     Ok(())
+}
+
+fn generate_sdk_source(config: &ProjectConfig, template: &Template) -> String {
+    match config.lang.as_str() {
+        "python" => generate_python_sdk(config, template),
+        "go" => generate_go_sdk(config, template),
+        "java" => generate_java_sdk(config, template),
+        "typescript" => generate_ts_sdk(config, template),
+        _ => String::new(),
+    }
+}
+
+fn generate_python_sdk(config: &ProjectConfig, template: &Template) -> String {
+    let steps = sdk_steps_for_template(template.id, "python");
+    format!(
+        r#"# {name} — VIL SDK Pipeline ({tmpl_title})
+# Generated by: vil init {name} --lang python --template {tmpl_id}
+#
+# Compile: vil compile --from python --input app.vil.py --output {name}
+# Run:     ./{name}
+
+from vil_sdk import pipeline, http_trigger{imports}
+
+p = pipeline("{name}")
+p.trigger(http_trigger(port={port}, path="/api/{path}"{response_mode}))
+{steps}
+"#,
+        name = config.name,
+        tmpl_title = template.title,
+        tmpl_id = template.id,
+        port = config.port,
+        path = sdk_default_path(template.id),
+        response_mode = sdk_response_mode(template.id, "python"),
+        imports = sdk_imports(template.id, "python"),
+        steps = steps,
+    )
+}
+
+fn generate_go_sdk(config: &ProjectConfig, template: &Template) -> String {
+    let steps = sdk_steps_for_template(template.id, "go");
+    format!(
+        r#"// {name} — VIL SDK Pipeline ({tmpl_title})
+// Generated by: vil init {name} --lang go --template {tmpl_id}
+//
+// Compile: vil compile --from go --input main.go --output {name}
+// Run:     ./{name}
+
+package main
+
+import vil "github.com/OceanOS-id/vil-sdk-go"
+
+func main() {{
+	p := vil.NewPipeline("{name}")
+	p.Trigger(vil.HTTPTrigger{{Port: {port}, Path: "/api/{path}"{response_mode}}})
+{steps}
+}}
+"#,
+        name = config.name,
+        tmpl_title = template.title,
+        tmpl_id = template.id,
+        port = config.port,
+        path = sdk_default_path(template.id),
+        response_mode = sdk_response_mode(template.id, "go"),
+        steps = steps,
+    )
+}
+
+fn generate_java_sdk(config: &ProjectConfig, template: &Template) -> String {
+    let class_name = config
+        .name
+        .chars()
+        .enumerate()
+        .map(|(i, c)| {
+            if i == 0 || (i > 0 && config.name.as_bytes()[i - 1] == b'-') {
+                c.to_uppercase().next().unwrap_or(c)
+            } else if c == '-' {
+                ' '
+            } else {
+                c
+            }
+        })
+        .filter(|c| *c != ' ')
+        .collect::<String>();
+    let steps = sdk_steps_for_template(template.id, "java");
+    format!(
+        r#"// {name} — VIL SDK Pipeline ({tmpl_title})
+// Generated by: vil init {name} --lang java --template {tmpl_id}
+//
+// Compile: vil compile --from java --input App.java --output {name}
+// Run:     ./{name}
+
+import id.vastar.vil.sdk.*;
+
+public class App {{
+    public static void main(String[] args) {{
+        var p = VilPipeline.create("{name}");
+        p.trigger(HTTPTrigger.builder().port({port}).path("/api/{path}"){response_mode}.build());
+{steps}
+    }}
+}}
+"#,
+        name = config.name,
+        tmpl_title = template.title,
+        tmpl_id = template.id,
+        port = config.port,
+        path = sdk_default_path(template.id),
+        response_mode = sdk_response_mode(template.id, "java"),
+        steps = steps,
+    )
+}
+
+fn generate_ts_sdk(config: &ProjectConfig, template: &Template) -> String {
+    let steps = sdk_steps_for_template(template.id, "typescript");
+    format!(
+        r#"// {name} — VIL SDK Pipeline ({tmpl_title})
+// Generated by: vil init {name} --lang typescript --template {tmpl_id}
+//
+// Compile: vil compile --from typescript --input app.vil.ts --output {name}
+// Run:     ./{name}
+
+import {{ pipeline, httpTrigger{imports} }} from '@vastar/vil-sdk';
+
+const p = pipeline('{name}');
+p.trigger(httpTrigger({{ port: {port}, path: '/api/{path}'{response_mode} }}));
+{steps}
+"#,
+        name = config.name,
+        tmpl_title = template.title,
+        tmpl_id = template.id,
+        port = config.port,
+        path = sdk_default_path(template.id),
+        response_mode = sdk_response_mode(template.id, "typescript"),
+        imports = sdk_imports(template.id, "typescript"),
+        steps = steps,
+    )
+}
+
+fn sdk_default_path(template_id: &str) -> &str {
+    match template_id {
+        "ai-gateway" => "chat",
+        "rest-crud" => "items",
+        "multi-model-router" => "chat",
+        "rag-pipeline" => "ask",
+        "websocket-chat" => "ws",
+        "wasm-faas" => "invoke",
+        "agent" => "agent",
+        _ => "trigger",
+    }
+}
+
+fn sdk_response_mode(template_id: &str, lang: &str) -> String {
+    let needs_sse = matches!(template_id, "ai-gateway" | "multi-model-router");
+    if !needs_sse {
+        return String::new();
+    }
+    match lang {
+        "python" => ", response_mode=\"sse\"".into(),
+        "go" => ", ResponseMode: \"sse\"".into(),
+        "java" => ".responseMode(\"sse\")".into(),
+        "typescript" => ", responseMode: 'sse'".into(),
+        _ => String::new(),
+    }
+}
+
+fn sdk_imports(template_id: &str, lang: &str) -> String {
+    match lang {
+        "python" => {
+            let mut imps = Vec::new();
+            match template_id {
+                "ai-gateway" => imps.extend(["llm_call", "respond"]),
+                "rest-crud" => imps.extend(["crud_handler", "respond"]),
+                "multi-model-router" => imps.extend(["model_router", "respond"]),
+                "rag-pipeline" => imps.extend(["rag_search", "llm_call", "respond"]),
+                "websocket-chat" => imps.extend(["websocket_handler"]),
+                "wasm-faas" => imps.extend(["wasm_function", "respond"]),
+                "agent" => imps.extend(["react_agent", "respond"]),
+                _ => imps.push("respond"),
+            }
+            if imps.is_empty() {
+                String::new()
+            } else {
+                format!(", {}", imps.join(", "))
+            }
+        }
+        "typescript" => {
+            let mut imps = Vec::new();
+            match template_id {
+                "ai-gateway" => imps.extend(["llmCall", "respond"]),
+                "rest-crud" => imps.extend(["crudHandler", "respond"]),
+                "multi-model-router" => imps.extend(["modelRouter", "respond"]),
+                "rag-pipeline" => imps.extend(["ragSearch", "llmCall", "respond"]),
+                "websocket-chat" => imps.extend(["websocketHandler"]),
+                "wasm-faas" => imps.extend(["wasmFunction", "respond"]),
+                "agent" => imps.extend(["reactAgent", "respond"]),
+                _ => imps.push("respond"),
+            }
+            if imps.is_empty() {
+                String::new()
+            } else {
+                format!(", {}", imps.join(", "))
+            }
+        }
+        _ => String::new(),
+    }
+}
+
+fn sdk_steps_for_template(template_id: &str, lang: &str) -> String {
+    match (template_id, lang) {
+        // ── Python ──
+        ("ai-gateway", "python") => r#"p.step(llm_call(model="gpt-4", temperature=0.7))
+p.step(respond(format="sse"))"#.into(),
+        ("rest-crud", "python") => r#"p.step(crud_handler(table="items", db="postgres://localhost/mydb"))
+p.step(respond(format="json"))"#.into(),
+        ("multi-model-router", "python") => r#"p.step(model_router(routes={
+    "gpt-4": "https://api.openai.com/v1/chat/completions",
+    "claude": "https://api.anthropic.com/v1/messages",
+    "llama": "http://localhost:11434/api/chat",
+}))
+p.step(respond(format="sse"))"#.into(),
+        ("rag-pipeline", "python") => r#"p.step(rag_search(collection="docs", top_k=5))
+p.step(llm_call(model="gpt-4", temperature=0.3, system="Answer using the provided context."))
+p.step(respond(format="json"))"#.into(),
+        ("websocket-chat", "python") => r#"p.step(websocket_handler(broadcast=True))"#.into(),
+        ("wasm-faas", "python") => r#"p.step(wasm_function(path="./functions/handler.wasm", memory_limit=64*1024*1024))
+p.step(respond(format="json"))"#.into(),
+        ("agent", "python") => r#"p.step(react_agent(model="gpt-4", tools=["calculator", "http_fetch", "retrieval"], max_steps=10))
+p.step(respond(format="json"))"#.into(),
+        ("blank", "python") => r#"# Add your pipeline steps here
+p.step(respond(format="json"))"#.into(),
+
+        // ── Go ──
+        ("ai-gateway", "go") => "\tp.Step(vil.LLMCall{Model: \"gpt-4\", Temperature: 0.7})\n\tp.Step(vil.Respond{Format: \"sse\"})".into(),
+        ("rest-crud", "go") => "\tp.Step(vil.CRUDHandler{Table: \"items\", DB: \"postgres://localhost/mydb\"})\n\tp.Step(vil.Respond{Format: \"json\"})".into(),
+        ("multi-model-router", "go") => "\tp.Step(vil.ModelRouter{Routes: map[string]string{\n\t\t\"gpt-4\":  \"https://api.openai.com/v1/chat/completions\",\n\t\t\"claude\": \"https://api.anthropic.com/v1/messages\",\n\t\t\"llama\":  \"http://localhost:11434/api/chat\",\n\t}})\n\tp.Step(vil.Respond{Format: \"sse\"})".into(),
+        ("rag-pipeline", "go") => "\tp.Step(vil.RAGSearch{Collection: \"docs\", TopK: 5})\n\tp.Step(vil.LLMCall{Model: \"gpt-4\", Temperature: 0.3, System: \"Answer using the provided context.\"})\n\tp.Step(vil.Respond{Format: \"json\"})".into(),
+        ("websocket-chat", "go") => "\tp.Step(vil.WebSocketHandler{Broadcast: true})".into(),
+        ("wasm-faas", "go") => "\tp.Step(vil.WASMFunction{Path: \"./functions/handler.wasm\", MemoryLimit: 64 * 1024 * 1024})\n\tp.Step(vil.Respond{Format: \"json\"})".into(),
+        ("agent", "go") => "\tp.Step(vil.ReactAgent{Model: \"gpt-4\", Tools: []string{\"calculator\", \"http_fetch\", \"retrieval\"}, MaxSteps: 10})\n\tp.Step(vil.Respond{Format: \"json\"})".into(),
+        ("blank", "go") => "\t// Add your pipeline steps here\n\tp.Step(vil.Respond{Format: \"json\"})".into(),
+
+        // ── Java ──
+        ("ai-gateway", "java") => "        p.step(LLMCall.builder().model(\"gpt-4\").temperature(0.7).build());\n        p.step(Respond.builder().format(\"sse\").build());".into(),
+        ("rest-crud", "java") => "        p.step(CRUDHandler.builder().table(\"items\").db(\"postgres://localhost/mydb\").build());\n        p.step(Respond.builder().format(\"json\").build());".into(),
+        ("multi-model-router", "java") => "        p.step(ModelRouter.builder()\n            .route(\"gpt-4\", \"https://api.openai.com/v1/chat/completions\")\n            .route(\"claude\", \"https://api.anthropic.com/v1/messages\")\n            .route(\"llama\", \"http://localhost:11434/api/chat\")\n            .build());\n        p.step(Respond.builder().format(\"sse\").build());".into(),
+        ("rag-pipeline", "java") => "        p.step(RAGSearch.builder().collection(\"docs\").topK(5).build());\n        p.step(LLMCall.builder().model(\"gpt-4\").temperature(0.3).system(\"Answer using the provided context.\").build());\n        p.step(Respond.builder().format(\"json\").build());".into(),
+        ("websocket-chat", "java") => "        p.step(WebSocketHandler.builder().broadcast(true).build());".into(),
+        ("wasm-faas", "java") => "        p.step(WASMFunction.builder().path(\"./functions/handler.wasm\").memoryLimit(64 * 1024 * 1024).build());\n        p.step(Respond.builder().format(\"json\").build());".into(),
+        ("agent", "java") => "        p.step(ReactAgent.builder().model(\"gpt-4\").tools(\"calculator\", \"http_fetch\", \"retrieval\").maxSteps(10).build());\n        p.step(Respond.builder().format(\"json\").build());".into(),
+        ("blank", "java") => "        // Add your pipeline steps here\n        p.step(Respond.builder().format(\"json\").build());".into(),
+
+        // ── TypeScript ──
+        ("ai-gateway", "typescript") => "p.step(llmCall({ model: 'gpt-4', temperature: 0.7 }));\np.step(respond({ format: 'sse' }));".into(),
+        ("rest-crud", "typescript") => "p.step(crudHandler({ table: 'items', db: 'postgres://localhost/mydb' }));\np.step(respond({ format: 'json' }));".into(),
+        ("multi-model-router", "typescript") => "p.step(modelRouter({\n  routes: {\n    'gpt-4': 'https://api.openai.com/v1/chat/completions',\n    'claude': 'https://api.anthropic.com/v1/messages',\n    'llama': 'http://localhost:11434/api/chat',\n  }\n}));\np.step(respond({ format: 'sse' }));".into(),
+        ("rag-pipeline", "typescript") => "p.step(ragSearch({ collection: 'docs', topK: 5 }));\np.step(llmCall({ model: 'gpt-4', temperature: 0.3, system: 'Answer using the provided context.' }));\np.step(respond({ format: 'json' }));".into(),
+        ("websocket-chat", "typescript") => "p.step(websocketHandler({ broadcast: true }));".into(),
+        ("wasm-faas", "typescript") => "p.step(wasmFunction({ path: './functions/handler.wasm', memoryLimit: 64 * 1024 * 1024 }));\np.step(respond({ format: 'json' }));".into(),
+        ("agent", "typescript") => "p.step(reactAgent({ model: 'gpt-4', tools: ['calculator', 'http_fetch', 'retrieval'], maxSteps: 10 }));\np.step(respond({ format: 'json' }));".into(),
+        ("blank", "typescript") => "// Add your pipeline steps here\np.step(respond({ format: 'json' }));".into(),
+
+        _ => "// TODO: add pipeline steps".into(),
+    }
+}
+
+fn generate_java_pom(config: &ProjectConfig) -> String {
+    format!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>id.vastar.vil</groupId>
+    <artifactId>{name}</artifactId>
+    <version>1.0.0</version>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>id.vastar</groupId>
+            <artifactId>vil-sdk</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+    </dependencies>
+</project>
+"#,
+        name = config.name
+    )
+}
+
+fn validate_lang(lang: &str) -> Result<String, String> {
+    let normalized = lang.to_lowercase();
+    let valid = match normalized.as_str() {
+        "rust" | "rs" => "rust",
+        "python" | "py" => "python",
+        "go" | "golang" => "go",
+        "java" => "java",
+        "typescript" | "ts" => "typescript",
+        _ => {
+            return Err(format!(
+                "Unsupported language '{}'. Available: rust, python, go, java, typescript",
+                lang
+            ))
+        }
+    };
+    Ok(valid.to_string())
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Wizard
 // ═══════════════════════════════════════════════════════════════════════════════
 
-fn run_wizard(args: &InitArgs) -> Result<(String, String, String, u16, String), String> {
+fn run_wizard(args: &InitArgs) -> Result<(String, String, String, String, u16, String), String> {
     // Project name
     let name = if let Some(n) = &args.name {
         n.clone()
     } else {
         prompt("Project name", "my-vil-app")?
     };
+
+    // Language selection
+    println!();
+    println!("  {} Available languages:", "LANGUAGE".cyan());
+    for (i, (id, desc)) in SUPPORTED_LANGS.iter().enumerate() {
+        println!("    {}. {:15} {}", i + 1, id.green(), desc);
+    }
+    println!();
+    let lang_input = if let Some(l) = &args.lang {
+        l.clone()
+    } else {
+        prompt("Language (number or name)", "1")?
+    };
+    let lang = resolve_lang(&lang_input)?;
 
     // Template selection
     println!();
@@ -345,17 +794,21 @@ fn run_wizard(args: &InitArgs) -> Result<(String, String, String, u16, String), 
 
     let template = find_template(&template_id)?;
 
-    // Token type
-    println!();
-    println!("  {} Token types:", "TOKEN".cyan());
-    println!(
-        "    1. {} — multi-pipeline, zero-copy SHM (recommended)",
-        "shm".green()
-    );
-    println!("    2. {} — single pipeline, simpler", "generic".green());
-    let token_input = prompt("Token", "shm")?;
-    let token = if token_input == "2" || token_input == "generic" {
-        "generic".into()
+    // Token type (only for Rust)
+    let token = if lang == "rust" {
+        println!();
+        println!("  {} Token types:", "TOKEN".cyan());
+        println!(
+            "    1. {} — multi-pipeline, zero-copy SHM (recommended)",
+            "shm".green()
+        );
+        println!("    2. {} — single pipeline, simpler", "generic".green());
+        let token_input = prompt("Token", "shm")?;
+        if token_input == "2" || token_input == "generic" {
+            "generic".into()
+        } else {
+            "shm".into()
+        }
     } else {
         "shm".into()
     };
@@ -371,7 +824,18 @@ fn run_wizard(args: &InitArgs) -> Result<(String, String, String, u16, String), 
         String::new()
     };
 
-    Ok((name, template_id, token, port, upstream))
+    Ok((name, template_id, lang, token, port, upstream))
+}
+
+fn resolve_lang(input: &str) -> Result<String, String> {
+    // Try as number
+    if let Ok(n) = input.parse::<usize>() {
+        if n >= 1 && n <= SUPPORTED_LANGS.len() {
+            return Ok(SUPPORTED_LANGS[n - 1].0.to_string());
+        }
+    }
+    // Try as name
+    validate_lang(input)
 }
 
 fn prompt(label: &str, default: &str) -> Result<String, String> {
@@ -936,16 +1400,55 @@ pub async fn {name}(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 fn generate_readme(config: &ProjectConfig, template: &Template) -> String {
-    format!(
-        r#"# {name}
+    let lang_flag = if config.lang != "rust" {
+        format!(" --lang {}", config.lang)
+    } else {
+        String::new()
+    };
 
-{desc}
+    let quick_start = match config.lang.as_str() {
+        "python" => format!(
+            r#"```bash
+# Compile to native binary
+vil compile --from python --input app.vil.py --output {name}
 
-Generated by `vil init {name} --template {tmpl}`.
+# Run
+./{name}
+```"#,
+            name = config.name
+        ),
+        "go" => format!(
+            r#"```bash
+# Compile to native binary
+vil compile --from go --input main.go --output {name}
 
-## Quick Start
+# Run
+./{name}
+```"#,
+            name = config.name
+        ),
+        "java" => format!(
+            r#"```bash
+# Compile to native binary
+vil compile --from java --input App.java --output {name}
 
-```bash
+# Run
+./{name}
+```"#,
+            name = config.name
+        ),
+        "typescript" => format!(
+            r#"```bash
+# Compile to native binary
+vil compile --from typescript --input app.vil.ts --output {name}
+
+# Run
+./{name}
+```"#,
+            name = config.name
+        ),
+        _ => format!(
+            r#"```bash
 # Visualize
 vil viz app.vil.yaml --open
 
@@ -957,7 +1460,75 @@ vil compile --from yaml --input app.vil.yaml --release
 
 # Run
 vil run --file app.vil.yaml
-```
+```"#
+        ),
+    };
+
+    let structure = match config.lang.as_str() {
+        "python" => format!(
+            r#"```
+{name}/
+├── app.vil.yaml          <- YAML manifest
+├── app.vil.py            <- Python SDK pipeline (edit this)
+├── requirements.txt
+└── README.md
+```"#,
+            name = config.name
+        ),
+        "go" => format!(
+            r#"```
+{name}/
+├── app.vil.yaml          <- YAML manifest
+├── main.go               <- Go SDK pipeline (edit this)
+├── go.mod
+└── README.md
+```"#,
+            name = config.name
+        ),
+        "java" => format!(
+            r#"```
+{name}/
+├── app.vil.yaml          <- YAML manifest
+├── App.java              <- Java SDK pipeline (edit this)
+├── pom.xml
+└── README.md
+```"#,
+            name = config.name
+        ),
+        "typescript" => format!(
+            r#"```
+{name}/
+├── app.vil.yaml          <- YAML manifest
+├── app.vil.ts            <- TypeScript SDK pipeline (edit this)
+├── package.json
+└── README.md
+```"#,
+            name = config.name
+        ),
+        _ => format!(
+            r#"```
+{name}/
+├── app.vil.yaml          <- application manifest (edit this)
+├── src/
+│   ├── main.rs             <- auto-generated (don't edit)
+│   └── handlers/           <- your custom logic (edit these)
+├── Cargo.toml              <- auto-generated
+└── README.md
+```"#,
+            name = config.name
+        ),
+    };
+
+    format!(
+        r#"# {name}
+
+{desc}
+
+Generated by `vil init {name}{lang_flag} --template {tmpl}`.
+
+## Quick Start
+
+{quick_start}
 
 ## Test
 
@@ -969,29 +1540,14 @@ curl -N -X POST http://localhost:{port}/trigger \
 
 ## Project Structure
 
-```
-{name}/
-├── app.vil.yaml          <- application manifest (edit this)
-├── src/
-│   ├── main.rs             <- auto-generated (don't edit)
-│   └── handlers/           <- your custom logic (edit these)
-├── Cargo.toml              <- auto-generated
-└── README.md
-```
-
-## Regenerate Rust Code
-
-After editing `app.vil.yaml`:
-
-```bash
-vil compile --from yaml --input app.vil.yaml --save-source
-```
-
-This regenerates `src/main.rs` and `Cargo.toml`. Your handler files in `src/handlers/` are NOT overwritten.
+{structure}
 "#,
         name = config.name,
         desc = template.description,
         tmpl = template.id,
-        port = config.port
+        lang_flag = lang_flag,
+        port = config.port,
+        quick_start = quick_start,
+        structure = structure,
     )
 }

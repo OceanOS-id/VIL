@@ -176,6 +176,15 @@ impl VastarRuntimeWorld {
             );
         }
 
+        {
+            use vil_log::{system_log, types::SystemPayload, dict::register_str};
+            system_log!(Info, SystemPayload {
+                event_type: 4, // startup / registration
+                ..SystemPayload::default()
+            });
+            let _ = register_str(spec.name);
+        }
+
         Ok(ProcessHandle {
             process_id,
             spec,
@@ -588,6 +597,13 @@ impl VastarRuntimeWorld {
     }
 
     pub fn crash_process(&self, process_id: ProcessId) -> CleanupReport {
+        {
+            use vil_log::{system_log, types::SystemPayload};
+            system_log!(Warn, SystemPayload {
+                event_type: 3, // panic / crash
+                ..SystemPayload::default()
+            });
+        }
         self.supervisor().crash_process(process_id)
     }
 

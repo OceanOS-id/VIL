@@ -29,6 +29,6 @@ pub use capability::DbCapability;
 pub use portability::PortabilityTier;
 pub use cache_policy::CachePolicy;
 pub use entity::VilEntityMeta;
-pub use provider_trait::{DbProvider, DbQueryExecutor, ToSqlValue};
+pub use provider_trait::{DbProvider, DbQueryExecutor, ProviderExecutor, ToSqlValue};
 pub use provisioning::DatasourceRegistry;
 pub use error::{DbError, DbResult};

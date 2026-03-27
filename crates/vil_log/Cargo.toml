@@ -1,0 +1,44 @@
+[package]
+name = "vil_log"
+description = "VIL Semantic Log System — zero-copy, non-blocking, structured logging with pluggable drains"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+rmp-serde = "1.3"
+chrono = { version = "0.4", features = ["serde"] }
+fxhash = "0.2"
+async-trait = "0.1"
+
+# Optional drain backends
+clickhouse = { version = "0.12", features = ["inserter"], optional = true }
+async-nats = { version = "0.38", optional = true }
+
+[features]
+default = []
+clickhouse-drain = ["dep:clickhouse"]
+nats-drain = ["dep:async-nats"]
+all-drains = ["clickhouse-drain", "nats-drain"]
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tracing-appender = "0.2"
+
+[[bench]]
+name = "baseline_tracing"
+harness = false
+
+[[bench]]
+name = "vil_log_emit"
+harness = false
+
+[[bench]]
+name = "comparison"
+harness = false

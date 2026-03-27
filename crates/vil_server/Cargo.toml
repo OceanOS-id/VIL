@@ -24,6 +24,7 @@ vil_sdk = { path = "../vil_sdk" }
 
 # VIL observability
 vil_obs = { path = "../vil_obs" }
+vil_log = { path = "../vil_log" }
 
 # Re-export essentials
 axum = { version = "0.7", features = ["macros"] }

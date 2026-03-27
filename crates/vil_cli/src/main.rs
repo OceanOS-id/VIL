@@ -183,6 +183,10 @@ enum Commands {
         #[arg(short, long)]
         template: Option<String>,
 
+        /// Language: rust (default), python, go, java, typescript
+        #[arg(short, long)]
+        lang: Option<String>,
+
         /// Token type: shm (multi-pipeline, default) or generic (single pipeline)
         #[arg(long)]
         token: Option<String>,
@@ -689,10 +693,11 @@ fn main() {
                 "✓".green().bold(), project_name);
         }
 
-        Commands::Init { name, template, token, port, upstream, wizard } => {
+        Commands::Init { name, template, lang, token, port, upstream, wizard } => {
             if let Err(e) = project_init::run_init(project_init::InitArgs {
                 name: name.clone(),
                 template: template.clone(),
+                lang: lang.clone(),
                 token: token.clone(),
                 port: *port,
                 upstream: upstream.clone(),

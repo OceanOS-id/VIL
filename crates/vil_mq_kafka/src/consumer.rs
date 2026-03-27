@@ -106,12 +106,29 @@ impl KafkaConsumer {
             while running_clone.load(Ordering::Relaxed) {
                 match stream.next().await {
                     Some(Ok(borrowed_msg)) => {
+                        let topic_str = RdMessage::topic(&borrowed_msg).to_string();
+                        let payload_bytes = RdMessage::payload(&borrowed_msg).map(|p| Bytes::copy_from_slice(p)).unwrap_or_default();
+                        let payload_len = payload_bytes.len();
+                        let partition = RdMessage::partition(&borrowed_msg);
+                        let offset = RdMessage::offset(&borrowed_msg);
+                        {
+                            use vil_log::{mq_log, types::MqPayload};
+                            mq_log!(Info, MqPayload {
+                                broker_hash: register_str("kafka"),
+                                topic_hash: register_str(&topic_str),
+                                message_bytes: payload_len as u32,
+                                op_type: 1,
+                                partition: partition.clamp(0, 255) as u8,
+                                offset: offset.max(0) as u64,
+                                ..Default::default()
+                            });
+                        }
                         let kafka_msg = KafkaMessage {
-                            topic: RdMessage::topic(&borrowed_msg).to_string(),
-                            partition: RdMessage::partition(&borrowed_msg),
-                            offset: RdMessage::offset(&borrowed_msg),
+                            topic: topic_str,
+                            partition,
+                            offset,
                             key: RdMessage::key(&borrowed_msg).map(|k| String::from_utf8_lossy(k).to_string()),
-                            payload: RdMessage::payload(&borrowed_msg).map(|p| Bytes::copy_from_slice(p)).unwrap_or_default(),
+                            payload: payload_bytes,
                         };
                         if tx.send(kafka_msg).await.is_err() {
                             break; // receiver dropped

@@ -60,6 +60,7 @@ impl AnthropicProvider {
 #[async_trait]
 impl LlmProvider for AnthropicProvider {
     async fn chat(&self, messages: &[ChatMessage]) -> Result<ChatResponse, LlmError> {
+        let __ai_start = std::time::Instant::now();
         // Anthropic requires system message separate from messages array.
         // Extract system messages and convert remaining to Anthropic format.
         let mut system_text = String::new();
@@ -177,6 +178,29 @@ impl LlmProvider for AnthropicProvider {
             completion_tokens: u["output_tokens"].as_u64().unwrap_or(0) as u32,
             total_tokens: (u["input_tokens"].as_u64().unwrap_or(0) + u["output_tokens"].as_u64().unwrap_or(0)) as u32,
         });
+
+        {
+            use vil_log::{ai_log, types::AiPayload};
+            let __elapsed = __ai_start.elapsed();
+            let (input_tokens, output_tokens) = usage.as_ref()
+                .map(|u| (u.prompt_tokens, u.completion_tokens))
+                .unwrap_or((0, 0));
+            ai_log!(Info, AiPayload {
+                model_hash: vil_log::dict::register_str(self.model()),
+                provider_hash: vil_log::dict::register_str(self.provider_name()),
+                input_tokens,
+                output_tokens,
+                latency_us: __elapsed.as_micros() as u32,
+                cost_micro_usd: 0,
+                provider_status: 200,
+                op_type: 0,
+                streaming: 0,
+                retries: 0,
+                cache_hit: 0,
+                _pad: [0; 2],
+                meta_bytes: [0; 160],
+            });
+        }
 
         Ok(ChatResponse {
             content,

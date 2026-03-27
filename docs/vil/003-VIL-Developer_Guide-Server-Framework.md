@@ -1,6 +1,6 @@
 # VIL Developer Guide — Part 3: Server Framework
 
-**Series:** VIL Developer Guide (3 of 6)
+**Series:** VIL Developer Guide (3 of 7)
 **Previous:** [Part 2 — Semantic Types & Memory Model](./002-VIL-Developer_Guide-Semantic-Types.md)
 **Next:** [Part 4 — Pipeline & HTTP Streaming](./004-VIL-Developer_Guide-Pipeline-Streaming.md)
 **Last updated:** 2026-03-26

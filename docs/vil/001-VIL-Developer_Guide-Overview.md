@@ -1,6 +1,6 @@
 # VIL Developer Guide — Part 1: Overview & Architecture
 
-**Series:** VIL Developer Guide (1 of 6)
+**Series:** VIL Developer Guide (1 of 7)
 **Crates:** 100+ | **Tests:** 1,425+ | **Protocols:** 7
 **License:** Apache-2.0
 **GitHub:** https://github.com/OceanOS-id/VIL

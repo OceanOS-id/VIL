@@ -28,6 +28,7 @@
 use dashmap::DashMap;
 use std::sync::Arc;
 
+use vil_log::{system_log, types::SystemPayload};
 use vil_queue::QueueBackend;
 use vil_registry::Registry;
 use vil_shm::SharedStore;
@@ -100,6 +101,11 @@ impl Supervisor {
     /// 3. Remove from shared store
     /// 4. Drain invalid descriptors from queues
     pub fn shutdown_process(&self, process_id: ProcessId) -> CleanupReport {
+        system_log!(Info, SystemPayload {
+            event_type: 5, // shutdown
+            exit_code: 0,
+            ..SystemPayload::default()
+        });
         self.registry.mark_process_dead(process_id);
         self.cleanup_for_process(process_id)
     }
@@ -109,6 +115,11 @@ impl Supervisor {
     /// Same as shutdown but also advances epoch to mark
     /// the previous generation as invalid.
     pub fn crash_process(&self, process_id: ProcessId) -> CleanupReport {
+        system_log!(Warn, SystemPayload {
+            event_type: 3, // panic / crash
+            exit_code: 1,
+            ..SystemPayload::default()
+        });
         self.registry.mark_process_dead(process_id);
         let report = self.cleanup_for_process(process_id);
         self.registry.advance_epoch(process_id);

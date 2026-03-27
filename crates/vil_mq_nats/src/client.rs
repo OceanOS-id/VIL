@@ -23,9 +23,24 @@ pub struct NatsSubscription {
 
 impl NatsSubscription {
     pub async fn next(&mut self) -> Option<NatsMessage> {
+        let __mq_start = std::time::Instant::now();
         let msg = self.inner.next().await?;
+        let __elapsed = __mq_start.elapsed();
+        let payload_len = msg.payload.len();
+        let subject_str = msg.subject.to_string();
+        {
+            use vil_log::{mq_log, types::MqPayload};
+            mq_log!(Info, MqPayload {
+                broker_hash: register_str("nats"),
+                topic_hash: register_str(&subject_str),
+                message_bytes: payload_len as u32,
+                e2e_latency_us: __elapsed.as_micros() as u32,
+                op_type: 1,
+                ..Default::default()
+            });
+        }
         Some(NatsMessage {
-            subject: msg.subject.to_string(),
+            subject: subject_str,
             payload: msg.payload.clone(),
             reply_to: msg.reply.as_ref().map(|s| s.to_string()),
         })
@@ -82,11 +97,26 @@ impl NatsClient {
         if !self.connected.load(Ordering::Relaxed) {
             return Err("NATS not connected".into());
         }
-        self.client.publish(subject.to_string(), Bytes::copy_from_slice(payload)).await
-            .map_err(|e| format!("NATS publish failed: {}", e))?;
-        self.published.fetch_add(1, Ordering::Relaxed);
+        let __mq_start = std::time::Instant::now();
+        let result = self.client.publish(subject.to_string(), Bytes::copy_from_slice(payload)).await
+            .map_err(|e| format!("NATS publish failed: {}", e));
+        if result.is_ok() {
+            self.published.fetch_add(1, Ordering::Relaxed);
+        }
+        let __elapsed = __mq_start.elapsed();
+        {
+            use vil_log::{mq_log, types::MqPayload};
+            mq_log!(Info, MqPayload {
+                broker_hash: register_str("nats"),
+                topic_hash: register_str(subject),
+                message_bytes: payload.len() as u32,
+                e2e_latency_us: __elapsed.as_micros() as u32,
+                op_type: 0,
+                ..Default::default()
+            });
+        }
         tracing::debug!(subject = %subject, size = payload.len(), "nats publish");
-        Ok(())
+        result
     }
 
     /// Subscribe to a subject (supports wildcards: *, >).

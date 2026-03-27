@@ -195,10 +195,68 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         ReturnType::Default => false,
     };
 
+    // Inline access log emission block — avoids depending on macro_export path resolution.
+    // Uses ::vil_server::__private::vil_log for all types, which is re-exported from vil_server.
+    let emit_access_log = quote! {
+        {
+            use ::vil_server::__private::vil_log::emit::ring::{try_global_ring, level_enabled};
+            use ::vil_server::__private::vil_log::types::{
+                LogSlot, VilLogHeader, LogLevel, LogCategory, AccessPayload,
+            };
+            use ::vil_server::__private::vil_log::dict::register_str;
+
+            if level_enabled(LogLevel::Info as u8) {
+                if let Some(__vil_ring) = try_global_ring() {
+                    let __vil_ts = {
+                        use ::std::time::{SystemTime, UNIX_EPOCH};
+                        SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_nanos() as u64
+                    };
+
+                    let mut __vil_slot = LogSlot::default();
+                    __vil_slot.header = VilLogHeader {
+                        timestamp_ns: __vil_ts,
+                        level:        LogLevel::Info as u8,
+                        category:     LogCategory::Access as u8,
+                        version:      1,
+                        service_hash: register_str(module_path!()),
+                        handler_hash: register_str(#name_str),
+                        process_id:   ::std::process::id() as u64,
+                        ..VilLogHeader::default()
+                    };
+
+                    let __vil_payload = AccessPayload {
+                        status_code:    __vil_status,
+                        duration_us:    __vil_elapsed.as_micros() as u32,
+                        route_hash:     register_str(#name_str),
+                        path_hash:      register_str(#name_str),
+                        session_id:     register_str(&__vil_rid.0) as u64,
+                        ..AccessPayload::default()
+                    };
+
+                    let __vil_payload_bytes = unsafe {
+                        ::std::slice::from_raw_parts(
+                            &__vil_payload as *const _ as *const u8,
+                            ::std::mem::size_of::<AccessPayload>().min(192),
+                        )
+                    };
+                    let __vil_copy_len = __vil_payload_bytes.len().min(192);
+                    __vil_slot.payload[..__vil_copy_len]
+                        .copy_from_slice(&__vil_payload_bytes[..__vil_copy_len]);
+
+                    let _ = __vil_ring.try_push(__vil_slot);
+                }
+            }
+        }
+    };
+
     let wrapper_body = if is_result {
         quote! {
             let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
-            match #inner_name(#(#param_names),*).await {
+            let __vil_start = ::std::time::Instant::now();
+            let __vil_resp = match #inner_name(#(#param_names),*).await {
                 Ok(data) => {
                     ::vil_server::__private::axum::response::IntoResponse::into_response(
                         ::vil_server::__private::response::VilResponse::ok(data)
@@ -208,15 +266,24 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
                     let vil_err: ::vil_server::__private::VilError = e.into();
                     ::vil_server::__private::axum::response::IntoResponse::into_response(vil_err)
                 }
-            }
+            };
+            let __vil_elapsed = __vil_start.elapsed();
+            let __vil_status = __vil_resp.status().as_u16();
+            #emit_access_log
+            __vil_resp
         }
     } else {
         quote! {
             let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
+            let __vil_start = ::std::time::Instant::now();
             let data = #inner_name(#(#param_names),*).await;
-            ::vil_server::__private::axum::response::IntoResponse::into_response(
+            let __vil_resp = ::vil_server::__private::axum::response::IntoResponse::into_response(
                 ::vil_server::__private::response::VilResponse::ok(data)
-            )
+            );
+            let __vil_elapsed = __vil_start.elapsed();
+            let __vil_status = __vil_resp.status().as_u16();
+            #emit_access_log
+            __vil_resp
         }
     };
 

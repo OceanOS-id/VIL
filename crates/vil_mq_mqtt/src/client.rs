@@ -75,11 +75,26 @@ impl MqttClient {
         if !self.connected.load(Ordering::Relaxed) {
             return Err("MQTT not connected".into());
         }
-        self.client.publish(topic, to_mqtt_qos(qos), false, payload).await
-            .map_err(|e| format!("MQTT publish failed: {}", e))?;
-        self.published.fetch_add(1, Ordering::Relaxed);
+        let __mq_start = std::time::Instant::now();
+        let result = self.client.publish(topic, to_mqtt_qos(qos), false, payload).await
+            .map_err(|e| format!("MQTT publish failed: {}", e));
+        if result.is_ok() {
+            self.published.fetch_add(1, Ordering::Relaxed);
+        }
+        let __elapsed = __mq_start.elapsed();
+        {
+            use vil_log::{mq_log, types::MqPayload};
+            mq_log!(Info, MqPayload {
+                broker_hash: register_str("mqtt"),
+                topic_hash: register_str(topic),
+                message_bytes: payload.len() as u32,
+                e2e_latency_us: __elapsed.as_micros() as u32,
+                op_type: 0,
+                ..Default::default()
+            });
+        }
         tracing::debug!(topic = %topic, qos = ?qos, size = payload.len(), "mqtt publish");
-        Ok(())
+        result
     }
 
     /// Subscribe to a topic pattern.

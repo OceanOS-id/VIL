@@ -82,13 +82,29 @@ pub struct JsConsumer {
 
 impl JsConsumer {
     pub async fn next(&mut self) -> Option<JsMessage> {
+        let __mq_start = std::time::Instant::now();
         let msg = self.inner.next().await?;
         match msg {
             Ok(msg) => {
                 self.messages_received.fetch_add(1, Ordering::Relaxed);
                 let sequence = msg.info().ok().map(|i| i.stream_sequence).unwrap_or(0);
+                let payload_len = msg.payload.len();
+                let subject_str = msg.subject.to_string();
+                let __elapsed = __mq_start.elapsed();
+                {
+                    use vil_log::{mq_log, types::MqPayload};
+                    mq_log!(Info, MqPayload {
+                        broker_hash: register_str("nats"),
+                        topic_hash: register_str(&subject_str),
+                        message_bytes: payload_len as u32,
+                        e2e_latency_us: __elapsed.as_micros() as u32,
+                        op_type: 1,
+                        offset: sequence,
+                        ..Default::default()
+                    });
+                }
                 Some(JsMessage {
-                    subject: msg.subject.to_string(),
+                    subject: subject_str,
                     payload: msg.payload.clone(),
                     stream: self.stream_name.clone(),
                     sequence,
@@ -186,11 +202,25 @@ impl JetStreamClient {
 
     /// Publish to a JetStream subject.
     pub async fn publish(&self, subject: &str, payload: &[u8]) -> Result<u64, String> {
+        let __mq_start = std::time::Instant::now();
         let ack = self.js.publish(subject.to_string(), Bytes::copy_from_slice(payload)).await
             .map_err(|e| format!("jetstream publish failed: {}", e))?;
         let ack = ack.await
             .map_err(|e| format!("jetstream publish ack failed: {}", e))?;
         let seq = ack.sequence;
+        let __elapsed = __mq_start.elapsed();
+        {
+            use vil_log::{mq_log, types::MqPayload};
+            mq_log!(Info, MqPayload {
+                broker_hash: register_str("nats"),
+                topic_hash: register_str(subject),
+                message_bytes: payload.len() as u32,
+                e2e_latency_us: __elapsed.as_micros() as u32,
+                op_type: 0,
+                offset: seq,
+                ..Default::default()
+            });
+        }
         tracing::debug!(subject = %subject, seq = seq, "jetstream publish");
         Ok(seq)
     }

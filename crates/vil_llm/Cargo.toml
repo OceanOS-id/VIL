@@ -10,6 +10,7 @@ vil_server_core = { path = "../vil_server_core" }
 vil_server = { path = "../vil_server" }
 vil_json = { path = "../vil_json" }
 vil_macros = { path = "../vil_macros" }
+vil_log = { workspace = true }
 
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

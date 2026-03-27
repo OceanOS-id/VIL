@@ -1,0 +1,13 @@
+[package]
+name = "example-505-villog-tracing-bridge"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_log            = { workspace = true }
+tokio              = { workspace = true }
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde_json         = { workspace = true }
+rmp-serde          = "1.3"
