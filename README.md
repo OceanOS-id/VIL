@@ -15,7 +15,7 @@
 <p align="center">
   <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License"></a>
   <img src="https://img.shields.io/badge/crates-130%2B-green" alt="Crates">
-  <img src="https://img.shields.io/badge/examples-71-orange" alt="Examples">
+  <img src="https://img.shields.io/badge/examples-83-orange" alt="Examples">
   <img src="https://img.shields.io/badge/tests-1425%2B-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/rust-1.93%2B-orange" alt="Rust">
 </p>
@@ -189,9 +189,9 @@ pipeline.source(url="http://ai-provider:4545/v1/chat", format="sse")
 | **Edge** | vil_edge_deploy | ARM64, ARMv7, RISC-V deployment profiles |
 | **Connector Macros** | vil_connector_macros | Lightweight #[connector_fault/event/state] for all connectors |
 
-**130+ crates** | **71 examples** | **9 SDK languages** | **6 Grafana dashboards**
+**130+ crates** | **83 examples** | **9 SDK languages** | **6 Grafana dashboards**
 
-## Examples (5 Tiers)
+## Examples (8 Tiers)
 
 | Tier | Count | Pattern | Highlights |
 |------|-------|---------|------------|
@@ -201,6 +201,9 @@ pipeline.source(url="http://ai-provider:4545/v1/chat", format="sse")
 | **RAG** (301-306) | 6 | VX_APP | Vector search, multi-source, hybrid, citation, guardrail |
 | **Agent** (401-406) | 6 | VX_APP | Calculator, HTTP fetch, file review, CSV, ReAct, handler+SHM |
 | **VIL Log** (501-509) | 9 | vil_log | Stdout, file, multi-drain, benchmark, tracing bridge, structured events, file drain bench, multi-thread, Phase 1 integration |
+| **Storage/DB** (601-604) | 4 | Connectors | S3 basic, Mongo CRUD, ClickHouse batch, Elastic search |
+| **MQ/Protocol** (701-704) | 4 | Connectors | RabbitMQ pubsub, SQS send/receive, SOAP client, Modbus read |
+| **Triggers** (801-804) | 4 | Triggers | Cron basic, filesystem watcher, webhook receiver, CDC postgres |
 
 ```bash
 # Run any example
@@ -237,7 +240,7 @@ cargo run --release -p vil-basic-credit-npl-filter
 | `#[connector_event]` | Ad-hoc structs | #[repr(C)], ≤192B, compile-time size guard |
 | `#[connector_state]` | Manual metrics | Zero-init state, atomic-ready counters |
 
-All 51 AI plugins + all 71 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
+All 51 AI plugins + all 83 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
 
 ## Documentation
 

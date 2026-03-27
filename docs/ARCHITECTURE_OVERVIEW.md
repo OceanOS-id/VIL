@@ -1,6 +1,6 @@
 # VIL Architecture Overview
 
-**130+ crates** | **71 examples** | **1,425+ tests** | **7 protocols** | **3 execution modes**
+**130+ crates** | **83 examples** | **1,425+ tests** | **7 protocols** | **3 execution modes**
 **License:** MIT OR Apache-2.0 | **Repository:** [github.com/OceanOS-id/VIL](https://github.com/OceanOS-id/VIL)
 
 ---
@@ -220,7 +220,7 @@ Full benchmark: [examples/BENCHMARK_REPORT.md](../examples/BENCHMARK_REPORT.md)
 | [vil-server Guide](./vil-server/vil-server-guide.md) | Server framework reference |
 | [API Reference](./vil-server/API-REFERENCE-SERVER.md) | Per-module API documentation |
 | [Quick Start](./QUICK_START.md) | Getting started |
-| [Examples](./EXAMPLES.md) | 71 runnable examples |
+| [Examples](./EXAMPLES.md) | 83 runnable examples |
 | [Changelog](./CHANGELOG.md) | Release history |
 
 ---
