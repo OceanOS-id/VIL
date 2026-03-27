@@ -1,6 +1,20 @@
-# VIL — Vastar Intermediate Language
+<p align="center">
+  <img src="docs/assets/vil-logo.svg" alt="VIL Logo" width="200"/>
+</p>
 
-A **process-oriented language and framework** hosted on Rust for building zero-copy, high-performance distributed systems.
+<h1 align="center">VIL — Vastar Intermediate Language</h1>
+
+<p align="center">
+  A <strong>process-oriented language and framework</strong> hosted on Rust for building zero-copy, high-performance distributed systems.
+</p>
+
+<p align="center">
+  <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License"></a>
+  <img src="https://img.shields.io/badge/crates-102-green" alt="Crates">
+  <img src="https://img.shields.io/badge/examples-63-orange" alt="Examples">
+  <img src="https://img.shields.io/badge/tests-1425%2B-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/rust-1.93%2B-orange" alt="Rust">
+</p>
 
 VIL combines a **semantic language layer** (compiler, IR, macros, codegen) with a **server framework** (VilApp, ServiceProcess, Tri-Lane mesh) — generating all plumbing so developers write only business logic and intent.
 
