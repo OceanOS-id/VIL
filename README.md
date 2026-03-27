@@ -246,7 +246,7 @@ All 51 AI plugins + all 71 examples use these patterns. Zero `Extension<T>`, zer
 | Architecture Overview | [docs/ARCHITECTURE_OVERVIEW.md](docs/ARCHITECTURE_OVERVIEW.md) |
 | Design Principles | [docs/vil/VIL_CONCEPT.md](docs/vil/VIL_CONCEPT.md) |
 | Custom Code (Native/WASM/Sidecar) | [docs/vil/CUSTOM_CODE_GUIDE.md](docs/vil/CUSTOM_CODE_GUIDE.md) |
-| VIL Guide (7 parts) | [docs/vil/001-VIL-Developer_Guide-Overview.md](docs/vil/001-VIL-Developer_Guide-Overview.md) |
+| VIL Guide (8 parts) | [docs/vil/001-VIL-Developer_Guide-Overview.md](docs/vil/001-VIL-Developer_Guide-Overview.md) |
 | Server Framework | [docs/vil-server/vil-server-guide.md](docs/vil-server/vil-server-guide.md) |
 | API Reference | [docs/vil-server/API-REFERENCE-SERVER.md](docs/vil-server/API-REFERENCE-SERVER.md) |
 | Config Reference | [vil-server.reference.yaml](vil-server.reference.yaml) |

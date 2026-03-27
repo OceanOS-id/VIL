@@ -1,7 +1,8 @@
 # VIL Developer Guide — Part 7: Semantic Log System
 
-**Series:** VIL Developer Guide (7 of 7)
+**Series:** VIL Developer Guide (7 of 8)
 **Previous:** [Part 6 — CLI, Deployment & Best Practices](./006-VIL-Developer_Guide-CLI-Deployment.md)
+**Next:** [Part 8 — Connectors & Semantic Types](./008-VIL-Developer_Guide-Connectors.md)
 **Last updated:** 2026-03-27
 
 ---

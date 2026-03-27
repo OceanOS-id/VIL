@@ -1,6 +1,6 @@
 # VIL Developer Guide — Part 6: CLI, Deployment & Best Practices
 
-**Series:** VIL Developer Guide (6 of 7)
+**Series:** VIL Developer Guide (6 of 8)
 **Previous:** [Part 5 — Infrastructure & Plugins](./005-VIL-Developer_Guide-Infrastructure.md)
 **Next:** [Part 7 — Semantic Log System](./007-VIL-Developer_Guide-Semantic-Log.md)
 **Last updated:** 2026-03-27

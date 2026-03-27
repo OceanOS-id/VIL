@@ -216,7 +216,7 @@ Full benchmark: [examples/BENCHMARK_REPORT.md](../examples/BENCHMARK_REPORT.md)
 |----------|-------|
 | [VIL Concept](./vil/VIL_CONCEPT.md) | 10 immutable design principles |
 | [Custom Code Guide](./vil/CUSTOM_CODE_GUIDE.md) | Native / WASM / Sidecar execution modes |
-| [Developer Guide (7 parts)](./vil/001-VIL-Developer_Guide-Overview.md) | Complete language + framework reference |
+| [Developer Guide (8 parts)](./vil/001-VIL-Developer_Guide-Overview.md) | Complete language + framework reference |
 | [vil-server Guide](./vil-server/vil-server-guide.md) | Server framework reference |
 | [API Reference](./vil-server/API-REFERENCE-SERVER.md) | Per-module API documentation |
 | [Quick Start](./QUICK_START.md) | Getting started |

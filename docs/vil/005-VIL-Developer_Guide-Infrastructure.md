@@ -1,6 +1,6 @@
 # VIL Developer Guide — Part 5: Infrastructure & Plugins
 
-**Series:** VIL Developer Guide (5 of 7)
+**Series:** VIL Developer Guide (5 of 8)
 **Previous:** [Part 4 — Pipeline & HTTP Streaming](./004-VIL-Developer_Guide-Pipeline-Streaming.md)
 **Next:** [Part 6 — CLI, Deployment & Best Practices](./006-VIL-Developer_Guide-CLI-Deployment.md)
 **Last updated:** 2026-03-26

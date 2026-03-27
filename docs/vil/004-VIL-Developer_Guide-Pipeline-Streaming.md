@@ -1,6 +1,6 @@
 # VIL Developer Guide — Part 4: Pipeline & HTTP Streaming
 
-**Series:** VIL Developer Guide (4 of 7)
+**Series:** VIL Developer Guide (4 of 8)
 **Previous:** [Part 3 — Server Framework](./003-VIL-Developer_Guide-Server-Framework.md)
 **Next:** [Part 5 — Infrastructure & Plugins](./005-VIL-Developer_Guide-Infrastructure.md)
 **Last updated:** 2026-03-26
