@@ -1121,6 +1121,14 @@ fn generate_main(manifest: &WorkflowManifest) -> String {
         s.push_str("\n");
     }
 
+    // Connector init (Phase 6 Stream 3): databases, storage, queues, triggers, logging
+    let connector_init = generate_connector_init(manifest);
+    if !connector_init.is_empty() {
+        s.push_str("    // ── Connector Init (Phase 6) ──────────────────────────────────────\n");
+        s.push_str(&connector_init);
+        s.push_str("\n");
+    }
+
     // Initialize gRPC server if grpc: section declared (runs on separate port)
     // GraphQL is auto-registered as VilApp routes
     s.push_str(&format!(
@@ -2317,6 +2325,131 @@ async fn sidecar_status(
 }
 "#);
     s
+}
+
+// =============================================================================
+// Connector init codegen (Phase 6 Stream 3)
+// =============================================================================
+
+/// Generate connector/trigger/logging initialization code for injection into main().
+fn generate_connector_init(manifest: &WorkflowManifest) -> String {
+    let mut code = String::new();
+
+    // Logging init
+    if let Some(logging) = &manifest.logging {
+        let level = match logging.level.as_str() {
+            "trace" => "Trace", "debug" => "Debug", "info" => "Info",
+            "warn" => "Warn", "error" => "Error", _ => "Info",
+        };
+        let threads = logging.threads.map(|t| format!("Some({})", t)).unwrap_or("None".into());
+        let ring_slots = logging.ring_slots.unwrap_or(1 << 20);
+
+        code.push_str(&format!(r#"
+    // ── VIL Log System ──
+    let _log_task = vil_log::runtime::init_logging(
+        vil_log::LogConfig {{
+            ring_slots: {},
+            level: vil_log::LogLevel::{},
+            batch_size: 1024,
+            flush_interval_ms: 100,
+            threads: {},
+        }},
+        vil_log::StdoutDrain::resolved(),
+    );
+"#, ring_slots, level, threads));
+    }
+
+    // Database connectors
+    if let Some(connectors) = &manifest.connectors {
+        for db in &connectors.databases {
+            let var_name = db.name.replace('-', "_");
+            match db.db_type.as_str() {
+                "mongo" => {
+                    let uri = db.uri.as_deref().unwrap_or("mongodb://localhost:27017");
+                    let database = db.database.as_deref().unwrap_or("default");
+                    code.push_str(&format!(r#"
+    let {var} = vil_db_mongo::process::create_client(vil_db_mongo::MongoConfig {{
+        uri: "{}".into(),
+        database: "{}".into(),
+        ..Default::default()
+    }}).await.expect("Failed to connect to MongoDB");
+"#, uri, database, var = var_name));
+                }
+                "clickhouse" => {
+                    let url = db.url.as_deref().unwrap_or("http://localhost:8123");
+                    let database = db.database.as_deref().unwrap_or("default");
+                    code.push_str(&format!(r#"
+    let {var} = vil_db_clickhouse::process::create_client(vil_db_clickhouse::ClickHouseConfig {{
+        url: "{}".into(),
+        database: "{}".into(),
+        ..Default::default()
+    }});
+"#, url, database, var = var_name));
+                }
+                // Additional DB types can be added here: dynamodb, cassandra, timeseries, neo4j, elastic
+                _ => {}
+            }
+        }
+
+        for storage in &connectors.storage {
+            let var_name = storage.name.replace('-', "_");
+            match storage.storage_type.as_str() {
+                "s3" => {
+                    let endpoint = storage.endpoint.as_deref()
+                        .map(|e| format!("Some(\"{}\".into())", e))
+                        .unwrap_or("None".into());
+                    let bucket = storage.bucket.as_deref().unwrap_or("default");
+                    let region = storage.region.as_deref().unwrap_or("us-east-1");
+                    code.push_str(&format!(r#"
+    let {var} = vil_storage_s3::process::create_client(vil_storage_s3::S3Config {{
+        endpoint: {endpoint},
+        bucket: "{}".into(),
+        region: "{}".into(),
+        ..Default::default()
+    }}).await.expect("Failed to connect to S3");
+"#, bucket, region, var = var_name, endpoint = endpoint));
+                }
+                _ => {}
+            }
+        }
+
+        for mq in &connectors.queues {
+            let var_name = mq.name.replace('-', "_");
+            match mq.queue_type.as_str() {
+                "rabbitmq" => {
+                    let uri = mq.uri.as_deref().unwrap_or("amqp://localhost:5672");
+                    code.push_str(&format!(r#"
+    let {var} = vil_mq_rabbitmq::process::create_client(vil_mq_rabbitmq::RabbitConfig {{
+        uri: "{}".into(),
+        ..Default::default()
+    }}).await.expect("Failed to connect to RabbitMQ");
+"#, uri, var = var_name));
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // Triggers
+    for trigger in &manifest.triggers {
+        let var_name = trigger.name.replace('-', "_");
+        match trigger.trigger_type.as_str() {
+            "cron" => {
+                let schedule = trigger.schedule.as_deref().unwrap_or("0 * * * * *");
+                code.push_str(&format!(r#"
+    let ({var}_trigger, {var}_rx) = vil_trigger_cron::process::create_cron_trigger(
+        vil_trigger_cron::CronConfig {{
+            schedule: "{}".into(),
+            ..Default::default()
+        }}
+    ).expect("Failed to create cron trigger");
+"#, schedule, var = var_name));
+            }
+            _ => {}
+        }
+    }
+
+    code
 }
 
 /// Generate Code Activity for a transform node.

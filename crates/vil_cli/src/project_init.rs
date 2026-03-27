@@ -531,6 +531,9 @@ from vil_sdk import pipeline, http_trigger{imports}
 p = pipeline("{name}")
 p.trigger(http_trigger(port={port}, path="/api/{path}"{response_mode}))
 {steps}
+
+# Connectors (S3, MongoDB, etc.) are declared in app.vil.yaml, not in SDK code.
+# See: vil init --template data-pipeline for a connector example.
 "#,
         name = config.name,
         tmpl_title = template.title,
@@ -561,6 +564,9 @@ func main() {{
 	p.Trigger(vil.HTTPTrigger{{Port: {port}, Path: "/api/{path}"{response_mode}}})
 {steps}
 }}
+
+// Connectors (S3, MongoDB, etc.) are declared in app.vil.yaml, not in SDK code.
+// See: vil init --template data-pipeline for a connector example.
 "#,
         name = config.name,
         tmpl_title = template.title,
@@ -605,6 +611,9 @@ public class App {{
 {steps}
     }}
 }}
+
+// Connectors (S3, MongoDB, etc.) are declared in app.vil.yaml, not in SDK code.
+// See: vil init --template data-pipeline for a connector example.
 "#,
         name = config.name,
         tmpl_title = template.title,
@@ -630,6 +639,9 @@ import {{ pipeline, httpTrigger{imports} }} from '@vastar/vil-sdk';
 const p = pipeline('{name}');
 p.trigger(httpTrigger({{ port: {port}, path: '/api/{path}'{response_mode} }}));
 {steps}
+
+// Connectors (S3, MongoDB, etc.) are declared in app.vil.yaml, not in SDK code.
+// See: vil init --template data-pipeline for a connector example.
 "#,
         name = config.name,
         tmpl_title = template.title,
@@ -662,6 +674,9 @@ var pipeline = new VilPipeline("{name}")
     .Build();
 
 VilRunner.Run(pipeline);
+
+// Connectors (S3, MongoDB, etc.) are declared in app.vil.yaml, not in SDK code.
+// See: vil init --template data-pipeline for a connector example.
 "#,
         name = config.name,
         port = config.port,
@@ -690,6 +705,9 @@ fun main() {{
         }})
     }}.run()
 }}
+
+// Connectors (S3, MongoDB, etc.) are declared in app.vil.yaml, not in SDK code.
+// See: vil init --template data-pipeline for a connector example.
 "#,
         name = config.name,
         port = config.port,
@@ -715,6 +733,9 @@ let pipeline = VilPipeline("{name}")
         .url("http://localhost:4545"))
 
 VilRunner.run(pipeline)
+
+// Connectors (S3, MongoDB, etc.) are declared in app.vil.yaml, not in SDK code.
+// See: vil init --template data-pipeline for a connector example.
 "#,
         name = config.name,
         port = config.port,
@@ -742,6 +763,9 @@ pub fn main() !void {{
 
     try vil.run(pipeline);
 }}
+
+// Connectors (S3, MongoDB, etc.) are declared in app.vil.yaml, not in SDK code.
+// See: vil init --template data-pipeline for a connector example.
 "#,
         name = config.name,
         port = config.port,

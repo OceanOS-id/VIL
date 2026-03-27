@@ -72,6 +72,14 @@ pub struct WorkflowManifest {
     // ── Sidecar definitions ─────────────────────────────────────────────
     #[serde(default)]
     pub sidecars: Vec<SidecarManifest>,
+
+    // ── Connector declarations (Phase 6) ──────────────────────────────────
+    #[serde(default)]
+    pub connectors: Option<ConnectorsManifest>,
+    #[serde(default)]
+    pub triggers: Vec<TriggerManifest>,
+    #[serde(default)]
+    pub logging: Option<LoggingManifest>,
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -771,6 +779,128 @@ fn default_shm() -> String { "shm".into() }
 fn default_20() -> u32 { 20 }
 fn default_5() -> u32 { 5 }
 fn default_mqtt_port() -> u16 { 1883 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Connector declarations (Phase 6)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ConnectorsManifest {
+    #[serde(default)]
+    pub databases: Vec<DatabaseConnectorManifest>,
+    #[serde(default)]
+    pub storage: Vec<StorageConnectorManifest>,
+    #[serde(default)]
+    pub queues: Vec<QueueConnectorManifest>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseConnectorManifest {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub db_type: String,  // mongo, clickhouse, dynamodb, cassandra, timeseries, neo4j, elastic
+    #[serde(default)]
+    pub uri: Option<String>,
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub database: Option<String>,
+    #[serde(default)]
+    pub options: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StorageConnectorManifest {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub storage_type: String,  // s3, gcs, azure
+    #[serde(default)]
+    pub endpoint: Option<String>,
+    #[serde(default)]
+    pub bucket: Option<String>,
+    #[serde(default)]
+    pub container: Option<String>,
+    #[serde(default)]
+    pub region: Option<String>,
+    #[serde(default)]
+    pub options: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueueConnectorManifest {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub queue_type: String,  // rabbitmq, sqs, pulsar, pubsub, kafka, nats, mqtt
+    #[serde(default)]
+    pub uri: Option<String>,
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub topic: Option<String>,
+    #[serde(default)]
+    pub queue: Option<String>,
+    #[serde(default)]
+    pub exchange: Option<String>,
+    #[serde(default)]
+    pub options: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TriggerManifest {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub trigger_type: String,  // cron, fs, cdc, email, iot, evm, webhook
+    #[serde(default)]
+    pub schedule: Option<String>,
+    #[serde(default)]
+    pub path: Option<String>,
+    #[serde(default)]
+    pub pattern: Option<String>,
+    #[serde(default)]
+    pub uri: Option<String>,
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub topic: Option<String>,
+    #[serde(default)]
+    pub listen: Option<String>,
+    #[serde(default)]
+    pub secret: Option<String>,
+    #[serde(default)]
+    pub options: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LoggingManifest {
+    #[serde(default = "default_log_level")]
+    pub level: String,
+    #[serde(default)]
+    pub threads: Option<usize>,
+    #[serde(default)]
+    pub ring_slots: Option<usize>,
+    #[serde(default)]
+    pub drains: Vec<DrainManifest>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DrainManifest {
+    #[serde(rename = "type")]
+    pub drain_type: String,  // stdout, file, clickhouse, nats
+    #[serde(default)]
+    pub format: Option<String>,
+    #[serde(default)]
+    pub dir: Option<String>,
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub database: Option<String>,
+    #[serde(default)]
+    pub subject_prefix: Option<String>,
+    #[serde(default)]
+    pub options: HashMap<String, String>,
+}
+
+fn default_log_level() -> String { "info".to_string() }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Impl

@@ -156,10 +156,10 @@ All 8 crates: `vil_log` + `mq_log!` auto-emit, `TriggerSource` trait, COMPLIANCE
 - [x] events.rs + state.rs per crate
 - [x] Fault enums annotated with `#[connector_fault]`
 
-### Stream 3: YAML Codegen for connectors
-- [ ] `connectors:` / `triggers:` / `logging:` in YAML manifest
-- [ ] Rust codegen from YAML → connector init code
-- [ ] SDK transpile support (all 9 languages)
+### Stream 3: YAML Codegen for connectors ✅
+- [x] `connectors:` / `triggers:` / `logging:` in YAML manifest
+- [x] Rust codegen from YAML → connector init code (Mongo, ClickHouse, S3, RabbitMQ, Cron)
+- [x] SDK transpile comment: connectors declared in YAML, not SDK code
 
 ### Stream 4: 4 new templates + examples
 - [ ] Template 9: Data Pipeline (S3 → Mongo → ClickHouse)
