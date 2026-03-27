@@ -264,6 +264,20 @@ members = [
     "examples/507-villog-bench-file-drain",
     "examples/508-villog-bench-multithread",
     "examples/509-villog-phase1-integration",
+
+    # --- Phase 6 Stream 4: Storage / DB / MQ / Protocol / Trigger Examples ---
+    "examples/601-storage-s3-basic",
+    "examples/602-db-mongo-crud",
+    "examples/603-db-clickhouse-batch",
+    "examples/604-db-elastic-search",
+    "examples/701-mq-rabbitmq-pubsub",
+    "examples/702-mq-sqs-send-receive",
+    "examples/703-protocol-soap-client",
+    "examples/704-protocol-modbus-read",
+    "examples/801-trigger-cron-basic",
+    "examples/802-trigger-fs-watcher",
+    "examples/803-trigger-webhook-receiver",
+    "examples/804-trigger-cdc-postgres",
 ]
 
 [workspace.package]
@@ -313,6 +327,8 @@ vil_storage_azure  = { path = "crates/vil_storage_azure" }
 vil_db_elastic     = { path = "crates/vil_db_elastic" }
 
 # Phase 1 Database Plugins
+vil_db_mongo       = { path = "crates/vil_db_mongo" }
+vil_db_clickhouse  = { path = "crates/vil_db_clickhouse" }
 vil_db_dynamodb    = { path = "crates/vil_db_dynamodb" }
 vil_db_cassandra   = { path = "crates/vil_db_cassandra" }
 vil_db_timeseries  = { path = "crates/vil_db_timeseries" }

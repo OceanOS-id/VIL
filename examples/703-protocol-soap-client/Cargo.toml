@@ -1,0 +1,10 @@
+[package]
+name = "example-703-protocol-soap-client"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_soap = { workspace = true }
+vil_log  = { workspace = true }
+tokio    = { workspace = true }

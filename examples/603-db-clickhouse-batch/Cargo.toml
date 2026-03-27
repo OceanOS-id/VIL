@@ -1,0 +1,12 @@
+[package]
+name = "example-603-db-clickhouse-batch"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_db_clickhouse = { workspace = true }
+vil_log           = { workspace = true }
+tokio             = { workspace = true }
+serde             = { workspace = true, features = ["derive"] }
+clickhouse        = { version = "0.12", features = ["inserter"] }

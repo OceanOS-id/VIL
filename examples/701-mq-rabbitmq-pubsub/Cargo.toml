@@ -1,0 +1,10 @@
+[package]
+name = "example-701-mq-rabbitmq-pubsub"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_mq_rabbitmq = { workspace = true }
+vil_log         = { workspace = true }
+tokio           = { workspace = true }

@@ -1,0 +1,11 @@
+[package]
+name = "example-604-db-elastic-search"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_db_elastic = { workspace = true }
+vil_log        = { workspace = true }
+tokio          = { workspace = true }
+serde_json     = { workspace = true }

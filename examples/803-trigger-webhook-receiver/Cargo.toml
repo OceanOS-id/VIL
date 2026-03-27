@@ -1,0 +1,13 @@
+[package]
+name = "example-803-trigger-webhook-receiver"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_trigger_webhook = { workspace = true }
+vil_trigger_core    = { workspace = true }
+vil_log             = { workspace = true }
+tokio               = { workspace = true }
+reqwest             = { version = "0.12", features = ["json"] }
+serde_json          = { workspace = true }

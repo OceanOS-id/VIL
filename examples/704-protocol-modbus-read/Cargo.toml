@@ -1,0 +1,10 @@
+[package]
+name = "example-704-protocol-modbus-read"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_modbus = { workspace = true }
+vil_log    = { workspace = true }
+tokio      = { workspace = true }

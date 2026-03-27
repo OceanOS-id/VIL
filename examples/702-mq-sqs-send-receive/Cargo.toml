@@ -1,0 +1,10 @@
+[package]
+name = "example-702-mq-sqs-send-receive"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_mq_sqs = { workspace = true }
+vil_log    = { workspace = true }
+tokio      = { workspace = true }

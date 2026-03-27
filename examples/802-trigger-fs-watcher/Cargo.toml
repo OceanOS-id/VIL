@@ -1,0 +1,11 @@
+[package]
+name = "example-802-trigger-fs-watcher"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_trigger_fs   = { workspace = true }
+vil_trigger_core = { workspace = true }
+vil_log          = { workspace = true }
+tokio            = { workspace = true }

@@ -1,0 +1,13 @@
+[package]
+name = "example-602-db-mongo-crud"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_db_mongo = { workspace = true }
+vil_log      = { workspace = true }
+tokio        = { workspace = true }
+serde        = { workspace = true, features = ["derive"] }
+serde_json   = { workspace = true }
+bson         = "2.13"

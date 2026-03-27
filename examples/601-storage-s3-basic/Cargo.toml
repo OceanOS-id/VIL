@@ -1,0 +1,11 @@
+[package]
+name = "example-601-storage-s3-basic"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_storage_s3 = { workspace = true }
+vil_log        = { workspace = true }
+tokio          = { workspace = true }
+bytes          = "1"

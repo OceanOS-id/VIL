@@ -4508,6 +4508,127 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-601-storage-s3-basic"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "tokio",
+ "vil_log",
+ "vil_storage_s3",
+]
+
+[[package]]
+name = "example-602-db-mongo-crud"
+version = "0.1.0"
+dependencies = [
+ "bson",
+ "serde",
+ "serde_json",
+ "tokio",
+ "vil_db_mongo",
+ "vil_log",
+]
+
+[[package]]
+name = "example-603-db-clickhouse-batch"
+version = "0.1.0"
+dependencies = [
+ "clickhouse",
+ "serde",
+ "tokio",
+ "vil_db_clickhouse",
+ "vil_log",
+]
+
+[[package]]
+name = "example-604-db-elastic-search"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_db_elastic",
+ "vil_log",
+]
+
+[[package]]
+name = "example-701-mq-rabbitmq-pubsub"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "vil_log",
+ "vil_mq_rabbitmq",
+]
+
+[[package]]
+name = "example-702-mq-sqs-send-receive"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "vil_log",
+ "vil_mq_sqs",
+]
+
+[[package]]
+name = "example-703-protocol-soap-client"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "vil_log",
+ "vil_soap",
+]
+
+[[package]]
+name = "example-704-protocol-modbus-read"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "vil_log",
+ "vil_modbus",
+]
+
+[[package]]
+name = "example-801-trigger-cron-basic"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "vil_log",
+ "vil_trigger_core",
+ "vil_trigger_cron",
+]
+
+[[package]]
+name = "example-802-trigger-fs-watcher"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "vil_log",
+ "vil_trigger_core",
+ "vil_trigger_fs",
+]
+
+[[package]]
+name = "example-803-trigger-webhook-receiver"
+version = "0.1.0"
+dependencies = [
+ "reqwest 0.12.28",
+ "serde_json",
+ "tokio",
+ "vil_log",
+ "vil_trigger_core",
+ "vil_trigger_webhook",
+]
+
+[[package]]
+name = "example-804-trigger-cdc-postgres"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "vil_log",
+ "vil_trigger_cdc",
+ "vil_trigger_core",
+]
+
+[[package]]
 name = "executor-trait"
 version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

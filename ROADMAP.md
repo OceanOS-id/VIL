@@ -161,12 +161,12 @@ All 8 crates: `vil_log` + `mq_log!` auto-emit, `TriggerSource` trait, COMPLIANCE
 - [x] Rust codegen from YAML → connector init code (Mongo, ClickHouse, S3, RabbitMQ, Cron)
 - [x] SDK transpile comment: connectors declared in YAML, not SDK code
 
-### Stream 4: 4 new templates + examples
-- [ ] Template 9: Data Pipeline (S3 → Mongo → ClickHouse)
-- [ ] Template 10: Event-Driven (RabbitMQ → process → publish)
-- [ ] Template 11: IoT Gateway (MQTT → TimeSeries → alert)
-- [ ] Template 12: Scheduled ETL (Cron → S3 → Elasticsearch)
-- [ ] Examples 601-804 per category
+### Stream 4: 4 new templates + examples ✅
+- [x] Template 9: Data Pipeline (S3 → Mongo → ClickHouse)
+- [x] Template 10: Event-Driven (RabbitMQ → process → publish)
+- [x] Template 11: IoT Gateway (MQTT → TimeSeries → alert)
+- [x] Template 12: Scheduled ETL (Cron → S3 → Elasticsearch)
+- [x] Examples 601-604 (storage/DB), 701-704 (MQ/protocol), 801-804 (triggers)
 
 ---
 
