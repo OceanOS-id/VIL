@@ -5,6 +5,10 @@ edition.workspace = true
 description = "VIL Google Cloud Pub/Sub Adapter — publish and subscribe with semantic log integration"
 license.workspace = true
 authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
 
 [dependencies]
 vil_log                    = { workspace = true }

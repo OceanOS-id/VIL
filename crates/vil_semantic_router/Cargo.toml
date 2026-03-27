@@ -3,6 +3,10 @@ name = "vil_semantic_router"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Semantic Router — route queries to specialized models/pipelines based on intent"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 license = "Apache-2.0"
 
 [dependencies]

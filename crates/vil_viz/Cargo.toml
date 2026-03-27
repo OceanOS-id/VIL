@@ -3,6 +3,10 @@ name = "vil_viz"
 version = "0.1.0"
 edition = "2021"
 description = "VIL workflow visualization engine — graph rendering in 6 formats"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 publish = false
 
 [dependencies]

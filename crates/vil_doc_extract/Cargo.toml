@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
 description = "I06 — Data Extraction Pipeline: rule-based field extraction from text"
 
 [dependencies]

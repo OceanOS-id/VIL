@@ -3,6 +3,10 @@ name = "vil_vision"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Image Understanding — infrastructure and traits for image analysis and embedding (I04)"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_sdk          = { version = "0.1.0", path = "../vil_sdk" }

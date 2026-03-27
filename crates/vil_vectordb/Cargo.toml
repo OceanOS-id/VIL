@@ -3,6 +3,10 @@ name = "vil_vectordb"
 version = "0.1.0"
 edition = "2021"
 description = "VIL VectorDB — native HNSW vector index for single-binary RAG"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

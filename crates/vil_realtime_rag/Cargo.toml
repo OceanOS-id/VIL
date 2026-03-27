@@ -3,6 +3,10 @@ name = "vil_realtime_rag"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Real-Time RAG — sub-millisecond retrieval for latency-critical applications"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_embedder     = { version = "0.1.0", path = "../vil_embedder" }

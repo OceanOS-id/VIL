@@ -3,6 +3,10 @@ name = "vil_context_optimizer"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Context Optimizer — fit 4-10x more context in LLM token budgets"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_tokenizer    = { version = "0.1.0", path = "../vil_tokenizer" }

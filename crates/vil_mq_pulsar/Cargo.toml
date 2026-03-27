@@ -5,6 +5,10 @@ edition.workspace = true
 description = "VIL Apache Pulsar Adapter — producer/consumer with Tri-Lane bridge"
 license.workspace = true
 authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
 
 [dependencies]
 vil_log              = { workspace = true }

@@ -3,6 +3,10 @@ name = "vil_server_mesh"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Server Mesh — Tri-Lane SHM service mesh with TCP fallback"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 license = "Apache-2.0"
 
 [dependencies]

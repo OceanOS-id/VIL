@@ -3,6 +3,10 @@ name = "vil_db_sea_orm"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Database Plugin — Full ORM via sea-orm (Entity, Migration, Query Builder)"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 license = "Apache-2.0"
 
 [features]

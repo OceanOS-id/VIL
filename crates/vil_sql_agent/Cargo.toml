@@ -3,6 +3,10 @@ name = "vil_sql_agent"
 version = "0.1.0"
 edition = "2021"
 description = "VIL SQL Query Generator — text-to-SQL patterns, schema registry, injection prevention (I05)"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_sdk          = { version = "0.1.0", path = "../vil_sdk" }

@@ -3,6 +3,10 @@ name = "vil_memory_graph"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Memory Graph — persistent knowledge graph for agent long-term memory"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 license = "Apache-2.0"
 
 [dependencies]

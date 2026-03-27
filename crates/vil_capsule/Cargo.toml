@@ -4,6 +4,10 @@ description = "VIL WASM Capsule — sandboxed WebAssembly execution with wasmtim
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
 
 [features]
 default = []

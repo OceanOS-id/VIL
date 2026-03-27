@@ -3,6 +3,10 @@ name = "vil_guardrails"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Content Guardrails Engine — PII detection, toxicity scoring, custom rules (H07)"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_prompt_shield = { version = "0.1.0", path = "../vil_prompt_shield" }

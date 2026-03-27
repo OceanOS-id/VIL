@@ -3,6 +3,10 @@ name = "vil_reranker"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Reranker Engine — keyword, cross-encoder, and Reciprocal Rank Fusion reranking for RAG retrieval"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_llm = { version = "0.1.0", path = "../vil_llm" }

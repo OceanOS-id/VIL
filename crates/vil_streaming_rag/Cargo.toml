@@ -3,6 +3,10 @@ name = "vil_streaming_rag"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Streaming RAG (D17) — chunk, embed, and index documents as they stream in real-time"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_tokenizer   = { version = "0.1.0", path = "../vil_tokenizer" }

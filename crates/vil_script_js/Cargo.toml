@@ -3,6 +3,10 @@ name = "vil_script_js"
 version = "0.1.0"
 edition = "2021"
 description = "VIL JavaScript script runtime — sandboxed JS execution for workflow tasks"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 publish = false
 
 [features]

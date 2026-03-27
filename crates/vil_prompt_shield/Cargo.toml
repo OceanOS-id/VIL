@@ -3,6 +3,10 @@ name = "vil_prompt_shield"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Prompt Shield — real-time prompt injection detection (<100µs)"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_macros       = { version = "0.1.0", path = "../vil_macros" }

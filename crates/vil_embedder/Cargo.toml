@@ -3,6 +3,10 @@ name = "vil_embedder"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Embedding Engine — high-performance text embeddings with batching and SIMD similarity"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

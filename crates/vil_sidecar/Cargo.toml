@@ -3,6 +3,10 @@ name = "vil_sidecar"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
 license = "Apache-2.0"
 description = "VIL Sidecar Protocol — SHM IPC for external process integration"
 

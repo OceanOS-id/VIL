@@ -3,6 +3,10 @@ name = "vil_ai_gateway"
 version = "0.1.0"
 edition = "2021"
 description = "VIL AI Gateway — intelligent LLM routing with health, failover, cost, circuit breaker"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_llm          = { version = "0.1.0", path = "../vil_llm" }

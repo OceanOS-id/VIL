@@ -3,6 +3,10 @@ name = "vil_cli"
 version = "0.1.0"
 edition = "2021"
 description = "VIL CLI - Vastar Intermediate Language zero-copy streaming pipelines for Rust"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_rt = { version = "0.1.0", path = "../vil_rt" }

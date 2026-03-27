@@ -3,6 +3,10 @@ name = "vil_llm"
 version = "0.1.0"
 edition = "2021"
 description = "VIL LLM Plugin — multi-provider LLM abstraction (chat, streaming, embeddings)"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_sdk = { version = "0.1.0", path = "../vil_sdk" }

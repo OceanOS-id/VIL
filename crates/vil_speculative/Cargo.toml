@@ -3,6 +3,10 @@ name = "vil_speculative"
 version = "0.1.0"
 edition = "2021"
 description = "VIL Speculative Decoding Proxy — draft+verify for 2-3x faster LLM generation"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
 
 [dependencies]
 vil_llm = { version = "0.1.0", path = "../vil_llm" }
