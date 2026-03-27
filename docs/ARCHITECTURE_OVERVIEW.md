@@ -146,6 +146,7 @@ All 51 crates follow the 5-layer VIL pattern: semantic types → SSE pipeline �
 | `vil_operator` | Kubernetes CRD operator |
 | `vil_lsp` | Language Server — diagnostics, completions, hover for VIL macros |
 | `vil_observer` | Observer Dashboard (embedded SPA) |
+| `vil_connector_macros` | Lightweight proc-macro: #[connector_fault/event/state] for connector crates |
 
 ---
 

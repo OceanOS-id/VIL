@@ -148,13 +148,13 @@ All 8 crates: `vil_log` + `mq_log!` auto-emit, `TriggerSource` trait, COMPLIANCE
 ## Phase 6 — Semantic Completion (all crates fully VIL Way)
 
 ### Stream 1: vil_connector_macros (lightweight proc-macro)
-- [ ] `#[connector_fault]` — Display, error_code(), is_retryable()
-- [ ] `#[connector_event]` — #[repr(C)], ≤192B, size guard
-- [ ] `#[connector_state]` — atomic counters, health metrics
+- [x] `#[connector_fault]` — Display, error_code(), is_retryable()
+- [x] `#[connector_event]` — #[repr(C)], ≤192B, size guard
+- [x] `#[connector_state]` — atomic counters, health metrics
 
 ### Stream 2: Events & State for all 28 connectors
-- [ ] events.rs + state.rs per crate
-- [ ] Fault enums annotated with `#[connector_fault]`
+- [x] events.rs + state.rs per crate
+- [x] Fault enums annotated with `#[connector_fault]`
 
 ### Stream 3: YAML Codegen for connectors
 - [ ] `connectors:` / `triggers:` / `logging:` in YAML manifest

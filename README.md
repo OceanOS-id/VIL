@@ -187,6 +187,7 @@ pipeline.source(url="http://ai-provider:4545/v1/chat", format="sse")
 | **Triggers** | vil_trigger_cron/fs/cdc/email/iot/evm/webhook | Cron, filesystem, CDC, email, IoT, blockchain, webhook |
 | **Observability** | vil_log, vil_otel | Semantic log (4.5-6.2x faster than tracing), OpenTelemetry export |
 | **Edge** | vil_edge_deploy | ARM64, ARMv7, RISC-V deployment profiles |
+| **Connector Macros** | vil_connector_macros | Lightweight #[connector_fault/event/state] for all connectors |
 
 **130+ crates** | **71 examples** | **9 SDK languages** | **6 Grafana dashboards**
 
@@ -232,6 +233,9 @@ cargo run --release -p vil-basic-credit-npl-filter
 | `ctx: ServiceCtx` | `Extension<T>` | Tri-Lane context + typed state |
 | `body.json::<T>()` | `serde_json` | SIMD JSON (sonic-rs) |
 | `VilResponse::ok(data)` | `Json(data)` | SIMD serialization + SHM write-through |
+| `#[connector_fault]` | Plain enum errors | Auto Display, error_code(), kind(), is_retryable() |
+| `#[connector_event]` | Ad-hoc structs | #[repr(C)], ≤192B, compile-time size guard |
+| `#[connector_state]` | Manual metrics | Zero-init state, atomic-ready counters |
 
 All 51 AI plugins + all 71 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
 
