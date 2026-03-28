@@ -201,6 +201,9 @@ async fn main() {
         batch_size: 8192,
         flush_interval_ms: 1,
         threads: Some(1),
+        dict_path: None,
+        fallback_path: None,
+        drain_failure_threshold: 3,
     };
     let _task = init_logging(config, NullDrain);
 

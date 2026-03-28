@@ -12,6 +12,7 @@ readme = "README.md"
 
 [dependencies]
 vil_log                  = { workspace = true }
+tracing = { workspace = true }
 vil_connector_macros     = { workspace = true }
 google-cloud-storage     = "0.22"
 tokio                    = { workspace = true }

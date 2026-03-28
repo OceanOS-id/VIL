@@ -31,6 +31,9 @@ async fn main() {
         batch_size:        256,
         flush_interval_ms: 50,
         threads: None,
+        dict_path: None,
+        fallback_path: None,
+        drain_failure_threshold: 3,
     };
     let drain = StdoutDrain::new(StdoutFormat::Pretty);
     let _task = init_logging(config, drain);

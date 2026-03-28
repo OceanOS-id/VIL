@@ -267,6 +267,9 @@ async fn main() {
         batch_size: 8192,
         flush_interval_ms: 1,
         threads: Some(4),
+        dict_path: None,
+        fallback_path: None,
+        drain_failure_threshold: 3,
     };
     let _task = init_logging(config, CountingDrain {
         inner: StdoutDrain::new(vil_log::drain::StdoutFormat::Resolved),

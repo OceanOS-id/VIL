@@ -7,6 +7,7 @@ publish = false
 [dependencies]
 vil_db_mongo = { workspace = true }
 vil_log      = { workspace = true }
+tracing            = { workspace = true }
 tokio        = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }
 serde_json   = { workspace = true }

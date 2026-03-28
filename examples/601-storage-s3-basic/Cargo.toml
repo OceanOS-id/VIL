@@ -7,5 +7,6 @@ publish = false
 [dependencies]
 vil_storage_s3 = { workspace = true }
 vil_log        = { workspace = true }
+tracing            = { workspace = true }
 tokio          = { workspace = true }
 bytes          = "1"

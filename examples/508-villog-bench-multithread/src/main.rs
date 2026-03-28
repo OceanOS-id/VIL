@@ -127,6 +127,9 @@ async fn main() {
         batch_size: 16384,
         flush_interval_ms: 1,
         threads: Some(8), // benchmark uses up to 8 threads → 8 stripes
+        dict_path: None,
+        fallback_path: None,
+        drain_failure_threshold: 3,
     };
     let _task = init_logging(config, NullDrain);
 

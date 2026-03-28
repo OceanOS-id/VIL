@@ -40,7 +40,8 @@ pub mod types;
 pub use config::LogConfig;
 
 pub use drain::{
-    FileDrain, LogDrain, MultiDrain, NullDrain, RotationStrategy, StdoutDrain, StdoutFormat,
+    FallbackDrain, FileDrain, LogDrain, MultiDrain, NullDrain, RotationStrategy, StdoutDrain,
+    StdoutFormat,
 };
 
 pub use emit::{global_ring, init_ring, try_global_ring, LogRing, VilTracingLayer};

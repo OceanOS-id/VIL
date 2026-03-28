@@ -10,6 +10,10 @@
 //
 // Uses the global DictRegistry for hash→string lookup.
 // Unknown hashes display as hex (e.g., "0x720c0265").
+//
+// Version-aware: dispatches to version-specific resolvers based on
+// VilLogHeader.version, allowing schema evolution without breaking
+// old log resolution.
 // =============================================================================
 
 use crate::dict;
@@ -72,19 +76,32 @@ fn format_ts(ns: u64) -> String {
 }
 
 /// Resolve a LogSlot into a ResolvedLog with all human-readable fields.
+///
+/// Dispatches to version-specific detail resolvers based on the `version`
+/// field in VilLogHeader. This enables schema evolution: when a v2 payload
+/// layout is introduced, a new `resolve_*_detail_v2` function can be added
+/// without breaking resolution of existing v1 logs.
 pub fn resolve_slot(slot: &LogSlot) -> ResolvedLog {
     let h = &slot.header;
     let level = LogLevel::from(h.level);
     let category = LogCategory::from(h.category);
+    let version = h.version;
 
-    let detail = match category {
-        LogCategory::Db => resolve_db_detail(&slot.payload),
-        LogCategory::Mq => resolve_mq_detail(&slot.payload),
-        LogCategory::Access => resolve_access_detail(&slot.payload),
-        LogCategory::Ai => resolve_ai_detail(&slot.payload),
-        LogCategory::System => resolve_system_detail(&slot.payload),
-        LogCategory::Security => resolve_security_detail(&slot.payload),
-        LogCategory::App => resolve_app_detail(&slot.payload),
+    let detail = match (category, version) {
+        (LogCategory::Db, 1)       => resolve_db_detail_v1(&slot.payload),
+        (LogCategory::Db, _)       => format!("[unknown DB schema v{}]", version),
+        (LogCategory::Mq, 1)       => resolve_mq_detail_v1(&slot.payload),
+        (LogCategory::Mq, _)       => format!("[unknown MQ schema v{}]", version),
+        (LogCategory::Access, 1)   => resolve_access_detail_v1(&slot.payload),
+        (LogCategory::Access, _)   => format!("[unknown Access schema v{}]", version),
+        (LogCategory::Ai, 1)       => resolve_ai_detail_v1(&slot.payload),
+        (LogCategory::Ai, _)       => format!("[unknown AI schema v{}]", version),
+        (LogCategory::System, 1)   => resolve_system_detail_v1(&slot.payload),
+        (LogCategory::System, _)   => format!("[unknown System schema v{}]", version),
+        (LogCategory::Security, 1) => resolve_security_detail_v1(&slot.payload),
+        (LogCategory::Security, _) => format!("[unknown Security schema v{}]", version),
+        (LogCategory::App, 1)      => resolve_app_detail_v1(&slot.payload),
+        (LogCategory::App, _)      => format!("[unknown App schema v{}]", version),
     };
 
     ResolvedLog {
@@ -107,9 +124,9 @@ pub fn format_human(slot: &LogSlot) -> String {
         r.timestamp, r.level, r.category, r.service, r.handler, r.detail)
 }
 
-// ── Detail resolvers per category ──
+// ── Detail resolvers per category (v1) ──
 
-fn resolve_db_detail(payload: &[u8; 192]) -> String {
+fn resolve_db_detail_v1(payload: &[u8; 192]) -> String {
     // DbPayload layout: db_hash(4) + table_hash(4) + query_hash(4) + duration_us(4) + rows(4) + op(1) + ...
     let db_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
     let table_hash = u32::from_le_bytes([payload[4], payload[5], payload[6], payload[7]]);
@@ -133,7 +150,7 @@ fn resolve_db_detail(payload: &[u8; 192]) -> String {
     }
 }
 
-fn resolve_mq_detail(payload: &[u8; 192]) -> String {
+fn resolve_mq_detail_v1(payload: &[u8; 192]) -> String {
     let broker_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
     let topic_hash = u32::from_le_bytes([payload[4], payload[5], payload[6], payload[7]]);
     let _group_hash = u32::from_le_bytes([payload[8], payload[9], payload[10], payload[11]]);
@@ -151,7 +168,7 @@ fn resolve_mq_detail(payload: &[u8; 192]) -> String {
         op, broker, topic, offset, msg_bytes, latency_us)
 }
 
-fn resolve_access_detail(payload: &[u8; 192]) -> String {
+fn resolve_access_detail_v1(payload: &[u8; 192]) -> String {
     let method = payload[0];
     let status = u16::from_le_bytes([payload[1], payload[2]]);
     let _protocol = payload[3];
@@ -168,7 +185,7 @@ fn resolve_access_detail(payload: &[u8; 192]) -> String {
         method_str, status, duration_us, req_bytes, resp_bytes)
 }
 
-fn resolve_ai_detail(payload: &[u8; 192]) -> String {
+fn resolve_ai_detail_v1(payload: &[u8; 192]) -> String {
     let model_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
     let provider_hash = u32::from_le_bytes([payload[4], payload[5], payload[6], payload[7]]);
     let input_tokens = u32::from_le_bytes([payload[8], payload[9], payload[10], payload[11]]);
@@ -184,7 +201,7 @@ fn resolve_ai_detail(payload: &[u8; 192]) -> String {
         latency_us / 1000, cost as f64 / 1_000_000.0)
 }
 
-fn resolve_system_detail(payload: &[u8; 192]) -> String {
+fn resolve_system_detail_v1(payload: &[u8; 192]) -> String {
     let cpu_x100 = u16::from_le_bytes([payload[0], payload[1]]);
     let mem_kb = u32::from_le_bytes([payload[2], payload[3], payload[4], payload[5]]);
     let event_type = payload[22];
@@ -194,7 +211,7 @@ fn resolve_system_detail(payload: &[u8; 192]) -> String {
         event, cpu_x100 as f64 / 100.0, mem_kb / 1024)
 }
 
-fn resolve_security_detail(payload: &[u8; 192]) -> String {
+fn resolve_security_detail_v1(payload: &[u8; 192]) -> String {
     let actor_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
     let resource_hash = u32::from_le_bytes([payload[4], payload[5], payload[6], payload[7]]);
     let action_hash = u32::from_le_bytes([payload[8], payload[9], payload[10], payload[11]]);
@@ -212,7 +229,7 @@ fn resolve_security_detail(payload: &[u8; 192]) -> String {
         event, result, actor, resource, action, risk)
 }
 
-fn resolve_app_detail(payload: &[u8; 192]) -> String {
+fn resolve_app_detail_v1(payload: &[u8; 192]) -> String {
     let code_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
     let kv_len = u16::from_le_bytes([payload[4], payload[5]]) as usize;
 
@@ -253,5 +270,29 @@ mod tests {
     fn test_resolve_hash_unknown() {
         let resolved = resolve_hash(0xDEADBEEF);
         assert_eq!(resolved, "0xdeadbeef");
+    }
+
+    #[test]
+    fn test_resolve_slot_unknown_version() {
+        // Build a slot with version=99 — should produce "[unknown ... schema v99]"
+        let mut slot = LogSlot::default();
+        slot.header.version = 99;
+        slot.header.category = LogCategory::Db as u8;
+        let resolved = resolve_slot(&slot);
+        assert!(resolved.detail.contains("unknown"), "got: {}", resolved.detail);
+        assert!(resolved.detail.contains("v99"), "got: {}", resolved.detail);
+    }
+
+    #[test]
+    fn test_resolve_slot_v1() {
+        // Build a v1 DB slot
+        let mut slot = LogSlot::default();
+        slot.header.version = 1;
+        slot.header.category = LogCategory::Db as u8;
+        slot.header.level = LogLevel::Info as u8;
+        // op_type = 0 (SELECT)
+        slot.payload[20] = 0;
+        let resolved = resolve_slot(&slot);
+        assert!(resolved.detail.contains("SELECT"), "got: {}", resolved.detail);
     }
 }

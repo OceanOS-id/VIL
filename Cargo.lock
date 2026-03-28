@@ -4411,6 +4411,7 @@ dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
 ]
 
@@ -4421,6 +4422,7 @@ dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
 ]
 
@@ -4431,6 +4433,7 @@ dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
 ]
 
@@ -4466,6 +4469,7 @@ dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
 ]
 
@@ -4504,6 +4508,7 @@ dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
 ]
 
@@ -4513,6 +4518,7 @@ version = "0.1.0"
 dependencies = [
  "bytes",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_storage_s3",
 ]
@@ -4525,6 +4531,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_db_mongo",
  "vil_log",
 ]
@@ -4536,6 +4543,7 @@ dependencies = [
  "clickhouse",
  "serde",
  "tokio",
+ "tracing",
  "vil_db_clickhouse",
  "vil_log",
 ]
@@ -4546,6 +4554,7 @@ version = "0.1.0"
 dependencies = [
  "serde_json",
  "tokio",
+ "tracing",
  "vil_db_elastic",
  "vil_log",
 ]
@@ -4555,6 +4564,7 @@ name = "example-701-mq-rabbitmq-pubsub"
 version = "0.1.0"
 dependencies = [
  "tokio",
+ "tracing",
  "vil_log",
  "vil_mq_rabbitmq",
 ]
@@ -4564,6 +4574,7 @@ name = "example-702-mq-sqs-send-receive"
 version = "0.1.0"
 dependencies = [
  "tokio",
+ "tracing",
  "vil_log",
  "vil_mq_sqs",
 ]
@@ -4573,6 +4584,7 @@ name = "example-703-protocol-soap-client"
 version = "0.1.0"
 dependencies = [
  "tokio",
+ "tracing",
  "vil_log",
  "vil_soap",
 ]
@@ -4582,6 +4594,7 @@ name = "example-704-protocol-modbus-read"
 version = "0.1.0"
 dependencies = [
  "tokio",
+ "tracing",
  "vil_log",
  "vil_modbus",
 ]
@@ -4591,6 +4604,7 @@ name = "example-801-trigger-cron-basic"
 version = "0.1.0"
 dependencies = [
  "tokio",
+ "tracing",
  "vil_log",
  "vil_trigger_core",
  "vil_trigger_cron",
@@ -4601,6 +4615,7 @@ name = "example-802-trigger-fs-watcher"
 version = "0.1.0"
 dependencies = [
  "tokio",
+ "tracing",
  "vil_log",
  "vil_trigger_core",
  "vil_trigger_fs",
@@ -4613,6 +4628,7 @@ dependencies = [
  "reqwest 0.12.28",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_trigger_core",
  "vil_trigger_webhook",
@@ -4623,6 +4639,7 @@ name = "example-804-trigger-cdc-postgres"
 version = "0.1.0"
 dependencies = [
  "tokio",
+ "tracing",
  "vil_log",
  "vil_trigger_cdc",
  "vil_trigger_core",
@@ -13307,6 +13324,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_json",
  "vil_llm",
  "vil_log",
@@ -13326,6 +13344,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_macros",
  "vil_sdk",
@@ -13345,6 +13364,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_llm",
  "vil_log",
  "vil_macros",
@@ -13501,6 +13521,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_llm",
  "vil_log",
  "vil_macros",
@@ -13552,6 +13573,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_macros",
  "vil_sdk",
@@ -13581,6 +13603,7 @@ dependencies = [
  "scylla",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -13592,6 +13615,7 @@ dependencies = [
  "clickhouse",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -13604,6 +13628,7 @@ dependencies = [
  "aws-sdk-dynamodb",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -13617,6 +13642,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -13640,6 +13666,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -13651,6 +13678,7 @@ dependencies = [
  "neo4rs",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -13693,6 +13721,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_server_db",
 ]
@@ -13719,6 +13748,7 @@ dependencies = [
  "influxdb2",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -13956,6 +13986,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_macros",
  "vil_sdk",
@@ -13998,6 +14029,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_json",
  "vil_log",
  "vil_macros",
@@ -14110,6 +14142,7 @@ version = "0.1.0"
 dependencies = [
  "tokio",
  "tokio-modbus",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14140,6 +14173,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_llm",
  "vil_log",
  "vil_macros",
@@ -14160,6 +14194,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
 ]
 
@@ -14173,6 +14208,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
 ]
 
@@ -14189,6 +14225,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
 ]
 
@@ -14203,6 +14240,7 @@ dependencies = [
  "google-cloud-pubsub 0.25.0",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14217,6 +14255,7 @@ dependencies = [
  "pulsar",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14231,6 +14270,7 @@ dependencies = [
  "lapin",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14245,6 +14285,7 @@ dependencies = [
  "aws-sdk-sqs",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14260,6 +14301,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_agent",
  "vil_llm",
  "vil_log",
@@ -14348,6 +14390,7 @@ version = "0.1.0"
 dependencies = [
  "opcua",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14470,6 +14513,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "serde_json",
+ "tracing",
  "vil_log",
  "vil_macros",
  "vil_sdk",
@@ -14567,6 +14611,7 @@ version = "0.1.0"
 dependencies = [
  "dashmap 5.5.3",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_net",
  "vil_obs",
@@ -14618,6 +14663,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "serde_json",
+ "tracing",
  "vil_log",
  "vil_macros",
  "vil_sdk",
@@ -14662,6 +14708,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tower 0.4.13",
+ "tracing",
  "uuid",
  "vil_log",
  "vil_server_core",
@@ -14721,6 +14768,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_server_core",
 ]
@@ -14763,6 +14811,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_rt",
  "vil_server_core",
@@ -14830,6 +14879,7 @@ dependencies = [
  "serde_yaml",
  "tempfile",
  "tokio",
+ "tracing",
  "vil_log",
  "vil_types",
 ]
@@ -14841,6 +14891,7 @@ dependencies = [
  "quick-xml 0.36.2",
  "reqwest 0.12.28",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14855,6 +14906,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "vil_llm",
  "vil_log",
  "vil_macros",
@@ -14888,6 +14940,7 @@ dependencies = [
  "futures-util",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14900,6 +14953,7 @@ dependencies = [
  "google-cloud-storage",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14914,6 +14968,7 @@ dependencies = [
  "bytes",
  "serde",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]
@@ -14997,6 +15052,7 @@ dependencies = [
  "async-trait",
  "tokio",
  "tokio-postgres",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
@@ -15020,6 +15076,7 @@ dependencies = [
  "chrono",
  "cron",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
@@ -15035,6 +15092,7 @@ dependencies = [
  "native-tls",
  "tokio",
  "tokio-native-tls",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
@@ -15048,6 +15106,7 @@ dependencies = [
  "async-trait",
  "futures-util",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
@@ -15060,6 +15119,7 @@ dependencies = [
  "async-trait",
  "notify",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
@@ -15072,6 +15132,7 @@ dependencies = [
  "async-trait",
  "rumqttc",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
@@ -15086,6 +15147,7 @@ dependencies = [
  "hmac",
  "sha2",
  "tokio",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
  "vil_trigger_core",
@@ -15172,6 +15234,7 @@ dependencies = [
  "futures-util",
  "tokio",
  "tokio-tungstenite 0.24.0",
+ "tracing",
  "vil_connector_macros",
  "vil_log",
 ]

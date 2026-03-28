@@ -7,4 +7,5 @@ publish = false
 [dependencies]
 vil_modbus = { workspace = true }
 vil_log    = { workspace = true }
+tracing            = { workspace = true }
 tokio      = { workspace = true }

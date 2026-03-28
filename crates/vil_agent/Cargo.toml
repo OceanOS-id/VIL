@@ -17,6 +17,7 @@ vil_rag = { version = "0.1.0", path = "../vil_rag" }
 vil_json = { version = "0.1.0", path = "../vil_json" }
 vil_macros = { version = "0.1.0", path = "../vil_macros" }
 vil_log = { workspace = true }
+tracing = { workspace = true }
 
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

@@ -3,33 +3,70 @@
 // =============================================================================
 //
 // Maps (category: u8, hash: u32) → String for reverse lookup.
-// Uses fxhash::hash32 for fast, deterministic hashing.
+// Uses fxhash::hash64 internally for collision detection, truncated to u32
+// for the wire format.
 // Thread-safe via std::sync::Mutex (simple, v0.1).
 // =============================================================================
 
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use fxhash::hash32;
+use fxhash::hash64;
 
-/// Global dictionary: hash -> string value for reverse lookup.
-static DICT: Mutex<Option<HashMap<u32, String>>> = Mutex::new(None);
+/// Dictionary entry storing the original string and full 64-bit hash
+/// for collision detection.
+#[derive(Debug, Clone)]
+struct DictEntry {
+    value: String,
+    hash64: u64,
+}
+
+/// Global dictionary: hash -> DictEntry for reverse lookup.
+static DICT: Mutex<Option<HashMap<u32, DictEntry>>> = Mutex::new(None);
 
 /// Compute a 32-bit FxHash of a string and register it in the global dict.
 ///
+/// Internally uses 64-bit hash for collision detection, truncated to u32
+/// for the wire format. If a collision is detected (different string, same u32),
+/// a warning is printed via eprintln.
+///
 /// Returns the hash, which can be stored in log headers for compact storage.
 pub fn register_str(s: &str) -> u32 {
-    let h = hash32(s.as_bytes());
+    let h64 = hash64(s.as_bytes());
+    let h32 = h64 as u32; // truncate for wire format
+
     let mut guard = DICT.lock().unwrap_or_else(|e| e.into_inner());
     let dict = guard.get_or_insert_with(HashMap::new);
-    dict.entry(h).or_insert_with(|| s.to_string());
-    h
+
+    match dict.entry(h32) {
+        std::collections::hash_map::Entry::Occupied(existing) => {
+            if existing.get().hash64 != h64 {
+                // COLLISION DETECTED — different string, same u32 hash
+                eprintln!(
+                    "[vil_log WARNING] Hash collision: '{}' and '{}' both hash to 0x{:08x}",
+                    existing.get().value,
+                    s,
+                    h32
+                );
+            }
+        }
+        std::collections::hash_map::Entry::Vacant(entry) => {
+            entry.insert(DictEntry {
+                value: s.to_string(),
+                hash64: h64,
+            });
+        }
+    }
+
+    h32
 }
 
 /// Look up a string by its hash. Returns None if not registered.
 pub fn lookup(hash: u32) -> Option<String> {
     let guard = DICT.lock().unwrap_or_else(|e| e.into_inner());
-    guard.as_ref().and_then(|d| d.get(&hash).cloned())
+    guard
+        .as_ref()
+        .and_then(|d| d.get(&hash).map(|e| e.value.clone()))
 }
 
 /// Number of registered strings.
@@ -43,13 +80,21 @@ pub fn dict_size() -> usize {
 // =============================================================================
 
 /// Save the current dictionary to a JSON file.
-/// Format: `{ "hash_decimal": "original_string", ... }`
+/// Format: `{ "hash_decimal": { "value": "original_string", "hash64": 12345 }, ... }`
 pub fn save_to_file(path: &std::path::Path) -> std::io::Result<()> {
     let guard = DICT.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(dict) = guard.as_ref() {
-        let map: std::collections::BTreeMap<String, &String> = dict
+        let map: std::collections::BTreeMap<String, serde_json::Value> = dict
             .iter()
-            .map(|(k, v)| (format!("{}", k), v))
+            .map(|(k, entry)| {
+                (
+                    format!("{}", k),
+                    serde_json::json!({
+                        "value": entry.value,
+                        "hash64": entry.hash64
+                    }),
+                )
+            })
             .collect();
         let json = serde_json::to_string_pretty(&map)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
@@ -59,19 +104,43 @@ pub fn save_to_file(path: &std::path::Path) -> std::io::Result<()> {
 }
 
 /// Load dictionary from a JSON file (merges with existing entries).
+///
+/// Supports both new format (object with "value" and "hash64" fields) and
+/// old format (plain string value) for backward compatibility.
 pub fn load_from_file(path: &std::path::Path) -> std::io::Result<usize> {
     let json = std::fs::read_to_string(path)?;
-    let map: std::collections::BTreeMap<String, String> = serde_json::from_str(&json)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+    let raw: std::collections::BTreeMap<String, serde_json::Value> =
+        serde_json::from_str(&json)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
     let mut guard = DICT.lock().unwrap_or_else(|e| e.into_inner());
     let dict = guard.get_or_insert_with(HashMap::new);
     let mut loaded = 0;
-    for (hash_str, value) in map {
+    for (hash_str, val) in raw {
         if let Ok(hash) = hash_str.parse::<u32>() {
+            let (value, h64) = if let Some(obj) = val.as_object() {
+                // New format: { "value": "...", "hash64": ... }
+                let value = obj
+                    .get("value")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let h64 = obj
+                    .get("hash64")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or_else(|| hash64(value.as_bytes()));
+                (value, h64)
+            } else if let Some(s) = val.as_str() {
+                // Old format: plain string value — recompute hash64
+                let value = s.to_string();
+                let h64 = hash64(value.as_bytes());
+                (value, h64)
+            } else {
+                continue;
+            };
             dict.entry(hash).or_insert_with(|| {
                 loaded += 1;
-                value
+                DictEntry { value, hash64: h64 }
             });
         }
     }
@@ -81,7 +150,10 @@ pub fn load_from_file(path: &std::path::Path) -> std::io::Result<usize> {
 /// Export the full dictionary as a HashMap (for external use).
 pub fn export_all() -> HashMap<u32, String> {
     let guard = DICT.lock().unwrap_or_else(|e| e.into_inner());
-    guard.as_ref().cloned().unwrap_or_default()
+    guard
+        .as_ref()
+        .map(|d| d.iter().map(|(k, e)| (*k, e.value.clone())).collect())
+        .unwrap_or_default()
 }
 
 // =============================================================================
@@ -166,5 +238,57 @@ mod tests {
         let h1 = register_str("service.name");
         let h2 = register_str("service.name");
         assert_eq!(h1, h2);
+    }
+
+    #[test]
+    fn test_dict_size() {
+        let before = dict_size();
+        register_str("dict_size_test_unique_key");
+        let after = dict_size();
+        assert!(after >= before + 1);
+    }
+
+    #[test]
+    fn test_export_all() {
+        register_str("export_test_val");
+        let exported = export_all();
+        assert!(exported.values().any(|v| v == "export_test_val"));
+    }
+
+    #[test]
+    fn test_save_and_load_roundtrip() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("vil_log_dict_test.json");
+
+        register_str("roundtrip_test_str");
+        save_to_file(&path).unwrap();
+
+        // Verify file is valid JSON and loadable
+        let loaded = load_from_file(&path).unwrap();
+        // loaded may be 0 if entries already existed, but no error
+        let _ = loaded;
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn test_load_old_format() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("vil_log_dict_old_format_test.json");
+
+        // Write old format: plain string values
+        let old_data = serde_json::json!({
+            "12345": "old_format_value"
+        });
+        std::fs::write(&path, serde_json::to_string_pretty(&old_data).unwrap()).unwrap();
+
+        let loaded = load_from_file(&path).unwrap();
+        assert!(loaded >= 1);
+
+        // Verify the value is accessible
+        let found = lookup(12345);
+        assert_eq!(found.as_deref(), Some("old_format_value"));
+
+        let _ = std::fs::remove_file(&path);
     }
 }

@@ -6,6 +6,8 @@
 // or via builder methods.
 // =============================================================================
 
+use std::path::PathBuf;
+
 use crate::types::LogLevel;
 
 /// Configuration for the VIL log system.
@@ -36,16 +38,33 @@ pub struct LogConfig {
     ///   CLI tool:        threads = 1 or 2
     ///   Microservice:    threads = None (auto-detect)
     pub threads: Option<usize>,
+
+    /// Path for dictionary persistence file.
+    /// On startup, the dictionary is loaded from this file (if it exists).
+    /// On shutdown (ctrl+c / SIGTERM), the dictionary is saved to this file.
+    /// Default: `.vil_log_dict.json`
+    pub dict_path: Option<PathBuf>,
+
+    /// Path for fallback file when primary drain fails.
+    /// Default: `.vil_log_fallback.jsonl`
+    pub fallback_path: Option<PathBuf>,
+
+    /// Number of consecutive drain failures before switching to fallback.
+    /// Default: 3
+    pub drain_failure_threshold: u32,
 }
 
 impl Default for LogConfig {
     fn default() -> Self {
         Self {
-            ring_slots:        8192,
-            level:             LogLevel::Info,
-            batch_size:        256,
-            flush_interval_ms: 10,
-            threads:           None, // auto-detect
+            ring_slots:              8192,
+            level:                   LogLevel::Info,
+            batch_size:              256,
+            flush_interval_ms:       10,
+            threads:                 None, // auto-detect
+            dict_path:               None, // default: .vil_log_dict.json
+            fallback_path:           None, // default: .vil_log_fallback.jsonl
+            drain_failure_threshold: 3,
         }
     }
 }
@@ -78,6 +97,24 @@ impl LogConfig {
     /// Set expected thread count. Determines stripe count for optimal performance.
     pub fn threads(mut self, n: usize) -> Self {
         self.threads = Some(n);
+        self
+    }
+
+    /// Set the dictionary persistence path.
+    pub fn dict_path(mut self, path: impl Into<PathBuf>) -> Self {
+        self.dict_path = Some(path.into());
+        self
+    }
+
+    /// Set the fallback file path for when primary drain fails.
+    pub fn fallback_path(mut self, path: impl Into<PathBuf>) -> Self {
+        self.fallback_path = Some(path.into());
+        self
+    }
+
+    /// Set the number of consecutive drain failures before switching to fallback.
+    pub fn drain_failure_threshold(mut self, n: u32) -> Self {
+        self.drain_failure_threshold = n;
         self
     }
 }

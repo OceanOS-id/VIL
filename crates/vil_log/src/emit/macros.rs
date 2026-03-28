@@ -5,6 +5,10 @@
 // Each macro builds a LogSlot and pushes it to the global ring.
 // Failures (ring full) increment the drop counter silently — never block.
 //
+// When the ring is not initialized (try_global_striped() returns None),
+// macros fall back to emitting via the `tracing` crate so that logs are
+// not silently lost during early startup or in test contexts.
+//
 // app_log!(LEVEL, "event.code", { key: value, ... })
 //   - Builds VilLogHeader with category=App, current timestamp
 //   - Serializes fields to msgpack via rmp_serde
@@ -21,6 +25,8 @@
 // =============================================================================
 
 /// Emit a general application log event to the global ring.
+///
+/// Falls back to `tracing` if the ring is not initialized.
 ///
 /// # Example
 /// ```rust,ignore
@@ -71,16 +77,23 @@ macro_rules! app_log {
             if let Ok(encoded) = rmp_serde::to_vec_named(&kv_map) {
                 let len = encoded.len().min(184);
                 // Write AppPayload manually: code_hash(u32) + kv_len(u16) + pad(u8x2) + bytes
-                let mut cursor = 0usize;
                 let ch_bytes = code_hash.to_le_bytes();
                 slot.payload[0..4].copy_from_slice(&ch_bytes);
                 let kl_bytes = (len as u16).to_le_bytes();
                 slot.payload[4..6].copy_from_slice(&kl_bytes);
-                cursor = 8; // skip 2-byte pad
+                let cursor = 8usize; // skip 2-byte pad
                 slot.payload[cursor..cursor + len].copy_from_slice(&encoded[..len]);
             }
 
             let _ = striped.try_push(slot);
+        } else {
+            // Fallback: ring not initialized — emit via tracing
+            tracing::event!(
+                tracing::Level::INFO,
+                code = $code,
+                $( $key = %$val, )*
+                "vil_log fallback (ring not initialized)"
+            );
         }
         } // level_enabled
     }};
@@ -141,6 +154,8 @@ macro_rules! security_log {
 }
 
 /// Internal helper — copy a typed payload struct into a LogSlot and push.
+///
+/// Falls back to `tracing` if the ring is not initialized.
 #[doc(hidden)]
 #[macro_export]
 macro_rules! _emit_typed_log {
@@ -182,6 +197,14 @@ macro_rules! _emit_typed_log {
             slot.payload[..copy_len].copy_from_slice(&payload_bytes[..copy_len]);
 
             let _ = striped.try_push(slot);
+        } else {
+            // Fallback: ring not initialized — emit via tracing
+            tracing::event!(
+                tracing::Level::INFO,
+                category = format!("{:?}", $category).as_str(),
+                level = stringify!($level),
+                "vil_log fallback (ring not initialized)"
+            );
         }
         } // level_enabled
     }};

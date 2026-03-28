@@ -29,6 +29,7 @@ dashmap = "5.5"
 
 # Logging
 vil_log = { workspace = true }
+tracing = { workspace = true }
 
 # VIL internal
 vil_types = { version = "0.1.0", path = "../vil_types" }

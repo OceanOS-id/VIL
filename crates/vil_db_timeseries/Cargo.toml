@@ -16,6 +16,7 @@ timescale = []  # uses vil_db_sqlx under the hood
 
 [dependencies]
 vil_log              = { workspace = true }
+tracing = { workspace = true }
 vil_connector_macros = { workspace = true }
 tokio      = { workspace = true }
 serde      = { workspace = true }

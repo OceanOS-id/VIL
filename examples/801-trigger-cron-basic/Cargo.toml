@@ -8,4 +8,5 @@ publish = false
 vil_trigger_cron = { workspace = true }
 vil_trigger_core = { workspace = true }
 vil_log          = { workspace = true }
+tracing            = { workspace = true }
 tokio            = { workspace = true }

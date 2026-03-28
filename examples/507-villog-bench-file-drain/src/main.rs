@@ -63,6 +63,9 @@ async fn bench_vil_file() -> (std::time::Duration, PathBuf) {
         batch_size: 4096,
         flush_interval_ms: 1,
         threads: None,
+        dict_path: None,
+        fallback_path: None,
+        drain_failure_threshold: 3,
     };
     let task = init_logging(config, drain);
 

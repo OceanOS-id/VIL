@@ -26,6 +26,9 @@ async fn main() {
         batch_size:        100,
         flush_interval_ms: 100,
         threads: None,
+        dict_path: None,
+        fallback_path: None,
+        drain_failure_threshold: 3,
     };
 
     let drain = StdoutDrain::new(StdoutFormat::Pretty);

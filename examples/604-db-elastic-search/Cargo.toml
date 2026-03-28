@@ -7,5 +7,6 @@ publish = false
 [dependencies]
 vil_db_elastic = { workspace = true }
 vil_log        = { workspace = true }
+tracing            = { workspace = true }
 tokio          = { workspace = true }
 serde_json     = { workspace = true }
