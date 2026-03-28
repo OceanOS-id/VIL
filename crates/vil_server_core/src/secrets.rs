@@ -3,7 +3,9 @@
 // =============================================================================
 //
 // Encrypts sensitive configuration values (database URLs, API keys, tokens)
-// at rest. Supports multiple backends:
+// at rest using AES-256-GCM (authenticated encryption with associated data).
+//
+// Backends:
 //   - LocalEncryption: AES-256-GCM with key on disk
 //   - EnvVar: resolve from environment variables
 //   - KubernetesSecrets: resolve from K8s Secret API (requires kube-rs)
@@ -16,6 +18,8 @@
 //   k8s ref:    url: "${K8S_SECRET:db-creds/url}"
 //   vault ref:  url: "${VAULT:secret/data/db#url}"
 
+use aes_gcm::aead::{Aead, KeyInit, OsRng};
+use aes_gcm::{Aes256Gcm, Nonce};
 use std::path::Path;
 use vil_log::app_log;
 
@@ -102,14 +106,18 @@ impl LocalEncryption {
 
 impl SecretProvider for LocalEncryption {
     fn encrypt(&self, plaintext: &str) -> Result<String, SecretError> {
-        // Simple XOR-based encryption — upgrade to AES-256-GCM for production
-        // In production: use `aes-gcm` crate for proper AEAD
-        let nonce = generate_nonce();
-        let mut ciphertext = plaintext.as_bytes().to_vec();
-        for (i, byte) in ciphertext.iter_mut().enumerate() {
-            *byte ^= self.key[i % 32] ^ nonce[i % 12];
-        }
-        let mut output = nonce.to_vec();
+        let cipher = Aes256Gcm::new_from_slice(&self.key)
+            .map_err(|e| SecretError::EncryptionFailed(e.to_string()))?;
+
+        let nonce_bytes = generate_nonce();
+        let nonce = Nonce::from_slice(&nonce_bytes);
+
+        let ciphertext = cipher
+            .encrypt(nonce, plaintext.as_bytes())
+            .map_err(|e| SecretError::EncryptionFailed(e.to_string()))?;
+
+        // Output: nonce (12 bytes) || ciphertext+tag
+        let mut output = nonce_bytes.to_vec();
         output.extend_from_slice(&ciphertext);
         Ok(format!("ENC[AES256:{}]", base64_encode(&output)))
     }
@@ -121,15 +129,20 @@ impl SecretProvider for LocalEncryption {
             .ok_or_else(|| SecretError::DecryptionFailed("Invalid format".into()))?;
 
         let data = base64_decode(inner)?;
-        if data.len() < 12 {
+        if data.len() < 12 + 16 {
+            // 12-byte nonce + 16-byte GCM tag minimum
             return Err(SecretError::DecryptionFailed("Data too short".into()));
         }
 
-        let nonce = &data[..12];
-        let mut plaintext = data[12..].to_vec();
-        for (i, byte) in plaintext.iter_mut().enumerate() {
-            *byte ^= self.key[i % 32] ^ nonce[i % 12];
-        }
+        let (nonce_bytes, ciphertext_and_tag) = data.split_at(12);
+        let nonce = Nonce::from_slice(nonce_bytes);
+
+        let cipher = Aes256Gcm::new_from_slice(&self.key)
+            .map_err(|e| SecretError::DecryptionFailed(e.to_string()))?;
+
+        let plaintext = cipher
+            .decrypt(nonce, ciphertext_and_tag)
+            .map_err(|_| SecretError::DecryptionFailed("Authentication failed — wrong key or tampered data".into()))?;
 
         String::from_utf8(plaintext)
             .map_err(|e| SecretError::DecryptionFailed(e.to_string()))
@@ -158,7 +171,6 @@ pub struct EnvVarProvider;
 
 impl SecretProvider for EnvVarProvider {
     fn encrypt(&self, plaintext: &str) -> Result<String, SecretError> {
-        // Env vars can't be encrypted — just pass through
         Ok(plaintext.to_string())
     }
 
@@ -217,7 +229,6 @@ impl SecretProvider for KubernetesSecretsProvider {
             return Err(SecretError::ProviderError("Format: secret-name/key".into()));
         }
 
-        // Placeholder: in production, use kube-rs to query K8s API
         app_log!(Debug, "secrets.k8s.resolve", { namespace: vil_log::dict::register_str(&self.namespace) as u64, secret: vil_log::dict::register_str(parts[0]) as u64, key: vil_log::dict::register_str(parts[1]) as u64 });
         Err(SecretError::ProviderError(
             "K8s Secrets provider — requires kube-rs crate. Enable with feature flag.".into()
@@ -267,7 +278,6 @@ impl SecretProvider for VaultProvider {
             return Err(SecretError::ProviderError("Format: path#key".into()));
         }
 
-        // Placeholder: in production, use reqwest/ureq to query Vault HTTP API
         app_log!(Debug, "secrets.vault.resolve", { vault_addr: vil_log::dict::register_str(&self.addr) as u64, path: vil_log::dict::register_str(parts[0]) as u64, key: vil_log::dict::register_str(parts[1]) as u64 });
         Err(SecretError::ProviderError(
             "Vault provider — requires Vault HTTP API. Enable with feature flag.".into()
@@ -330,27 +340,17 @@ impl SecretResolver {
 // Helpers
 // =============================================================================
 
+/// Generate a 32-byte cryptographically secure random key.
 fn generate_random_key() -> [u8; 32] {
     let mut key = [0u8; 32];
-    let seed = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos();
-    for (i, byte) in key.iter_mut().enumerate() {
-        *byte = ((seed >> (i % 16)) ^ (i as u128 * 0x9e3779b97f4a7c15)) as u8;
-    }
+    getrandom::getrandom(&mut key).expect("CSPRNG unavailable");
     key
 }
 
+/// Generate a 12-byte cryptographically secure random nonce.
 fn generate_nonce() -> [u8; 12] {
     let mut nonce = [0u8; 12];
-    let seed = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos();
-    for (i, byte) in nonce.iter_mut().enumerate() {
-        *byte = ((seed >> (i * 3)) ^ (i as u128 * 0xdeadbeef)) as u8;
-    }
+    getrandom::getrandom(&mut nonce).expect("CSPRNG unavailable");
     nonce
 }
 
@@ -373,7 +373,6 @@ fn bytes_to_hex(bytes: &[u8]) -> String {
 }
 
 fn base64_encode(data: &[u8]) -> String {
-    // Simple base64 without external crate
     const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut result = String::new();
     for chunk in data.chunks(3) {

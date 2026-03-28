@@ -7,7 +7,7 @@ repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"
 documentation = "https://vastar.id/docs/vil"
 readme = "README.md"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 vil_capsule = { version = "0.1.0", path = "../vil_capsule" }
@@ -41,6 +41,8 @@ bytes = "1.0"
 dashmap = "5.5"
 futures-core = "0.3"
 itoa = "1.0"
+aes-gcm = "0.10"
+getrandom = "0.2"
 
 # VIL internal
 vil_obs = { version = "0.1.0", path = "../vil_obs" }

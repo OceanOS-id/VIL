@@ -2,7 +2,7 @@
 name = "vil_llm"
 version = "0.1.0"
 edition = "2021"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "VIL LLM Plugin — multi-provider LLM abstraction (chat, streaming, embeddings)"
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"

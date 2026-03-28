@@ -40,3 +40,9 @@ docs-marketing/
 docs-dev/
 scripts/
 .memory/
+
+# Compiled example binaries
+examples/005-basic-multiservice-mesh-ndjson/multiservice-mesh
+examples/007-basic-credit-npl-filter/ai-stream-filter
+examples/008-basic-credit-quality-monitor/ai-content-moderator
+examples/009-basic-credit-regulatory-slik/ai-summarizer

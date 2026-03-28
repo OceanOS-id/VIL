@@ -7,7 +7,7 @@ repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"
 documentation = "https://vastar.id/docs/vil"
 readme = "README.md"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 
 [features]
 default = ["sqlite"]

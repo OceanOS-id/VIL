@@ -7,7 +7,7 @@ repository.workspace = true
 homepage.workspace = true
 documentation.workspace = true
 readme = "README.md"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "VIL Sidecar Protocol — SHM IPC for external process integration"
 
 [dependencies]

@@ -2,7 +2,7 @@
 name = "vil_doc_parser"
 version = "0.1.0"
 edition = "2021"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "VIL Native Document Parser — zero-dependency Markdown, HTML, plain-text, and CSV parsing for RAG pipelines"
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"

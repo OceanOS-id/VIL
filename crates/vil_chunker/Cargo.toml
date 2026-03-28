@@ -2,7 +2,7 @@
 name = "vil_chunker"
 version = "0.1.0"
 edition = "2021"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "VIL Advanced Semantic Chunker — SIMD-optimized, zero-alloc text chunking with sentence-boundary, sliding-window, code-aware, and table strategies"
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"
