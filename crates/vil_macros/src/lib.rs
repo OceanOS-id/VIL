@@ -460,7 +460,7 @@ pub fn vil_workflow(input: TokenStream) -> TokenStream {
         let dst_proc = r.dst_process.to_string();
         let dst_port = r.dst_port.to_string();
         let t_mode = &r.transfer_mode;
-        
+
         if let Some(transport) = &r.transport {
             let trans_str = transport.to_string();
             quote! {

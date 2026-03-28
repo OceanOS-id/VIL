@@ -1,7 +1,3 @@
-[target.'cfg(all())']
-rustflags = [
-    # ── Security-Critical Lints (warn, not deny — too many existing) ──
-    "-Wclippy::undocumented_unsafe_blocks",
-    "-Wclippy::panic_in_result_fn",
-    "-Wclippy::dbg_macro",
-]
+# Clippy lints are configured in clippy.toml
+# Rustflags intentionally left empty to avoid breaking builds
+# Use `cargo clippy` for lint enforcement

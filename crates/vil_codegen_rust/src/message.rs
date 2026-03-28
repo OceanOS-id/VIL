@@ -40,7 +40,7 @@ pub fn generate_messages(ir: &WorkflowIR) -> TokenStream {
                     name: #name_str,
                     layout: #layout_ident,
                     // TODO: Implement TransferCaps extraction based on workflow usage
-                    transfer_caps: &[vil_types::TransferMode::LoanWrite, vil_types::TransferMode::LoanRead], 
+                    transfer_caps: &[vil_types::TransferMode::LoanWrite, vil_types::TransferMode::LoanRead],
                     is_stable: false,
                     semantic_kind: vil_types::SemanticKind::Message,
                     memory_class: vil_types::MemoryClass::PagedExchange,
