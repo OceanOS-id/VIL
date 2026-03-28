@@ -2,7 +2,7 @@
 name = "vil_new_http"
 description = "Thin HTTP adapter for VIL using core reactive session primitives (VL-RFC-0003)"
 edition.workspace = true
-version = "0.1.1"
+version = "0.1.2"
 license.workspace = true
 authors.workspace = true
 repository.workspace = true

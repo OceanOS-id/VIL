@@ -1,6 +1,6 @@
 [package]
 name = "vil_graphql"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "VIL GraphQL Plugin — auto-generated schema from VlangEntity, CRUD resolvers, subscriptions"
 repository = "https://github.com/OceanOS-id/VIL"

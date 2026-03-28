@@ -1,6 +1,6 @@
 [package]
 name = "vil_db_sqlx"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "VIL Database Plugin — PostgreSQL, MySQL, SQLite via sqlx"
 repository = "https://github.com/OceanOS-id/VIL"

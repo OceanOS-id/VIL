@@ -1,6 +1,6 @@
 [package]
 name = "vil_server_mesh"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "VIL Server Mesh — Tri-Lane SHM service mesh with TCP fallback"
 repository = "https://github.com/OceanOS-id/VIL"

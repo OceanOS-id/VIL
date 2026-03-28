@@ -1,6 +1,6 @@
 [package]
 name = "vil_multi_agent"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL Multi-Agent System — compile agent graphs to state machines with typed inter-agent channels"

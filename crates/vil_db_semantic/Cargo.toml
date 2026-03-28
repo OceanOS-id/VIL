@@ -1,6 +1,6 @@
 [package]
 name = "vil_db_semantic"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "VIL DB Semantic Layer — Provider-neutral, compile-time IR, runtime zero-cost"
 repository = "https://github.com/OceanOS-id/VIL"

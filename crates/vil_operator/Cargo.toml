@@ -1,6 +1,6 @@
 [package]
 name = "vil_operator"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "VIL Kubernetes Operator — CRD-based deployment of vil-server"
 repository = "https://github.com/OceanOS-id/VIL"
