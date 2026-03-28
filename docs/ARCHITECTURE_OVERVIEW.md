@@ -79,6 +79,7 @@ Each layer builds on the one below without modifying its contracts.
 |-------|---------|
 | `vil_obs` | RuntimeObserver, RuntimeCounters, LatencyTracker |
 | `vil_diag` | Diagnostic reporting |
+| `vil_log` | Semantic log system — zero-copy ring buffer, 7 typed log categories (v0.2: zerocopy resolver, tracing fallback, dict persist) |
 
 ### Layer E: Developer Interface
 

@@ -24,6 +24,15 @@ VIL includes `vil_log` — a zero-copy, non-blocking semantic log system purpose
 
 For Rust ecosystem compatibility, `VilTracingLayer` bridges `tracing` events into VIL's ring buffer.
 
+### Development vs Production
+
+| Mode | Setup | Latency | When |
+|------|-------|---------|------|
+| **Development** | Don't call `init_logging()` | ~800ns (tracing fallback) | Debugging, testing, familiar output |
+| **Production** | Call `init_logging()` | ~130ns (SPSC ring) | Deployed services, high throughput |
+
+Macros (`app_log!`, `db_log!`, etc.) automatically detect which mode — zero code change needed. See [USAGE.md](../../crates/vil_log/USAGE.md).
+
 ---
 
 ## 2. Architecture
@@ -39,6 +48,17 @@ vil_rt         ─► system_log!()  ──┤    1 ring per CPU core) └─►
 developer      ─► app_log!()    ──┤
 tracing bridge ─► VilTracingLayer┘
 ```
+
+### Safety & Reliability (v0.2)
+
+| Feature | Description |
+|---------|-------------|
+| **Collision detection** | 64-bit hash internally, warns if two strings produce same 32-bit truncation |
+| **Auto dictionary persist** | Loads `.vil_log_dict.json` on startup, saves on shutdown (ctrl+c/SIGTERM) |
+| **Schema versioning** | Resolver dispatches by `(category, version)` — old logs always readable |
+| **Zerocopy resolver** | `FromBytes::read_from_prefix()` — no unsafe, no hardcoded byte offsets |
+| **FallbackDrain** | Wraps any drain with JSONL file backup after N consecutive failures |
+| **Tracing fallback** | When `init_logging()` not called, macros auto-fallback to `tracing::event!` |
 
 ### Striped SPSC Rings
 
@@ -264,6 +284,22 @@ let drain = NatsDrain::new(NatsConfig {
     url: "nats://nats:4222".into(),
     subject_prefix: "vil.logs".into(),
 });
+```
+
+---
+
+## Schema Backup (Important)
+
+vil_log stores payloads as binary structs, not text. To read old logs in the future:
+
+1. **Back up `.vil_log_dict.json`** — hash→string dictionary (auto-saved on shutdown)
+2. **Back up `crates/vil_log/src/types/*.rs`** — struct definitions are the "schema"
+3. **Version field** — each LogSlot carries `version: u8` for schema evolution
+
+```bash
+# After each release:
+cp .vil_log_dict.json log-schema-backup/v0.2.0/
+cp crates/vil_log/src/types/*.rs log-schema-backup/v0.2.0/
 ```
 
 ---
