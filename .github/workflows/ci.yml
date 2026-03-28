@@ -12,7 +12,6 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  RUST_VERSION: "1.93.1"
 
 jobs:
   check:
@@ -20,9 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
+      - run: rustup default 1.93.1
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --workspace --exclude vil-basic-ai-gw-demo --exclude vil-multi-pipeline-benchmark
 
@@ -31,9 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
+      - run: rustup default 1.93.1
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace --exclude vil-basic-ai-gw-demo --exclude vil-multi-pipeline-benchmark -- --skip integration
 
@@ -42,10 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-          components: clippy
+      - run: rustup default 1.93.1 && rustup component add clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --workspace --exclude vil-basic-ai-gw-demo --exclude vil-multi-pipeline-benchmark
 
@@ -54,42 +46,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-          components: rustfmt
+      - run: rustup default 1.93.1 && rustup component add rustfmt
       - run: cargo fmt --all -- --check
 
-  # ── Security: Rust Advisory DB ──
   audit:
     name: Security Audit (RustSec)
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-      - name: Install cargo-audit
-        run: cargo install cargo-audit
-      - name: Run audit
-        run: cargo audit
+      - run: rustup default stable
+      - run: cargo install cargo-audit --locked
+      - run: cargo audit
 
-  # ── Security: OSV Scanner (OpenSSF) ──
   osv-scanner:
     name: OSV Scanner
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Install OSV Scanner
+      - name: Install and run OSV Scanner
         run: |
           curl -sSfL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_linux_amd64 -o /usr/local/bin/osv-scanner
           chmod +x /usr/local/bin/osv-scanner
-      - name: Scan
-        run: osv-scanner --lockfile Cargo.lock || true
+          osv-scanner --lockfile Cargo.lock || true
 
-  # ── License & Dependency Policy ──
   deny:
     name: Cargo Deny
     runs-on: ubuntu-latest
