@@ -65,7 +65,6 @@ impl KafkaConsumer {
         }
 
         let (tx, rx) = mpsc::channel(1024);
-        tracing::info!(brokers = %config.brokers, group = %group_id, "kafka consumer created (real rdkafka)");
 
         Ok(Self {
             consumer: Arc::new(consumer),
@@ -98,8 +97,6 @@ impl KafkaConsumer {
         let running = Arc::new(AtomicBool::new(true));
         let running_clone = running.clone();
         let _received_counter = AtomicU64::new(0);
-
-        tracing::info!(topic = ?self.config.topic, "kafka consumer started (real rdkafka)");
 
         tokio::spawn(async move {
             let mut stream = consumer.stream();
@@ -134,8 +131,7 @@ impl KafkaConsumer {
                             break; // receiver dropped
                         }
                     }
-                    Some(Err(e)) => {
-                        tracing::warn!(error = %e, "kafka consumer error");
+                    Some(Err(_e)) => {
                     }
                     None => break,
                 }
@@ -146,7 +142,6 @@ impl KafkaConsumer {
     /// Stop consuming.
     pub fn stop(&self) {
         self.running.store(false, Ordering::Relaxed);
-        tracing::info!("kafka consumer stopped");
     }
 
     pub fn is_running(&self) -> bool { self.running.load(Ordering::Relaxed) }

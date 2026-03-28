@@ -7,6 +7,7 @@ use crate::classifier::KeywordClassifier;
 use crate::route::Route;
 use serde::{Deserialize, Serialize};
 use vil_macros::VilAiDecision;
+use vil_log::app_log;
 
 /// Result of routing a query.
 #[derive(Debug, Clone, Serialize, Deserialize, VilAiDecision)]
@@ -65,12 +66,7 @@ impl SemanticRouter {
     pub fn route(&self, query: &str) -> RoutingResult {
         match self.classifier.classify_with_threshold(query, self.min_confidence) {
             Some(result) => {
-                tracing::debug!(
-                    route = %result.route_name,
-                    target = %result.target,
-                    confidence = result.confidence,
-                    "Semantic router matched"
-                );
+                app_log!(Debug, "semantic_router_match", { route: result.route_name.clone(), target: result.target.clone(), confidence: result.confidence });
                 RoutingResult {
                     target: result.target,
                     route_name: result.route_name,
@@ -79,10 +75,7 @@ impl SemanticRouter {
                 }
             }
             None => {
-                tracing::debug!(
-                    target = %self.default_target,
-                    "Semantic router: no match, using default"
-                );
+                app_log!(Debug, "semantic_router_default", { target: self.default_target.clone() });
                 RoutingResult {
                     target: self.default_target.clone(),
                     route_name: "default".to_string(),

@@ -11,7 +11,7 @@
 
 use dashmap::DashMap;
 use std::sync::Arc;
-use tracing::info;
+use vil_log::app_log;
 
 use vil_rt::{ProcessHandle, VastarRuntimeWorld};
 use vil_types::{
@@ -80,16 +80,12 @@ impl ProcessRegistry {
 
         match self.runtime.register_process(spec) {
             Ok(handle) => {
-                info!(
-                    process_id = ?handle.id(),
-                    handler = %key,
-                    "registered handler process"
-                );
+                app_log!(Info, "handler.process.registered", { handler: key.as_str() });
                 self.handles.insert(key, handle.clone());
                 Some(handle)
             }
             Err(e) => {
-                tracing::error!(handler = %key, error = ?e, "failed to register handler process");
+                app_log!(Error, "handler.process.failed", { handler: key.as_str(), error: format!("{:?}", e) });
                 None
             }
         }

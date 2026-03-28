@@ -74,10 +74,10 @@ where
             match tokio::time::timeout(timeout, inner.call(req)).await {
                 Ok(result) => result,
                 Err(_) => {
-                    tracing::warn!(
-                        timeout_ms = timeout.as_millis() as u64,
-                        "request timed out"
-                    );
+                    {
+                        use vil_log::app_log;
+                        app_log!(Warn, "request.timeout", { timeout_ms: timeout.as_millis() as u64 });
+                    }
                     Ok(timeout_response(timeout))
                 }
             }

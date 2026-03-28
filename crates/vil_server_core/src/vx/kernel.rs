@@ -295,10 +295,16 @@ impl VxKernel {
             ControlSignal::Pause => self.pause(),
             ControlSignal::Resume => self.resume(),
             ControlSignal::HealthDegraded { reason } => {
-                tracing::warn!(service = %self.service, reason = %reason, "Health degraded");
+                {
+                    use vil_log::app_log;
+                    app_log!(Warn, "vx.health.degraded", { service: self.service.as_str(), reason: reason.as_str() });
+                }
             }
             ControlSignal::HealthRestored => {
-                tracing::info!(service = %self.service, "Health restored");
+                {
+                    use vil_log::app_log;
+                    app_log!(Info, "vx.health.restored", { service: self.service.as_str() });
+                }
             }
         }
     }

@@ -14,6 +14,7 @@
 
 use std::time::Duration;
 use tokio::sync::{mpsc, oneshot};
+use vil_log::app_log;
 
 /// Configuration for request coalescing.
 #[derive(Debug, Clone)]
@@ -92,11 +93,7 @@ impl<K: Send + 'static, V: Send + 'static> Coalescer<K, V> {
                     continue;
                 }
 
-                tracing::debug!(
-                    coalescer = %name,
-                    batch_size = batch.len(),
-                    "executing batch"
-                );
+                app_log!(Debug, "coalescing.batch", { coalescer: vil_log::dict::register_str(&name) as u64, batch_size: batch.len() as u64 });
 
                 // Extract keys and execute batch
                 let keys: Vec<K> = batch.iter().map(|r| r.key.clone()).collect();

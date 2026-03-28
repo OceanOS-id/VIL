@@ -142,11 +142,10 @@ impl TriLaneRouter {
 
         self.senders.insert(key.clone(), channels);
 
-        tracing::info!(
-            from = %from,
-            to = %to,
-            "VX tri-lane route registered (Trigger + Data + Control)"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "vx.trilane.route.registered", { from: from, to: to });
+        }
 
         TriLaneReceivers {
             trigger: LaneReceiver { rx: trigger_rx },

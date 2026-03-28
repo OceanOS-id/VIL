@@ -43,12 +43,10 @@ impl MeshRouter {
         // send messages using sender_for(). The config is used for
         // validation and documentation.
         for route in &_config.routes {
-            tracing::info!(
-                from = %route.from,
-                to = %route.to,
-                lane = %route.lane,
-                "mesh route registered"
-            );
+            {
+                use vil_log::app_log;
+                app_log!(Info, "mesh.route.registered", { from: route.from.as_str(), to: route.to.as_str() });
+            }
         }
     }
 }

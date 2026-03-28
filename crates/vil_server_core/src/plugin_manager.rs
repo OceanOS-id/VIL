@@ -80,7 +80,7 @@ impl PluginManager {
                 }
             }
 
-            tracing::debug!(plugin = %name, "loaded plugin from disk");
+            // debug-level: skip vil_log
         }
     }
 
@@ -138,7 +138,10 @@ impl PluginManager {
         self.states.insert(name.clone(), state);
         self.configs.insert(name.clone(), default_config);
 
-        tracing::info!(plugin = %name, "plugin installed");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "plugin.installed", { plugin: name.as_str() });
+        }
         Ok(())
     }
 
@@ -158,7 +161,10 @@ impl PluginManager {
 
         self.persist_state(name, &state)?;
 
-        tracing::info!(plugin = %name, "plugin enabled");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "plugin.enabled", { plugin: name });
+        }
         Ok(())
     }
 
@@ -177,7 +183,10 @@ impl PluginManager {
 
         self.persist_state(name, &state)?;
 
-        tracing::info!(plugin = %name, "plugin disabled");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "plugin.disabled", { plugin: name });
+        }
         Ok(())
     }
 
@@ -214,7 +223,10 @@ impl PluginManager {
             let _ = self.persist_state(name, &state);
         }
 
-        tracing::info!(plugin = %name, changes = ?changes, "config updated");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "plugin.config.updated", { plugin: name, changes: changes.len() as u64 });
+        }
         Ok(changes)
     }
 
@@ -295,7 +307,10 @@ impl PluginManager {
             let _ = std::fs::remove_dir_all(&plugin_dir);
         }
 
-        tracing::info!(plugin = %name, "plugin removed");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "plugin.removed", { plugin: name });
+        }
         Ok(())
     }
 

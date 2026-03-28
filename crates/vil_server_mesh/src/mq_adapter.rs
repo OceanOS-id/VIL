@@ -145,10 +145,10 @@ impl MqAdapter for NatsAdapter {
     type Error = MqError;
 
     async fn connect(&mut self) -> Result<(), Self::Error> {
-        tracing::info!(
-            urls = ?self.config.urls,
-            "NATS adapter: connecting"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "mesh.nats.connecting", {});
+        }
         // Stub: real implementation would use async-nats client
         self.connected = true;
         Ok(())
@@ -158,11 +158,7 @@ impl MqAdapter for NatsAdapter {
         if !self.connected {
             return Err(MqError::NotConnected);
         }
-        tracing::debug!(
-            subject = %msg.subject,
-            size = msg.payload.len(),
-            "NATS publish"
-        );
+        // debug-level: skip vil_log
         Ok(())
     }
 
@@ -171,7 +167,10 @@ impl MqAdapter for NatsAdapter {
             return Err(MqError::NotConnected);
         }
         let (_tx, rx) = tokio::sync::mpsc::channel(256);
-        tracing::info!(subject = %subject, "NATS subscribe");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "mesh.nats.subscribe", { subject: subject });
+        }
         Ok(MqSubscription::new(rx))
     }
 
@@ -185,7 +184,10 @@ impl MqAdapter for NatsAdapter {
 
     async fn disconnect(&mut self) -> Result<(), Self::Error> {
         self.connected = false;
-        tracing::info!("NATS adapter: disconnected");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "mesh.nats.disconnected", {});
+        }
         Ok(())
     }
 

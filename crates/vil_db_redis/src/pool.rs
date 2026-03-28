@@ -37,7 +37,6 @@ impl RedisPool {
         let conn = ConnectionManager::new(client).await
             .map_err(|e| format!("Redis ConnectionManager failed: {}", e))?;
 
-        tracing::info!(pool = %name, url = %config.url, "redis pool connected (real redis)");
         Ok(Self {
             config,
             conn,
@@ -94,7 +93,6 @@ impl RedisPool {
     }
 
     pub async fn close(&self) {
-        tracing::info!(pool = %self.pool_name, "redis pool closed");
     }
 
     /// Access the underlying ConnectionManager for advanced use cases.

@@ -92,24 +92,28 @@ impl BackpressureController {
 
         if current >= self.max_in_flight {
             self.paused.store(true, Ordering::Relaxed);
-            tracing::warn!(
-                service = %self.service,
-                in_flight = current,
-                max = self.max_in_flight,
-                "backpressure: PAUSE (max in-flight reached)"
-            );
+            {
+                use vil_log::app_log;
+                app_log!(Warn, "mesh.backpressure.pause", {
+                    service: self.service.as_str(),
+                    in_flight: current,
+                    max: self.max_in_flight
+                });
+            }
             return Some(BackpressureSignal::Pause);
         }
 
         if current >= self.high_watermark && !self.paused.load(Ordering::Relaxed) {
             let rate = self.max_in_flight.saturating_sub(current) * 100;
             self.throttle_rate.store(rate, Ordering::Relaxed);
-            tracing::info!(
-                service = %self.service,
-                in_flight = current,
-                throttle_rate = rate,
-                "backpressure: THROTTLE"
-            );
+            {
+                use vil_log::app_log;
+                app_log!(Info, "mesh.backpressure.throttle", {
+                    service: self.service.as_str(),
+                    in_flight: current,
+                    throttle_rate: rate
+                });
+            }
             return Some(BackpressureSignal::Throttle { max_rate: rate });
         }
 
@@ -124,11 +128,10 @@ impl BackpressureController {
         if self.paused.load(Ordering::Relaxed) && current <= self.low_watermark {
             self.paused.store(false, Ordering::Relaxed);
             self.throttle_rate.store(0, Ordering::Relaxed);
-            tracing::info!(
-                service = %self.service,
-                in_flight = current,
-                "backpressure: RESUME"
-            );
+            {
+                use vil_log::app_log;
+                app_log!(Info, "mesh.backpressure.resume", { service: self.service.as_str(), in_flight: current });
+            }
             return Some(BackpressureSignal::Resume);
         }
 
@@ -183,20 +186,29 @@ impl UpstreamThrottle {
         match signal {
             BackpressureSignal::Throttle { max_rate } => {
                 self.allowed_rate.store(*max_rate, Ordering::Relaxed);
-                tracing::debug!(target = %self.target, rate = max_rate, "upstream throttled");
+                // debug-level: skip vil_log
             }
             BackpressureSignal::Pause => {
                 self.paused.store(true, Ordering::Relaxed);
-                tracing::warn!(target = %self.target, "upstream paused by downstream");
+                {
+                    use vil_log::app_log;
+                    app_log!(Warn, "mesh.upstream.paused", { target: self.target.as_str() });
+                }
             }
             BackpressureSignal::Resume => {
                 self.paused.store(false, Ordering::Relaxed);
                 self.allowed_rate.store(0, Ordering::Relaxed);
-                tracing::info!(target = %self.target, "upstream resumed");
+                {
+                    use vil_log::app_log;
+                    app_log!(Info, "mesh.upstream.resumed", { target: self.target.as_str() });
+                }
             }
             BackpressureSignal::Drain => {
                 self.paused.store(true, Ordering::Relaxed);
-                tracing::info!(target = %self.target, "upstream draining");
+                {
+                    use vil_log::app_log;
+                    app_log!(Info, "mesh.upstream.draining", { target: self.target.as_str() });
+                }
             }
             _ => {}
         }

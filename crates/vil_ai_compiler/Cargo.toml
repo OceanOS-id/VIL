@@ -14,7 +14,8 @@ readme = "README.md"
 tokio = { version = "1", features = ["full"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-tracing = { workspace = true }
+rmp-serde = "1.3"
+vil_log = { workspace = true }
 vil_macros = { version = "0.1.0", path = "../vil_macros" }
 vil_server_core = { version = "0.1.0", path = "../vil_server_core" }
 vil_sdk = { version = "0.1.0", path = "../vil_sdk" }

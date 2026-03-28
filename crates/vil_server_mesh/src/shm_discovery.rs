@@ -82,16 +82,18 @@ impl ServiceDiscovery for ShmDiscovery {
     }
 
     async fn register(&self, service: ServiceInfo) -> Result<(), DiscoveryError> {
-        tracing::info!(
-            service = %service.name,
-            co_located = service.co_located,
-            "service registered in SHM discovery"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "mesh.discovery.registered", { service: service.name.as_str() });
+        }
         Ok(())
     }
 
     async fn deregister(&self, service_id: &str) -> Result<(), DiscoveryError> {
-        tracing::info!(service = %service_id, "service deregistered from SHM discovery");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "mesh.discovery.deregistered", { service: service_id });
+        }
         Ok(())
     }
 

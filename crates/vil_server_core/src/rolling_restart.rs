@@ -50,7 +50,10 @@ impl RestartCoordinator {
     pub fn start_drain(&self) {
         *self.phase.write().unwrap() = RestartPhase::Draining;
         self.draining.store(true, Ordering::Relaxed);
-        tracing::info!("rolling restart: draining in-flight requests");
+        {
+            use vil_log::{system_log, types::SystemPayload};
+            system_log!(Info, SystemPayload { event_type: 5, ..Default::default() });
+        }
     }
 
     /// Check if the server is accepting new requests.
@@ -68,7 +71,10 @@ impl RestartCoordinator {
         let remaining = self.in_flight.fetch_sub(1, Ordering::Relaxed) - 1;
         if self.draining.load(Ordering::Relaxed) && remaining == 0 {
             *self.phase.write().unwrap() = RestartPhase::ShuttingDown;
-            tracing::info!("rolling restart: all requests drained, shutting down");
+            {
+                use vil_log::app_log;
+                app_log!(Info, "rolling.restart.drained", {});
+            }
         }
     }
 
@@ -81,10 +87,10 @@ impl RestartCoordinator {
                 return true;
             }
             if start.elapsed() > self.drain_timeout {
-                tracing::warn!(
-                    remaining = remaining,
-                    "rolling restart: drain timeout reached, forcing shutdown"
-                );
+                {
+                    use vil_log::app_log;
+                    app_log!(Warn, "rolling.restart.drain.timeout", { remaining: remaining });
+                }
                 return false;
             }
             tokio::time::sleep(Duration::from_millis(100)).await;

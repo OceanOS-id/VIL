@@ -17,6 +17,7 @@
 //   vault ref:  url: "${VAULT:secret/data/db#url}"
 
 use std::path::Path;
+use vil_log::app_log;
 
 /// Errors from secret operations.
 #[derive(Debug)]
@@ -85,7 +86,10 @@ impl LocalEncryption {
                 use std::os::unix::fs::PermissionsExt;
                 let _ = std::fs::set_permissions(key_path, std::fs::Permissions::from_mode(0o600));
             }
-            tracing::info!("Generated new encryption key at {:?}", key_path);
+            {
+                use vil_log::app_log;
+                app_log!(Info, "secrets.key.generated", { path: format!("{:?}", key_path) });
+            }
             Ok(Self { key })
         }
     }
@@ -214,12 +218,7 @@ impl SecretProvider for KubernetesSecretsProvider {
         }
 
         // Placeholder: in production, use kube-rs to query K8s API
-        tracing::debug!(
-            namespace = %self.namespace,
-            secret = parts[0],
-            key = parts[1],
-            "K8s secret resolve (requires kube-rs — see docs)"
-        );
+        app_log!(Debug, "secrets.k8s.resolve", { namespace: vil_log::dict::register_str(&self.namespace) as u64, secret: vil_log::dict::register_str(parts[0]) as u64, key: vil_log::dict::register_str(parts[1]) as u64 });
         Err(SecretError::ProviderError(
             "K8s Secrets provider — requires kube-rs crate. Enable with feature flag.".into()
         ))
@@ -269,12 +268,7 @@ impl SecretProvider for VaultProvider {
         }
 
         // Placeholder: in production, use reqwest/ureq to query Vault HTTP API
-        tracing::debug!(
-            vault_addr = %self.addr,
-            path = parts[0],
-            key = parts[1],
-            "Vault secret resolve (requires Vault HTTP API — see docs)"
-        );
+        app_log!(Debug, "secrets.vault.resolve", { vault_addr: vil_log::dict::register_str(&self.addr) as u64, path: vil_log::dict::register_str(parts[0]) as u64, key: vil_log::dict::register_str(parts[1]) as u64 });
         Err(SecretError::ProviderError(
             "Vault provider — requires Vault HTTP API. Enable with feature flag.".into()
         ))

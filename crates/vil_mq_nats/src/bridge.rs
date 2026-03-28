@@ -1,4 +1,5 @@
 use std::sync::atomic::{AtomicU64, Ordering};
+use vil_log::app_log;
 
 /// NATS ↔ Tri-Lane SHM Bridge.
 pub struct NatsBridge {
@@ -13,7 +14,7 @@ impl NatsBridge {
 
     pub async fn bridge(&self, subject: &str, payload: &[u8]) {
         self.bridged.fetch_add(1, Ordering::Relaxed);
-        tracing::debug!(subject = %subject, target = %self.target, size = payload.len(), "nats → tri-lane");
+        app_log!(Debug, "nats.bridge", { subject: vil_log::dict::register_str(subject) as u64, size: payload.len() as u64 });
     }
 
     pub fn bridged_count(&self) -> u64 { self.bridged.load(Ordering::Relaxed) }

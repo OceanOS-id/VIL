@@ -100,7 +100,10 @@ impl SidecarRegistry {
     /// Register a sidecar config (does not connect — call lifecycle::connect after).
     pub fn register(&self, config: SidecarConfig) {
         let name = config.name.clone();
-        tracing::info!(sidecar = %name, "registered sidecar");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "sidecar.registered", { sidecar: name.as_str() });
+        }
         self.entries.insert(name, SidecarEntry::new(config));
     }
 

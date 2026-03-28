@@ -56,21 +56,20 @@ pub fn cleanup_kernel(kernel: &VxKernel, config: &CleanupConfig) -> CleanupRepor
     let stuck = if in_flight > ready { in_flight - ready } else { 0 };
 
     if stuck > 0 {
-        tracing::warn!(
-            service = kernel.service(),
-            stuck_tokens = stuck,
-            "Detected potentially stuck tokens (in-flight but not in ready queue)"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Warn, "vx.cleanup.stuck_tokens", { service: kernel.service(), stuck: stuck as u64 });
+        }
         report.orphans_failed = stuck;
     }
 
     if report.stale_removed > 0 || report.orphans_failed > 0 {
-        tracing::info!(
-            service = kernel.service(),
-            stale_removed = report.stale_removed,
-            orphans = report.orphans_failed,
-            "Cleanup cycle completed"
-        );
+        use vil_log::app_log;
+        app_log!(Info, "vx.cleanup.cycle", {
+            service: kernel.service(),
+            stale_removed: report.stale_removed as u64,
+            orphans: report.orphans_failed as u64
+        });
     }
 
     report
@@ -80,11 +79,8 @@ pub fn cleanup_kernel(kernel: &VxKernel, config: &CleanupConfig) -> CleanupRepor
 pub fn cleanup_stale_pending(bridge: &IngressBridge, max_pending: usize) -> usize {
     let pending = bridge.pending_count();
     if pending > max_pending {
-        tracing::warn!(
-            pending = pending,
-            max = max_pending,
-            "Too many pending requests — possible leak"
-        );
+        use vil_log::app_log;
+        app_log!(Warn, "vx.pending.requests.leak", { pending: pending as u64, max: max_pending as u64 });
     }
     // IngressBridge doesn't expose age-based cleanup yet.
     // For now, just report the count. Phase 2 will add timestamped entries.
@@ -107,13 +103,7 @@ pub fn spawn_cleanup_task(
             let report = cleanup_kernel(&kernel, &config);
             let _ = cleanup_stale_pending(&bridge, 10_000);
 
-            if report.stale_removed > 0 || report.orphans_failed > 0 {
-                tracing::debug!(
-                    stale = report.stale_removed,
-                    orphans = report.orphans_failed,
-                    "Cleanup tick"
-                );
-            }
+            // debug-level: skip vil_log
         }
     })
 }

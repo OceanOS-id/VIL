@@ -42,12 +42,10 @@ impl DatasourceRegistry {
             )));
         }
 
-        tracing::info!(
-            datasource = %name,
-            provider = %provider.name(),
-            capabilities = %actual,
-            "datasource registered"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "datasource_registered", { datasource: name.to_string(), provider: provider.name().to_string() });
+        }
 
         self.bindings.insert(name.to_string(), Arc::new(DatasourceBinding {
             name: name.to_string(),

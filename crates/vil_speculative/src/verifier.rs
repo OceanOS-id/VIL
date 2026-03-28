@@ -1,7 +1,7 @@
 use vil_llm::{ChatMessage, ChatResponse, LlmProvider};
 use vil_llm::message::LlmError;
 use std::sync::Arc;
-use tracing::debug;
+use vil_log::app_log;
 
 /// Result of verifying draft tokens against the target model.
 #[derive(Debug, Clone)]
@@ -45,11 +45,7 @@ pub async fn verify_draft(
     // Count how many draft tokens match the target's output prefix.
     let accepted = count_matching_prefix(draft_tokens, &target_content);
 
-    debug!(
-        draft_count = draft_tokens.len(),
-        accepted,
-        "speculative verification complete"
-    );
+    app_log!(Debug, "speculative_verify", { draft_count: draft_tokens.len(), accepted: accepted });
 
     Ok(VerificationResult {
         accepted,

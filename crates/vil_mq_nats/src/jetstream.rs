@@ -55,7 +55,7 @@ impl JsMessage {
             inner.ack().await.map_err(|e| format!("jetstream ack failed: {}", e))?;
         }
         self.acked.store(true, Ordering::Relaxed);
-        tracing::debug!(stream = %self.stream, seq = self.sequence, "jetstream ack");
+        // debug-level: skip vil_log
         Ok(())
     }
 
@@ -65,7 +65,7 @@ impl JsMessage {
             inner.ack_with(async_nats::jetstream::AckKind::Nak(None)).await
                 .map_err(|e| format!("jetstream nack failed: {}", e))?;
         }
-        tracing::debug!(stream = %self.stream, seq = self.sequence, "jetstream nack");
+        // debug-level: skip vil_log
         Ok(())
     }
 
@@ -113,7 +113,10 @@ impl JsConsumer {
                 })
             }
             Err(e) => {
-                tracing::warn!(error = %e, "jetstream consumer error");
+                {
+                    use vil_log::app_log;
+                    app_log!(Warn, "nats.jetstream.consumer.error", { error: e.to_string() });
+                }
                 None
             }
         }
@@ -155,7 +158,10 @@ impl JetStreamClient {
             ..Default::default()
         }).await.map_err(|e| format!("jetstream create_stream failed: {}", e))?;
 
-        tracing::info!(stream = %config.name, subjects = ?config.subjects, "jetstream stream created");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "nats.jetstream.stream.created", { stream: config.name.as_str() });
+        }
         self.stream_names.insert(config.name.clone(), config);
         Ok(())
     }
@@ -191,7 +197,10 @@ impl JetStreamClient {
         let messages = consumer.messages().await
             .map_err(|e| format!("jetstream consumer messages failed: {}", e))?;
 
-        tracing::info!(stream = %stream, consumer = ?config.durable_name, "jetstream consumer created");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "nats.jetstream.consumer.created", { stream: stream });
+        }
         Ok(JsConsumer {
             inner: messages,
             config,
@@ -221,7 +230,7 @@ impl JetStreamClient {
                 ..Default::default()
             });
         }
-        tracing::debug!(subject = %subject, seq = seq, "jetstream publish");
+        // debug-level: skip vil_log (mq_log already captures this)
         Ok(seq)
     }
 

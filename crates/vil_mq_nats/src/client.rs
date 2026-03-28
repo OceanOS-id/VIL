@@ -60,7 +60,10 @@ pub struct NatsClient {
 impl NatsClient {
     /// Connect to a real NATS server.
     pub async fn connect(config: NatsConfig) -> Result<Self, String> {
-        tracing::info!(url = %config.url, name = %config.client_name, "nats connecting (real async-nats)");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "nats.connecting", { url: config.url.as_str(), name: config.client_name.as_str() });
+        }
 
         let opts = async_nats::ConnectOptions::new()
             .name(&config.client_name)
@@ -82,7 +85,10 @@ impl NatsClient {
         let client = opts.connect(&config.url).await
             .map_err(|e| format!("NATS connect failed: {}", e))?;
 
-        tracing::info!(url = %config.url, "nats connected successfully");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "nats.connected", { url: config.url.as_str() });
+        }
         Ok(Self {
             client,
             config,
@@ -115,7 +121,7 @@ impl NatsClient {
                 ..Default::default()
             });
         }
-        tracing::debug!(subject = %subject, size = payload.len(), "nats publish");
+        // debug-level: skip vil_log (mq_log already captures this)
         result
     }
 
@@ -123,7 +129,10 @@ impl NatsClient {
     pub async fn subscribe(&self, subject: &str) -> Result<NatsSubscription, String> {
         let sub = self.client.subscribe(subject.to_string()).await
             .map_err(|e| format!("NATS subscribe failed: {}", e))?;
-        tracing::info!(subject = %subject, "nats subscribe");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "nats.subscribe", { subject: subject });
+        }
         Ok(NatsSubscription { inner: sub, subject: subject.to_string() })
     }
 
@@ -145,7 +154,10 @@ impl NatsClient {
         self.connected.store(false, Ordering::Relaxed);
         // Flush pending messages before disconnect
         let _ = self.client.flush().await;
-        tracing::info!("nats disconnected");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "nats.disconnected", {});
+        }
     }
 
     pub fn is_connected(&self) -> bool { self.connected.load(Ordering::Relaxed) }

@@ -3,9 +3,9 @@ use std::time::Instant;
 
 use dashmap::DashMap;
 use parking_lot::RwLock;
-use tracing::{info, warn};
 use serde::Serialize;
 use vil_llm::{ChatMessage, LlmProvider};
+use vil_log::app_log;
 use vil_macros::VilAiEvent;
 
 use crate::metrics::VariantMetrics;
@@ -110,7 +110,7 @@ impl ModelServer {
         for v in variants.iter_mut() {
             if v.name == variant_name {
                 v.weight = 1.0;
-                info!(variant = %variant_name, "promoted to 100% traffic");
+                app_log!(Info, "model_serving_promote", { variant: variant_name.to_string() });
             } else {
                 v.weight = 0.0;
             }
@@ -123,7 +123,7 @@ impl ModelServer {
         let before = variants.len();
         variants.retain(|v| v.name != variant_name);
         if variants.len() < before {
-            warn!(variant = %variant_name, "rolled back and removed");
+            app_log!(Warn, "model_serving_rollback", { variant: variant_name.to_string() });
             self.metrics.remove(variant_name);
         }
     }

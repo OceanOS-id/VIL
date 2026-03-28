@@ -86,12 +86,7 @@ pub async fn dispatch_to_wasm(
 
     let duration_us = start.elapsed().as_micros() as u64;
 
-    tracing::debug!(
-        handler = %handler_name,
-        duration_us = duration_us,
-        status = response.status,
-        "WASM handler dispatch"
-    );
+    // debug-level: skip vil_log
 
     // Convert WasmHandlerResponse to Axum Response
     let status = StatusCode::from_u16(response.status).unwrap_or(StatusCode::OK);
@@ -201,11 +196,10 @@ impl WasmPool {
             handler_name.to_string(),
             std::sync::atomic::AtomicU64::new(0),
         );
-        tracing::info!(
-            handler = %handler_name,
-            pool_size = self.pool_size,
-            "WASM pool pre-warmed"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "wasm.pool.warmed", { handler: handler_name, pool_size: self.pool_size as u64 });
+        }
     }
 
     /// Acquire an instance (increment active count).

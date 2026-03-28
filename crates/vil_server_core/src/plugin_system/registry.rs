@@ -94,11 +94,10 @@ impl PluginRegistry {
             let plugin = &self.plugins[idx];
             let plugin_id = plugin.id().to_string();
 
-            tracing::info!(
-                plugin = %plugin_id,
-                version = %plugin.version(),
-                "registering plugin"
-            );
+            {
+                use vil_log::app_log;
+                app_log!(Info, "plugin.registering", { plugin: plugin_id.as_str(), version: plugin.version() });
+            }
 
             let mut ctx = PluginContext::new(
                 &plugin_id,
@@ -211,7 +210,10 @@ impl PluginRegistry {
     /// Shutdown all plugins in reverse order.
     pub fn shutdown_all(&self) {
         for plugin in self.plugins.iter().rev() {
-            tracing::info!(plugin = %plugin.id(), "shutting down plugin");
+            {
+                use vil_log::app_log;
+                app_log!(Info, "plugin.shutdown", { plugin: plugin.id() });
+            }
             plugin.shutdown();
         }
     }

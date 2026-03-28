@@ -37,13 +37,6 @@ impl SqlxPool {
             .connect(&config.url)
             .await?;
 
-        tracing::info!(
-            pool = %name,
-            driver = %config.driver,
-            max_conn = config.max_connections,
-            "sqlx pool connected"
-        );
-
         Ok(Self {
             pool,
             config,
@@ -94,7 +87,6 @@ impl SqlxPool {
     /// Close the pool gracefully.
     pub async fn close(&self) {
         self.pool.close().await;
-        tracing::info!(pool = %self.pool_name, "sqlx pool closed");
     }
 }
 

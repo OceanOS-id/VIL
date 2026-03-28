@@ -66,13 +66,15 @@ pub async fn reconnect_with_backoff(
     for attempt in 0..policy.max_retries {
         let delay = policy.backoff_duration(attempt);
         if attempt > 0 {
-            tracing::info!(
-                sidecar = %name,
-                attempt = attempt + 1,
-                max = policy.max_retries,
-                delay_ms = %delay.as_millis(),
-                "reconnecting to sidecar"
-            );
+            {
+                use vil_log::app_log;
+                app_log!(Info, "sidecar.reconnecting", {
+                    sidecar: name,
+                    attempt: (attempt + 1) as u64,
+                    max: policy.max_retries as u64,
+                    delay_ms: delay.as_millis() as u64
+                });
+            }
             tokio::time::sleep(delay).await;
         }
 
@@ -80,30 +82,48 @@ pub async fn reconnect_with_backoff(
             Ok(mut conn) => {
                 // Re-handshake
                 if let Err(e) = conn.send(&Message::Handshake(handshake.clone())).await {
-                    tracing::warn!(sidecar = %name, error = %e, "handshake send failed");
+                    {
+                        use vil_log::app_log;
+                        app_log!(Warn, "sidecar.reconnect.handshake.failed", { sidecar: name, error: e.to_string() });
+                    }
                     continue;
                 }
                 match conn.recv().await {
                     Ok(Message::HandshakeAck(ack)) if ack.accepted => {
-                        tracing::info!(sidecar = %name, attempt = attempt + 1, "reconnected successfully");
+                        {
+                            use vil_log::app_log;
+                            app_log!(Info, "sidecar.reconnected", { sidecar: name, attempt: (attempt + 1) as u64 });
+                        }
                         return Ok(conn);
                     }
                     Ok(Message::HandshakeAck(ack)) => {
-                        tracing::warn!(sidecar = %name, reason = ?ack.reject_reason, "handshake rejected");
+                        {
+                            use vil_log::app_log;
+                            app_log!(Warn, "sidecar.reconnect.rejected", { sidecar: name });
+                        }
                         continue;
                     }
                     Ok(_) => {
-                        tracing::warn!(sidecar = %name, "unexpected handshake response");
+                        {
+                            use vil_log::app_log;
+                            app_log!(Warn, "sidecar.reconnect.unexpected", { sidecar: name });
+                        }
                         continue;
                     }
                     Err(e) => {
-                        tracing::warn!(sidecar = %name, error = %e, "handshake recv failed");
+                        {
+                            use vil_log::app_log;
+                            app_log!(Warn, "sidecar.reconnect.recv.failed", { sidecar: name, error: e.to_string() });
+                        }
                         continue;
                     }
                 }
             }
             Err(e) => {
-                tracing::debug!(sidecar = %name, attempt = attempt + 1, error = %e, "connect failed");
+                {
+                    use vil_log::app_log;
+                    app_log!(Debug, "sidecar.reconnect.connect.failed", { sidecar: vil_log::dict::register_str(name) as u64, attempt: (attempt + 1) as u64, error: e.to_string() });
+                }
                 continue;
             }
         }

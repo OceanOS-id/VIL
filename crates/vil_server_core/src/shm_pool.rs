@@ -89,12 +89,15 @@ impl ShmPool {
     pub fn new(heap: Arc<ExchangeHeap>, capacity: usize, reset_threshold: usize) -> Self {
         let config = ShmPoolConfig { capacity, reset_threshold_pct: reset_threshold, ..Default::default() };
         let region_id = heap.create_region("vil_http_pool", config.capacity);
-        tracing::info!(
-            capacity_mb = config.capacity / (1024 * 1024),
-            threshold_pct = config.reset_threshold_pct,
-            check_interval = config.check_interval,
-            "SHM pool initialized"
-        );
+        {
+            use vil_log::system_log;
+            use vil_log::types::SystemPayload;
+            system_log!(Info, SystemPayload {
+                event_type: 4, // startup
+                mem_kb: (config.capacity / 1024) as u32,
+                ..Default::default()
+            });
+        }
         Self {
             heap, region_id, config,
             alloc_count: AtomicU64::new(0),
@@ -158,7 +161,7 @@ impl ShmPool {
             self.heap.reset_region(self.region_id);
             self.reset_count.fetch_add(1, Ordering::Relaxed);
             self.resetting.store(false, Ordering::Release);
-            tracing::debug!(utilization_pct = utilization, "SHM pool reset");
+            // debug-level: skip vil_log (below Info threshold)
         }
     }
 

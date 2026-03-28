@@ -39,7 +39,6 @@ impl KafkaProducer {
         let producer: FutureProducer = client_config.create()
             .map_err(|e| format!("Kafka producer creation failed: {}", e))?;
 
-        tracing::info!(brokers = %config.brokers, "kafka producer created (real rdkafka)");
         Ok(Self {
             producer,
             config,
@@ -74,7 +73,6 @@ impl KafkaProducer {
                 ..Default::default()
             });
         }
-        tracing::debug!(topic = %topic, size = payload.len(), "kafka publish");
         result.map(|_| ())
     }
 
@@ -105,7 +103,6 @@ impl KafkaProducer {
                 ..Default::default()
             });
         }
-        tracing::debug!(topic = %topic, key = %key, size = payload.len(), "kafka publish keyed");
         result.map(|_| ())
     }
 

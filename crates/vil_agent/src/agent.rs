@@ -4,6 +4,7 @@ use std::sync::Arc;
 use serde::Serialize;
 use vil_llm::{ChatMessage, LlmProvider};
 use vil_llm::message::LlmError;
+use vil_log::app_log;
 
 use crate::memory::ConversationMemory;
 use crate::tool::{Tool, ToolError, ToolRegistry};
@@ -111,11 +112,7 @@ impl Agent {
 
             let context = self.memory.get_context().await;
 
-            tracing::debug!(
-                iteration = iterations,
-                context_len = context.len(),
-                "agent ReAct iteration"
-            );
+            app_log!(Debug, "agent_react", { iteration: iterations, context_len: context.len() });
 
             // Call LLM with tools
             let response = self
@@ -134,11 +131,7 @@ impl Agent {
 
                     // Execute each tool call
                     for call in calls {
-                        tracing::info!(
-                            tool = %call.name,
-                            id = %call.id,
-                            "executing tool call"
-                        );
+                        app_log!(Info, "agent_tool_call", { tool: call.name.clone(), id: call.id.clone() });
 
                         let result = self
                             .tools

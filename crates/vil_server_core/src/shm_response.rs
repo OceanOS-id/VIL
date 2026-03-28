@@ -68,10 +68,7 @@ impl ShmResponse {
             let region_id = heap.create_region("vil_http_resp", self.body.len() * 2);
             if let Some(offset) = heap.alloc_bytes(region_id, self.body.len(), 8) {
                 heap.write_bytes(region_id, offset, &self.body);
-                tracing::debug!(
-                    len = self.body.len(),
-                    "response written to SHM for mesh forwarding"
-                );
+                // debug-level: skip vil_log
             }
         }
         self
@@ -129,7 +126,10 @@ impl<T: Serialize> IntoResponse for ShmJson<T> {
                     .into_response()
             }
             Err(e) => {
-                tracing::error!(error = %e, "Failed to serialize ShmJson response");
+                {
+                    use vil_log::app_log;
+                    app_log!(Error, "shm.response.serialize.failed", { error: e.to_string() });
+                }
                 StatusCode::INTERNAL_SERVER_ERROR.into_response()
             }
         }

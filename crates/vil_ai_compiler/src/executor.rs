@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 
 use crate::compiler::{CompiledPlan, ExecutionStep};
-use tracing::{debug, info};
+use vil_log::app_log;
 
 /// The result of executing one step.
 #[derive(Debug, Clone)]
@@ -72,7 +72,7 @@ pub fn execute(plan: &CompiledPlan, handler: &dyn StepHandler) -> ExecutionRepor
     let mut tiers_executed = 0;
 
     for (tier_idx, tier) in plan.parallelizable.iter().enumerate() {
-        debug!(tier = tier_idx, steps = tier.len(), "executing tier");
+        app_log!(Debug, "executor_tier", { tier: tier_idx, steps: tier.len() });
         tiers_executed += 1;
 
         for &step_idx in tier {
@@ -94,7 +94,7 @@ pub fn execute(plan: &CompiledPlan, handler: &dyn StepHandler) -> ExecutionRepor
 
             match handler.handle(step, &completed) {
                 Ok(()) => {
-                    info!(node_id = %step.node_id, "step completed");
+                    app_log!(Info, "executor_step", { node_id: step.node_id.clone() });
                     completed.insert(step.node_id.clone());
                     results.push(StepResult {
                         node_id: step.node_id.clone(),

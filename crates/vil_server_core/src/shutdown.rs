@@ -2,7 +2,7 @@
 // VIL Server Shutdown — Graceful shutdown handling
 // =============================================================================
 
-use tracing::info;
+use vil_log::{system_log, types::SystemPayload};
 
 /// Wait for a shutdown signal (SIGTERM or SIGINT/Ctrl+C).
 /// Used with Axum's graceful_shutdown.
@@ -26,10 +26,10 @@ pub async fn shutdown_signal() {
 
     tokio::select! {
         _ = ctrl_c => {
-            info!("Received Ctrl+C, initiating graceful shutdown...");
+            system_log!(Info, SystemPayload { event_type: 5, signal_num: 2, ..Default::default() });
         },
         _ = terminate => {
-            info!("Received SIGTERM, initiating graceful shutdown...");
+            system_log!(Info, SystemPayload { event_type: 5, signal_num: 15, ..Default::default() });
         },
     }
 }

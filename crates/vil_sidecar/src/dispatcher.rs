@@ -180,13 +180,10 @@ pub async fn invoke_with_retry(
             // Exponential backoff: 100ms, 200ms, 400ms, ...
             let delay = std::time::Duration::from_millis(100 * (1 << (attempt - 1)));
             tokio::time::sleep(delay).await;
-            tracing::debug!(
-                sidecar = %target,
-                method = %method,
-                attempt = attempt + 1,
-                max = max_retries + 1,
-                "retrying sidecar invocation"
-            );
+            {
+                use vil_log::app_log;
+                app_log!(Debug, "sidecar.dispatch.retry", { sidecar: vil_log::dict::register_str(target) as u64, method: vil_log::dict::register_str(method) as u64, attempt: (attempt + 1) as u64, max: (max_retries + 1) as u64 });
+            }
         }
 
         match invoke(registry, target, method, request_data).await {

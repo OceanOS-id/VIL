@@ -33,8 +33,6 @@ impl SeaOrmPool {
 
         let conn = Database::connect(opt).await?;
 
-        tracing::info!(pool = %name, driver = %config.driver, "sea-orm connected");
-
         Ok(Self {
             conn, config,
             metrics: Arc::new(OrmMetrics::new()),
@@ -62,7 +60,6 @@ impl SeaOrmPool {
 
     pub async fn close(&self) {
         self.conn.clone().close().await.ok();
-        tracing::info!(pool = %self.pool_name, "sea-orm pool closed");
     }
 }
 

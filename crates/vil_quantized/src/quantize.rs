@@ -3,6 +3,7 @@
 // =============================================================================
 
 use serde::{Deserialize, Serialize};
+use vil_log::app_log;
 
 use crate::format::QuantFormat;
 
@@ -43,14 +44,13 @@ pub fn simulate_quantize(
 ) -> QuantizeResult {
     let size = (param_count as f64 * config.target_format.bytes_per_param()) as u64;
 
-    tracing::info!(
-        source = %config.source_path,
-        output = %config.output_path,
-        format = %config.target_format,
-        params = param_count,
-        estimated_bytes = size,
-        "Simulated quantization complete"
-    );
+    app_log!(Info, "quantize_simulate", {
+        source: config.source_path.clone(),
+        output: config.output_path.clone(),
+        format: config.target_format.to_string(),
+        params: param_count,
+        estimated_bytes: size
+    });
 
     QuantizeResult {
         output_path: config.output_path.clone(),

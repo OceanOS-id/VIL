@@ -7,6 +7,7 @@
 use vil_server::prelude::*;
 
 use std::sync::Arc;
+use vil_log::app_log;
 
 
 
@@ -137,7 +138,7 @@ impl VilPlugin for LlmPlugin {
         let llm = match self.build_provider() {
             Some(p) => p,
             None => {
-                tracing::warn!("LlmPlugin: no providers configured");
+                app_log!(Warn, "llm_plugin", { event: "no_providers_configured" });
                 return;
             }
         };

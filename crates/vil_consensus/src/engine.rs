@@ -2,9 +2,9 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use tokio::task::JoinSet;
-use tracing::{info, warn};
 use serde::Serialize;
 use vil_llm::{ChatMessage, LlmProvider};
+use vil_log::app_log;
 use vil_macros::VilAiEvent;
 
 use crate::config::ConsensusConfig;
@@ -177,7 +177,7 @@ impl ConsensusEngine {
             match res {
                 Ok(pr) => all_responses.push(pr),
                 Err(e) => {
-                    warn!("provider task panicked: {}", e);
+                    app_log!(Warn, "consensus_provider_panic", { error: e.to_string() });
                 }
             }
         }
@@ -208,13 +208,7 @@ impl ConsensusEngine {
         let total_ms = start.elapsed().as_millis() as u64;
         let winner = &all_responses[winner_idx];
 
-        info!(
-            strategy = %strategy_name,
-            model = %winner.model,
-            score = winner.score,
-            total_ms,
-            "consensus reached"
-        );
+        app_log!(Info, "consensus_reached", { strategy: strategy_name.to_string(), model: winner.model.clone(), total_ms: total_ms });
 
         Ok(ConsensusResult {
             answer: winner.content.clone(),

@@ -3,6 +3,7 @@
 // =============================================================================
 
 use crate::config::QuantizedModelConfig;
+use vil_log::app_log;
 
 /// Runtime for loading and running inference on quantized models.
 ///
@@ -30,11 +31,7 @@ impl QuantizedRuntime {
     /// In a real implementation this would memory-map the GGUF file and
     /// initialize the compute graph.
     pub fn load(&mut self) -> Result<(), String> {
-        tracing::info!(
-            path = %self.config.path,
-            format = %self.config.format,
-            "Loading quantized model (simulated)"
-        );
+        app_log!(Info, "quantized_model_load", { path: self.config.path.clone(), format: self.config.format.to_string() });
         // Simulate: just mark as loaded
         self.loaded = true;
         Ok(())
@@ -59,12 +56,7 @@ impl QuantizedRuntime {
             return Err("model not loaded — call load() first".to_string());
         }
 
-        tracing::info!(
-            prompt_len = prompt.len(),
-            max_tokens = max_tokens,
-            format = %self.config.format,
-            "Generating (simulated)"
-        );
+        app_log!(Info, "quantized_model_generate", { prompt_len: prompt.len(), max_tokens: max_tokens, format: self.config.format.to_string() });
 
         // Placeholder response
         Ok(format!(

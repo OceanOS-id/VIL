@@ -19,6 +19,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::RwLock;
 use std::time::{Duration, Instant};
+use vil_log::app_log;
 
 /// Circuit breaker state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -97,10 +98,7 @@ impl CircuitBreaker {
                     if opened_at.elapsed() >= self.config.cooldown {
                         *self.state.write().unwrap() = CircuitState::HalfOpen;
                         self.half_open_attempts.store(0, Ordering::Relaxed);
-                        tracing::info!(
-                            service = %self.service_name,
-                            "circuit breaker: Open → HalfOpen (cooldown elapsed)"
-                        );
+                        app_log!(Info, "circuit_breaker", { service: self.service_name.clone(), transition: "Open→HalfOpen" });
                         return Ok(());
                     }
                 }
@@ -127,10 +125,7 @@ impl CircuitBreaker {
             *self.state.write().unwrap() = CircuitState::Closed;
             self.failure_count.store(0, Ordering::Relaxed);
             *self.opened_at.write().unwrap() = None;
-            tracing::info!(
-                service = %self.service_name,
-                "circuit breaker: HalfOpen → Closed (recovery confirmed)"
-            );
+            app_log!(Info, "circuit_breaker", { service: self.service_name.clone(), transition: "HalfOpen→Closed" });
         }
     }
 
@@ -146,21 +141,14 @@ impl CircuitBreaker {
                 if count >= self.config.failure_threshold {
                     *self.state.write().unwrap() = CircuitState::Open;
                     *self.opened_at.write().unwrap() = Some(Instant::now());
-                    tracing::warn!(
-                        service = %self.service_name,
-                        failures = count,
-                        "circuit breaker: Closed → Open (threshold reached)"
-                    );
+                    app_log!(Warn, "circuit_breaker", { service: self.service_name.clone(), transition: "Closed→Open", failures: count });
                 }
             }
             CircuitState::HalfOpen => {
                 // Recovery failed → back to Open
                 *self.state.write().unwrap() = CircuitState::Open;
                 *self.opened_at.write().unwrap() = Some(Instant::now());
-                tracing::warn!(
-                    service = %self.service_name,
-                    "circuit breaker: HalfOpen → Open (recovery failed)"
-                );
+                app_log!(Warn, "circuit_breaker", { service: self.service_name.clone(), transition: "HalfOpen→Open" });
             }
             CircuitState::Open => {}
         }
@@ -192,7 +180,7 @@ impl CircuitBreaker {
         self.failure_count.store(0, Ordering::Relaxed);
         self.success_count.store(0, Ordering::Relaxed);
         *self.opened_at.write().unwrap() = None;
-        tracing::info!(service = %self.service_name, "circuit breaker reset");
+        app_log!(Info, "circuit_breaker", { service: self.service_name.clone(), event: "reset" });
     }
 
     /// Export status as JSON-compatible struct.

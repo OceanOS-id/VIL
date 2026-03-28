@@ -496,10 +496,10 @@ impl VilApp {
                         }
                         self.mesh_config = Some(mesh);
                     }
-                    tracing::info!(
-                        plugins = self.plugin_registry.count(),
-                        "all plugins registered successfully"
-                    );
+                    {
+                        use vil_log::app_log;
+                        app_log!(Info, "plugins.registered", { count: self.plugin_registry.count() as u64 });
+                    }
                 }
                 Err(e) => {
                     eprintln!("  FATAL: Plugin resolution failed: {}", e);
@@ -604,72 +604,45 @@ impl VilApp {
         mut receivers: TriLaneReceivers,
         _egress: EgressHandle,
     ) {
-        tracing::info!(
-            service = %service_name,
-            "VX ingress receiver worker started"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "vx.ingress.worker.started", { service: service_name.as_str() });
+        }
 
         loop {
             tokio::select! {
                 msg = receivers.trigger.recv() => {
                     match msg {
-                        Some(lane_msg) => {
-                            tracing::debug!(
-                                from = %lane_msg.from,
-                                to = %lane_msg.to,
-                                lane = "Trigger",
-                                bytes = lane_msg.data.len(),
-                                "VX ingress -> {} received trigger message",
-                                service_name,
-                            );
+                        Some(_lane_msg) => {
+                            // debug-level: skip vil_log
                         }
                         None => {
-                            tracing::info!(
-                                service = %service_name,
-                                "VX ingress trigger channel closed, worker exiting"
-                            );
+                            use vil_log::app_log;
+                            app_log!(Info, "vx.ingress.channel.closed", { service: service_name.as_str(), lane: "Trigger" });
                             break;
                         }
                     }
                 }
                 msg = receivers.data.recv() => {
                     match msg {
-                        Some(lane_msg) => {
-                            tracing::debug!(
-                                from = %lane_msg.from,
-                                to = %lane_msg.to,
-                                lane = "Data",
-                                bytes = lane_msg.data.len(),
-                                "VX ingress -> {} received data message",
-                                service_name,
-                            );
+                        Some(_lane_msg) => {
+                            // debug-level: skip vil_log
                         }
                         None => {
-                            tracing::info!(
-                                service = %service_name,
-                                "VX ingress data channel closed, worker exiting"
-                            );
+                            use vil_log::app_log;
+                            app_log!(Info, "vx.ingress.channel.closed", { service: service_name.as_str(), lane: "Data" });
                             break;
                         }
                     }
                 }
                 msg = receivers.control.recv() => {
                     match msg {
-                        Some(lane_msg) => {
-                            tracing::debug!(
-                                from = %lane_msg.from,
-                                to = %lane_msg.to,
-                                lane = "Control",
-                                bytes = lane_msg.data.len(),
-                                "VX ingress -> {} received control message",
-                                service_name,
-                            );
+                        Some(_lane_msg) => {
+                            // debug-level: skip vil_log
                         }
                         None => {
-                            tracing::info!(
-                                service = %service_name,
-                                "VX ingress control channel closed, worker exiting"
-                            );
+                            use vil_log::app_log;
+                            app_log!(Info, "vx.ingress.channel.closed", { service: service_name.as_str(), lane: "Control" });
                             break;
                         }
                     }
@@ -687,64 +660,38 @@ impl VilApp {
         to: String,
         mut receivers: TriLaneReceivers,
     ) {
-        tracing::info!(
-            from = %from,
-            to = %to,
-            "VX mesh receiver worker started"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "vx.mesh.worker.started", { from: from.as_str(), to: to.as_str() });
+        }
 
         loop {
             tokio::select! {
                 msg = receivers.trigger.recv() => {
                     match msg {
-                        Some(lane_msg) => {
-                            tracing::debug!(
-                                from = %lane_msg.from,
-                                to = %lane_msg.to,
-                                lane = "Trigger",
-                                bytes = lane_msg.data.len(),
-                                "VX mesh received trigger message",
-                            );
-                        }
+                        Some(_lane_msg) => { /* debug-level: skip vil_log */ }
                         None => break,
                     }
                 }
                 msg = receivers.data.recv() => {
                     match msg {
-                        Some(lane_msg) => {
-                            tracing::debug!(
-                                from = %lane_msg.from,
-                                to = %lane_msg.to,
-                                lane = "Data",
-                                bytes = lane_msg.data.len(),
-                                "VX mesh received data message",
-                            );
-                        }
+                        Some(_lane_msg) => { /* debug-level: skip vil_log */ }
                         None => break,
                     }
                 }
                 msg = receivers.control.recv() => {
                     match msg {
-                        Some(lane_msg) => {
-                            tracing::debug!(
-                                from = %lane_msg.from,
-                                to = %lane_msg.to,
-                                lane = "Control",
-                                bytes = lane_msg.data.len(),
-                                "VX mesh received control message",
-                            );
-                        }
+                        Some(_lane_msg) => { /* debug-level: skip vil_log */ }
                         None => break,
                     }
                 }
             }
         }
 
-        tracing::info!(
-            from = %from,
-            to = %to,
-            "VX mesh receiver worker exiting (channels closed)"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "vx.mesh.worker.exiting", { from: from.as_str(), to: to.as_str() });
+        }
     }
 
     /// Print the VX topology banner to stdout.

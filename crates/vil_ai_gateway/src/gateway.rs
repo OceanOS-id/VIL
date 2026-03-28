@@ -12,6 +12,7 @@ use crate::config::{GatewayConfig, RoutingPolicy};
 use crate::cost::{CostTracker, ModelCost};
 use crate::health::{HealthTracker, ModelHealth};
 use crate::metrics::GatewayMetrics;
+use vil_log::app_log;
 
 /// Error type for gateway operations.
 #[derive(Debug, Serialize, VilAiFault)]
@@ -162,7 +163,7 @@ impl AiGateway {
             if let Some(cb) = self.breakers.get(name) {
                 if !cb.can_proceed() {
                     self.metrics.record_circuit_rejection();
-                    tracing::debug!(model = %name, "circuit breaker open, skipping");
+                    app_log!(Debug, "gateway_circuit_breaker", { model: name.clone(), event: "open_skip" });
                     attempts.push((name.clone(), "circuit_breaker_open".to_string()));
                     continue;
                 }
@@ -212,7 +213,7 @@ impl AiGateway {
                 }
                 Ok(Err(err)) => {
                     let err_str = err.to_string();
-                    tracing::warn!(model = %name, error = %err_str, "provider failed");
+                    app_log!(Warn, "gateway_provider_failed", { model: name.clone(), error: err_str.clone() });
                     self.health.record_failure(name, &err_str);
                     if let Some(cb) = self.breakers.get(name) {
                         cb.record_failure();
@@ -220,7 +221,7 @@ impl AiGateway {
                     attempts.push((name.clone(), err_str));
                 }
                 Err(_) => {
-                    tracing::warn!(model = %name, "provider timed out");
+                    app_log!(Warn, "gateway_provider_timeout", { model: name.clone() });
                     self.health.record_failure(name, "timeout");
                     if let Some(cb) = self.breakers.get(name) {
                         cb.record_failure();

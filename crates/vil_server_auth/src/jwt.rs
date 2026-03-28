@@ -8,7 +8,7 @@ use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
 use serde::{Deserialize, Serialize};
-use tracing::warn;
+use vil_log::app_log;
 
 /// JWT claims structure.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -119,7 +119,7 @@ pub async fn jwt_middleware(
                     next.run(request).await
                 }
                 Err(e) => {
-                    warn!(error = %e, "JWT validation failed");
+                    app_log!(Warn, "jwt_auth", { error: e.to_string() });
                     (
                         StatusCode::UNAUTHORIZED,
                         serde_json::json!({

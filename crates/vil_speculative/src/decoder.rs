@@ -1,6 +1,6 @@
 use std::sync::Arc;
-use tracing::{debug, info};
 use vil_llm::{ChatMessage, LlmProvider};
+use vil_log::app_log;
 use vil_llm::message::LlmError;
 
 use crate::config::SpeculativeConfig;
@@ -86,11 +86,11 @@ impl SpeculativeDecoder {
 
         loop {
             if iterations >= self.config.max_iterations {
-                debug!("reached max iterations ({})", self.config.max_iterations);
+                app_log!(Debug, "speculative_decode", { event: "max_iterations", max: self.config.max_iterations });
                 break;
             }
             if output.len() >= self.config.max_total_tokens {
-                debug!("reached max total tokens ({})", self.config.max_total_tokens);
+                app_log!(Debug, "speculative_decode", { event: "max_tokens", max: self.config.max_total_tokens });
                 break;
             }
             iterations += 1;
@@ -108,7 +108,7 @@ impl SpeculativeDecoder {
                 .await?;
 
             if draft_tokens.is_empty() {
-                debug!("draft returned empty, finishing");
+                app_log!(Debug, "speculative_decode", { event: "draft_empty" });
                 break;
             }
 
@@ -124,11 +124,7 @@ impl SpeculativeDecoder {
                 output.push_str(&accepted_text);
                 total_accepted += verification.accepted;
 
-                debug!(
-                    accepted = verification.accepted,
-                    drafted = n_draft,
-                    "accepted draft tokens"
-                );
+                app_log!(Debug, "speculative_decode", { accepted: verification.accepted, drafted: n_draft });
             }
 
             // Step 4: If not all tokens accepted, use target's correction.
@@ -137,18 +133,18 @@ impl SpeculativeDecoder {
                 if !verification.target_content.is_empty() {
                     output.push_str(&verification.target_content);
                 }
-                debug!("diverged at position {}, used target correction", verification.accepted);
+                app_log!(Debug, "speculative_decode", { event: "diverged", position: verification.accepted });
             }
 
             // If all draft tokens accepted and no more content, we are done.
             if verification.accepted == n_draft && verification.target_content.is_empty() {
-                debug!("all draft accepted and target has no more content, finishing");
+                app_log!(Debug, "speculative_decode", { event: "all_accepted_done" });
                 break;
             }
 
             // If the target returned content that signals end, break.
             if verification.target_content.is_empty() && verification.accepted == 0 {
-                debug!("no accepted tokens and no target content, finishing");
+                app_log!(Debug, "speculative_decode", { event: "no_progress_done" });
                 break;
             }
         }
@@ -173,14 +169,11 @@ impl SpeculativeDecoder {
             1.0
         };
 
-        info!(
-            content_len = output.len(),
-            total_draft,
-            total_accepted,
-            acceptance_rate,
-            speedup,
-            "speculative decode complete"
-        );
+        app_log!(Info, "speculative_decode_complete", {
+            content_len: output.len(),
+            total_draft: total_draft,
+            total_accepted: total_accepted
+        });
 
         Ok(SpeculativeResult {
             content: output,

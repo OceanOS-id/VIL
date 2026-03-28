@@ -51,15 +51,12 @@ impl MqttClient {
             loop {
                 match eventloop.poll().await {
                     Ok(_event) => { /* event processed */ }
-                    Err(e) => {
-                        tracing::warn!(error = %e, "mqtt eventloop error, retrying...");
+                    Err(_e) => {
                         tokio::time::sleep(Duration::from_secs(1)).await;
                     }
                 }
             }
         });
-
-        tracing::info!(broker = %config.broker_url, port = config.port, client_id = %client_id, "mqtt client created (real rumqttc)");
 
         Ok(Self {
             client,
@@ -93,7 +90,6 @@ impl MqttClient {
                 ..Default::default()
             });
         }
-        tracing::debug!(topic = %topic, qos = ?qos, size = payload.len(), "mqtt publish");
         result
     }
 
@@ -104,7 +100,6 @@ impl MqttClient {
         }
         self.client.subscribe(topic_filter, to_mqtt_qos(self.config.qos)).await
             .map_err(|e| format!("MQTT subscribe failed: {}", e))?;
-        tracing::info!(topic = %topic_filter, "mqtt subscribe");
         Ok(())
     }
 
@@ -112,7 +107,6 @@ impl MqttClient {
     pub async fn disconnect(&self) {
         self.connected.store(false, Ordering::Relaxed);
         let _ = self.client.disconnect().await;
-        tracing::info!("mqtt disconnected");
     }
 
     pub fn is_connected(&self) -> bool { self.connected.load(Ordering::Relaxed) }

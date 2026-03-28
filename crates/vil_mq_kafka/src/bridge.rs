@@ -18,12 +18,6 @@ impl KafkaBridge {
     /// Write payload to SHM → send descriptor via Trigger Lane.
     pub async fn bridge(&self, msg: &KafkaMessage) {
         self.bridged_count.fetch_add(1, Ordering::Relaxed);
-        tracing::debug!(
-            topic = %msg.topic,
-            target = %self.target_service,
-            size = msg.payload.len(),
-            "kafka → tri-lane bridge"
-        );
     }
 
     pub fn bridged_count(&self) -> u64 { self.bridged_count.load(Ordering::Relaxed) }

@@ -84,13 +84,14 @@ impl DeadLetterQueue {
         }
         letters.push(letter);
 
-        tracing::warn!(
-            from = %from,
-            to = %to,
-            lane = %lane,
-            error = %error,
-            "message sent to dead letter queue"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Warn, "mesh.dlq.enqueued", {
+                from: from,
+                to: to,
+                error: error
+            });
+        }
     }
 
     /// Get recent dead letters.

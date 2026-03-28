@@ -14,7 +14,6 @@ impl MqttBridge {
 
     pub async fn bridge(&self, topic: &str, payload: &[u8]) {
         self.bridged_count.fetch_add(1, Ordering::Relaxed);
-        tracing::debug!(topic = %topic, target = %self.target_service, size = payload.len(), "mqtt → tri-lane bridge");
     }
 
     pub fn bridged_count(&self) -> u64 { self.bridged_count.load(Ordering::Relaxed) }

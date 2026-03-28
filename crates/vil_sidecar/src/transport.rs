@@ -134,14 +134,20 @@ impl SidecarListener {
         // Remove stale socket file
         let _ = std::fs::remove_file(&path);
         let listener = UnixListener::bind(&path)?;
-        tracing::info!(path = %path, "sidecar listener bound");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "sidecar.listener.bound", { path: path.as_str() });
+        }
         Ok(Self { listener, path })
     }
 
     /// Accept a new sidecar connection.
     pub async fn accept(&self) -> Result<SidecarConnection, TransportError> {
         let (stream, _addr) = self.listener.accept().await?;
-        tracing::debug!(path = %self.path, "sidecar connection accepted");
+        {
+            use vil_log::app_log;
+            app_log!(Debug, "sidecar.transport.accepted", { path: vil_log::dict::register_str(&self.path) as u64 });
+        }
         Ok(SidecarConnection::new(stream))
     }
 

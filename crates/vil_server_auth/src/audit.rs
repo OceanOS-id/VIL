@@ -18,6 +18,7 @@
 use serde::Serialize;
 use std::sync::Arc;
 use std::time::SystemTime;
+use vil_log::app_log;
 
 /// Audit event type.
 #[derive(Debug, Clone, Serialize)]
@@ -110,16 +111,13 @@ impl AuditLog {
     /// Record an audit event.
     pub fn record(&self, event: AuditEvent) {
         // Emit as structured log
-        tracing::info!(
-            event_type = ?event.event_type,
-            actor = %event.actor,
-            resource = %event.resource,
-            action = %event.action,
-            outcome = %event.outcome,
-            ip = ?event.ip_address,
-            request_id = ?event.request_id,
-            "audit"
-        );
+        app_log!(Info, "audit", {
+            event_type: format!("{:?}", event.event_type),
+            actor: event.actor.clone(),
+            resource: event.resource.clone(),
+            action: event.action.clone(),
+            outcome: event.outcome.clone()
+        });
 
         // Store in ring buffer
         let mut events = self.events.write().unwrap();

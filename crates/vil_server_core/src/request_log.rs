@@ -75,37 +75,30 @@ pub async fn request_logger(
     let status = response.status().as_u16();
 
     // Log based on status code severity
-    if status >= 500 {
-        tracing::error!(
-            request_id = %request_id,
-            method = %method,
-            path = %path,
-            status = status,
-            duration_ms = duration_ms,
-            content_length = %content_length,
-            "server error"
-        );
-    } else if status >= 400 {
-        tracing::warn!(
-            request_id = %request_id,
-            method = %method,
-            path = %path,
-            status = status,
-            duration_ms = duration_ms,
-            "client error"
-        );
-    } else {
-        tracing::info!(
-            request_id = %request_id,
-            method = %method,
-            path = %path,
-            query = ?query,
-            status = status,
-            duration_ms = duration_ms,
-            content_length = %content_length,
-            user_agent = %user_agent,
-            "request"
-        );
+    {
+        use vil_log::app_log;
+        if status >= 500 {
+            app_log!(Error, "http.server.error", {
+                status: status as u64,
+                duration_ms: duration_ms,
+                method: method.as_str(),
+                path: path.as_str()
+            });
+        } else if status >= 400 {
+            app_log!(Warn, "http.client.error", {
+                status: status as u64,
+                duration_ms: duration_ms,
+                method: method.as_str(),
+                path: path.as_str()
+            });
+        } else {
+            app_log!(Info, "http.request", {
+                status: status as u64,
+                duration_ms: duration_ms,
+                method: method.as_str(),
+                path: path.as_str()
+            });
+        }
     }
 
     response

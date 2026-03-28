@@ -66,11 +66,10 @@ impl CircuitBreaker {
             if let Ok(mut guard) = self.last_failure.lock() {
                 *guard = Some(Instant::now());
             }
-            tracing::warn!(
-                failures = count,
-                threshold = self.threshold,
-                "circuit breaker opened"
-            );
+            {
+                use vil_log::app_log;
+                app_log!(Warn, "sidecar.circuit.breaker.open", { failures: count, threshold: self.threshold });
+            }
         }
     }
 
@@ -112,7 +111,10 @@ pub async fn invoke_with_failover(
                 if let Some(cb) = circuit_breaker {
                     cb.record_failure();
                 }
-                tracing::warn!(sidecar = %target, error = %e, "primary sidecar failed");
+                {
+                    use vil_log::app_log;
+                    app_log!(Warn, "sidecar.failover.primary.failed", { sidecar: target, error: e.to_string() });
+                }
             }
         }
     }
@@ -124,11 +126,17 @@ pub async fn invoke_with_failover(
 
     if let Some(ref fo) = failover_config {
         if let Some(ref backup) = fo.backup {
-            tracing::info!(primary = %target, backup = %backup, "failing over to backup sidecar");
+            {
+                use vil_log::app_log;
+                app_log!(Info, "sidecar.failover.to.backup", { primary: target, backup: backup.as_str() });
+            }
             match dispatcher::invoke(registry, backup, method, request_data).await {
                 Ok(resp) => return Ok(resp),
                 Err(e) => {
-                    tracing::warn!(backup = %backup, error = %e, "backup sidecar also failed");
+                    {
+                        use vil_log::app_log;
+                        app_log!(Warn, "sidecar.failover.backup.failed", { backup: backup.as_str(), error: e.to_string() });
+                    }
                 }
             }
         }

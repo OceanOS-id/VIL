@@ -136,13 +136,14 @@ where
             Err(e) => {
                 if attempt < policy.max_retries {
                     let delay = policy.strategy.delay_for_attempt(attempt);
-                    tracing::warn!(
-                        attempt = attempt + 1,
-                        max = policy.max_retries,
-                        delay_ms = delay.as_millis() as u64,
-                        error = %e,
-                        "retry: attempt failed, retrying"
-                    );
+                    {
+                        use vil_log::app_log;
+                        app_log!(Warn, "retry.attempt.failed", {
+                            attempt: (attempt + 1) as u64,
+                            max: policy.max_retries as u64,
+                            delay_ms: delay.as_millis() as u64
+                        });
+                    }
                     tokio::time::sleep(delay).await;
                 }
                 last_error = Some(e);

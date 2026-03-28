@@ -49,7 +49,10 @@ pub async fn connect_sidecar(
     let pid = if let Some(ref cmd) = config.command {
         Some(spawn_sidecar_process(cmd)?)
     } else {
-        tracing::info!(sidecar = %name, socket = %socket_path, "waiting for sidecar to connect");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "sidecar.waiting.connect", { sidecar: name, socket: socket_path.as_str() });
+        }
         None
     };
 
@@ -109,13 +112,10 @@ pub async fn connect_sidecar(
                 }
             }
 
-            tracing::info!(
-                sidecar = %name,
-                version = %h.version,
-                methods = ?h.methods,
-                capabilities = ?h.capabilities,
-                "sidecar handshake accepted"
-            );
+            {
+                use vil_log::app_log;
+                app_log!(Info, "sidecar.handshake.accepted", { sidecar: name, version: h.version.as_str() });
+            }
             h.methods
         }
         other => {
@@ -166,7 +166,14 @@ fn spawn_sidecar_process(command: &str) -> Result<u32, LifecycleError> {
         .map_err(|e| LifecycleError::SpawnFailed(format!("{}: {}", command, e)))?;
 
     let pid = child.id();
-    tracing::info!(command = %command, pid = pid, "spawned sidecar process");
+    {
+        use vil_log::{system_log, types::SystemPayload};
+        system_log!(Info, SystemPayload { event_type: 4, ..Default::default() });
+        {
+            use vil_log::app_log;
+            app_log!(Info, "sidecar.process.spawned", { command: command, pid: pid as u64 });
+        }
+    }
     Ok(pid)
 }
 
@@ -235,13 +242,15 @@ fn mark_unhealthy(registry: &SidecarRegistry, name: &str, max_failures: u64) {
             if let Some(mut entry) = registry.get_mut(name) {
                 entry.health = SidecarHealth::Disconnected;
                 entry.connection = None;
-                tracing::warn!(sidecar = %name, failures = failures, "sidecar marked disconnected after {} failures", max_failures);
+                use vil_log::app_log;
+                app_log!(Warn, "sidecar.disconnected", { sidecar: name, failures: failures });
             }
         } else {
             drop(entry);
             if let Some(mut entry) = registry.get_mut(name) {
                 entry.health = SidecarHealth::Unhealthy;
-                tracing::warn!(sidecar = %name, failures = failures, max = max_failures, "sidecar health check failed");
+                use vil_log::app_log;
+                app_log!(Warn, "sidecar.health.failed", { sidecar: name, failures: failures, max: max_failures });
             }
         }
     }
@@ -270,23 +279,30 @@ pub async fn drain_sidecar(
         .await
         .map_err(LifecycleError::Transport)?;
 
-    tracing::info!(sidecar = %name, "drain signal sent, waiting for completion");
+    {
+        use vil_log::app_log;
+        app_log!(Info, "sidecar.draining", { sidecar: name });
+    }
 
     // Wait for Drained (with timeout)
     let result = tokio::time::timeout(std::time::Duration::from_secs(60), conn.recv()).await;
 
     match result {
         Ok(Ok(Message::Drained)) => {
-            tracing::info!(sidecar = %name, "sidecar drained successfully");
+            use vil_log::app_log;
+            app_log!(Info, "sidecar.drained", { sidecar: name });
         }
         Ok(Ok(_)) => {
-            tracing::warn!(sidecar = %name, "unexpected message during drain");
+            use vil_log::app_log;
+            app_log!(Warn, "sidecar.drain.unexpected", { sidecar: name });
         }
         Ok(Err(e)) => {
-            tracing::warn!(sidecar = %name, error = %e, "error during drain");
+            use vil_log::app_log;
+            app_log!(Warn, "sidecar.drain.error", { sidecar: name, error: e.to_string() });
         }
         Err(_) => {
-            tracing::warn!(sidecar = %name, "drain timed out after 60s");
+            use vil_log::app_log;
+            app_log!(Warn, "sidecar.drain.timeout", { sidecar: name });
         }
     }
 
@@ -327,12 +343,18 @@ pub fn spawn_health_loop(
                 .unwrap_or(false);
 
             if !is_connected {
-                tracing::debug!(sidecar = %name, "health loop stopping: sidecar not connected");
+                {
+                    use vil_log::app_log;
+                    app_log!(Debug, "sidecar.health.loop.stop", { sidecar: vil_log::dict::register_str(&name) as u64 });
+                }
                 break;
             }
 
             if let Err(e) = health_check(&registry, &name, max_failures).await {
-                tracing::debug!(sidecar = %name, error = %e, "health check failed");
+                {
+                    use vil_log::app_log;
+                    app_log!(Debug, "sidecar.health.check.failed", { sidecar: vil_log::dict::register_str(&name) as u64, error: e.to_string() });
+                }
             }
         }
     })

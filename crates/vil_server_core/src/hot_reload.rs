@@ -105,7 +105,10 @@ async fn reload_config(State(state): State<AppState>) -> impl IntoResponse {
 
     state.config_reloader().record_reload("http", true, duration_us, changes.clone());
 
-    tracing::info!(duration_us = duration_us, "config reloaded");
+    {
+        use vil_log::app_log;
+        app_log!(Info, "config.reloaded", { duration_us: duration_us });
+    }
 
     axum::Json(serde_json::json!({
         "status": "reloaded",

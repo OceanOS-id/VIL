@@ -92,7 +92,10 @@ impl Scheduler {
         });
 
         self.handles.insert(name.to_string(), handle);
-        tracing::info!(job = %name, interval_s = interval.as_secs(), "scheduled recurring job");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "scheduler.job.recurring", { job: name, interval_s: interval.as_secs() });
+        }
     }
 
     /// Schedule a one-shot delayed job.
@@ -131,7 +134,10 @@ impl Scheduler {
         });
 
         self.handles.insert(name.to_string(), handle);
-        tracing::info!(job = %name, delay_s = delay.as_secs(), "scheduled one-shot job");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "scheduler.job.once", { job: name, delay_s: delay.as_secs() });
+        }
     }
 
     /// Cancel a scheduled job.
@@ -141,7 +147,10 @@ impl Scheduler {
             if let Some(mut info) = self.jobs.get_mut(name) {
                 info.status = JobStatus::Cancelled;
             }
-            tracing::info!(job = %name, "job cancelled");
+            {
+                use vil_log::app_log;
+                app_log!(Info, "scheduler.job.cancelled", { job: name });
+            }
         }
     }
 

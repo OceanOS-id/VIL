@@ -58,7 +58,10 @@ impl CapsuleRegistry {
         self.sources.insert(name.to_string(), path.to_string());
         self.reload_counts.insert(name.to_string(), 0);
 
-        tracing::info!(handler = %name, path = %path, "capsule handler loaded");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "capsule.handler.loaded", { handler: name, path: path });
+        }
         Ok(())
     }
 
@@ -67,7 +70,10 @@ impl CapsuleRegistry {
         let size = bytes.len();
         self.modules.insert(name.to_string(), Arc::new(bytes));
         self.reload_counts.insert(name.to_string(), 0);
-        tracing::info!(handler = %name, size = size, "capsule handler loaded from bytes");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "capsule.handler.loaded.bytes", { handler: name, size: size as u64 });
+        }
     }
 
     /// Hot-reload a handler from its source file.
@@ -91,11 +97,10 @@ impl CapsuleRegistry {
             *count += 1;
         }
 
-        tracing::info!(
-            handler = %name,
-            reload_us = elapsed_us,
-            "capsule handler hot-reloaded"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "capsule.handler.reloaded", { handler: name, reload_us: elapsed_us });
+        }
 
         Ok(elapsed_us)
     }

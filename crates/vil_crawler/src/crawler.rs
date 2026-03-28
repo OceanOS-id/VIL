@@ -5,7 +5,7 @@ use std::time::Instant;
 
 use dashmap::DashMap;
 use tokio::sync::Semaphore;
-use tracing::{debug, warn};
+use vil_log::app_log;
 
 use crate::config::CrawlConfig;
 use crate::result::{extract_links, extract_title, strip_html_tags, CrawlResult};
@@ -104,7 +104,7 @@ impl Crawler {
             // Check domain allowance
             if let Some(host) = extract_host(&url) {
                 if !self.config.is_domain_allowed(&host) {
-                    debug!(url = %url, "skipping: domain not allowed");
+                    app_log!(Debug, "crawler_skip", { url: url.clone(), reason: "domain_not_allowed" });
                     continue;
                 }
             }
@@ -113,7 +113,7 @@ impl Crawler {
             if let Some(ref checker) = robots {
                 if let Some(path) = extract_path(&url) {
                     if !checker.is_allowed("vil-crawler", &path) {
-                        debug!(url = %url, "skipping: disallowed by robots.txt");
+                        app_log!(Debug, "crawler_skip", { url: url.clone(), reason: "robots_disallowed" });
                         continue;
                     }
                 }
@@ -142,7 +142,7 @@ impl Crawler {
                     results.push(result);
                 }
                 Err(e) => {
-                    warn!(url = %url, error = %e, "crawl failed");
+                    app_log!(Warn, "crawler_failed", { url: url.clone(), error: e.to_string() });
                 }
             }
         }

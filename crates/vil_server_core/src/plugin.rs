@@ -74,12 +74,10 @@ impl PluginRegistry {
     /// Register a plugin manifest (called after loading).
     pub fn register(&mut self, manifest: PluginManifest, load_path: &str) {
         let name = manifest.name.clone();
-        tracing::info!(
-            plugin = %name,
-            version = %manifest.version,
-            routes = manifest.routes.len(),
-            "plugin registered"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "plugin.registered", { plugin: name.as_str(), routes: manifest.routes.len() as u64 });
+        }
         self.plugins.insert(name, PluginInfo {
             manifest,
             status: PluginStatus::Active,
@@ -91,7 +89,10 @@ impl PluginRegistry {
     pub fn unregister(&mut self, name: &str) {
         if let Some(info) = self.plugins.get_mut(name) {
             info.status = PluginStatus::Unloaded;
-            tracing::info!(plugin = %name, "plugin unregistered");
+            {
+                use vil_log::app_log;
+                app_log!(Info, "plugin.unregistered", { plugin: name });
+            }
         }
     }
 

@@ -84,7 +84,14 @@ impl ShmRegion {
         let region = Self { mmap, size, path };
         // Initialize header: write cursor at HEADER_SIZE (start of data area)
         region.write_cursor().store(HEADER_SIZE, Ordering::Release);
-        tracing::info!(path = %region.path, size = size, "SHM region created");
+        {
+            use vil_log::{system_log, types::SystemPayload};
+            system_log!(Info, SystemPayload {
+                event_type: 4,
+                mem_kb: (size / 1024) as u32,
+                ..Default::default()
+            });
+        }
 
         Ok(region)
     }
@@ -98,7 +105,14 @@ impl ShmRegion {
 
         let mmap = unsafe { MmapMut::map_mut(&file)? };
 
-        tracing::info!(path = %path, size = size, "SHM region opened");
+        {
+            use vil_log::{system_log, types::SystemPayload};
+            system_log!(Info, SystemPayload {
+                event_type: 4,
+                mem_kb: (size / 1024) as u32,
+                ..Default::default()
+            });
+        }
         Ok(Self { mmap, size, path })
     }
 
@@ -150,7 +164,10 @@ impl ShmRegion {
     /// Only safe when no readers are active on existing data.
     pub fn reset(&self) {
         self.write_cursor().store(HEADER_SIZE, Ordering::Release);
-        tracing::debug!(path = %self.path, "SHM region reset");
+        {
+            use vil_log::app_log;
+            app_log!(Debug, "sidecar.shm.reset", { path: vil_log::dict::register_str(&self.path) as u64 });
+        }
     }
 
     /// Current write cursor position (bytes used including header).
@@ -194,7 +211,10 @@ impl Drop for ShmRegion {
     fn drop(&mut self) {
         // Don't remove the file here — the other side may still be using it.
         // Cleanup is handled by the lifecycle manager.
-        tracing::debug!(path = %self.path, "SHM region handle dropped");
+        {
+            use vil_log::app_log;
+            app_log!(Debug, "sidecar.shm.dropped", { path: vil_log::dict::register_str(&self.path) as u64 });
+        }
     }
 }
 
@@ -202,7 +222,10 @@ impl Drop for ShmRegion {
 pub fn remove_shm_region(path: &str) {
     if let Err(e) = std::fs::remove_file(path) {
         if e.kind() != std::io::ErrorKind::NotFound {
-            tracing::warn!(path = %path, error = %e, "failed to remove SHM region");
+            {
+                use vil_log::app_log;
+                app_log!(Warn, "sidecar.shm.remove.failed", { path: path, error: e.to_string() });
+            }
         }
     }
 }

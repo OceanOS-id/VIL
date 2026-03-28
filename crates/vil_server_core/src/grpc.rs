@@ -117,11 +117,10 @@ impl GrpcServiceRegistry {
     /// Register a gRPC service with its transport.
     pub fn register(&self, name: impl Into<String>, transport: GrpcTransport) {
         let name = name.into();
-        tracing::info!(
-            service = %name,
-            transport = %transport.endpoint(),
-            "gRPC service registered"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "grpc.service.registered", { service: name.as_str(), transport: transport.endpoint() });
+        }
         self.services.insert(name, transport);
     }
 

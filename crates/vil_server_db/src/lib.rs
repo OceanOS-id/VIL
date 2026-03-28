@@ -8,6 +8,7 @@
 
 use async_trait::async_trait;
 use serde::Deserialize;
+use vil_log::app_log;
 
 /// Database configuration.
 #[derive(Debug, Clone, Deserialize)]
@@ -89,7 +90,7 @@ impl<C> Transaction<C> {
 impl<C> Drop for Transaction<C> {
     fn drop(&mut self) {
         if !self.committed {
-            tracing::warn!("Transaction dropped without commit — rollback implied");
+            app_log!(Warn, "db.tx.dropped", { rollback: 1u64 });
         }
     }
 }

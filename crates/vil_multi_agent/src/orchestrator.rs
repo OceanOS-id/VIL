@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
-use tracing;
+use vil_log::app_log;
 use vil_macros::VilAiEvent;
 
 use crate::channel::AgentMessage;
@@ -124,7 +124,7 @@ impl Orchestrator {
                 parts.join("\n")
             };
 
-            tracing::debug!(agent = %name, input_len = input.len(), "running agent");
+            app_log!(Debug, "multi_agent_run", { agent: name.clone(), input_len: input.len() });
 
             // Execute the agent.
             let output = node

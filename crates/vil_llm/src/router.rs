@@ -3,6 +3,7 @@ use crate::provider::LlmProvider;
 use crate::message::*;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use vil_log::app_log;
 
 #[derive(Debug, Clone, Copy)]
 pub enum RouterStrategy {
@@ -56,11 +57,7 @@ impl LlmProvider for LlmRouter {
                             if i == self.providers.len() - 1 {
                                 return Err(e);
                             }
-                            tracing::warn!(
-                                provider = provider.provider_name(),
-                                error = %e,
-                                "LLM provider failed, trying next"
-                            );
+                            app_log!(Warn, "llm_router_fallback", { provider: provider.provider_name().to_string(), error: e.to_string() });
                         }
                     }
                 }

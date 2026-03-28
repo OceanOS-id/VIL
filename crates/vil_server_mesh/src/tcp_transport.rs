@@ -269,7 +269,10 @@ impl TcpTriLaneSender {
                             self.addr, e
                         )));
                     }
-                    tracing::warn!(addr = %self.addr, err = %e, "TCP send failed, reconnecting");
+                    {
+                        use vil_log::app_log;
+                        app_log!(Warn, "mesh.tcp.send.failed", { addr: self.addr.as_str(), error: e.to_string() });
+                    }
                 }
             }
         }
@@ -326,12 +329,18 @@ impl TcpTriLaneListener {
                         let senders = senders.clone();
                         tokio::spawn(async move {
                             if let Err(e) = handle_connection(stream, &senders).await {
-                                tracing::debug!(peer = %peer, err = %e, "TCP connection ended");
+                                {
+                            use vil_log::app_log;
+                            app_log!(Debug, "mesh.tcp.conn.ended", { peer: vil_log::dict::register_str(&peer.to_string()) as u64, error: e.to_string() });
+                        }
                             }
                         });
                     }
                     Err(e) => {
-                        tracing::error!(err = %e, "TCP accept error");
+                        {
+                            use vil_log::app_log;
+                            app_log!(Error, "mesh.tcp.accept.error", { error: e.to_string() });
+                        }
                         // Brief pause to avoid busy-loop on persistent errors.
                         tokio::time::sleep(std::time::Duration::from_millis(50)).await;
                     }
@@ -339,7 +348,10 @@ impl TcpTriLaneListener {
             }
         });
 
-        tracing::info!(addr = %local_addr, "TCP Tri-Lane listener started");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "mesh.tcp.listener.started", { addr: local_addr.to_string() });
+        }
 
         Ok((
             TcpTriLaneReceivers {
@@ -433,7 +445,10 @@ impl TcpTriLaneRouter {
     pub fn add_peer(&self, service_name: &str, addr: &str) {
         self.remote_peers
             .insert(service_name.to_owned(), addr.to_owned());
-        tracing::info!(service = %service_name, addr = %addr, "TCP peer registered");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "mesh.tcp.peer.registered", { service: service_name, addr: addr });
+        }
     }
 
     /// Check whether a service has a registered remote peer address.
@@ -476,7 +491,10 @@ impl TcpTriLaneRouter {
     pub async fn start_listener(&self) -> Result<TcpTriLaneReceivers, TcpLaneError> {
         let listener = TcpTriLaneListener::new(&self.listen_addr);
         let (receivers, local_addr) = listener.start().await?;
-        tracing::info!(addr = %local_addr, "TcpTriLaneRouter listener active");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "mesh.tcp.router.active", { addr: local_addr.to_string() });
+        }
         Ok(receivers)
     }
 

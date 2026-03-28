@@ -37,21 +37,16 @@ impl<'a> PluginContext<'a> {
 
     /// Add a ServiceProcess to the app.
     pub fn add_service(&mut self, svc: ServiceProcess) {
-        tracing::info!(
-            plugin = %self.plugin_id,
-            service = %svc.name(),
-            "plugin registered service"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Info, "plugin.service.registered", { plugin: self.plugin_id.as_str(), service: svc.name() });
+        }
         self.services.push(svc);
     }
 
     /// Register a typed resource (other plugins can consume it).
     pub fn provide<T: Send + Sync + 'static>(&mut self, name: &str, resource: T) {
-        tracing::debug!(
-            plugin = %self.plugin_id,
-            resource = %name,
-            "plugin provided resource"
-        );
+        // debug-level: skip vil_log
         self.resources.provide::<T>(name, resource);
     }
 

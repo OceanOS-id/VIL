@@ -8,7 +8,7 @@
 use std::sync::Arc;
 use tokio::sync::{oneshot, Mutex};
 use tokio::time::Duration;
-use tracing;
+use vil_log::app_log;
 
 use crate::backend::{InferError, InferInput, InferOutput, ModelBackend};
 
@@ -88,7 +88,7 @@ impl DynamicBatcher {
         };
 
         let count = requests.len();
-        tracing::debug!(count, "flushing batch");
+        app_log!(Debug, "inference_batcher_flush", { count: count });
 
         let inputs: Vec<InferInput> = requests.iter().map(|r| r.input.clone()).collect();
         let results = self.backend.infer_batch(&inputs).await;

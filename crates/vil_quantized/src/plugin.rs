@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use axum::http::Method;
 use axum::routing::{get, post};
+use vil_log::app_log;
 
 use vil_server_core::plugin_system::{
     EndpointSpec, PluginCapability, PluginContext, PluginHealth, VilPlugin,
@@ -81,7 +82,7 @@ impl VilPlugin for QuantizedPlugin {
 
         if self.auto_load {
             if let Err(e) = runtime.load() {
-                tracing::warn!("QuantizedPlugin: auto-load failed: {}", e);
+                app_log!(Warn, "quantized_plugin", { event: "auto_load_failed", error: e.to_string() });
             }
         }
 

@@ -11,7 +11,7 @@ use axum::Router;
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tracing::info;
+use vil_log::{app_log, system_log, types::SystemPayload};
 
 use crate::health;
 use crate::middleware;
@@ -184,11 +184,11 @@ impl VilServer {
 
         let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
-        info!(
-            name = %name,
-            port = port,
-            "vil-server starting"
-        );
+        system_log!(Info, SystemPayload {
+            event_type: 4, // startup
+            ..Default::default()
+        });
+        app_log!(Info, "server.starting", { name: name.as_str(), port: port as u64 });
 
         println!();
         println!("  vil-server: {}", name);
@@ -207,11 +207,11 @@ impl VilServer {
             tokio::spawn(async move {
                 let metrics_app = health::health_router().with_state(metrics_state);
                 let metrics_addr = SocketAddr::from(([0, 0, 0, 0], mp));
-                info!(port = mp, "metrics server starting");
+                app_log!(Info, "metrics.server.starting", { port: mp as u64 });
                 let listener = match tokio::net::TcpListener::bind(metrics_addr).await {
                     Ok(l) => l,
                     Err(e) => {
-                        tracing::warn!(port = mp, error = %e, "Failed to bind metrics port, metrics served on main port");
+                        app_log!(Warn, "metrics.bind.failed", { port: mp as u64, error: e.to_string() });
                         return;
                     }
                 };
@@ -232,6 +232,10 @@ impl VilServer {
             .await
             .expect("Server error");
 
-        info!("vil-server shut down gracefully");
+        system_log!(Info, SystemPayload {
+            event_type: 5, // shutdown
+            ..Default::default()
+        });
+        app_log!(Info, "server.shutdown", {});
     }
 }

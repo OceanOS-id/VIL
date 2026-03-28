@@ -72,7 +72,10 @@ impl RpcRegistry {
         };
 
         self.handlers.insert(name.to_string(), Box::new(h));
-        tracing::info!(endpoint = %name, "RPC handler registered");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "mesh.rpc.handler.registered", { endpoint: name });
+        }
     }
 
     /// Invoke an RPC endpoint by name with raw bytes.
@@ -123,12 +126,10 @@ impl RpcClient {
             .map_err(|e| format!("Serialization failed: {}", e))?;
 
         let transport = if self.co_located { "SHM" } else { "TCP" };
-        tracing::debug!(
-            target = %self.target,
-            endpoint = %endpoint,
-            transport = transport,
-            "RPC call"
-        );
+        {
+            use vil_log::app_log;
+            app_log!(Debug, "mesh.rpc.call", { target: vil_log::dict::register_str(&self.target) as u64, endpoint: vil_log::dict::register_str(endpoint) as u64, transport: vil_log::dict::register_str(transport) as u64 });
+        }
 
         // In production: dispatch via TriLaneRouter (SHM) or TCP
         Err(format!(

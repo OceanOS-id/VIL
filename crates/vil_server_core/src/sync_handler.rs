@@ -48,7 +48,10 @@ where
             match tokio::task::spawn_blocking(move || f().into_response()).await {
                 Ok(response) => response,
                 Err(e) => {
-                    tracing::error!(error = %e, "Blocking handler panicked");
+                    {
+                        use vil_log::app_log;
+                        app_log!(Error, "handler.blocking.panic", { error: e.to_string() });
+                    }
                     StatusCode::INTERNAL_SERVER_ERROR.into_response()
                 }
             }
@@ -80,7 +83,10 @@ where
     match tokio::task::spawn_blocking(f).await {
         Ok(response) => response.into_response(),
         Err(e) => {
-            tracing::error!(error = %e, "Blocking handler panicked");
+            {
+                use vil_log::app_log;
+                app_log!(Error, "handler.blocking.panic", { error: e.to_string() });
+            }
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }

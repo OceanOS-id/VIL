@@ -29,7 +29,10 @@ impl KvStore {
         }).await.map_err(|e| format!("KV bucket '{}' creation failed: {}", bucket, e))?;
 
         let (tx, _) = broadcast::channel(256);
-        tracing::info!(bucket = %bucket, "nats kv store opened");
+        {
+            use vil_log::app_log;
+            app_log!(Info, "nats.kv.opened", { bucket: bucket });
+        }
         Ok(Self { bucket: bucket.into(), store, watch_tx: tx })
     }
 
@@ -44,7 +47,7 @@ impl KvStore {
             key: key.to_string(), value: bytes, revision: rev,
         });
 
-        tracing::debug!(bucket = %self.bucket, key = %key, rev = rev, "kv put");
+        // debug-level: skip vil_log
         Ok(rev)
     }
 
@@ -58,7 +61,10 @@ impl KvStore {
             }),
             Ok(None) => None,
             Err(e) => {
-                tracing::warn!(key = %key, error = %e, "kv get failed");
+                {
+                    use vil_log::app_log;
+                    app_log!(Warn, "nats.kv.get.failed", { key: key, error: e.to_string() });
+                }
                 None
             }
         }
