@@ -71,14 +71,11 @@ impl CsrfProtection {
         Self { config }
     }
 
-    /// Generate a new CSRF token.
+    /// Generate a new CSRF token using cryptographically secure randomness.
     pub fn generate_token(&self) -> String {
         use std::fmt::Write;
         let mut bytes = vec![0u8; self.config.token_length];
-        // Use thread_rng for token generation
-        for byte in bytes.iter_mut() {
-            *byte = rand_byte();
-        }
+        getrandom::getrandom(&mut bytes).expect("CSPRNG unavailable");
         let mut hex = String::with_capacity(self.config.token_length * 2);
         for b in &bytes {
             write!(hex, "{:02x}", b).unwrap();
@@ -123,25 +120,8 @@ impl CsrfProtection {
     }
 }
 
-/// Simple pseudo-random byte (not cryptographically secure for production;
-/// use `rand` crate for production).
-fn rand_byte() -> u8 {
-    use std::time::SystemTime;
-    let nanos = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap_or_default()
-        .subsec_nanos();
-    (nanos & 0xFF) as u8
-}
-
-/// Constant-time byte comparison (prevents timing attacks).
+/// Constant-time byte comparison using `subtle` crate (prevents timing attacks).
 fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-    if a.len() != b.len() {
-        return false;
-    }
-    let mut diff = 0u8;
-    for (x, y) in a.iter().zip(b.iter()) {
-        diff |= x ^ y;
-    }
-    diff == 0
+    use subtle::ConstantTimeEq;
+    a.ct_eq(b).into()
 }

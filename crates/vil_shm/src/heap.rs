@@ -127,7 +127,9 @@ impl RegionSlot {
         nix::unistd::ftruncate(&fd, size as nix::libc::off_t)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
+        // SAFETY: fd is valid, obtained from shm_open. Ownership transferred via into_raw_fd.
         let file = unsafe { std::fs::File::from_raw_fd(fd.into_raw_fd()) };
+        // SAFETY: file is valid and exclusively owned; no other mappings exist yet.
         let mmap = unsafe { MmapMut::map_mut(&file)? };
 
         // Pre-fault pages: lock in RAM to eliminate page faults on ShmToken hot path.
@@ -154,7 +156,9 @@ impl RegionSlot {
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
         let size = stat.st_size as usize;
 
+        // SAFETY: fd is valid, obtained from shm_open. Ownership transferred via into_raw_fd.
         let file = unsafe { std::fs::File::from_raw_fd(fd.into_raw_fd()) };
+        // SAFETY: file is valid and exclusively owned; mapping shared memory for attach.
         let mmap = unsafe { MmapMut::map_mut(&file)? };
 
         // Pre-fault pages on attach
@@ -191,6 +195,8 @@ pub struct BumpRegion {
     cursor: std::sync::atomic::AtomicUsize,
 }
 
+// SAFETY: BumpRegion uses AtomicUsize for offset. All mmap access is bounds-checked.
+// Concurrent access is safe because allocations are append-only via atomic fetch_add.
 unsafe impl Send for BumpRegion {}
 unsafe impl Sync for BumpRegion {}
 
@@ -225,6 +231,7 @@ impl BumpRegion {
     /// Alloc + write in one shot. Lock-free.
     pub fn alloc_and_write(&self, data: &[u8]) -> Option<(Offset, u32)> {
         let offset = self.alloc(data.len())?;
+        // SAFETY: offset obtained from alloc(), guaranteed within bounds.
         unsafe { self.write(offset, data); }
         Some((offset, data.len() as u32))
     }
@@ -308,6 +315,7 @@ impl ExchangeHeap {
         let off = offset.as_usize();
         let size = std::mem::size_of::<T>();
         let src = &value as *const T as *const u8;
+        // SAFETY: offset from try_alloc is within buffer bounds; src/dst do not overlap.
         unsafe {
             std::ptr::copy_nonoverlapping(src, slot.buffer.as_mut_ptr().add(off), size);
         }
@@ -328,6 +336,7 @@ impl ExchangeHeap {
         }
 
         let mut value = std::mem::MaybeUninit::<T>::uninit();
+        // SAFETY: bounds checked above; buffer ptr and local MaybeUninit do not overlap.
         unsafe {
             std::ptr::copy_nonoverlapping(
                 slot.buffer.as_ptr().add(off),
@@ -354,6 +363,7 @@ impl ExchangeHeap {
         }
 
         let src = &value as *const T as *const u8;
+        // SAFETY: bounds checked above; src (stack local) and dst (buffer) do not overlap.
         unsafe {
             std::ptr::copy_nonoverlapping(src, slot.buffer.as_mut_ptr().add(off), size);
         }
@@ -402,6 +412,7 @@ impl ExchangeHeap {
         if off + data.len() > slot.buffer.len() {
             return false;
         }
+        // SAFETY: bounds checked above; src (caller slice) and dst (buffer) do not overlap.
         unsafe {
             std::ptr::copy_nonoverlapping(data.as_ptr(), slot.buffer.as_mut_ptr().add(off), data.len());
         }
@@ -417,6 +428,7 @@ impl ExchangeHeap {
             return None;
         }
         let mut dest = vec![0u8; len];
+        // SAFETY: bounds checked above; src (buffer) and dst (local Vec) do not overlap.
         unsafe {
             std::ptr::copy_nonoverlapping(slot.buffer.as_ptr().add(off), dest.as_mut_ptr(), len);
         }
@@ -491,6 +503,8 @@ impl ExchangeHeap {
             
             if aligned_offset != sample.offset as usize {
                 // Move data
+                // SAFETY: samples sorted by offset; dst <= src so regions may overlap,
+                // hence ptr::copy (not copy_nonoverlapping). Both within buffer bounds.
                 unsafe {
                     let src = slot.buffer.as_ptr().add(sample.offset as usize);
                     let dst = slot.buffer.as_mut_ptr().add(aligned_offset);

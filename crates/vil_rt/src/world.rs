@@ -389,6 +389,7 @@ impl VastarRuntimeWorld {
                     // This eliminates: 1 SHM alloc + 1 memcpy(write) + 1 memcpy(read) per message.
                     let src = &value as *const T as *const u8;
                     let size = std::mem::size_of::<T>();
+                    // SAFETY: src points to valid SHM-mapped memory of at least `size` bytes.
                     let bytes = unsafe { std::slice::from_raw_parts(src, size) };
 
                     // Pack T's bytes into descriptor fields (up to 24 bytes = 3 × u64)
@@ -502,6 +503,7 @@ impl VastarRuntimeWorld {
                     if size >= 24 { buf[16..24].copy_from_slice(&descriptor.publish_ts.to_ne_bytes()); }
 
                     let mut val = std::mem::MaybeUninit::<T>::uninit();
+                    // SAFETY: buf contains valid bytes for the target type, size verified by caller.
                     unsafe {
                         std::ptr::copy_nonoverlapping(buf.as_ptr(), val.as_mut_ptr() as *mut u8, size);
                         Arc::new(val.assume_init())

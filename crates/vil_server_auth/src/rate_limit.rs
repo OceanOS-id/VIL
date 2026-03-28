@@ -73,4 +73,19 @@ impl RateLimit {
             .map(|b| b.tokens)
             .unwrap_or(self.max_requests)
     }
+
+    /// Remove expired buckets (stale for > 2x window).
+    /// Call periodically (e.g. every 60s via tokio::spawn) to prevent unbounded memory growth.
+    pub fn cleanup_expired(&self) {
+        let now = Instant::now();
+        let max_age = self.window * 2;
+        self.buckets.retain(|_, bucket| {
+            now.duration_since(bucket.last_refill) < max_age
+        });
+    }
+
+    /// Current number of tracked IPs.
+    pub fn bucket_count(&self) -> usize {
+        self.buckets.len()
+    }
 }

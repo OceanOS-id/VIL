@@ -187,6 +187,7 @@ macro_rules! _emit_typed_log {
 
             // Copy payload struct bytes into slot.payload
             let p = $payload;
+            // SAFETY: `p` is a valid, fully-initialized struct; pointer and length are derived from it and do not exceed its size.
             let payload_bytes = unsafe {
                 std::slice::from_raw_parts(
                     &p as *const _ as *const u8,

@@ -39,6 +39,7 @@ pub struct DbPayload {
 
 impl Default for DbPayload {
     fn default() -> Self {
+        // SAFETY: All fields are primitive integers and fixed-size byte arrays — zeroed bytes are valid.
         unsafe { std::mem::zeroed() }
     }
 }

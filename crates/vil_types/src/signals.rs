@@ -30,6 +30,7 @@ pub enum ControlSignal {
     Abort { session_id: u64 },
 }
 
+// SAFETY: ControlSignal is a repr(u8) enum with defined variants — no pointers or address-dependent data.
 unsafe impl crate::markers::Vasi for ControlSignal {}
 // PodLike is NOT implemented because of String in Error variant
 

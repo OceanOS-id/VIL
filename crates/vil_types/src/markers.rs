@@ -67,6 +67,8 @@ pub trait MessageContract {
 
 // --- Blanket unsafe impls for primitives ---
 
+// SAFETY: Primitive types (u8..u128, i8..i128, f32, f64, bool) contain no pointers
+// and have stable representations across address spaces.
 unsafe impl Vasi for u8 {}
 unsafe impl Vasi for u16 {}
 unsafe impl Vasi for u32 {}
@@ -81,6 +83,7 @@ unsafe impl Vasi for f32 {}
 unsafe impl Vasi for f64 {}
 unsafe impl Vasi for bool {}
 
+// SAFETY: Primitive types are valid for any bit pattern and can be safely zeroed/copied.
 unsafe impl PodLike for u8 {}
 unsafe impl PodLike for u16 {}
 unsafe impl PodLike for u32 {}

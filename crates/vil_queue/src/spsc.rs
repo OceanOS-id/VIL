@@ -137,6 +137,7 @@ impl<T> SpscRingBuffer<T> {
 
         // Write item to slot
         let idx = tail & self.mask;
+        // SAFETY: idx is within buffer bounds (masked). Exclusive access guaranteed by single-producer invariant (head ownership).
         unsafe {
             (*self.buffer[idx].get()).write(item);
         }
@@ -179,6 +180,7 @@ impl<T> SpscRingBuffer<T> {
 
         // Read item from slot
         let idx = head & self.mask;
+        // SAFETY: idx slot was previously written by producer. Exclusive access guaranteed by single-consumer invariant (tail ownership).
         let item = unsafe { (*self.buffer[idx].get()).assume_init_read() };
 
         // Publish new head — producer will see this slot as available
@@ -212,6 +214,7 @@ impl<T> Drop for SpscRingBuffer<T> {
         let tail = *self.tail.value.get_mut();
         for i in head..tail {
             let idx = i & self.mask;
+            // SAFETY: slots between head and tail were previously initialized.
             unsafe {
                 self.buffer[idx].get_mut().assume_init_drop();
             }
@@ -346,6 +349,7 @@ impl ShmSpscQueue {
     }
 
     pub fn try_push(&self, item: Descriptor) -> Result<(), Descriptor> {
+        // SAFETY: self.layout points to valid SHM-mapped ShmSpscLayout, allocated during construction.
         unsafe {
             let tail = (*self.layout).tail.load(Ordering::Relaxed);
             let head = (*self.layout).head.load(Ordering::Acquire);
@@ -367,6 +371,7 @@ impl ShmSpscQueue {
     }
 
     pub fn try_pop(&self) -> Option<Descriptor> {
+        // SAFETY: self.layout points to valid SHM-mapped ShmSpscLayout, allocated during construction.
         unsafe {
             let head = (*self.layout).head.load(Ordering::Relaxed);
             let tail = (*self.layout).tail.load(Ordering::Acquire);
@@ -405,6 +410,7 @@ impl QueueBackend for ShmSpscQueue {
     }
 
     fn len(&self) -> usize {
+        // SAFETY: self.layout points to valid SHM-mapped ShmSpscLayout, allocated during construction.
         unsafe {
             let tail = (*self.layout).tail.load(Ordering::Acquire);
             let head = (*self.layout).head.load(Ordering::Acquire);
@@ -672,11 +678,13 @@ mod tests {
         // Simulate SHM with a manually aligned Vec
         let mut storage = vec![0u8; size + 256];
         let raw_ptr = storage.as_mut_ptr();
+        // SAFETY: raw_ptr is from valid allocation, alignment adjustment ensures cache-line alignment.
         let base_ptr = unsafe {
             let offset = (128 - (raw_ptr as usize % 128)) % 128;
             raw_ptr.add(offset)
         };
-        
+
+        // SAFETY: raw_ptr is from valid allocation, alignment adjustment ensures cache-line alignment.
         unsafe {
             let layout = base_ptr as *mut ShmSpscLayout<Descriptor>;
             (*layout).capacity = capacity;

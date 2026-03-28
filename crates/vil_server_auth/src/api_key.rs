@@ -5,10 +5,12 @@
 // Validates API keys from request headers or query parameters.
 // Supports multiple keys with optional scoping (per-service, per-route).
 //
+// Keys are stored as SHA-256 hashes — never in plaintext.
+// Validation uses constant-time comparison via `subtle` crate.
+//
 // Header modes:
 //   X-API-Key: <key>
 //   Authorization: ApiKey <key>
-//   Authorization: Bearer <key> (with api_key mode)
 //
 // Query mode:
 //   ?api_key=<key>
@@ -18,13 +20,25 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use dashmap::DashMap;
+use sha2::{Digest, Sha256};
 use std::sync::Arc;
+use subtle::ConstantTimeEq;
+
+/// Hash an API key with SHA-256 for storage.
+fn hash_key(key: &str) -> [u8; 32] {
+    let mut hasher = Sha256::new();
+    hasher.update(key.as_bytes());
+    hasher.finalize().into()
+}
 
 /// API key store and validator.
+///
+/// Keys are stored as SHA-256 hashes. Validation uses constant-time comparison
+/// to prevent timing side-channel attacks.
 #[derive(Clone)]
 pub struct ApiKeyAuth {
-    /// Map of api_key → ApiKeyInfo
-    keys: Arc<DashMap<String, ApiKeyInfo>>,
+    /// Map of sha256(api_key) → ApiKeyInfo
+    keys: Arc<DashMap<[u8; 32], ApiKeyInfo>>,
     /// Header name to check (default: "x-api-key")
     header_name: String,
     /// Also check query parameter
@@ -63,23 +77,23 @@ impl ApiKeyAuth {
         self
     }
 
-    /// Register an API key.
+    /// Register an API key (stored as SHA-256 hash).
     pub fn add_key(&self, key: impl Into<String>, name: impl Into<String>) {
-        self.keys.insert(key.into(), ApiKeyInfo {
+        self.keys.insert(hash_key(&key.into()), ApiKeyInfo {
             name: name.into(),
             scopes: Vec::new(),
             active: true,
         });
     }
 
-    /// Register an API key with scopes.
+    /// Register an API key with scopes (stored as SHA-256 hash).
     pub fn add_key_scoped(
         &self,
         key: impl Into<String>,
         name: impl Into<String>,
         scopes: Vec<String>,
     ) {
-        self.keys.insert(key.into(), ApiKeyInfo {
+        self.keys.insert(hash_key(&key.into()), ApiKeyInfo {
             name: name.into(),
             scopes,
             active: true,
@@ -88,19 +102,33 @@ impl ApiKeyAuth {
 
     /// Revoke an API key.
     pub fn revoke_key(&self, key: &str) {
-        if let Some(mut entry) = self.keys.get_mut(key) {
+        let h = hash_key(key);
+        if let Some(mut entry) = self.keys.get_mut(&h) {
             entry.active = false;
         }
     }
 
-    /// Validate a key. Returns the key info if valid.
+    /// Validate a key using constant-time comparison.
+    /// Returns the key info if valid and active.
     pub fn validate(&self, key: &str) -> Option<ApiKeyInfo> {
-        self.keys.get(key).and_then(|info| {
-            if info.active {
-                Some(info.clone())
-            } else {
-                None
+        let candidate = hash_key(key);
+        for entry in self.keys.iter() {
+            if entry.key().ct_eq(&candidate).into() {
+                let info = entry.value();
+                if info.active {
+                    return Some(info.clone());
+                }
+                return None;
             }
+        }
+        None
+    }
+
+    /// Validate a key and check that it has the required scope.
+    /// Empty scopes on the key means unrestricted access.
+    pub fn validate_scoped(&self, key: &str, required_scope: &str) -> Option<ApiKeyInfo> {
+        self.validate(key).filter(|info| {
+            info.scopes.is_empty() || info.scopes.iter().any(|s| s == required_scope)
         })
     }
 

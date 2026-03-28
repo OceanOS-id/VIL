@@ -44,6 +44,7 @@ impl<T: 'static> VSlice<T> {
 
         // Fast path for u8
         if std::any::TypeId::of::<T>() == std::any::TypeId::of::<u8>() {
+             // SAFETY: Vec<T> and Vec<u8> have identical layout. T is constrained to types where all bit patterns are valid (PodLike).
              let bytes = bytes::Bytes::from(unsafe { std::mem::transmute::<Vec<T>, Vec<u8>>(value) });
              return Self { data: bytes, _marker: PhantomData };
         }
@@ -103,6 +104,7 @@ where
 }
 
 
+// SAFETY: VSlice<T> is backed by bytes::Bytes with no absolute pointers. T: Vasi/PodLike ensures inner type is safe.
 unsafe impl<T: Vasi> Vasi for VSlice<T> {}
 unsafe impl<T: PodLike> PodLike for VSlice<T> {}
 
@@ -129,6 +131,7 @@ impl<T> VRef<T> {
     }
 }
 
+// SAFETY: VRef<T> is backed by bytes::Bytes. Same reasoning as VSlice.
 unsafe impl<T: Vasi> Vasi for VRef<T> {}
 unsafe impl<T: PodLike> PodLike for VRef<T> {}
 

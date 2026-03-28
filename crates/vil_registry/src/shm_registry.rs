@@ -130,6 +130,8 @@ pub struct ShmRegistry {
     _local_host_id: vil_types::HostId,
 }
 
+// SAFETY: ShmRegistry uses atomic operations for concurrent access. The layout_ptr points to
+// heap-allocated memory that outlives the registry.
 unsafe impl Send for ShmRegistry {}
 unsafe impl Sync for ShmRegistry {}
 
@@ -160,6 +162,7 @@ impl ShmRegistry {
                     // Clear stale sample table from previous process runs.
                     // Samples are per-session and don't survive process restart.
                     let layout_ptr = heap.get_region_ptr(id).unwrap() as *mut SharedRegistryLayout;
+                    // SAFETY: layout_ptr is valid, allocated during new(). Exclusive access for &mut is ensured by caller.
                     let layout = unsafe { &mut *layout_ptr };
                     for slot in &mut layout.sample_table {
                         slot.active.store(false, Ordering::Release);
@@ -181,6 +184,8 @@ impl ShmRegistry {
                     next_process_id: AtomicU64::new(1),
                     next_port_id: AtomicU64::new(1),
                     next_sample_id: AtomicU64::new(1),
+                    // SAFETY: Layout struct contains only primitive integers and fixed-size arrays —
+                    // zeroed bytes are valid.
                     process_table: unsafe { std::mem::zeroed() },
                     port_table: unsafe { std::mem::zeroed() },
                     sample_table: unsafe { std::mem::zeroed() },
@@ -189,6 +194,7 @@ impl ShmRegistry {
                     global_counters: vil_obs::counters::RuntimeCounters::new(),
                     global_latency: vil_obs::latency::LatencyTracker::new(),
                 };
+                // SAFETY: layout pointer is valid and size matches the struct layout.
                 heap.write_bytes(id, ptr, unsafe {
                     std::slice::from_raw_parts(&layout as *const _ as *const u8, size)
                 });
@@ -206,14 +212,16 @@ impl ShmRegistry {
     fn get_layout<F, R>(&self, f: F) -> R 
     where F: FnOnce(&SharedRegistryLayout) -> R 
     {
+        // SAFETY: layout_ptr is valid, allocated during new(). Exclusive access for &mut is ensured by caller.
         let layout = unsafe { &*self.layout_ptr };
         f(layout)
     }
 
     #[doc(alias = "vil_keep")]
-    fn get_layout_mut<F, R>(&self, f: F) -> R 
-    where F: FnOnce(&mut SharedRegistryLayout) -> R 
+    fn get_layout_mut<F, R>(&self, f: F) -> R
+    where F: FnOnce(&mut SharedRegistryLayout) -> R
     {
+        // SAFETY: layout_ptr is valid, allocated during new(). Exclusive access for &mut is ensured by caller.
         let layout = unsafe { &mut *self.layout_ptr };
         f(layout)
     }
@@ -631,12 +639,14 @@ impl ShmRegistry {
 
     /// Accessor for global performance counters.
     pub fn global_counters(&self) -> &vil_obs::counters::RuntimeCounters {
+        // SAFETY: layout_ptr is valid, allocated during new(). Exclusive access for &mut is ensured by caller.
         let layout = unsafe { &*self.layout_ptr };
         &layout.global_counters
     }
 
     /// Accessor for global latency tracking.
     pub fn global_latency(&self) -> &vil_obs::latency::LatencyTracker {
+        // SAFETY: layout_ptr is valid, allocated during new(). Exclusive access for &mut is ensured by caller.
         let layout = unsafe { &*self.layout_ptr };
         &layout.global_latency
     }

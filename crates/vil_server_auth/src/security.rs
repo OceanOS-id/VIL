@@ -61,6 +61,12 @@ pub async fn security_headers(
         HeaderValue::from_static("camera=(), microphone=(), geolocation=()"),
     );
 
+    // HSTS — instruct browsers to only use HTTPS for 1 year
+    headers.insert(
+        "strict-transport-security",
+        HeaderValue::from_static("max-age=31536000; includeSubDomains"),
+    );
+
     response
 }
 
