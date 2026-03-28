@@ -2,6 +2,7 @@
 name = "vil_sql_agent"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
 description = "VIL SQL Query Generator — text-to-SQL patterns, schema registry, injection prevention (I05)"
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"

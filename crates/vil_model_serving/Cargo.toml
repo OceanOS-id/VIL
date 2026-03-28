@@ -2,6 +2,7 @@
 name = "vil_model_serving"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
 description = "VIL Differential Model Serving (D19) — A/B test model versions with traffic splitting, per-model metrics, auto-promote/rollback"
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"

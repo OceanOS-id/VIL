@@ -2,6 +2,7 @@
 name = "vil_embedder"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
 description = "VIL Embedding Engine — high-performance text embeddings with batching and SIMD similarity"
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"

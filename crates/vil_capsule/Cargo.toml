@@ -3,6 +3,7 @@ name = "vil_capsule"
 description = "VIL WASM Capsule — sandboxed WebAssembly execution with wasmtime pool"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 authors.workspace = true
 repository.workspace = true
 homepage.workspace = true

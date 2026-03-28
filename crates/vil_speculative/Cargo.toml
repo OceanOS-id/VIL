@@ -2,6 +2,7 @@
 name = "vil_speculative"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
 description = "VIL Speculative Decoding Proxy — draft+verify for 2-3x faster LLM generation"
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"
