@@ -37,4 +37,6 @@ lcov.info
 tarpaulin-report.html
 docs-internal/
 docs-marketing/
+docs-dev/
 scripts/
+.memory/
