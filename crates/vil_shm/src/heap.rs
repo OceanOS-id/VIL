@@ -202,16 +202,41 @@ unsafe impl Sync for BumpRegion {}
 
 impl BumpRegion {
     /// Bump-allocate `size` bytes. Returns offset or None if full.
-    /// Lock-free: single atomic fetch_add.
+    /// Lock-free: uses compare-and-swap loop to prevent race conditions
+    /// on wrap-around. Only one thread can win the CAS per allocation.
     pub fn alloc(&self, size: usize) -> Option<Offset> {
         let aligned_size = (size + 7) & !7; // 8-byte align
-        let offset = self.cursor.fetch_add(aligned_size, std::sync::atomic::Ordering::Relaxed);
-        if offset + size > self.capacity {
-            // Wrap around (ring buffer behavior for streaming)
-            self.cursor.store(aligned_size, std::sync::atomic::Ordering::Relaxed);
-            Some(Offset::new(0))
-        } else {
-            Some(Offset::new(offset as u64))
+        loop {
+            let current = self.cursor.load(std::sync::atomic::Ordering::Acquire);
+            // SAFETY: use checked_add to prevent integer overflow
+            let new_offset = match current.checked_add(aligned_size) {
+                Some(n) => n,
+                None => return None, // overflow — region exhausted
+            };
+            if new_offset > self.capacity {
+                // Wrap around: try to reset cursor to beginning.
+                // Only one thread will succeed the CAS; others retry.
+                match self.cursor.compare_exchange_weak(
+                    current,
+                    aligned_size,
+                    std::sync::atomic::Ordering::AcqRel,
+                    std::sync::atomic::Ordering::Acquire,
+                ) {
+                    Ok(_) => return Some(Offset::new(0)),
+                    Err(_) => continue, // another thread won — retry
+                }
+            } else {
+                // Normal allocation: CAS to claim [current..new_offset]
+                match self.cursor.compare_exchange_weak(
+                    current,
+                    new_offset,
+                    std::sync::atomic::Ordering::AcqRel,
+                    std::sync::atomic::Ordering::Acquire,
+                ) {
+                    Ok(_) => return Some(Offset::new(current as u64)),
+                    Err(_) => continue, // contention — retry
+                }
+            }
         }
     }
 

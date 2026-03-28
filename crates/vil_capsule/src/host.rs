@@ -13,6 +13,10 @@ pub struct CapsuleConfig {
     pub module_name: String,
     /// Maximum allowed memory pages (1 page = 64KB)
     pub max_memory_pages: u32,
+    /// Maximum fuel (instruction budget) per call. 0 = unlimited.
+    pub max_fuel: u64,
+    /// Enable epoch-based interruption for CPU time limits.
+    pub epoch_interruption: bool,
 }
 
 impl CapsuleConfig {
@@ -20,12 +24,24 @@ impl CapsuleConfig {
         Self {
             wasm_bytes,
             module_name: module_name.into(),
-            max_memory_pages: 256, // Default: 16MB
+            max_memory_pages: 256,       // Default: 16MB
+            max_fuel: 1_000_000_000,     // Default: 1B instructions (~1 second)
+            epoch_interruption: false,
         }
     }
 
     pub fn max_memory_pages(mut self, pages: u32) -> Self {
         self.max_memory_pages = pages;
+        self
+    }
+
+    pub fn max_fuel(mut self, fuel: u64) -> Self {
+        self.max_fuel = fuel;
+        self
+    }
+
+    pub fn epoch_interruption(mut self, enabled: bool) -> Self {
+        self.epoch_interruption = enabled;
         self
     }
 }
@@ -78,12 +94,31 @@ impl CapsuleHost {
     /// avoiding the expensive compilation step on every invocation.
     #[cfg(feature = "wasm")]
     pub fn precompile(&mut self) -> Result<(), CapsuleError> {
-        let engine = wasmtime::Engine::default();
+        let mut wasm_config = wasmtime::Config::new();
+        // Enable fuel metering for instruction-level sandboxing
+        if self.config.max_fuel > 0 {
+            wasm_config.consume_fuel(true);
+        }
+        if self.config.epoch_interruption {
+            wasm_config.epoch_interruption(true);
+        }
+        let engine = wasmtime::Engine::new(&wasm_config)
+            .map_err(|e| CapsuleError::CompileFailed(e.to_string()))?;
         let module = wasmtime::Module::new(&engine, &self.config.wasm_bytes)
             .map_err(|e| CapsuleError::CompileFailed(e.to_string()))?;
         self.engine = Some(engine);
         self.module = Some(module);
         Ok(())
+    }
+
+    /// Configure a Store with fuel and memory limits from CapsuleConfig.
+    #[cfg(feature = "wasm")]
+    fn configure_store(&self, engine: &wasmtime::Engine) -> wasmtime::Store<()> {
+        let mut store = wasmtime::Store::new(engine, ());
+        if self.config.max_fuel > 0 {
+            let _ = store.set_fuel(self.config.max_fuel);
+        }
+        store
     }
 
     /// Execute a function in the capsule and return its output.
@@ -119,7 +154,7 @@ impl CapsuleHost {
             CapsuleError::ExecutionFailed("not precompiled — call precompile() first".into())
         })?;
 
-        let mut store = wasmtime::Store::new(engine, ());
+        let mut store = self.configure_store(engine);
         let mut linker = wasmtime::Linker::new(engine);
         linker
             .func_wrap("env", "vil_log", |_: i32, _: i32| {})
@@ -311,9 +346,14 @@ impl CapsuleHost {
     /// Used when `precompile()` has not been called.
     #[cfg(feature = "wasm")]
     fn call_wasm_legacy(&self, input: CapsuleInput) -> Result<CapsuleOutput, CapsuleError> {
-        use wasmtime::{Engine, Linker, Module, Store};
+        use wasmtime::{Linker, Module};
 
-        let engine = Engine::default();
+        let mut wasm_config = wasmtime::Config::new();
+        if self.config.max_fuel > 0 {
+            wasm_config.consume_fuel(true);
+        }
+        let engine = wasmtime::Engine::new(&wasm_config)
+            .map_err(|e| CapsuleError::CompileFailed(e.to_string()))?;
         let module = Module::from_binary(&engine, &self.config.wasm_bytes)
             .map_err(|e| CapsuleError::CompileFailed(e.to_string()))?;
 
@@ -327,7 +367,7 @@ impl CapsuleHost {
             })
             .map_err(|e| CapsuleError::InstantiateFailed(e.to_string()))?;
 
-        let mut store = Store::new(&engine, ());
+        let mut store = self.configure_store(&engine);
         let instance = linker
             .instantiate(&mut store, &module)
             .map_err(|e| CapsuleError::InstantiateFailed(e.to_string()))?;

@@ -40,7 +40,14 @@ impl Crawler {
     }
 
     /// Crawl a single URL and return the result.
+    /// Rejects URLs targeting private/internal IP ranges to prevent SSRF.
     pub async fn crawl_url(&self, url: &str) -> Result<CrawlResult, CrawlError> {
+        if is_private_url(url) {
+            return Err(CrawlError::FetchError(
+                "URL targets a private/internal address — blocked for security".into(),
+            ));
+        }
+
         let start = Instant::now();
 
         let resp = self
@@ -161,6 +168,36 @@ impl Crawler {
         let body = resp.text().await.ok()?;
         Some(RobotsChecker::parse(&body))
     }
+}
+
+/// Check if a URL targets a private/internal IP range (SSRF prevention).
+fn is_private_url(url: &str) -> bool {
+    let host = match url.find("://") {
+        Some(idx) => {
+            let rest = &url[idx + 3..];
+            rest.split('/').next().unwrap_or("")
+                .split(':').next().unwrap_or("")
+        }
+        None => return true,
+    };
+    if matches!(host, "localhost" | "0.0.0.0" | "[::]" | "[::1]"
+        | "metadata.google.internal" | "metadata.internal") {
+        return true;
+    }
+    if let Ok(ip) = host.parse::<std::net::IpAddr>() {
+        return match ip {
+            std::net::IpAddr::V4(v4) => {
+                v4.is_loopback() || v4.is_private() || v4.is_link_local()
+                || v4.is_broadcast() || v4.is_unspecified()
+                || v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64
+            }
+            std::net::IpAddr::V6(v6) => v6.is_loopback() || v6.is_unspecified(),
+        };
+    }
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return true;
+    }
+    false
 }
 
 /// Extract the origin (scheme + host) from a URL.
