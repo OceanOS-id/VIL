@@ -1,3 +1,0 @@
-# Clippy lints are configured in clippy.toml
-# Rustflags intentionally left empty to avoid breaking builds
-# Use `cargo clippy` for lint enforcement
