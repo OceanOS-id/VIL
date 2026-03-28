@@ -59,6 +59,7 @@ pub mod multi_protocol;
 // Sprint 16-18: Data, Events, Production
 pub mod cache;
 pub mod http_client;
+pub mod upstream_metrics;
 pub mod scheduler;
 pub mod feature_flags;
 pub mod streaming;

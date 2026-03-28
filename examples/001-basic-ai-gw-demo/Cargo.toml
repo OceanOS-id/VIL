@@ -9,4 +9,5 @@ edition = "2021"
 # ─────────────────────────────────────────────────────────────────────────────
 [dependencies]
 vil_sdk  = { path = "../../crates/vil_sdk" }
+vil_observer = { path = "../../crates/vil_observer" }
 serde_json = "1.0"

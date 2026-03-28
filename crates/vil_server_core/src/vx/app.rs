@@ -217,6 +217,8 @@ pub struct VilApp {
     sidecar_configs: Vec<SidecarConfig>,
     /// Plugin registry (hybrid architecture: native + process + WASM + sidecar)
     plugin_registry: PluginRegistry,
+    /// Enable the embedded observer dashboard at `/_vil/dashboard/`.
+    observer: bool,
 }
 
 impl VilApp {
@@ -232,6 +234,7 @@ impl VilApp {
             heap_size: 64 * 1024 * 1024, // 64MB default
             sidecar_configs: Vec::new(),
             plugin_registry: PluginRegistry::new(),
+            observer: false,
         }
     }
 
@@ -250,6 +253,12 @@ impl VilApp {
     /// Disable CORS.
     pub fn no_cors(mut self) -> Self {
         self.ingress.cors = false;
+        self
+    }
+
+    /// Enable the embedded observer dashboard at `/_vil/dashboard/`.
+    pub fn observer(mut self, enabled: bool) -> Self {
+        self.observer = enabled;
         self
     }
 
@@ -568,6 +577,10 @@ impl VilApp {
 
         if !self.ingress.cors {
             server = server.no_cors();
+        }
+
+        if self.observer {
+            server = server.observer(true);
         }
 
         // Add public services as nested routers (owned — applies Extension layers)

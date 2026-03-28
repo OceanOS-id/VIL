@@ -13,6 +13,102 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
+// ── Global inbound request counters (for observer sidecar) ──────────────
+static INBOUND_REQUESTS: AtomicU64 = AtomicU64::new(0);
+static INBOUND_COMPLETED: AtomicU64 = AtomicU64::new(0);
+static INBOUND_ERRORS: AtomicU64 = AtomicU64::new(0);
+static INBOUND_LATENCY_SUM_US: AtomicU64 = AtomicU64::new(0);
+static INBOUND_MIN_US: AtomicU64 = AtomicU64::new(u64::MAX);
+static INBOUND_MAX_US: AtomicU64 = AtomicU64::new(0);
+
+/// Latency histogram — same bucket boundaries as obs_middleware.
+const LATENCY_BUCKETS: [u64; 40] = [
+    10, 25, 50, 75, 100, 150, 200, 300, 500, 750,
+    1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5_000, 6_000, 7_500, 10_000,
+    12_500, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000, 60_000, 75_000, 100_000,
+    125_000, 150_000, 200_000, 300_000, 500_000, 750_000, 1_000_000,
+    1_500_000, 2_000_000, 5_000_000,
+];
+static INBOUND_BUCKETS: [AtomicU64; 41] = {
+    // const init workaround
+    const ZERO: AtomicU64 = AtomicU64::new(0);
+    [ZERO; 41]
+};
+
+fn record_inbound_latency(duration_us: u64) {
+    INBOUND_COMPLETED.fetch_add(1, Ordering::Relaxed);
+    INBOUND_LATENCY_SUM_US.fetch_add(duration_us, Ordering::Relaxed);
+
+    // min (CAS)
+    let mut cur = INBOUND_MIN_US.load(Ordering::Relaxed);
+    while duration_us < cur {
+        match INBOUND_MIN_US.compare_exchange_weak(cur, duration_us, Ordering::Relaxed, Ordering::Relaxed) {
+            Ok(_) => break, Err(c) => cur = c,
+        }
+    }
+    // max (CAS)
+    let mut cur = INBOUND_MAX_US.load(Ordering::Relaxed);
+    while duration_us > cur {
+        match INBOUND_MAX_US.compare_exchange_weak(cur, duration_us, Ordering::Relaxed, Ordering::Relaxed) {
+            Ok(_) => break, Err(c) => cur = c,
+        }
+    }
+    // bucket
+    let idx = LATENCY_BUCKETS.iter().position(|&b| duration_us <= b).unwrap_or(LATENCY_BUCKETS.len());
+    INBOUND_BUCKETS[idx].fetch_add(1, Ordering::Relaxed);
+}
+
+fn percentile_from_buckets(pct: f64) -> u64 {
+    let counts: Vec<u64> = INBOUND_BUCKETS.iter().map(|b| b.load(Ordering::Relaxed)).collect();
+    let total: u64 = counts.iter().sum();
+    if total == 0 { return 0; }
+    let target = (total as f64 * pct).ceil() as u64;
+    let mut cum = 0u64;
+    for (i, &c) in counts.iter().enumerate() {
+        cum += c;
+        if cum >= target {
+            return if i < LATENCY_BUCKETS.len() { LATENCY_BUCKETS[i] } else { LATENCY_BUCKETS[LATENCY_BUCKETS.len()-1] * 2 };
+        }
+    }
+    LATENCY_BUCKETS[LATENCY_BUCKETS.len()-1]
+}
+
+/// Get inbound HTTP request counters for observer sidecar.
+pub fn inbound_snapshot() -> InboundSnapshot {
+    let reqs = INBOUND_REQUESTS.load(Ordering::Relaxed);
+    let completed = INBOUND_COMPLETED.load(Ordering::Relaxed);
+    let errs = INBOUND_ERRORS.load(Ordering::Relaxed);
+    let sum = INBOUND_LATENCY_SUM_US.load(Ordering::Relaxed);
+    let min = INBOUND_MIN_US.load(Ordering::Relaxed);
+    let max = INBOUND_MAX_US.load(Ordering::Relaxed);
+    InboundSnapshot {
+        requests: reqs,
+        completed,
+        in_flight: reqs.saturating_sub(completed),
+        errors: errs,
+        avg_latency_us: if completed > 0 { sum / completed } else { 0 },
+        min_latency_us: if min == u64::MAX { 0 } else { min },
+        max_latency_us: max,
+        p95_us: percentile_from_buckets(0.95),
+        p99_us: percentile_from_buckets(0.99),
+        p999_us: percentile_from_buckets(0.999),
+    }
+}
+
+#[derive(serde::Serialize)]
+pub struct InboundSnapshot {
+    pub requests: u64,
+    pub completed: u64,
+    pub in_flight: u64,
+    pub errors: u64,
+    pub avg_latency_us: u64,
+    pub min_latency_us: u64,
+    pub max_latency_us: u64,
+    pub p95_us: u64,
+    pub p99_us: u64,
+    pub p999_us: u64,
+}
+
 use axum::{
     body::Body,
     extract::State,
@@ -413,6 +509,9 @@ async fn handle_webhook<T: StreamTokenLike>(
     State(state): State<Arc<AppState<T>>>,
     payload: bytes::Bytes,
 ) -> Response {
+    let _req_start = std::time::Instant::now();
+    INBOUND_REQUESTS.fetch_add(1, Ordering::Relaxed);
+
     let session_id = state.next_session_id.fetch_add(1, Ordering::Relaxed);
 
     // CORE PRIMITIVE: Delegate session setup and pending flush to Registry
@@ -421,12 +520,17 @@ async fn handle_webhook<T: StreamTokenLike>(
     struct SessionGuard<T: StreamTokenLike> {
         id: u64,
         registry: Arc<SessionRegistry<SampleGuard<T>>>,
+        start: std::time::Instant,
     }
     impl<T: StreamTokenLike> Drop for SessionGuard<T> {
-        fn drop(&mut self) { self.registry.cleanup(self.id); }
+        fn drop(&mut self) {
+            self.registry.cleanup(self.id);
+            let dur = self.start.elapsed().as_micros() as u64;
+            record_inbound_latency(dur);
+        }
     }
 
-    let guard = SessionGuard { id: session_id, registry: state.registry.clone() };
+    let guard = SessionGuard { id: session_id, registry: state.registry.clone(), start: _req_start };
 
     let trigger_msg = T::from_ndjson_line_shm(payload, session_id, &state.world);
     if state.world.publish_value(state.process_id, state.out_port, trigger_msg).is_err() {

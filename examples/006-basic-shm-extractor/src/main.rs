@@ -271,6 +271,7 @@ async fn main() {
     // VX: Run as Process-Oriented app
     VilApp::new("shm-extractor-demo")
         .port(8080)
+        .observer(true)
         .service(shm_service)
         .run()
         .await;

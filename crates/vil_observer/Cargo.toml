@@ -1,6 +1,6 @@
 [package]
 name = "vil_observer"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "Apache-2.0"
 description = "VIL Observer Dashboard — embedded web UI for service monitoring"
@@ -15,3 +15,13 @@ tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tracing = "0.1"
+vil_log = { workspace = true }
+vil_connector_macros = { workspace = true }
+
+# Optional: for sidecar .attach() to auto-wire VastarRuntimeWorld
+vil_rt = { workspace = true, optional = true }
+vil_new_http = { workspace = true, optional = true }
+
+[features]
+default = ["runtime"]
+runtime = ["vil_rt", "vil_new_http"]

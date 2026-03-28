@@ -117,6 +117,9 @@ fn main() {
     let world =
         Arc::new(VastarRuntimeWorld::new_shared().expect("Gagal inisialisasi VIL SHM Runtime"));
 
+    // ── Step 1b: Attach Observer Sidecar ──────────────────────────────────────
+    vil_observer::sidecar(3180).attach(&world).spawn();
+
     // ── Step 2: Configure Nodes (Decomposed Style) ──────────────────────────
     let sink_builder = configure_webhook_sink();
     let source_builder = configure_sse_source();

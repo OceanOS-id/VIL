@@ -382,6 +382,10 @@ impl SseCollect {
     /// Collect the entire SSE stream into a single String.
     pub async fn collect_text(self) -> Result<String, SseCollectError> {
         let client = self.client();
+        let upstream_url = self.url.clone();
+        let start = std::time::Instant::now();
+
+        crate::upstream_metrics::record_start(&upstream_url);
 
         let mut req = match self.method {
             HttpMethod::Post => client.post(&self.url),
@@ -396,10 +400,15 @@ impl SseCollect {
             req = req.json(&body);
         }
 
-        let resp = req
-            .send()
-            .await
-            .map_err(|e| SseCollectError::Request(e.to_string()))?;
+        let resp = match req.send().await {
+            Ok(r) => r,
+            Err(e) => {
+                let dur = start.elapsed().as_micros() as u64;
+                crate::upstream_metrics::record_end(&upstream_url, dur, 0, true);
+                return Err(SseCollectError::Request(e.to_string()));
+            }
+        };
+        let status = resp.status().as_u16();
 
         let mut content = String::new();
         let mut stream = resp.bytes_stream();
@@ -415,6 +424,8 @@ impl SseCollect {
                     let evt = evt.trim();
                     if let Some(ref de) = self.done_event {
                         if evt == de {
+                            let dur = start.elapsed().as_micros() as u64;
+                            crate::upstream_metrics::record_end(&upstream_url, dur, status, false);
                             return Ok(content);
                         }
                     }
@@ -428,6 +439,8 @@ impl SseCollect {
 
                     if let Some(ref dm) = self.done_marker {
                         if data == dm {
+                            let dur = start.elapsed().as_micros() as u64;
+                            crate::upstream_metrics::record_end(&upstream_url, dur, status, false);
                             return Ok(content);
                         }
                     }
@@ -435,6 +448,8 @@ impl SseCollect {
                     if let Some((ref field, ref expected)) = self.done_json_field {
                         if let Ok(json) = serde_json::from_str::<serde_json::Value>(data) {
                             if &json[field.as_str()] == expected {
+                                let dur = start.elapsed().as_micros() as u64;
+                                crate::upstream_metrics::record_end(&upstream_url, dur, status, false);
                                 return Ok(content);
                             }
                         }
@@ -469,6 +484,8 @@ impl SseCollect {
             }
         }
 
+        let dur = start.elapsed().as_micros() as u64;
+        crate::upstream_metrics::record_end(&upstream_url, dur, status, false);
         Ok(content)
     }
 }

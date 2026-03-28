@@ -80,6 +80,10 @@ pub struct WorkflowManifest {
     pub triggers: Vec<TriggerManifest>,
     #[serde(default)]
     pub logging: Option<LoggingManifest>,
+
+    // ── Observer dashboard ────────────────────────────────────────────────
+    #[serde(default)]
+    pub observer: bool,
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

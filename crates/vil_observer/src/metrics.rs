@@ -12,6 +12,9 @@ pub struct EndpointMetrics {
     pub total_latency_us: AtomicU64,
     pub min_latency_us: AtomicU64,
     pub max_latency_us: AtomicU64,
+    pub p95_us: AtomicU64,
+    pub p99_us: AtomicU64,
+    pub p999_us: AtomicU64,
 }
 
 impl EndpointMetrics {
@@ -24,6 +27,9 @@ impl EndpointMetrics {
             total_latency_us: AtomicU64::new(0),
             min_latency_us: AtomicU64::new(u64::MAX),
             max_latency_us: AtomicU64::new(0),
+            p95_us: AtomicU64::new(0),
+            p99_us: AtomicU64::new(0),
+            p999_us: AtomicU64::new(0),
         }
     }
 
@@ -67,6 +73,9 @@ impl EndpointMetrics {
             avg_latency_us: if requests > 0 { total / requests } else { 0 },
             min_latency_us: if min == u64::MAX { 0 } else { min },
             max_latency_us: max,
+            p95_us: self.p95_us.load(Ordering::Relaxed),
+            p99_us: self.p99_us.load(Ordering::Relaxed),
+            p999_us: self.p999_us.load(Ordering::Relaxed),
         }
     }
 }
@@ -81,6 +90,9 @@ pub struct EndpointSnapshot {
     pub avg_latency_us: u64,
     pub min_latency_us: u64,
     pub max_latency_us: u64,
+    pub p95_us: u64,
+    pub p99_us: u64,
+    pub p999_us: u64,
 }
 
 /// Global metrics collector for all endpoints.
@@ -101,6 +113,14 @@ impl MetricsCollector {
         Self {
             endpoints: std::sync::Mutex::new(Vec::new()),
             started_at: std::sync::Mutex::new(None),
+        }
+    }
+
+    /// Initialize uptime clock (for sidecar mode where no endpoints are registered).
+    pub fn init_uptime(&self) {
+        let mut started = self.started_at.lock().unwrap();
+        if started.is_none() {
+            *started = Some(std::time::Instant::now());
         }
     }
 
@@ -133,6 +153,83 @@ impl MetricsCollector {
             .iter()
             .map(|m| m.requests.load(Ordering::Relaxed))
             .sum()
+    }
+
+    /// Sync endpoint data from an external metrics source (e.g. HandlerMetricsRegistry).
+    /// Creates the endpoint entry if it doesn't exist, then overwrites counters.
+    pub fn sync_endpoint(&self, method: &str, path: &str, requests: u64, errors: u64, avg_latency_us: u64, p95_us: u64, p99_us: u64, p999_us: u64) {
+        let mut started = self.started_at.lock().unwrap();
+        if started.is_none() {
+            *started = Some(std::time::Instant::now());
+        }
+        drop(started);
+
+        let mut endpoints = self.endpoints.lock().unwrap();
+        let existing = endpoints.iter().find(|m| m.method == method && m.path == path);
+        if let Some(m) = existing {
+            m.requests.store(requests, Ordering::Relaxed);
+            m.errors.store(errors, Ordering::Relaxed);
+            m.total_latency_us.store(avg_latency_us * requests, Ordering::Relaxed);
+            m.p95_us.store(p95_us, Ordering::Relaxed);
+            m.p99_us.store(p99_us, Ordering::Relaxed);
+            m.p999_us.store(p999_us, Ordering::Relaxed);
+            if requests > 0 && avg_latency_us > 0 {
+                let min = m.min_latency_us.load(Ordering::Relaxed);
+                if avg_latency_us < min {
+                    m.min_latency_us.store(avg_latency_us, Ordering::Relaxed);
+                }
+                let max = m.max_latency_us.load(Ordering::Relaxed);
+                if avg_latency_us > max || max == 0 {
+                    m.max_latency_us.store(avg_latency_us, Ordering::Relaxed);
+                }
+            }
+        } else {
+            let m = Arc::new(EndpointMetrics::new(method, path));
+            m.requests.store(requests, Ordering::Relaxed);
+            m.errors.store(errors, Ordering::Relaxed);
+            m.total_latency_us.store(avg_latency_us * requests, Ordering::Relaxed);
+            m.p95_us.store(p95_us, Ordering::Relaxed);
+            m.p99_us.store(p99_us, Ordering::Relaxed);
+            m.p999_us.store(p999_us, Ordering::Relaxed);
+            if requests > 0 && avg_latency_us > 0 {
+                m.min_latency_us.store(avg_latency_us, Ordering::Relaxed);
+                m.max_latency_us.store(avg_latency_us, Ordering::Relaxed);
+            }
+            endpoints.push(m);
+        }
+    }
+
+    /// Sync with actual min/max from HandlerMetricsRegistry.
+    pub fn sync_endpoint_full(&self, method: &str, path: &str, requests: u64, errors: u64, avg_latency_us: u64, min_us: u64, max_us: u64, p95_us: u64, p99_us: u64, p999_us: u64) {
+        let mut started = self.started_at.lock().unwrap();
+        if started.is_none() {
+            *started = Some(std::time::Instant::now());
+        }
+        drop(started);
+
+        let mut endpoints = self.endpoints.lock().unwrap();
+        let existing = endpoints.iter().find(|m| m.method == method && m.path == path);
+        if let Some(m) = existing {
+            m.requests.store(requests, Ordering::Relaxed);
+            m.errors.store(errors, Ordering::Relaxed);
+            m.total_latency_us.store(avg_latency_us * requests, Ordering::Relaxed);
+            m.min_latency_us.store(if min_us == u64::MAX { 0 } else { min_us }, Ordering::Relaxed);
+            m.max_latency_us.store(max_us, Ordering::Relaxed);
+            m.p95_us.store(p95_us, Ordering::Relaxed);
+            m.p99_us.store(p99_us, Ordering::Relaxed);
+            m.p999_us.store(p999_us, Ordering::Relaxed);
+        } else {
+            let m = Arc::new(EndpointMetrics::new(method, path));
+            m.requests.store(requests, Ordering::Relaxed);
+            m.errors.store(errors, Ordering::Relaxed);
+            m.total_latency_us.store(avg_latency_us * requests, Ordering::Relaxed);
+            m.min_latency_us.store(if min_us == u64::MAX { 0 } else { min_us }, Ordering::Relaxed);
+            m.max_latency_us.store(max_us, Ordering::Relaxed);
+            m.p95_us.store(p95_us, Ordering::Relaxed);
+            m.p99_us.store(p99_us, Ordering::Relaxed);
+            m.p999_us.store(p999_us, Ordering::Relaxed);
+            endpoints.push(m);
+        }
     }
 }
 

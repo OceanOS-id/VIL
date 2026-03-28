@@ -9,6 +9,7 @@
 use axum::middleware as axum_mw;
 use axum::Router;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use vil_log::{app_log, system_log, types::SystemPayload};
@@ -40,6 +41,7 @@ pub struct VilServer {
     app_router: Router<AppState>,
     services: Vec<ServiceDef>,
     cors: bool,
+    observer: bool,
 }
 
 impl VilServer {
@@ -52,7 +54,18 @@ impl VilServer {
             app_router: Router::new(),
             services: Vec::new(),
             cors: true,
+            observer: false,
         }
+    }
+
+    /// Enable the embedded observer dashboard at `/_vil/dashboard/`.
+    ///
+    /// When enabled, merges the `vil_observer` router and injects a
+    /// `MetricsCollector` as an Axum Extension so that all observer API
+    /// endpoints can query live metrics.
+    pub fn observer(mut self, enabled: bool) -> Self {
+        self.observer = enabled;
+        self
     }
 
     /// Set the listening port (default: 8080).
@@ -106,7 +119,7 @@ impl VilServer {
     }
 
     /// Build the final Axum application with all middleware and health endpoints.
-    fn build(self) -> (Router, AppState, u16, Option<u16>) {
+    fn build(self) -> (Router, AppState, u16, Option<u16>, Option<(Arc<vil_observer::metrics::MetricsCollector>, vil_observer::api::UpstreamData)>) {
         let state = AppState::new(&self.name);
 
         // Merge service routers
@@ -135,16 +148,37 @@ impl VilServer {
             .merge(crate::plugin_api::plugin_router())
             .merge(crate::plugin_detail_gui::plugin_detail_router());
 
+        // Observer dashboard + API (when enabled)
+        let upstream_data = vil_observer::api::UpstreamData::default();
+        let observer_collector = if self.observer {
+            crate::upstream_metrics::enable();
+            let collector = Arc::new(vil_observer::metrics::MetricsCollector::new());
+            let obs_router: Router<AppState> = vil_observer::observer_router()
+                .layer(axum::Extension(collector.clone()))
+                .layer(axum::Extension(upstream_data.clone()))
+                .with_state(());
+            app = app.merge(obs_router);
+            Some((collector, upstream_data))
+        } else {
+            None
+        };
+
         // Add VIL middleware stack (order: outermost layer runs first)
         app = app
             .layer(axum_mw::from_fn_with_state(
                 state.clone(),
                 crate::trace_middleware::tracing_middleware,
-            ))
-            .layer(axum_mw::from_fn_with_state(
+            ));
+
+        // handler_metrics only when observer is enabled — true zero overhead when OFF
+        if self.observer {
+            app = app.layer(axum_mw::from_fn_with_state(
                 state.clone(),
                 crate::obs_middleware::handler_metrics,
-            ))
+            ));
+        }
+
+        app = app
             .layer(axum_mw::from_fn_with_state(
                 state.clone(),
                 middleware::request_tracker,
@@ -159,7 +193,7 @@ impl VilServer {
         // Attach state
         let app = app.with_state(state.clone());
 
-        (app, state, self.port, self.metrics_port)
+        (app, state, self.port, self.metrics_port, observer_collector)
     }
 
     /// Run the server (blocking).
@@ -180,7 +214,8 @@ impl VilServer {
             .init();
 
         let name = self.name.clone();
-        let (app, state, port, metrics_port) = self.build();
+        let observer_enabled = self.observer;
+        let (app, state, port, metrics_port, observer_collector) = self.build();
 
         let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
@@ -197,6 +232,29 @@ impl VilServer {
         println!("  Readiness:    http://localhost:{}/ready", metrics_port.unwrap_or(port));
         println!("  Metrics:      http://localhost:{}/metrics", metrics_port.unwrap_or(port));
         println!("  Info:         http://localhost:{}/info", metrics_port.unwrap_or(port));
+        if observer_enabled {
+            println!("  Observer:     http://localhost:{}/_vil/dashboard/", port);
+        }
+
+        // Spawn observer bridge: sync HandlerMetricsRegistry + UpstreamRegistry → observer every 2s
+        if let Some((obs, upstream_data)) = observer_collector {
+            let hmr = state.handler_metrics().clone();
+            tokio::spawn(async move {
+                loop {
+                    // Sync handler metrics → observer
+                    hmr.sync_to_observer(&obs);
+
+                    // Sync upstream metrics → observer
+                    let snapshots = crate::upstream_metrics::global().all_snapshots();
+                    let json_snapshots: Vec<serde_json::Value> = snapshots.iter()
+                        .map(|s| serde_json::to_value(s).unwrap_or_default())
+                        .collect();
+                    *upstream_data.0.lock().unwrap() = json_snapshots;
+
+                    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+                }
+            });
+        }
         println!();
         println!("  Press Ctrl+C to stop");
         println!();

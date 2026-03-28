@@ -1283,6 +1283,11 @@ fn generate_main(manifest: &WorkflowManifest) -> String {
         s.push_str("        .failover(failover)\n");
     }
 
+    // Wire observer dashboard if enabled
+    if manifest.observer {
+        s.push_str("        .observer(true)\n");
+    }
+
     s.push_str("        .run()\n");
     s.push_str("        .await;\n");
     s.push_str("}\n");
@@ -2566,4 +2571,54 @@ fn generate_code_activity(node_name: &str, code: &CodeManifest) -> String {
         }
     }
     s
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::manifest::WorkflowManifest;
+
+    #[test]
+    fn codegen_observer_true_emits_builder_call() {
+        let yaml = r#"
+vil_version: "6.0.0"
+name: test-app
+port: 8080
+token: shm
+observer: true
+endpoints:
+  - method: GET
+    path: /hello
+    handler: hello
+"#;
+        let manifest = WorkflowManifest::from_yaml(yaml).unwrap();
+        assert!(manifest.observer, "manifest.observer should be true");
+        let code = generate_rust(&manifest);
+        assert!(
+            code.contains(".observer(true)"),
+            "generated code must contain .observer(true)\n---\n{}",
+            code
+        );
+    }
+
+    #[test]
+    fn codegen_observer_false_omits_builder_call() {
+        let yaml = r#"
+vil_version: "6.0.0"
+name: test-app
+port: 8080
+token: shm
+endpoints:
+  - method: GET
+    path: /hello
+    handler: hello
+"#;
+        let manifest = WorkflowManifest::from_yaml(yaml).unwrap();
+        assert!(!manifest.observer, "manifest.observer should default to false");
+        let code = generate_rust(&manifest);
+        assert!(
+            !code.contains(".observer(true)"),
+            "generated code must NOT contain .observer(true) when disabled"
+        );
+    }
 }

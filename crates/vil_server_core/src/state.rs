@@ -77,6 +77,9 @@ struct AppStateInner {
     /// V6: Plugin manager
     plugin_manager: Arc<PluginManager>,
 
+    /// Upstream metrics (outbound HTTP call tracking)
+    upstream_registry: Arc<crate::upstream_metrics::UpstreamRegistry>,
+
     /// Server name/identifier
     name: String,
 
@@ -121,6 +124,7 @@ impl AppState {
                 profiler,
                 config_reloader,
                 plugin_manager,
+                upstream_registry: Arc::new(crate::upstream_metrics::UpstreamRegistry::new()),
                 name: name.into(),
                 version: env!("CARGO_PKG_VERSION").to_string(),
             }),
@@ -167,6 +171,7 @@ impl AppState {
                 profiler,
                 config_reloader,
                 plugin_manager,
+                upstream_registry: Arc::new(crate::upstream_metrics::UpstreamRegistry::new()),
                 name: name.into(),
                 version: env!("CARGO_PKG_VERSION").to_string(),
             }),
@@ -241,6 +246,11 @@ impl AppState {
     /// Get plugin manager
     pub fn plugin_manager(&self) -> &Arc<PluginManager> {
         &self.inner.plugin_manager
+    }
+
+    /// Get upstream metrics registry
+    pub fn upstream_registry(&self) -> &Arc<crate::upstream_metrics::UpstreamRegistry> {
+        &self.inner.upstream_registry
     }
 
     /// Get server name

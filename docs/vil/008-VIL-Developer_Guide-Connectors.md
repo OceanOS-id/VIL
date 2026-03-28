@@ -1,8 +1,9 @@
 # VIL Developer Guide — Part 8: Connectors & Semantic Types
 
-**Series:** VIL Developer Guide (8 of 8)
+**Series:** VIL Developer Guide (8 of 9)
 **Previous:** [Part 7 — Semantic Log System](./007-VIL-Developer_Guide-Semantic-Log.md)
-**Last updated:** 2026-03-27
+**Next:** [Part 9 — Dual Architecture: VilApp vs ShmToken](./009-VIL-Developer_Guide-Dual-Architecture.md)
+**Last updated:** 2026-03-28
 
 ---
 

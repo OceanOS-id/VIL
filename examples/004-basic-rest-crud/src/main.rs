@@ -264,6 +264,7 @@ async fn main() {
 
     VilApp::new("crud-service")
         .port(8080)
+        .observer(true)
         .service(task_service)
         .run()
         .await;

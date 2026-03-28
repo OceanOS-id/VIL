@@ -162,6 +162,7 @@ async fn main() {
     // auto-provides /health, /ready, /metrics for Kubernetes probes.
     VilApp::new("hello-server")
         .port(8080)
+        .observer(true)
         .service(hello_service)
         .run()
         .await;

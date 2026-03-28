@@ -1,6 +1,6 @@
 # VIL Developer Guide — Part 3: Server Framework
 
-**Series:** VIL Developer Guide (3 of 8)
+**Series:** VIL Developer Guide (3 of 9)
 **Previous:** [Part 2 — Semantic Types & Memory Model](./002-VIL-Developer_Guide-Semantic-Types.md)
 **Next:** [Part 4 — Pipeline & HTTP Streaming](./004-VIL-Developer_Guide-Pipeline-Streaming.md)
 **Last updated:** 2026-03-26
@@ -427,6 +427,87 @@ Key environment variables:
 | `VIL_WORKERS` | num_cpus | Worker thread count |
 | `VIL_REQUEST_TIMEOUT` | 30 | Request timeout in seconds |
 | `VIL_JWT_SECRET` | -- | JWT signing secret |
+
+---
+
+## 7. Observer Dashboard
+
+VIL includes an embedded observer dashboard for real-time service monitoring. Enable with one builder call:
+
+```rust
+VilApp::new("my-app")
+    .port(8080)
+    .observer(true)    // serves /_vil/dashboard/ and /_vil/api/*
+    .service(service)
+    .run()
+    .await;
+```
+
+Or via YAML:
+```yaml
+observer: true
+```
+
+### 7.1 API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/_vil/api/topology` | Service topology with grouped endpoint metrics |
+| `/_vil/api/metrics` | Raw endpoint snapshots, uptime, total requests |
+| `/_vil/api/health` | Observer health check |
+| `/_vil/api/routes` | All registered routes with exec_class classification |
+| `/_vil/api/shm` | SHM pool stats (ring stripes, capacity, drops) |
+| `/_vil/api/logs/recent` | Recent resolved log events |
+| `/_vil/api/system` | OS-level metrics (pid, cpu, memory, fds, threads) |
+| `/_vil/api/config` | Running config from environment |
+
+### 7.2 How It Works
+
+When `observer: true`, `VilServer::build()`:
+1. Creates an `Arc<MetricsCollector>` with atomic per-endpoint counters
+2. Merges `vil_observer::observer_router()` into the Axum app
+3. Injects `MetricsCollector` as an Axum Extension for all observer handlers
+
+The observer auto-emits `system_log!` (event_type 10/11) on topology and system_info queries.
+
+### 7.3 Semantic Events
+
+Observer defines three `#[connector_event]` types in `vil_observer::events`:
+- `ObserverMetricsSnapshot` — periodic metrics capture
+- `ObserverDashboardAccess` — dashboard page access
+- `ObserverErrorAlert` — endpoint error rate threshold crossing
+
+**See:** [`039-basic-observer-dashboard`](../../examples/039-basic-observer-dashboard/src/main.rs)
+
+### 7.4 Sidecar Mode (SDK Pipelines)
+
+For SDK pipeline workloads that don't use VilApp, observer attaches as a sidecar process:
+
+```rust
+vil_observer::sidecar(3180).attach(&world).spawn();
+```
+
+One line — auto-wires runtime metrics, pipeline counters, and HTTP inbound tracking with P95/P99/P99.9.
+
+### 7.5 Performance: Zero Overhead
+
+Benchmark-proven: observer ON vs OFF = **0% throughput impact**.
+
+| Observer | Req/s | Avg |
+|----------|------:|----:|
+| OFF | 4,611 | 38.97ms |
+| ON | 4,646 | 39.19ms |
+
+Lock-free `AtomicU64` counters (~20-50ns per request). When OFF, metrics middleware is **not attached**.
+
+### 7.6 Architecture Comparison
+
+| Use Case | Recommended | Throughput |
+|----------|:-----------:|----------:|
+| Single HTTP proxy | **VilApp** | 6,608 req/s |
+| Multi-stage pipeline | **ShmToken** | 7,255 req/s (+13%) |
+
+ShmToken multi-pipeline: P95=42ms vs VilApp P95=66ms (36% tighter).
 
 ---
 

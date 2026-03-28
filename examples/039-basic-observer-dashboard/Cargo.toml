@@ -1,0 +1,13 @@
+[package]
+name = "example-039-basic-observer-dashboard"
+edition.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_server   = { path = "../../crates/vil_server" }
+vil_observer = { path = "../../crates/vil_observer" }
+vil_log      = { workspace = true }
+tokio        = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }

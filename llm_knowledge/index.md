@@ -30,6 +30,7 @@ Pick the file matching the user's question. Each file is self-contained.
 | [server/macros.md](server/macros.md) | vil_handler, vil_endpoint, vil_app!, vil_service | macro, attribute, annotation, DSL |
 | [server/middleware.md](server/middleware.md) | Built-in middleware stack | health, metrics, CORS, tracing, auth |
 | [server/config.md](server/config.md) | Configuration profiles, YAML, ENV overrides | config, profile, dev, staging, prod, env, yaml |
+| [server/observer.md](server/observer.md) | Observer dashboard: /_vil/dashboard/, 8 API endpoints, MetricsCollector | observer, dashboard, monitoring, metrics, topology, system |
 
 ### Pipeline
 | File | Description | Keywords |

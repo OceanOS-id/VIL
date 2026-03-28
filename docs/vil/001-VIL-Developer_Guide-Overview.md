@@ -1,7 +1,7 @@
 # VIL Developer Guide — Part 1: Overview & Architecture
 
-**Series:** VIL Developer Guide (1 of 8)
-**Crates:** 100+ | **Tests:** 1,425+ | **Protocols:** 7
+**Series:** VIL Developer Guide (1 of 9)
+**Crates:** 130+ | **Tests:** 1,425+ | **Protocols:** 7
 **License:** Apache-2.0
 **GitHub:** https://github.com/OceanOS-id/VIL
 **Last updated:** 2026-03-26
@@ -10,16 +10,19 @@
 
 ## Document Index
 
-This Developer Guide is split into 6 parts for easier navigation:
+This Developer Guide is split into 9 parts for easier navigation:
 
 | # | Document | Scope |
 |---|---------|-------|
 | **001** | **Overview & Architecture** (this document) | Layered architecture, crate taxonomy, quick start, project stats |
 | 002 | [Semantic Types & Memory Model](./002-VIL-Developer_Guide-Semantic-Types.md) | Semantic macros, memory classes, session management, Execution Contract |
-| 003 | [Server Framework](./003-VIL-Developer_Guide-Server-Framework.md) | Server macros, VilApp, ServiceProcess, Tri-Lane mesh, DB integration |
+| 003 | [Server Framework](./003-VIL-Developer_Guide-Server-Framework.md) | Server macros, VilApp, ServiceProcess, Tri-Lane mesh, DB integration, Observer |
 | 004 | [Pipeline & HTTP Streaming](./004-VIL-Developer_Guide-Pipeline-Streaming.md) | `vil_workflow!`, Layer 1/2/3 API, `vil_new_http`, SSE/NDJSON, YAML pipelines |
 | 005 | [Infrastructure & Plugins](./005-VIL-Developer_Guide-Infrastructure.md) | Resilience, observability, WASM FaaS, sidecar SDK, LSP, AI plugin system |
 | 006 | [CLI, Deployment & Best Practices](./006-VIL-Developer_Guide-CLI-Deployment.md) | CLI reference, Transpile SDK, C interop, health endpoints, deployment, best practices |
+| 007 | [Semantic Log System](./007-VIL-Developer_Guide-Semantic-Log.md) | vil_log, SPSC ring buffer, 7 log types, auto-emit, drains |
+| 008 | [Connectors & Semantic Types](./008-VIL-Developer_Guide-Connectors.md) | Phase 6 connectors, `#[connector_fault/event/state]`, triggers |
+| **009** | **[Dual Architecture](./009-VIL-Developer_Guide-Dual-Architecture.md)** | **VilApp vs ShmToken: when to use which, benchmarks, decision matrix, hybrid pattern** |
 
 ---
 

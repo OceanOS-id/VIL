@@ -118,20 +118,38 @@ VilApp::new("my-service")
     .await;
 ```
 
-Dashboard features:
-- **`/_vil/dashboard/`**: Browser-accessible dark-theme SPA with real-time metrics.
-- **Endpoint monitoring**: Per-endpoint latency, throughput, and error rate via atomic counters (lock-free).
-- **Process topology**: Visual map of ServiceProcess instances and Tri-Lane routes.
+Or via YAML manifest:
+```yaml
+observer: true
+```
 
-Observer REST API:
+Dashboard features:
+- **`/_vil/dashboard/`**: Browser-accessible dark-theme SPA with real-time metrics (889-line HTML, sparklines, 4 gauge cards).
+- **Endpoint monitoring**: Per-endpoint latency (min/max/avg), throughput, and error rate via atomic counters (lock-free `MetricsCollector`).
+- **System monitoring**: pid, CPU count, RSS memory, fd count, thread count via `/proc/self`.
+- **SHM stats**: Ring stripe capacity, usage, and drop counts.
+- **Auto-emit**: `system_log!` fires on topology (event_type=10) and system_info (event_type=11) API calls.
+
+Observer REST API (all JSON):
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /vil/observer/metrics` | All endpoint metrics (JSON) |
-| `GET /vil/observer/services` | Running services list |
-| `GET /vil/observer/plugins` | Plugin registry info |
-| `GET /vil/observer/health` | Health check summary |
-| `GET /vil/observer/` | Embedded SPA dashboard |
+| `GET /_vil/api/topology` | Service topology with grouped endpoint metrics |
+| `GET /_vil/api/metrics` | Raw endpoint snapshots, uptime, total requests |
+| `GET /_vil/api/health` | Observer health check |
+| `GET /_vil/api/routes` | Registered routes with exec_class classification |
+| `GET /_vil/api/shm` | SHM pool stats (stripes, capacity, usage, drops) |
+| `GET /_vil/api/logs/recent` | Recent resolved log events |
+| `GET /_vil/api/system` | OS-level metrics (pid, cpu, memory, fds, threads) |
+| `GET /_vil/api/config` | Running config from environment |
+| `GET /_vil/dashboard/` | Embedded SPA dashboard |
+
+Semantic events (`vil_observer::events`):
+- `ObserverMetricsSnapshot` — periodic metrics capture
+- `ObserverDashboardAccess` — dashboard page access
+- `ObserverErrorAlert` — endpoint error rate threshold crossing
+
+**See:** [`039-basic-observer-dashboard`](../../examples/039-basic-observer-dashboard/src/main.rs)
 
 ---
 

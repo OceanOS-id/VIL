@@ -3,6 +3,7 @@ use axum::extract::Extension;
 use crate::metrics::MetricsCollector;
 use serde::Serialize;
 use std::sync::Arc;
+use vil_log::{system_log, types::SystemPayload};
 
 // ── Existing types ─────────────────────────────────────────────────────────
 
@@ -38,6 +39,9 @@ struct RouteInfo {
     exec_class: String,
     request_count: u64,
     avg_latency_us: u64,
+    p95_us: u64,
+    p99_us: u64,
+    p999_us: u64,
     error_rate: f64,
 }
 
@@ -77,6 +81,7 @@ struct SystemInfo {
 async fn topology(
     Extension(collector): Extension<Arc<MetricsCollector>>,
 ) -> Json<TopologyResponse> {
+    let start = std::time::Instant::now();
     let snapshots = collector.all_snapshots();
 
     // Group endpoints by service (derive from path prefix)
@@ -98,6 +103,12 @@ async fn topology(
     let services: Vec<ServiceInfo> = services_map.into_iter()
         .map(|(name, endpoints)| ServiceInfo { name, endpoints })
         .collect();
+
+    let _elapsed = start.elapsed();
+    system_log!(Info, SystemPayload {
+        event_type: 10, // observer metrics snapshot
+        ..Default::default()
+    });
 
     Json(TopologyResponse {
         app_name: "vil-app".into(),
@@ -151,6 +162,9 @@ async fn routes(
             exec_class: exec_class.into(),
             request_count: snap.requests,
             avg_latency_us: snap.avg_latency_us,
+            p95_us: snap.p95_us,
+            p99_us: snap.p99_us,
+            p999_us: snap.p999_us,
             error_rate: snap.error_rate,
         }
     }).collect();
@@ -181,10 +195,11 @@ async fn recent_logs() -> Json<Vec<LogEntry>> {
 async fn system_info(
     Extension(collector): Extension<Arc<MetricsCollector>>,
 ) -> Json<SystemInfo> {
-    Json(SystemInfo {
+    let start = std::time::Instant::now();
+    let info = SystemInfo {
         pid: std::process::id(),
         uptime_secs: collector.uptime_secs(),
-        rust_version: env!("CARGO_PKG_RUST_VERSION", "unknown").into(),
+        rust_version: env!("VIL_RUST_VERSION").into(),
         vil_version: "0.2.0".into(),
         os: std::env::consts::OS.into(),
         arch: std::env::consts::ARCH.into(),
@@ -194,7 +209,13 @@ async fn system_info(
         memory_rss_kb: read_proc_rss().unwrap_or(0),
         fd_count: read_fd_count().unwrap_or(0),
         thread_count: read_thread_count().unwrap_or(0),
-    })
+    };
+    let _elapsed = start.elapsed();
+    system_log!(Info, SystemPayload {
+        event_type: 11, // observer system info query
+        ..Default::default()
+    });
+    Json(info)
 }
 
 /// `/_vil/api/config` — running config from environment (read-only).
@@ -243,6 +264,20 @@ fn chrono_lite_now() -> String {
     format!("{}", secs)
 }
 
+// ── Upstreams ─────────────────────────────────────────────────────────────
+
+/// Shared upstream snapshot data (populated by bridge task in vil_server_core).
+#[derive(Clone, Default)]
+pub struct UpstreamData(pub Arc<std::sync::Mutex<Vec<serde_json::Value>>>);
+
+/// `/_vil/api/upstreams` — outbound HTTP call metrics.
+async fn upstreams(
+    Extension(data): Extension<UpstreamData>,
+) -> Json<Vec<serde_json::Value>> {
+    let snapshots = data.0.lock().unwrap().clone();
+    Json(snapshots)
+}
+
 // ── Router ─────────────────────────────────────────────────────────────────
 
 pub fn api_routes() -> Router {
@@ -251,6 +286,7 @@ pub fn api_routes() -> Router {
         .route("/_vil/api/metrics",      get(metrics))
         .route("/_vil/api/health",       get(health))
         .route("/_vil/api/routes",       get(routes))
+        .route("/_vil/api/upstreams",    get(upstreams))
         .route("/_vil/api/shm",          get(shm_stats))
         .route("/_vil/api/logs/recent",  get(recent_logs))
         .route("/_vil/api/system",       get(system_info))

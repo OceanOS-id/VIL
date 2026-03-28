@@ -269,5 +269,85 @@ For AI inference gateway workloads where the dominant latency is upstream model 
 
 ---
 
-**Version**: 1.0
-**Last Updated**: 2026-03-17
+## Update: Observer Integration & Architecture Comparison (2026-03-28)
+
+### Observer Sidecar
+
+Example 001 now includes an observer sidecar dashboard:
+
+```rust
+vil_observer::sidecar(3180).attach(&world).spawn();
+```
+
+Dashboard at `http://localhost:3180/_vil/dashboard/` provides:
+- Real-time throughput (Req/s live chart, Grafana-style cubic spline)
+- P95 / P99 / P99.9 latency (40-bucket histogram, microsecond precision)
+- Pipeline counters (SHM publishes, receives, drops, crashes)
+- System metrics (PID, CPU, memory RSS, threads, FDs)
+
+### Concurrency Sweep (release, 20s each)
+
+| Concurrency | Req/s | P95 | P99 | P99.9 |
+|:-----------:|------:|----:|----:|------:|
+| 50 | 1,397 | 43ms | 43ms | 46ms |
+| 100 | 2,749 | 43ms | 44ms | 54ms |
+| **200** | **5,460** | **47ms** | **51ms** | **66ms** |
+| **300** | **6,561** | **65ms** | **75ms** | **93ms** |
+| **400** | **6,771** | **80ms** | **91ms** | **122ms** |
+| 500 | 6,480 | 101ms | 114ms | 157ms |
+| 800 | 6,297 | 151ms | 172ms | 231ms |
+
+Sweet spot: **c=300** (6,561 req/s, P99<100ms). Peak throughput at c=400 (6,771) but P99 exceeds 90ms.
+
+### Architecture Comparison: ShmToken (001) vs VilApp (001b)
+
+Same business logic (SSE proxy → upstream simulator). Release build, -c 200 -n 2000:
+
+| Metric | 001 ShmToken | 001b VilApp (Observer ON) |
+|--------|:---:|:---:|
+| **Req/s** | **3,637** | **4,530** |
+| P50 | 48ms | 44ms |
+| P95 | 73ms | 62ms |
+| P99 | 84ms | 73ms |
+| Memory | ~121 MB | ~124 MB |
+
+**For single pipeline**: VilApp is faster (+25% req/s) with similar memory.
+
+### Multi-Pipeline Comparison: ShmToken (101b) vs VilApp (101c)
+
+3-node chain: Webhook → Transform → SSE Upstream. Release build, -c 300 -z 20s:
+
+| Metric | 101b ShmToken | 101c VilApp |
+|--------|:---:|:---:|
+| **Req/s** | **7,255** | **6,399** |
+| P95 | **42ms** | 66ms |
+| P99 | **43ms** | 75ms |
+| P99.9 | 63ms | 94ms |
+| Memory | 121 MB | 124 MB |
+
+**For multi-stage pipelines**: ShmToken wins 13% throughput with 36% tighter P95. The zero-copy SHM transfer between stages eliminates serialization overhead that VilApp incurs at each HTTP handler boundary.
+
+### Observer Overhead
+
+Head-to-head (same binary, OBSERVER=0 vs OBSERVER=1):
+
+| Metric | Observer OFF | Observer ON | Overhead |
+|--------|:---:|:---:|:---:|
+| **Req/s** | **4,611** | **4,646** | **0%** |
+| Avg | 38.97ms | 39.19ms | +0.22ms |
+
+Observer uses lock-free `AtomicU64` counters (~20-50ns per request). When OFF, metrics middleware is **not attached** — true zero overhead.
+
+### Recommendation
+
+| Use Case | Architecture | Why |
+|----------|:----------:|-----|
+| Single HTTP proxy / API gateway | **VilApp** | Simpler, +25% req/s, observer built-in |
+| Multi-stage data pipeline (ETL) | **ShmToken** | +13% req/s, 36% tighter P95 |
+| Mixed API + pipeline | **Both** | VilApp for HTTP boundary, ShmToken for pipeline stages |
+
+---
+
+**Version**: 2.0
+**Last Updated**: 2026-03-28
+

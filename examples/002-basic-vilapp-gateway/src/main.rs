@@ -143,6 +143,7 @@ async fn main() {
     // Port 3081 is the gateway's public-facing port.
     VilApp::new("vil-app-gateway")
         .port(3081)
+        .observer(true)
         .service(svc)
         .run()
         .await;

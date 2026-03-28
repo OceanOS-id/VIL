@@ -55,6 +55,7 @@ struct ProjectConfig {
     port: u16,
     upstream: String,
     token: String,
+    observer: bool,
 }
 
 const TEMPLATES: &[Template] = &[
@@ -216,6 +217,7 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
         port,
         upstream: upstream.clone(),
         token: token.clone(),
+        observer: false,
     };
     if project_dir.exists() {
         println!();
@@ -262,6 +264,7 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
                     port,
                     upstream: upstream.clone(),
                     token: token.clone(),
+                    observer: false,
                 };
                 if config.lang == "rust" {
                     std::fs::create_dir_all(project_dir.join("src/handlers"))
@@ -1227,6 +1230,15 @@ fn find_workspace_root_for_init() -> String {
     ".".to_string()
 }
 
+/// Append optional YAML fields (observer, etc.) after the `token:` line.
+fn yaml_optional_fields(c: &ProjectConfig) -> String {
+    let mut s = String::new();
+    if c.observer {
+        s.push_str("observer: true\n");
+    }
+    s
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // YAML Template Generators
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1244,7 +1256,7 @@ vil_version: "6.0.0"
 name: {name}
 port: {port}
 token: {token}
-
+{optional}
 semantic_types:
   - name: InferenceState
     kind: state
@@ -1313,6 +1325,7 @@ routes:
         name = c.name,
         port = c.port,
         token = c.token,
+        optional = yaml_optional_fields(c),
         upstream = c.upstream
     )
 }
@@ -1326,7 +1339,7 @@ vil_version: "6.0.0"
 name: {name}
 port: {port}
 token: {token}
-
+{optional}
 endpoints:
   - method: GET
     path: /items
@@ -1377,7 +1390,8 @@ errors:
 "#,
         name = c.name,
         port = c.port,
-        token = c.token
+        token = c.token,
+        optional = yaml_optional_fields(c)
     )
 }
 
@@ -1390,7 +1404,7 @@ vil_version: "6.0.0"
 name: {name}
 port: {port}
 token: {token}
-
+{optional}
 semantic_types:
   - name: RoutingDecision
     kind: decision
@@ -1446,6 +1460,7 @@ failover:
         name = c.name,
         port = c.port,
         token = c.token,
+        optional = yaml_optional_fields(c),
         upstream = c.upstream
     )
 }
@@ -1459,7 +1474,7 @@ vil_version: "6.0.0"
 name: {name}
 port: {port}
 token: {token}
-
+{optional}
 nodes:
   gateway:
     type: http-sink
@@ -1512,6 +1527,7 @@ workflows:
         name = c.name,
         port = c.port,
         token = c.token,
+        optional = yaml_optional_fields(c),
         upstream = c.upstream
     )
 }
@@ -1525,7 +1541,7 @@ vil_version: "6.0.0"
 name: {name}
 port: {port}
 token: {token}
-
+{optional}
 endpoints:
   - method: GET
     path: /health
@@ -1546,7 +1562,8 @@ ws_events:
 "#,
         name = c.name,
         port = c.port,
-        token = c.token
+        token = c.token,
+        optional = yaml_optional_fields(c)
     )
 }
 
@@ -1559,7 +1576,7 @@ vil_version: "6.0.0"
 name: {name}
 port: {port}
 token: {token}
-
+{optional}
 vil_wasm:
   - name: functions
     language: rust
@@ -1591,7 +1608,8 @@ endpoints:
 "#,
         name = c.name,
         port = c.port,
-        token = c.token
+        token = c.token,
+        optional = yaml_optional_fields(c)
     )
 }
 
@@ -1604,7 +1622,7 @@ vil_version: "6.0.0"
 name: {name}
 port: {port}
 token: {token}
-
+{optional}
 nodes:
   api:
     type: http-sink
@@ -1645,6 +1663,7 @@ workflows:
         name = c.name,
         port = c.port,
         token = c.token,
+        optional = yaml_optional_fields(c),
         upstream = c.upstream
     )
 }
@@ -1662,7 +1681,7 @@ vil_version: "6.0.0"
 name: {name}
 port: {port}
 token: {token}
-
+{optional}
 # Add your nodes here:
 # nodes:
 #   my_sink:
@@ -1682,7 +1701,8 @@ token: {token}
 "#,
         name = c.name,
         port = c.port,
-        token = c.token
+        token = c.token,
+        optional = yaml_optional_fields(c)
     )
 }
 
@@ -1696,7 +1716,7 @@ fn yaml_data_pipeline(c: &ProjectConfig) -> String {
 vil_version: "6.0.0"
 name: {name}
 port: {port}
-
+{optional}
 connectors:
   storage:
     - name: ingest
@@ -1723,6 +1743,7 @@ logging:
 "#,
         name = c.name,
         port = c.port,
+        optional = yaml_optional_fields(c),
     )
 }
 
@@ -1736,7 +1757,7 @@ fn yaml_event_driven(c: &ProjectConfig) -> String {
 vil_version: "6.0.0"
 name: {name}
 port: {port}
-
+{optional}
 connectors:
   queues:
     - name: input
@@ -1756,6 +1777,7 @@ logging:
 "#,
         name = c.name,
         port = c.port,
+        optional = yaml_optional_fields(c),
     )
 }
 
@@ -1769,7 +1791,7 @@ fn yaml_iot_gateway(c: &ProjectConfig) -> String {
 vil_version: "6.0.0"
 name: {name}
 port: {port}
-
+{optional}
 connectors:
   databases:
     - name: timeseries
@@ -1790,6 +1812,7 @@ logging:
 "#,
         name = c.name,
         port = c.port,
+        optional = yaml_optional_fields(c),
     )
 }
 
@@ -1803,7 +1826,7 @@ fn yaml_scheduled_etl(c: &ProjectConfig) -> String {
 vil_version: "6.0.0"
 name: {name}
 port: {port}
-
+{optional}
 connectors:
   storage:
     - name: source
@@ -1829,6 +1852,7 @@ logging:
 "#,
         name = c.name,
         port = c.port,
+        optional = yaml_optional_fields(c),
     )
 }
 
@@ -2105,4 +2129,72 @@ curl -N -X POST http://localhost:{port}/trigger \
         quick_start = quick_start,
         structure = structure,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_config(observer: bool) -> ProjectConfig {
+        ProjectConfig {
+            name: "test-app".into(),
+            lang: "rust".into(),
+            port: 8080,
+            upstream: "http://localhost:3000".into(),
+            token: "shm".into(),
+            observer,
+        }
+    }
+
+    #[test]
+    fn yaml_optional_fields_observer_true() {
+        let c = test_config(true);
+        let fields = yaml_optional_fields(&c);
+        assert!(fields.contains("observer: true"), "should emit observer: true");
+    }
+
+    #[test]
+    fn yaml_optional_fields_observer_false() {
+        let c = test_config(false);
+        let fields = yaml_optional_fields(&c);
+        assert!(!fields.contains("observer"), "should emit nothing when observer=false");
+    }
+
+    #[test]
+    fn yaml_ai_gateway_includes_observer_placeholder() {
+        let c = test_config(true);
+        let yaml = yaml_ai_gateway(&c);
+        assert!(yaml.contains("observer: true"), "ai-gateway YAML must include observer: true\n{}", yaml);
+    }
+
+    #[test]
+    fn yaml_rest_crud_includes_observer_placeholder() {
+        let c = test_config(true);
+        let yaml = yaml_rest_crud(&c);
+        assert!(yaml.contains("observer: true"), "rest-crud YAML must include observer: true\n{}", yaml);
+    }
+
+    #[test]
+    fn yaml_blank_includes_observer_placeholder() {
+        let c = test_config(true);
+        let yaml = yaml_blank(&c);
+        assert!(yaml.contains("observer: true"), "blank YAML must include observer: true\n{}", yaml);
+    }
+
+    #[test]
+    fn yaml_data_pipeline_includes_observer_placeholder() {
+        let c = test_config(true);
+        let yaml = yaml_data_pipeline(&c);
+        assert!(yaml.contains("observer: true"), "data-pipeline YAML must include observer: true\n{}", yaml);
+    }
+
+    #[test]
+    fn yaml_templates_omit_observer_when_false() {
+        let c = test_config(false);
+        let yaml = yaml_ai_gateway(&c);
+        assert!(!yaml.contains("observer: true"), "should NOT contain observer: true when disabled");
+        // Should not have stray blank line from empty optional
+        let yaml2 = yaml_blank(&c);
+        assert!(!yaml2.contains("observer: true"));
+    }
 }

@@ -82,12 +82,32 @@ async fn main() {
 
     VilApp::new("my-app")
         .port(8080)
+        .observer(true)     // /_vil/dashboard/ + /_vil/api/*
         .service(api)
         .service(internal)
         .mesh(mesh)
         .run()
         .await;
 }
+```
+
+## Observer Dashboard
+
+Enable with `.observer(true)`. Serves:
+- `/_vil/dashboard/` — browser-accessible dark-theme SPA
+- `/_vil/api/topology` — service topology + endpoint metrics
+- `/_vil/api/system` — OS-level metrics (pid, cpu, memory, threads)
+- `/_vil/api/routes` — registered routes with exec_class
+- `/_vil/api/shm` — SHM pool stats
+- `/_vil/api/config` — running config
+
+```rust
+VilApp::new("app")
+    .port(8080)
+    .observer(true)
+    .service(my_service)
+    .run()
+    .await;
 ```
 
 ## Error Handling

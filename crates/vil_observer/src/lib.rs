@@ -10,6 +10,10 @@
 pub mod api;
 pub mod metrics;
 pub mod dashboard;
+pub mod events;
+pub mod sidecar;
+
+pub use sidecar::sidecar;
 
 use axum::Router;
 

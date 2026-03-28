@@ -35,7 +35,7 @@ use vil_server::prelude::*;
 
 | Type | API | Description |
 |------|-----|-------------|
-| `VilServer` | `.new(name)` `.port(u16)` `.metrics_port(u16)` `.route(path, handler)` `.service_def(def)` `.nest(path, router)` `.merge(router)` `.no_cors()` `.run().await` | Server builder |
+| `VilServer` | `.new(name)` `.port(u16)` `.metrics_port(u16)` `.route(path, handler)` `.service_def(def)` `.nest(path, router)` `.merge(router)` `.observer(bool)` `.no_cors()` `.run().await` | Server builder |
 | `AppState` | `.new(name)` `.new_shared(name)` `.runtime()` `.shm()` `.metrics()` `.process_registry()` `.handler_metrics()` `.capsule_registry()` `.span_collector()` `.custom_metrics()` `.error_tracker()` `.profiler()` `.config_reloader()` `.uptime_secs()` `.name()` `.version()` `.sync_metrics()` | Shared state |
 | `ServiceDef` | `.new(name, router)` `.prefix(path)` `.visibility(vis)` `.internal()` | Named service |
 | `Visibility` | `Public` `Internal` | Service visibility |
@@ -439,6 +439,42 @@ Single dependency for community plugin authors: `vil_plugin_sdk = "0.6"`
 | `.emits::<T>()` | Declare emitted AI event type (Data Lane) |
 | `.faults::<T>()` | Declare fault type (Control Lane) |
 | `.manages::<T>()` | Declare managed state type (Data Lane) |
+
+---
+
+## vil_observer
+
+Embedded monitoring dashboard and JSON API. Enable via `.observer(true)`.
+
+### Observer API Endpoints
+
+| Endpoint | Method | Response |
+|----------|--------|----------|
+| `/_vil/api/topology` | GET | `TopologyResponse { app_name, services[], uptime_secs, total_requests }` |
+| `/_vil/api/metrics` | GET | `{ endpoints[], uptime_secs, total_requests }` |
+| `/_vil/api/health` | GET | `{ status, timestamp }` |
+| `/_vil/api/routes` | GET | `RouteInfo[] { method, path, exec_class, request_count, avg_latency_us, error_rate }` |
+| `/_vil/api/shm` | GET | `ShmStats { configured_mb, ring_stripes, ring_total_capacity, ring_total_used, ring_total_drops }` |
+| `/_vil/api/logs/recent` | GET | `LogEntry[]` |
+| `/_vil/api/system` | GET | `SystemInfo { pid, uptime_secs, rust_version, vil_version, os, arch, cpu_count, memory_rss_kb, fd_count, thread_count }` |
+| `/_vil/api/config` | GET | `{ profile, log_level, shm_size_mb }` |
+| `/_vil/dashboard/` | GET | Embedded SPA dashboard (HTML) |
+
+### Core Types
+
+| Type | Description |
+|------|-------------|
+| `MetricsCollector` | Global metrics registry with atomic per-endpoint counters |
+| `EndpointMetrics` | Per-endpoint: requests, errors, total/min/max latency (AtomicU64) |
+| `EndpointSnapshot` | Serializable snapshot: path, method, requests, errors, error_rate, avg/min/max latency |
+
+### Semantic Events (`vil_observer::events`)
+
+| Event | Fields |
+|-------|--------|
+| `ObserverMetricsSnapshot` | `total_requests: u64, endpoint_count: u32, uptime_secs: u64, timestamp_ns: u64` |
+| `ObserverDashboardAccess` | `client_hash: u32, path_hash: u32, timestamp_ns: u64` |
+| `ObserverErrorAlert` | `endpoint_hash: u32, error_rate_bps: u32, request_count: u64, timestamp_ns: u64` |
 
 ---
 

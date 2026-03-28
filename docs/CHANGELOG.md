@@ -23,6 +23,55 @@ Tests: 1,425 passing | Examples: 40 | Semantic types: 164
 
 ---
 
+## [Unreleased] — Observer Dashboard Integration
+
+### Observer Dashboard (2026-03-28)
+
+**Core Integration:**
+- **`VilApp::observer(true)`** — enable embedded dashboard at `/_vil/dashboard/` with one builder call
+- **`VilServer::observer(true)`** — lower-level builder support
+- **Sidecar mode** — `vil_observer::sidecar(port).attach(&world).spawn()` for SDK pipelines (1 line)
+- **10 JSON API endpoints** — topology, metrics, health, routes, upstreams, shm, logs/recent, system, config, pipeline
+- **True zero overhead** — when observer OFF, metrics middleware **not attached** (not disabled, not there)
+
+**Metrics & Histograms:**
+- **40-bucket latency histogram** — 10us→5s, lock-free `AtomicU64`, P95/P99/P99.9 per route
+- **Microsecond precision** — `duration_sum_us` (not ms), CAS atomic min/max tracking
+- **Upstream tracking** — `UpstreamRegistry` with global singleton, auto-records `SseCollect` outbound calls
+- **Inbound tracking** — `HttpSink` global counters for SDK pipeline mode (request count + session latency)
+- **`/_vil/` routes excluded** — dashboard polling doesn't pollute business metrics
+
+**Dashboard UI:**
+- **Throughput** — Total Requests, Req/s (live smoothed + avg), Success Rate, Slowest/In-Flight, Memory RSS
+- **Response Time Distribution** — Fastest, Average, P95, P99, P99.9
+- **Req/s Live Chart** — Canvas, monotone cubic spline (Grafana-style), configurable refresh (1s-10s, default 3s)
+- **Upstreams Table** — per-URL: requests, req/s, in-flight, avg, P95, P99, P99.9, error rate, status
+- **Routes Table** — per-route: method, path, class, requests, req/s, avg, P95, P99, P99.9, error rate
+- **Pipeline Counters** (sidecar) — publishes, receives, drops, crashes, orphans, hops, failovers
+- **System/Config** — PID, CPU, threads, FDs, memory RSS, Rust version, VIL version, health
+
+**SDK & Codegen:**
+- **YAML manifest** — `observer: true` field, all 12 templates
+- **Codegen** — auto-generates `.observer(true)` from YAML
+- **Semantic events** — `ObserverMetricsSnapshot`, `ObserverDashboardAccess`, `ObserverErrorAlert`
+
+**Benchmark Results (release, i9-11900F, 16 threads):**
+- Observer ON vs OFF: **0% overhead** (4,646 vs 4,611 req/s)
+- VilApp single proxy: **6,608 req/s**, 142 MB, P95=61ms
+- ShmToken multi-pipeline: **7,255 req/s** (+13%), P95=42ms (-36% vs VilApp)
+- Concurrency sweet spot: c=300 (6,561 req/s, P99<100ms)
+
+**Examples & Tests:**
+- `039-basic-observer-dashboard` — VilApp observer example
+- `001b-vilapp-ai-gw-benchmark` — observer ON/OFF toggle benchmark
+- `101b-multi-pipeline-benchmark` — ShmToken 3-stage pipeline
+- `101c-vilapp-multi-pipeline-benchmark` — VilApp 3-stage pipeline
+- 2 codegen tests, 7 SDK YAML tests, 2 unit tests, 15-example regression (zero failures)
+
+**Version bumps:** `vil_observer` 0.1.0→0.1.1, `vil_server_core` 0.1.0→0.1.1
+
+---
+
 ## [Unreleased] — Configuration Architecture & Performance Tuning
 
 ### Configuration Architecture (2026-03-26)

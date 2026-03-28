@@ -136,24 +136,25 @@
   /* ── Gauge cards ─────────────────────────────────────────────────────── */
   .gauges {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 14px;
   }
 
   .gauge-card {
     background: var(--surface);
     border: 1px solid var(--border);
+    min-width: 0;
     border-radius: var(--radius);
-    padding: 18px 20px 14px;
+    padding: 10px 14px 8px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     transition: border-color 0.2s;
   }
   .gauge-card:hover { border-color: var(--border-bright); }
 
   .gauge-label {
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.6px;
@@ -162,11 +163,11 @@
 
   .gauge-value {
     font-family: var(--mono);
-    font-size: 30px;
+    font-size: 20px;
     font-weight: 700;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
     line-height: 1.15;
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   .gauge-value.cyan   { color: var(--cyan); }
@@ -175,18 +176,18 @@
   .gauge-value.yellow { color: var(--yellow); }
 
   .gauge-sub {
-    font-size: 11px;
+    font-size: 9px;
     color: var(--text-dim);
-    margin-top: 2px;
+    margin-top: 1px;
   }
 
   .sparkline {
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 10px;
     letter-spacing: 1px;
     color: var(--text-faint);
-    margin-top: 8px;
-    min-height: 18px;
+    margin-top: 4px;
+    min-height: 14px;
     overflow: hidden;
     white-space: nowrap;
   }
@@ -203,11 +204,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px;
+    padding: 8px 14px;
     border-bottom: 1px solid var(--border);
   }
   .panel-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text);
   }
@@ -312,20 +313,20 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    padding: 9px 20px;
+    padding: 5px 14px;
     border-bottom: 1px solid var(--border);
-    gap: 12px;
+    gap: 8px;
   }
   .info-row:last-child { border-bottom: none; }
   .info-key {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
     white-space: nowrap;
     flex-shrink: 0;
   }
   .info-val {
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text);
     text-align: right;
     word-break: break-all;
@@ -394,17 +395,17 @@
 
   /* ── Responsive ──────────────────────────────────────────────────────── */
   @media (max-width: 1000px) {
-    .gauges { grid-template-columns: repeat(2, 1fr); }
+    .gauges { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (max-width: 700px) {
     main { padding: 16px 12px 32px; }
-    .gauges { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .info-grid { grid-template-columns: 1fr; }
     header { padding: 12px 16px; }
     .header-meta { display: none; }
   }
   @media (max-width: 480px) {
-    .gauges { grid-template-columns: 1fr; }
+    .gauges { grid-template-columns: minmax(0, 1fr); }
   }
 </style>
 </head>
@@ -431,26 +432,36 @@
 
 <main>
 
-  <!-- ── Gauge cards ────────────────────────────────────────────────── -->
+  <!-- ── Throughput ─────────────────────────────────────────────────── -->
   <div>
-    <div class="section-label">Overview</div>
+    <div class="section-label">Throughput</div>
     <div class="gauges">
       <div class="gauge-card">
-        <div class="gauge-label">Requests</div>
+        <div class="gauge-label">Total Requests</div>
         <div class="gauge-value cyan" id="g-requests">—</div>
-        <div class="gauge-sub" id="g-rps">— req/s</div>
+        <div class="gauge-sub" id="g-req-sub">since startup</div>
         <div class="sparkline" id="sp-requests"></div>
       </div>
       <div class="gauge-card">
-        <div class="gauge-label">Errors</div>
-        <div class="gauge-value green" id="g-errors">—</div>
-        <div class="gauge-sub" id="g-errrate">—% error rate</div>
+        <div class="gauge-label">Req/s (live)</div>
+        <div class="gauge-value cyan" id="g-rps-live">—</div>
+        <div class="gauge-sub" id="g-rps-live-sub">current rate</div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-label">Req/s (avg)</div>
+        <div class="gauge-value cyan" id="g-rps-avg">—</div>
+        <div class="gauge-sub" id="g-rps-avg-sub">total / uptime</div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-label">Success Rate</div>
+        <div class="gauge-value green" id="g-success">—</div>
+        <div class="gauge-sub" id="g-errrate">0 errors</div>
         <div class="sparkline" id="sp-errors"></div>
       </div>
       <div class="gauge-card">
-        <div class="gauge-label">Avg Latency</div>
-        <div class="gauge-value cyan" id="g-latency">—</div>
-        <div class="gauge-sub" id="g-lat-sub">across all routes</div>
+        <div class="gauge-label">Slowest</div>
+        <div class="gauge-value red" id="g-slowest">—</div>
+        <div class="gauge-sub" id="g-slowest-sub">max latency</div>
         <div class="sparkline" id="sp-latency"></div>
       </div>
       <div class="gauge-card">
@@ -462,32 +473,64 @@
     </div>
   </div>
 
-  <!-- ── Routes table ───────────────────────────────────────────────── -->
-  <div class="panel">
-    <div class="panel-header">
-      <span class="panel-title">Routes</span>
-      <span class="panel-badge" id="routes-count">0 routes</span>
+  <!-- ── Response Time Distribution ────────────────────────────────── -->
+  <div id="response-time-section">
+    <div class="section-label">Response Time Distribution (global)</div>
+    <div class="gauges">
+      <div class="gauge-card">
+        <div class="gauge-label">Fastest</div>
+        <div class="gauge-value green" id="g-fastest">—</div>
+        <div class="gauge-sub">min latency</div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-label">Average</div>
+        <div class="gauge-value cyan" id="g-latency">—</div>
+        <div class="gauge-sub" id="g-lat-sub">across all routes</div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-label">P95</div>
+        <div class="gauge-value yellow" id="g-p95">—</div>
+        <div class="gauge-sub">95th percentile</div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-label">P99</div>
+        <div class="gauge-value yellow" id="g-p99">—</div>
+        <div class="gauge-sub">99th percentile</div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-label">P99.9</div>
+        <div class="gauge-value red" id="g-p999">—</div>
+        <div class="gauge-sub">99.9th percentile</div>
+      </div>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Method</th>
-          <th>Path</th>
-          <th>Class</th>
-          <th style="text-align:right">Requests</th>
-          <th style="text-align:right">Avg Latency</th>
-          <th style="text-align:right">Error Rate</th>
-          <th>Bar</th>
-        </tr>
-      </thead>
-      <tbody id="routes-body">
-        <tr class="empty-row"><td colspan="7">Loading routes…</td></tr>
-      </tbody>
-    </table>
   </div>
 
-  <!-- ── System + Config ────────────────────────────────────────────── -->
-  <div class="info-grid">
+  <!-- ── Chart + System + Config ──────────────────────────────────── -->
+  <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:14px;">
+    <!-- Req/s Live Chart (LEFT) -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Req/s (Live)</span>
+        <span class="panel-badge" id="chart-peak">peak: —</span>
+      </div>
+      <div style="padding:8px 14px 6px;">
+        <canvas id="rps-chart" style="width:100%;height:150px;"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <span style="font-size:10px;color:var(--text-faint);font-family:var(--mono);" id="chart-time-label">— samples</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:10px;color:var(--text-faint);">Refresh:</span>
+            <select id="refresh-rate" style="font-size:10px;font-family:var(--mono);background:var(--surface);color:var(--text-dim);border:1px solid var(--border);border-radius:4px;padding:1px 4px;">
+              <option value="1000">1s</option>
+              <option value="2000">2s</option>
+              <option value="3000" selected>3s</option>
+              <option value="5000">5s</option>
+              <option value="10000">10s</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- System -->
     <div class="panel">
       <div class="panel-header">
@@ -521,6 +564,61 @@
         <div class="info-row"><span class="info-key">Health</span><span class="info-val" style="color:var(--green)" id="c-health">healthy</span></div>
       </div>
     </div>
+  </div>
+
+  <!-- ── Upstreams table ──────────────────────────────────────────── -->
+  <div class="panel" id="upstreams-panel" style="display:none;">
+    <div class="panel-header">
+      <span class="panel-title">Upstreams</span>
+      <span class="panel-badge" id="upstreams-count">0 upstreams</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>URL</th>
+          <th style="text-align:right">Requests</th>
+          <th style="text-align:right">Req/s</th>
+          <th style="text-align:right">In-Flight</th>
+          <th style="text-align:right">Avg</th>
+          <th style="text-align:right">P95</th>
+          <th style="text-align:right">P99</th>
+          <th style="text-align:right">P99.9</th>
+          <th style="text-align:right">Error Rate</th>
+          <th style="text-align:right">Status</th>
+        </tr>
+      </thead>
+      <tbody id="upstreams-body">
+        <tr class="empty-row"><td colspan="10">No upstream calls recorded</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Routes table ───────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Routes</span>
+      <span class="panel-badge" id="routes-count">0 routes</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Path</th>
+          <th>Class</th>
+          <th style="text-align:right">Requests</th>
+          <th style="text-align:right">Req/s</th>
+          <th style="text-align:right">Avg</th>
+          <th style="text-align:right">P95</th>
+          <th style="text-align:right">P99</th>
+          <th style="text-align:right">P99.9</th>
+          <th style="text-align:right">Error Rate</th>
+          <th>Bar</th>
+        </tr>
+      </thead>
+      <tbody id="routes-body">
+        <tr class="empty-row"><td colspan="11">Loading routes…</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- ── Recent Logs ────────────────────────────────────────────────── -->
@@ -647,9 +745,11 @@ function setClass(id, cls) {
 }
 
 // ── State ────────────────────────────────────────────────────────────────
-var prevRequests = 0;
+var prevRequests = -1;
 var prevTime     = Date.now();
 var refreshCount = 0;
+var liveRpsHistory = [];  // rolling window for smoothed live rate
+var LIVE_RPS_WINDOW = 5;  // average over last 5 samples (~10s)
 
 // ── Main refresh ─────────────────────────────────────────────────────────
 async function refresh() {
@@ -662,6 +762,9 @@ async function refresh() {
       fetch('/_vil/api/routes').then(function(r) { return r.json(); }),
       fetch('/_vil/api/shm').then(function(r) { return r.json(); }),
       fetch('/_vil/api/logs/recent').then(function(r) { return r.json(); }),
+      fetch('/_vil/api/upstreams').then(function(r) { return r.json(); }),
+      fetch('/_vil/api/pipeline').then(function(r) { return r.json(); }).catch(function() { return null; }),
+      fetch('/_vil/api/counters').then(function(r) { return r.json(); }).catch(function() { return null; }),
     ]);
 
     var topology = results[0].status === 'fulfilled' ? results[0].value : null;
@@ -671,18 +774,30 @@ async function refresh() {
     var routes   = results[4].status === 'fulfilled' ? results[4].value : null;
     var shm      = results[5].status === 'fulfilled' ? results[5].value : null;
     var logs     = results[6].status === 'fulfilled' ? results[6].value : null;
+    var upstreams = results[7].status === 'fulfilled' ? results[7].value : null;
+    var pipeline  = results[8].status === 'fulfilled' ? results[8].value : null;
+    var counters  = results[9].status === 'fulfilled' ? results[9].value : null;
 
-    var anyOk = topology || metrics || system || config;
+    var anyOk = topology || metrics || system || config || pipeline;
     if (!anyOk) throw new Error('all endpoints failed');
+
+    // Detect sidecar mode: pipeline data exists but no handler metrics
+    var isSidecar = !!pipeline && (!metrics || metrics.total_requests === 0);
 
     refreshCount++;
     setText('refresh-clock', '\u21bb ' + (new Date()).toLocaleTimeString());
 
-    if (topology || metrics) renderOverview(topology, metrics);
-    if (routes)   renderRoutes(routes);
+    if (isSidecar) {
+      renderPipelineOverview(pipeline, counters, system);
+    } else if (topology || metrics) {
+      renderOverview(topology, metrics);
+    }
+    if (routes)   renderRoutes(routes, metrics ? metrics.uptime_secs : 0);
+    if (upstreams) renderUpstreams(upstreams, metrics ? metrics.uptime_secs : 0);
     if (system)   renderSystem(system);
     if (config)   renderConfig(config, shm);
     if (logs)     renderLogs(logs);
+    if (isSidecar && counters) renderPipelineCounters(counters);
 
     // Footer VIL version from system
     if (system && system.vil_version) setText('f-vil-ver', system.vil_version);
@@ -725,16 +840,71 @@ function renderOverview(topology, metrics) {
   var avgLatency = totalReqs > 0 ? sumLatencyUs / totalReqs : 0;
   var errRate    = totalReqs > 0 ? totalErrors / totalReqs : 0;
 
-  // RPS
+  // Live req/s — smoothed rolling window
   var now = Date.now();
-  var dt  = (now - prevTime) / 1000;
-  var rps = dt > 0 && prevRequests >= 0 ? ((totalReqs - prevRequests) / dt).toFixed(1) : '—';
+  var dt = (now - prevTime) / 1000;
+  var instantRps = 0;
+  if (dt > 0.3 && prevRequests >= 0) {
+    instantRps = (totalReqs - prevRequests) / dt;
+    if (instantRps < 0) instantRps = 0;
+  }
+  liveRpsHistory.push(instantRps);
+  if (liveRpsHistory.length > LIVE_RPS_WINDOW) liveRpsHistory.shift();
+  var liveRps = liveRpsHistory.reduce(function(a, b) { return a + b; }, 0) / liveRpsHistory.length;
+
+  // Avg RPS (total / uptime)
+  var avgRps = uptimeSecs > 0 ? (totalReqs / uptimeSecs).toFixed(1) : '0.0';
+
+  // Update prev for next cycle
   prevRequests = totalReqs;
   prevTime     = now;
 
-  // Update gauges
+  // Success rate
+  var successRate = totalReqs > 0 ? ((totalReqs - totalErrors) / totalReqs * 100).toFixed(2) : '100.00';
+
+  // Update throughput gauges
   setText('g-requests', fmtNum(totalReqs));
-  setText('g-rps', (rps !== '—' ? rps + ' req/s' : '— req/s'));
+  setText('g-req-sub', endpointCount + ' route' + (endpointCount !== 1 ? 's' : '') + ' tracked');
+  setText('g-rps-live', liveRps >= 1 ? fmtNum(Math.round(liveRps)) : (liveRps > 0 ? liveRps.toFixed(1) : '0'));
+  setText('g-rps-live-sub', liveRps >= 1 ? 'current throughput' : 'idle');
+
+  // Feed chart
+  addChartPoint(Math.round(liveRps));
+  setText('g-rps-avg', avgRps);
+  setText('g-rps-avg-sub', fmtNum(totalReqs) + ' / ' + fmtUptime(uptimeSecs));
+  setText('g-success', successRate + '%');
+  var successEl = document.getElementById('g-success');
+  if (successEl) successEl.className = 'gauge-value ' + (errRate < 0.01 ? 'green' : (errRate < 0.05 ? 'yellow' : 'red'));
+  setText('g-errrate', fmtNum(totalErrors) + ' error' + (totalErrors !== 1 ? 's' : ''));
+  // Global response time distribution (weighted by request count)
+  var globalP95 = 0, globalP99 = 0, globalP999 = 0;
+  var globalMinUs = Infinity, globalMaxUs = 0, globalAvgSum = 0, globalAvgCount = 0;
+  if (metrics && metrics.endpoints) {
+    metrics.endpoints.forEach(function(e) {
+      var r = e.requests || 0;
+      if (r > 0) {
+        if ((e.p95_us || 0) > globalP95) globalP95 = e.p95_us || 0;
+        if ((e.p99_us || 0) > globalP99) globalP99 = e.p99_us || 0;
+        if ((e.p999_us || 0) > globalP999) globalP999 = e.p999_us || 0;
+        var min = e.min_latency_us || 0;
+        if (min > 0 && min < globalMinUs) globalMinUs = min;
+        var max = e.max_latency_us || 0;
+        if (max > globalMaxUs) globalMaxUs = max;
+        globalAvgSum += (e.avg_latency_us || 0) * r;
+        globalAvgCount += r;
+      }
+    });
+  }
+  var globalAvg = globalAvgCount > 0 ? globalAvgSum / globalAvgCount : 0;
+
+  // Slowest card
+  setText('g-slowest', globalMaxUs > 0 ? fmtLatency(globalMaxUs) : '—');
+  setText('g-slowest-sub', 'max latency across ' + endpointCount + ' route' + (endpointCount !== 1 ? 's' : ''));
+
+  setText('g-fastest', globalMinUs < Infinity ? fmtLatency(globalMinUs) : '—');
+  setText('g-p95', fmtLatency(globalP95));
+  setText('g-p99', fmtLatency(globalP99));
+  setText('g-p999', fmtLatency(globalP999));
 
   setText('g-errors', fmtNum(totalErrors));
   setText('g-errrate', fmtPct(errRate) + ' error rate');
@@ -757,8 +927,140 @@ function renderOverview(topology, metrics) {
   setText('sp-latency',  renderSparkline(sparkHistory.latency));
 }
 
+// ── Pipeline Overview (sidecar mode) ─────────────────────────────────────
+function renderPipelineOverview(pipeline, counters, system) {
+  var publishes = counters ? (counters.publishes || 0) : 0;
+  var receives  = counters ? (counters.receives  || 0) : 0;
+  var drops     = counters ? (counters.drops     || 0) : 0;
+  var crashes   = counters ? (counters.crashes   || 0) : 0;
+  var queueDepth = pipeline ? (pipeline.queue_depth_total || 0) : 0;
+  var inFlight   = pipeline ? (pipeline.in_flight_samples || 0) : 0;
+
+  // Use inbound HTTP requests if available (head-to-head with oha)
+  var inboundReqs = pipeline ? (pipeline.inbound_requests || 0) : 0;
+  var inboundErrs = pipeline ? (pipeline.inbound_errors || 0) : 0;
+  var totalReqs = inboundReqs > 0 ? inboundReqs : publishes;
+  var totalErrors = inboundReqs > 0 ? inboundErrs : drops;
+
+  var uptimeSecs = system ? (system.uptime_secs || 1) : 1;
+  if (uptimeSecs === 0) uptimeSecs = 1;
+
+  // Live rate
+  var now = Date.now();
+  var dt = (now - prevTime) / 1000;
+  var liveRps = dt > 0.5 && prevRequests >= 0 ? ((totalReqs - prevRequests) / dt) : 0;
+  if (liveRps < 0) liveRps = 0;
+  liveRpsHistory.push(liveRps);
+  if (liveRpsHistory.length > LIVE_RPS_WINDOW) liveRpsHistory.shift();
+  var smoothedRps = liveRpsHistory.reduce(function(a, b) { return a + b; }, 0) / liveRpsHistory.length;
+
+  var avgRps = (totalReqs / uptimeSecs).toFixed(1);
+  var errRate = totalReqs > 0 ? totalErrors / totalReqs : 0;
+
+  prevRequests = totalReqs;
+  prevTime = now;
+
+  // Throughput cards
+  var reqLabel = inboundReqs > 0 ? 'HTTP requests' : 'publishes';
+  setText('g-requests', fmtNum(totalReqs));
+  setText('g-req-sub', reqLabel + (inboundReqs > 0 ? '' : ' (' + fmtNum(receives) + ' received)'));
+  setText('g-rps-live', smoothedRps >= 1 ? fmtNum(Math.round(smoothedRps)) : '0');
+  setText('g-rps-live-sub', smoothedRps >= 1 ? 'req/sec' : 'idle');
+  setText('g-rps-avg', avgRps);
+  setText('g-rps-avg-sub', fmtNum(totalReqs) + ' / ' + fmtUptime(uptimeSecs));
+  setText('g-success', totalErrors === 0 ? '100.00%' : ((1 - errRate) * 100).toFixed(2) + '%');
+  var successEl = document.getElementById('g-success');
+  if (successEl) successEl.className = 'gauge-value ' + (totalErrors === 0 ? 'green' : 'red');
+  setText('g-errrate', fmtNum(totalErrors) + ' error' + (totalErrors !== 1 ? 's' : ''));
+
+  // In-flight for throughput section
+  setText('g-slowest', fmtNum(pipeline ? pipeline.inbound_in_flight || 0 : 0));
+  document.getElementById('g-slowest').parentElement.querySelector('.gauge-label').textContent = 'IN-FLIGHT';
+  document.getElementById('g-slowest').parentElement.querySelector('.gauge-sub').textContent = 'active sessions';
+
+  // Header
+  setText('hdr-appname', 'pipeline (sidecar)');
+
+  // Response time — show real inbound latency if available
+  var rtSection = document.getElementById('response-time-section');
+  var hasLatency = pipeline && (pipeline.inbound_p95_us || 0) > 0;
+  if (rtSection) {
+    if (hasLatency) {
+      rtSection.style.display = '';
+      // Restore original labels
+      var labels = {
+        'g-fastest': ['FASTEST', fmtLatency(pipeline.inbound_min_latency_us || 0), 'min session duration'],
+        'g-latency': ['AVERAGE', fmtLatency(pipeline.inbound_avg_latency_us || 0), fmtNum(pipeline.inbound_completed || 0) + ' completed'],
+        'g-p95':     ['P95', fmtLatency(pipeline.inbound_p95_us || 0), '95th percentile'],
+        'g-p99':     ['P99', fmtLatency(pipeline.inbound_p99_us || 0), '99th percentile'],
+        'g-p999':    ['P99.9', fmtLatency(pipeline.inbound_p999_us || 0), '99.9th percentile'],
+      };
+      for (var id in labels) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.parentElement.querySelector('.gauge-label').textContent = labels[id][0];
+          el.textContent = labels[id][1];
+          el.parentElement.querySelector('.gauge-sub').textContent = labels[id][2];
+        }
+      }
+      // Slowest card
+      setText('g-slowest', fmtLatency(pipeline.inbound_max_latency_us || 0));
+      document.getElementById('g-slowest').parentElement.querySelector('.gauge-label').textContent = 'SLOWEST';
+      document.getElementById('g-slowest').parentElement.querySelector('.gauge-sub').textContent = 'max session duration';
+    } else {
+      rtSection.style.display = 'none';
+    }
+  }
+
+  // Feed chart
+  addChartPoint(Math.round(smoothedRps));
+
+  // Sparklines
+  addSparkPoint('requests', publishes);
+  setText('sp-requests', renderSparkline(sparkHistory.requests));
+}
+
+function renderPipelineCounters(counters) {
+  // Replace Routes panel entirely with Pipeline Counters
+  var panel = document.getElementById('routes-body');
+  if (!panel) return;
+  var countEl = document.getElementById('routes-count');
+  if (countEl) countEl.textContent = 'pipeline';
+
+  // Replace thead
+  var thead = panel.parentElement.querySelector('thead');
+  if (thead) {
+    thead.innerHTML = '<tr><th>Counter</th><th style="text-align:right">Value</th><th>Description</th></tr>';
+  }
+
+  // Also rename panel title
+  var titleEl = panel.parentElement.parentElement.querySelector('.panel-title');
+  if (titleEl) titleEl.textContent = 'Pipeline Counters';
+
+  var rows = [
+    ['Publishes', fmtNum(counters.publishes || 0), 'total SHM samples published', counters.drops === 0],
+    ['Receives',  fmtNum(counters.receives || 0),  'total samples consumed', true],
+    ['Drops',     fmtNum(counters.drops || 0),      'samples dropped (queue full)', counters.drops === 0],
+    ['Crashes',   fmtNum(counters.crashes || 0),    'process crashes detected', counters.crashes === 0],
+    ['Orphans',   fmtNum(counters.orphans_reclaimed || 0), 'leaked samples reclaimed', true],
+    ['Hops',      fmtNum(counters.hops || 0),       'inter-process hop events', true],
+    ['Net Pulls', fmtNum(counters.net_pulls || 0),  'cross-host RDMA transfers', true],
+    ['Failovers', fmtNum(counters.failover_events || 0), 'route failover events', counters.failover_events === 0],
+    ['Drained',   fmtNum(counters.descriptors_drained || 0), 'descriptors drained on crash', true],
+  ];
+
+  panel.innerHTML = rows.map(function(r) {
+    var valColor = r[3] ? 'var(--cyan)' : 'var(--red)';
+    return '<tr>'
+      + '<td style="font-weight:600;color:var(--text);padding:5px 18px">' + r[0] + '</td>'
+      + '<td class="num-cell" style="font-family:var(--mono);color:' + valColor + ';padding:5px 18px">' + r[1] + '</td>'
+      + '<td style="color:var(--text-dim);font-size:11px;padding:5px 18px">' + r[2] + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
 // ── Routes table ─────────────────────────────────────────────────────────
-function renderRoutes(routes) {
+function renderRoutes(routes, uptimeSecs) {
   var tbody = document.getElementById('routes-body');
   if (!tbody) return;
 
@@ -766,7 +1068,7 @@ function renderRoutes(routes) {
   if (countEl) countEl.textContent = (routes.length || 0) + ' route' + (routes.length !== 1 ? 's' : '');
 
   if (!routes || routes.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No routes registered yet</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="11">No routes registered yet</td></tr>';
     return;
   }
 
@@ -782,15 +1084,54 @@ function renderRoutes(routes) {
     var barHtml = '<div style="width:' + barWidth + '%;max-width:120px;height:4px;border-radius:2px;background:' + barColor + ';min-width:' + (barWidth > 0 ? 2 : 0) + 'px"></div>';
     var ecls    = execChipClass(r.exec_class || '');
     var errcls  = errClass(r.error_rate || 0);
+    var rps     = uptimeSecs > 0 ? ((r.request_count || 0) / uptimeSecs).toFixed(1) : '—';
 
     return '<tr>'
       + '<td><span class="method-badge method-' + esc(r.method) + '">' + esc(r.method) + '</span></td>'
       + '<td class="path-cell">' + esc(r.path) + '</td>'
       + '<td><span class="exec-chip ' + ecls + '">' + esc(r.exec_class || 'unknown') + '</span></td>'
       + '<td class="num-cell">' + fmtNum(r.request_count) + '</td>'
+      + '<td class="num-cell">' + rps + '</td>'
       + '<td class="num-cell">' + fmtLatency(r.avg_latency_us) + '</td>'
+      + '<td class="num-cell">' + fmtLatency(r.p95_us) + '</td>'
+      + '<td class="num-cell">' + fmtLatency(r.p99_us) + '</td>'
+      + '<td class="num-cell">' + fmtLatency(r.p999_us) + '</td>'
       + '<td class="num-cell ' + errcls + '">' + fmtPct(r.error_rate || 0) + '</td>'
       + '<td class="bar-cell">' + barHtml + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+// ── Upstreams table ──────────────────────────────────────────────────────
+function renderUpstreams(upstreams, uptimeSecs) {
+  var panel = document.getElementById('upstreams-panel');
+  var tbody = document.getElementById('upstreams-body');
+  if (!panel || !tbody) return;
+
+  if (!upstreams || upstreams.length === 0) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = '';
+
+  var countEl = document.getElementById('upstreams-count');
+  if (countEl) countEl.textContent = upstreams.length + ' upstream' + (upstreams.length !== 1 ? 's' : '');
+
+  tbody.innerHTML = upstreams.map(function(u) {
+    var errcls = errClass(u.error_rate || 0);
+    var statusCls = (u.last_status || 0) >= 400 ? 'error-bad' : ((u.last_status || 0) >= 300 ? 'error-warn' : 'error-ok');
+    var rps = uptimeSecs > 0 ? ((u.requests || 0) / uptimeSecs).toFixed(1) : '—';
+    return '<tr>'
+      + '<td class="path-cell">' + esc(u.url || '—') + '</td>'
+      + '<td class="num-cell">' + fmtNum(u.requests) + '</td>'
+      + '<td class="num-cell">' + rps + '</td>'
+      + '<td class="num-cell">' + fmtNum(u.in_flight || 0) + '</td>'
+      + '<td class="num-cell">' + fmtLatency(u.avg_latency_us) + '</td>'
+      + '<td class="num-cell">' + fmtLatency(u.p95_us) + '</td>'
+      + '<td class="num-cell">' + fmtLatency(u.p99_us) + '</td>'
+      + '<td class="num-cell">' + fmtLatency(u.p999_us) + '</td>'
+      + '<td class="num-cell ' + errcls + '">' + fmtPct(u.error_rate || 0) + '</td>'
+      + '<td class="num-cell ' + statusCls + '">' + (u.last_status || '—') + '</td>'
       + '</tr>';
   }).join('');
 }
@@ -879,9 +1220,165 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
+// ── Req/s Chart (Canvas) ─────────────────────────────────────────────────
+var CHART_MAX_POINTS = 120;
+var chartData = [];
+var chartPeak = 0;
+
+function renderChart() {
+  var canvas = document.getElementById('rps-chart');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  var W = rect.width;
+  var H = rect.height;
+
+  ctx.clearRect(0, 0, W, H);
+  if (chartData.length < 2) return;
+
+  var max = Math.max.apply(null, chartData);
+  if (max === 0) max = 1;
+  var padTop = 20, padBot = 4;
+  var drawH = H - padTop - padBot;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (var g = 0; g < 4; g++) {
+    var gy = padTop + (drawH / 4) * g;
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+  }
+
+  // Y-axis labels
+  ctx.font = '9px monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.textAlign = 'left';
+  ctx.fillText(fmtNum(Math.round(max)), 2, padTop - 4);
+  ctx.fillText(fmtNum(Math.round(max / 2)), 2, padTop + drawH / 2 - 4);
+  ctx.fillText('0', 2, H - padBot - 2);
+
+  // Build point arrays
+  var step = W / (CHART_MAX_POINTS - 1);
+  var startX = W - (chartData.length - 1) * step;
+  var pts = [];
+  for (var i = 0; i < chartData.length; i++) {
+    pts.push({
+      x: startX + i * step,
+      y: padTop + drawH - (chartData[i] / max) * drawH
+    });
+  }
+
+  // Monotone cubic spline helper (Grafana-style smooth curve)
+  function splinePath(ctx, pts, close) {
+    if (pts.length < 2) return;
+    ctx.moveTo(pts[0].x, close ? H - padBot : pts[0].y);
+    if (close) ctx.lineTo(pts[0].x, pts[0].y);
+    if (pts.length === 2) {
+      ctx.lineTo(pts[1].x, pts[1].y);
+    } else {
+      // Compute tangents (monotone)
+      var n = pts.length;
+      var dx = [], dy = [], m = [], t = [];
+      for (var i = 0; i < n - 1; i++) {
+        dx[i] = pts[i+1].x - pts[i].x;
+        dy[i] = pts[i+1].y - pts[i].y;
+        m[i] = dy[i] / dx[i];
+      }
+      t[0] = m[0];
+      t[n-1] = m[n-2];
+      for (var i = 1; i < n - 1; i++) {
+        if (m[i-1] * m[i] <= 0) { t[i] = 0; }
+        else { t[i] = (m[i-1] + m[i]) / 2; }
+      }
+      // Clamp tangents for monotonicity
+      for (var i = 0; i < n - 1; i++) {
+        if (Math.abs(m[i]) < 1e-6) { t[i] = 0; t[i+1] = 0; }
+        else {
+          var a = t[i] / m[i], b = t[i+1] / m[i];
+          var s = a * a + b * b;
+          if (s > 9) { var sc = 3 / Math.sqrt(s); t[i] = sc * a * m[i]; t[i+1] = sc * b * m[i]; }
+        }
+      }
+      // Draw bezier segments
+      for (var i = 0; i < n - 1; i++) {
+        var d = dx[i] / 3;
+        ctx.bezierCurveTo(
+          pts[i].x + d, pts[i].y + t[i] * d,
+          pts[i+1].x - d, pts[i+1].y - t[i+1] * d,
+          pts[i+1].x, pts[i+1].y
+        );
+      }
+    }
+    if (close) {
+      ctx.lineTo(pts[pts.length-1].x, H - padBot);
+      ctx.closePath();
+    }
+  }
+
+  // Area fill (smooth)
+  ctx.beginPath();
+  splinePath(ctx, pts, true);
+  var grad = ctx.createLinearGradient(0, padTop, 0, H);
+  grad.addColorStop(0, 'rgba(6,182,212,0.25)');
+  grad.addColorStop(1, 'rgba(6,182,212,0.02)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line (smooth)
+  ctx.beginPath();
+  if (pts.length > 0) {
+    ctx.moveTo(pts[0].x, pts[0].y);
+    splinePath(ctx, pts, false);
+  }
+  ctx.strokeStyle = 'rgba(6,182,212,0.8)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Current value dot
+  if (chartData.length > 0) {
+    var lastX = startX + (chartData.length - 1) * step;
+    var lastY = padTop + drawH - (chartData[chartData.length - 1] / max) * drawH;
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#06b6d4';
+    ctx.fill();
+  }
+}
+
+function addChartPoint(rps) {
+  chartData.push(rps);
+  if (chartData.length > CHART_MAX_POINTS) chartData.shift();
+  if (rps > chartPeak) chartPeak = rps;
+  setText('chart-peak', 'peak: ' + fmtNum(Math.round(chartPeak)));
+  setText('chart-time-label', chartData.length + ' samples');
+  renderChart();
+}
+
+// ── Refresh Rate Control ─────────────────────────────────────────────────
+var refreshInterval = null;
+var REFRESH_MS = 3000;
+
+function startRefreshLoop() {
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(refresh, REFRESH_MS);
+}
+
 // ── Boot ─────────────────────────────────────────────────────────────────
 refresh();
-setInterval(refresh, 2000);
+startRefreshLoop();
+
+// Refresh rate selector
+var rateSelect = document.getElementById('refresh-rate');
+if (rateSelect) {
+  rateSelect.addEventListener('change', function() {
+    REFRESH_MS = parseInt(this.value, 10);
+    startRefreshLoop();
+  });
+}
 
 })();
 </script>
