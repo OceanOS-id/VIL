@@ -356,7 +356,7 @@ impl ExchangeHeap {
         let off = ptr.offset().as_usize();
         let size = std::mem::size_of::<T>();
 
-        if off + size > slot.buffer.len() {
+        if off.checked_add(size).map_or(true, |end| end > slot.buffer.len()) {
             return None;
         }
 
@@ -383,7 +383,7 @@ impl ExchangeHeap {
         let off = ptr.offset().as_usize();
         let size = std::mem::size_of::<T>();
 
-        if off + size > slot.buffer.len() {
+        if off.checked_add(size).map_or(true, |end| end > slot.buffer.len()) {
             return false;
         }
 
@@ -434,7 +434,7 @@ impl ExchangeHeap {
             None => return false,
         };
         let off = offset.as_usize();
-        if off + data.len() > slot.buffer.len() {
+        if off.checked_add(data.len()).map_or(true, |end| end > slot.buffer.len()) {
             return false;
         }
         // SAFETY: bounds checked above; src (caller slice) and dst (buffer) do not overlap.
@@ -449,7 +449,7 @@ impl ExchangeHeap {
         let state = self.inner.lock().expect("exchange heap lock poisoned");
         let slot = state.regions.get(&region_id)?;
         let off = offset.as_usize();
-        if off + len > slot.buffer.len() {
+        if off.checked_add(len).map_or(true, |end| end > slot.buffer.len()) {
             return None;
         }
         let mut dest = vec![0u8; len];

@@ -53,7 +53,7 @@ impl VilServer {
             metrics_port: None,
             app_router: Router::new(),
             services: Vec::new(),
-            cors: true,
+            cors: false,
             observer: false,
         }
     }
@@ -112,9 +112,16 @@ impl VilServer {
         self
     }
 
-    /// Disable CORS (enabled by default with permissive settings).
+    /// Disable CORS headers entirely.
     pub fn no_cors(mut self) -> Self {
         self.cors = false;
+        self
+    }
+
+    /// Enable permissive CORS (any origin, any method, any header).
+    /// Only use for development or public APIs. Disabled by default.
+    pub fn cors_permissive(mut self) -> Self {
+        self.cors = true;
         self
     }
 

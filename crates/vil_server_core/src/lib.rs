@@ -4,88 +4,103 @@
 //
 // Built on Axum + Tower + Tokio, layered with VIL zero-copy SHM,
 // Tri-Lane protocol, and automatic observability.
+//
+// Module Organization:
+//   core/       — server builder, router, state, error, health, shutdown
+//   http/       — extractors, response, request handling, SSE, WebSocket
+//   shm/        — shared memory extractors, response, pool, query cache
+//   mw/         — middleware stack (timeout, compression, CORS, TLS, etc.)
+//   observe/    — observability (OTel, tracing, metrics, diagnostics)
+//   wasm/       — WASM host, dispatch, SHM bridge, capsule handler
+//   plugins/    — plugin system, manifest, manager, API, GUI
+//   production/ — cache, scheduler, feature flags, rolling restart, versioning
+//   vx/         — process-oriented server architecture (Tri-Lane)
 
+// ─── Core ───────────────────────────────────────────────────────────────────
 pub mod server;
 pub mod router;
 pub mod health;
-pub mod sse_collect;
+pub mod state;
+pub mod error;
+pub mod shutdown;
+pub mod model;
+pub mod process;
+
+// ─── HTTP Layer ─────────────────────────────────────────────────────────────
 pub mod extractors;
 pub mod response;
-pub mod shutdown;
-pub mod state;
-pub mod middleware;
-pub mod error;
-pub mod shm_extractor;
-pub mod shm_response;
-pub mod process;
-pub mod obs_middleware;
 pub mod sync_handler;
 pub mod sse;
-pub mod capsule_handler;
+pub mod sse_collect;
 pub mod websocket;
 pub mod grpc;
 pub mod profiler;
+pub mod http_client;
+pub mod content_negotiation;
+pub mod etag;
 
-// Sprint 7-9: Middleware & Security
+// ─── SHM Bridge ─────────────────────────────────────────────────────────────
+pub mod shm_extractor;
+pub mod shm_response;
+pub mod shm_pool;
+pub mod shm_query_cache;
+
+// ─── Middleware ──────────────────────────────────────────────────────────────
+pub mod middleware;
+pub mod middleware_stack;
+pub mod middleware_dsl;
+pub mod obs_middleware;
 pub mod timeout;
 pub mod compression;
 pub mod request_log;
 pub mod idempotency;
 pub mod tls;
-pub mod content_negotiation;
-pub mod etag;
 pub mod retry;
-pub mod middleware_stack;
+pub mod coalescing;
+pub mod multi_protocol;
 
-// Sprint 10-12: Observability & DX
+// ─── Observability ──────────────────────────────────────────────────────────
 pub mod otel;
 pub mod trace_middleware;
 pub mod custom_metrics;
 pub mod diagnostics;
 pub mod error_tracker;
 pub mod alerting;
-pub mod hot_reload;
-pub mod playground;
+pub mod upstream_metrics;
 
-// Sprint 13-15: WASM & Advanced
+// ─── WASM / Capsule ─────────────────────────────────────────────────────────
 pub mod wasm_host;
 pub mod wasm_dispatch;
 pub mod wasm_shm_bridge;
-pub mod coalescing;
-pub mod plugin;
-pub mod middleware_dsl;
-pub mod multi_protocol;
+pub mod capsule_handler;
 
-// Sprint 16-18: Data, Events, Production
+// ─── Plugin System ──────────────────────────────────────────────────────────
+pub mod plugin;
+pub mod plugin_manifest;
+pub mod plugin_manager;
+pub mod plugin_api;
+pub mod plugin_detail_gui;
+pub mod plugin_system;
+
+// ─── Production Infrastructure ──────────────────────────────────────────────
 pub mod cache;
-pub mod http_client;
-pub mod upstream_metrics;
 pub mod scheduler;
 pub mod feature_flags;
 pub mod streaming;
 pub mod api_versioning;
 pub mod rolling_restart;
-pub mod shm_pool;
-
-// V6: Plugin System & Secrets
-pub mod plugin_manifest;
+pub mod hot_reload;
+pub mod playground;
 pub mod secrets;
-pub mod plugin_manager;
-pub mod plugin_api;
-pub mod plugin_detail_gui;
-pub mod shm_query_cache;
-
-// Phase 2: Model & Macro support
-pub mod model;
 pub mod sidecar_admin;
 
-// VX: Process-Oriented Server Architecture (Tri-Lane)
+// ─── VX: Process-Oriented Server Architecture (Tri-Lane) ────────────────────
 pub mod vx;
 
-// Plugin System (Hybrid Architecture)
-pub mod plugin_system;
-
+// =============================================================================
 // Re-exports for convenience
+// =============================================================================
+
 pub use server::VilServer;
 pub use error::VilError;
 pub use model::VilModel;
@@ -111,7 +126,7 @@ pub use vil_rt::VastarRuntimeWorld;
 pub use vil_shm::ExchangeHeap;
 pub use extractors::ShmContext;
 
-// Sprint 2 exports
+// SHM bridge exports
 pub use shm_extractor::ShmSlice;
 pub use shm_response::{ShmResponse, ShmJson};
 pub use process::ProcessRegistry;
