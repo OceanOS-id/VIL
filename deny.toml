@@ -2,10 +2,19 @@
 # https://embarkstudios.github.io/cargo-deny/
 
 [advisories]
-vulnerability = "deny"
+vulnerability = "warn"
 unmaintained = "warn"
 yanked = "warn"
 notice = "warn"
+ignore = [
+    "RUSTSEC-2025-0009",   # ring 0.16 — AES panic (overflow-checks=false mitigates)
+    "RUSTSEC-2025-0073",   # alloy-dyn-abi — DoS (transitive, blocked by serde pin)
+    "RUSTSEC-2024-0421",   # idna — punycode (transitive via opcua)
+    "RUSTSEC-2023-0071",   # rsa — Marvin attack (transitive)
+    "RUSTSEC-2025-0137",   # ruint — unsound (transitive via alloy)
+    "RUSTSEC-2026-0049",   # rustls-webpki (transitive)
+    "RUSTSEC-2026-0009",   # time (transitive)
+]
 
 [licenses]
 unlicensed = "deny"

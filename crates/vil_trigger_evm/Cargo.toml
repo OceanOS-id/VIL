@@ -16,8 +16,8 @@ tracing = { workspace = true }
 vil_connector_macros = { workspace = true }
 vil_trigger_core = { version = "0.1.0", path = "../vil_trigger_core" }
 tokio            = { workspace = true }
-# alloy 0.15 — pubsub for eth_subscribe, provider-ws for WebSocket, rpc-types for Filter/Log.
-# Note: serde is pinned to =1.0.218 in workspace to avoid serde::__private rename in 1.0.219+.
+# alloy 0.15 — cannot upgrade to 1.x until serde pin (=1.0.218) is removed.
+# ring 0.16.20 advisory (RUSTSEC-2025-0009) is acknowledged — only affects overflow-checked builds.
 alloy            = { version = "0.15", features = ["providers", "transports", "rpc-types", "pubsub", "provider-ws"] }
 futures-util     = { workspace = true }
 async-trait      = { workspace = true }
