@@ -7,7 +7,7 @@
 // =============================================================================
 
 /// General application event payload. Fits in 192 bytes.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, zerocopy::FromBytes, zerocopy::Immutable, zerocopy::KnownLayout)]
 #[repr(C)]
 pub struct AppPayload {
     /// FxHash of the event code string (e.g. "user.login").

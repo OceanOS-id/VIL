@@ -18,6 +18,7 @@
 
 use crate::dict;
 use crate::types::*;
+use zerocopy::FromBytes;
 
 /// Resolved log entry — all fields as human-readable strings.
 #[derive(Debug, Clone)]
@@ -127,117 +128,93 @@ pub fn format_human(slot: &LogSlot) -> String {
 // ── Detail resolvers per category (v1) ──
 
 fn resolve_db_detail_v1(payload: &[u8; 192]) -> String {
-    // DbPayload layout: db_hash(4) + table_hash(4) + query_hash(4) + duration_us(4) + rows(4) + op(1) + ...
-    let db_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
-    let table_hash = u32::from_le_bytes([payload[4], payload[5], payload[6], payload[7]]);
-    let query_hash = u32::from_le_bytes([payload[8], payload[9], payload[10], payload[11]]);
-    let duration_us = u32::from_le_bytes([payload[12], payload[13], payload[14], payload[15]]);
-    let rows = u32::from_le_bytes([payload[16], payload[17], payload[18], payload[19]]);
-    let op_type = payload[20];
-    let error_code = payload[23];
+    let Ok((p, _rest)) = crate::types::DbPayload::read_from_prefix(payload.as_slice()) else {
+        return "[malformed DB payload]".to_string();
+    };
+    let db = resolve_hash(p.db_hash);
+    let table = resolve_hash(p.table_hash);
+    let query = resolve_hash(p.query_hash);
+    let op = dict::resolve_db_op(p.op_type);
 
-    let db = resolve_hash(db_hash);
-    let table = resolve_hash(table_hash);
-    let query = resolve_hash(query_hash);
-    let op = dict::resolve_db_op(op_type);
-
-    if error_code != 0 {
+    if p.error_code != 0 {
         format!("{} {}.{} query={} dur={}us rows={} ERROR({})",
-            op, db, table, query, duration_us, rows, error_code)
+            op, db, table, query, p.duration_us, p.rows_affected, p.error_code)
     } else {
         format!("{} {}.{} query={} dur={}us rows={}",
-            op, db, table, query, duration_us, rows)
+            op, db, table, query, p.duration_us, p.rows_affected)
     }
 }
 
 fn resolve_mq_detail_v1(payload: &[u8; 192]) -> String {
-    let broker_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
-    let topic_hash = u32::from_le_bytes([payload[4], payload[5], payload[6], payload[7]]);
-    let _group_hash = u32::from_le_bytes([payload[8], payload[9], payload[10], payload[11]]);
-    let offset = u64::from_le_bytes([payload[12], payload[13], payload[14], payload[15],
-                                      payload[16], payload[17], payload[18], payload[19]]);
-    let msg_bytes = u32::from_le_bytes([payload[20], payload[21], payload[22], payload[23]]);
-    let latency_us = u32::from_le_bytes([payload[24], payload[25], payload[26], payload[27]]);
-    let op_type = payload[28];
-
-    let broker = resolve_hash(broker_hash);
-    let topic = resolve_hash(topic_hash);
-    let op = dict::resolve_mq_op(op_type);
+    let Ok((p, _rest)) = crate::types::MqPayload::read_from_prefix(payload.as_slice()) else {
+        return "[malformed MQ payload]".to_string();
+    };
+    let broker = resolve_hash(p.broker_hash);
+    let topic = resolve_hash(p.topic_hash);
+    let op = dict::resolve_mq_op(p.op_type);
 
     format!("{} {}/{} offset={} size={}B dur={}us",
-        op, broker, topic, offset, msg_bytes, latency_us)
+        op, broker, topic, p.offset, p.message_bytes, p.e2e_latency_us)
 }
 
 fn resolve_access_detail_v1(payload: &[u8; 192]) -> String {
-    let method = payload[0];
-    let status = u16::from_le_bytes([payload[1], payload[2]]);
-    let _protocol = payload[3];
-    let duration_us = u32::from_le_bytes([payload[4], payload[5], payload[6], payload[7]]);
-    let req_bytes = u32::from_le_bytes([payload[8], payload[9], payload[10], payload[11]]);
-    let resp_bytes = u32::from_le_bytes([payload[12], payload[13], payload[14], payload[15]]);
-
-    let method_str = match method {
+    let Ok((p, _rest)) = crate::types::AccessPayload::read_from_prefix(payload.as_slice()) else {
+        return "[malformed Access payload]".to_string();
+    };
+    let method_str = match p.method {
         0 => "GET", 1 => "POST", 2 => "PUT", 3 => "DELETE",
         4 => "PATCH", 5 => "HEAD", 6 => "OPTIONS", _ => "?",
     };
 
     format!("{} {} dur={}us req={}B resp={}B",
-        method_str, status, duration_us, req_bytes, resp_bytes)
+        method_str, p.status_code, p.duration_us, p.request_bytes, p.response_bytes)
 }
 
 fn resolve_ai_detail_v1(payload: &[u8; 192]) -> String {
-    let model_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
-    let provider_hash = u32::from_le_bytes([payload[4], payload[5], payload[6], payload[7]]);
-    let input_tokens = u32::from_le_bytes([payload[8], payload[9], payload[10], payload[11]]);
-    let output_tokens = u32::from_le_bytes([payload[12], payload[13], payload[14], payload[15]]);
-    let latency_us = u32::from_le_bytes([payload[16], payload[17], payload[18], payload[19]]);
-    let cost = u32::from_le_bytes([payload[20], payload[21], payload[22], payload[23]]);
-
-    let model = resolve_hash(model_hash);
-    let provider = resolve_hash(provider_hash);
+    let Ok((p, _rest)) = crate::types::AiPayload::read_from_prefix(payload.as_slice()) else {
+        return "[malformed AI payload]".to_string();
+    };
+    let model = resolve_hash(p.model_hash);
+    let provider = resolve_hash(p.provider_hash);
 
     format!("{}/{} in={} out={} dur={}ms cost=${:.4}",
-        provider, model, input_tokens, output_tokens,
-        latency_us / 1000, cost as f64 / 1_000_000.0)
+        provider, model, p.input_tokens, p.output_tokens,
+        p.latency_us / 1000, p.cost_micro_usd as f64 / 1_000_000.0)
 }
 
 fn resolve_system_detail_v1(payload: &[u8; 192]) -> String {
-    let cpu_x100 = u16::from_le_bytes([payload[0], payload[1]]);
-    let mem_kb = u32::from_le_bytes([payload[2], payload[3], payload[4], payload[5]]);
-    let event_type = payload[22];
-
-    let event = dict::resolve_system_event(event_type);
+    let Ok((p, _rest)) = crate::types::SystemPayload::read_from_prefix(payload.as_slice()) else {
+        return "[malformed System payload]".to_string();
+    };
+    let event = dict::resolve_system_event(p.event_type);
     format!("{} cpu={:.1}% mem={}MB",
-        event, cpu_x100 as f64 / 100.0, mem_kb / 1024)
+        event, p.cpu_pct_x100 as f64 / 100.0, p.mem_kb / 1024)
 }
 
 fn resolve_security_detail_v1(payload: &[u8; 192]) -> String {
-    let actor_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
-    let resource_hash = u32::from_le_bytes([payload[4], payload[5], payload[6], payload[7]]);
-    let action_hash = u32::from_le_bytes([payload[8], payload[9], payload[10], payload[11]]);
-    let event_type = payload[16];
-    let outcome = payload[17];
-    let risk = payload[18];
-
-    let actor = resolve_hash(actor_hash);
-    let resource = resolve_hash(resource_hash);
-    let action = resolve_hash(action_hash);
-    let event = dict::resolve_security_event(event_type);
-    let result = dict::resolve_security_outcome(outcome);
+    let Ok((p, _rest)) = crate::types::SecurityPayload::read_from_prefix(payload.as_slice()) else {
+        return "[malformed Security payload]".to_string();
+    };
+    let actor = resolve_hash(p.actor_hash);
+    let resource = resolve_hash(p.resource_hash);
+    let action = resolve_hash(p.action_hash);
+    let event = dict::resolve_security_event(p.event_type);
+    let result = dict::resolve_security_outcome(p.outcome);
 
     format!("{} {} actor={} resource={} action={} risk={}",
-        event, result, actor, resource, action, risk)
+        event, result, actor, resource, action, p.risk_score)
 }
 
 fn resolve_app_detail_v1(payload: &[u8; 192]) -> String {
-    let code_hash = u32::from_le_bytes([payload[0], payload[1], payload[2], payload[3]]);
-    let kv_len = u16::from_le_bytes([payload[4], payload[5]]) as usize;
-
-    let code = resolve_hash(code_hash);
+    let Ok((p, _rest)) = crate::types::AppPayload::read_from_prefix(payload.as_slice()) else {
+        return "[malformed App payload]".to_string();
+    };
+    let code = resolve_hash(p.code_hash);
+    let kv_len = p.kv_len as usize;
 
     if kv_len > 0 && kv_len <= 184 {
-        // Try decode MsgPack KV from payload[8..8+kv_len]
-        if let Ok(val) = rmp_serde::from_slice::<serde_json::Value>(&payload[8..8 + kv_len]) {
+        // Try decode MsgPack KV from kv_bytes
+        if let Ok(val) = rmp_serde::from_slice::<serde_json::Value>(&p.kv_bytes[..kv_len]) {
             if let Ok(json) = serde_json::to_string(&val) {
                 return format!("{} {}", code, json);
             }

@@ -6,7 +6,7 @@
 // =============================================================================
 
 /// Message queue event payload. Fits in 192 bytes.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, zerocopy::FromBytes, zerocopy::Immutable, zerocopy::KnownLayout)]
 #[repr(C)]
 pub struct MqPayload {
     /// FxHash of the broker name (e.g. "kafka", "nats").

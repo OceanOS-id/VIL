@@ -6,7 +6,7 @@
 // =============================================================================
 
 /// Database operation event payload. Fits in 192 bytes.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, zerocopy::FromBytes, zerocopy::Immutable, zerocopy::KnownLayout)]
 #[repr(C)]
 pub struct DbPayload {
     /// FxHash of the database name.

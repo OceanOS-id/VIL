@@ -7,7 +7,7 @@
 // =============================================================================
 
 /// HTTP/RPC access log payload. Fits in 192 bytes.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, zerocopy::FromBytes, zerocopy::Immutable, zerocopy::KnownLayout)]
 #[repr(C)]
 pub struct AccessPayload {
     /// HTTP method code: 0=GET 1=POST 2=PUT 3=DELETE 4=PATCH 5=HEAD 6=OPTIONS

@@ -65,6 +65,26 @@ async fn main() {
 }
 ```
 
+## Development vs Production
+
+**During development**, don't call `init_logging()`. All macros fall back to standard `tracing` — familiar output, zero setup:
+
+```rust
+tracing_subscriber::fmt().pretty().init();
+app_log!(Info, "order.created", { order_id: 123u64 });
+// → standard tracing pretty output
+```
+
+**In production**, call `init_logging()` for 4-6x faster logging:
+
+```rust
+init_logging(LogConfig::default(), StdoutDrain::resolved());
+app_log!(Info, "order.created", { order_id: 123u64 });
+// → 2026-03-28 INFO [App] svc=my-service | order.created {"order_id":123}
+```
+
+**Important:** vil_log stores binary payloads. Back up `.vil_log_dict.json` and `crates/vil_log/src/types/*.rs` with each release to ensure old logs remain readable. See [USAGE.md](USAGE.md) for details.
+
 ## 7 Semantic Log Types
 
 | Macro | Category | Layout | Use Case |

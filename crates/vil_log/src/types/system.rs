@@ -6,7 +6,7 @@
 // =============================================================================
 
 /// System resource event payload. Fits in 192 bytes.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, zerocopy::FromBytes, zerocopy::Immutable, zerocopy::KnownLayout)]
 #[repr(C)]
 pub struct SystemPayload {
     /// CPU usage percentage * 100 (e.g. 7550 = 75.50%).
