@@ -77,8 +77,7 @@ impl ExtractState {
             self.complete_extractions += 1;
         }
         let n = self.total_extractions as f64;
-        self.avg_confidence =
-            self.avg_confidence * (n - 1.0) / n + event.confidence as f64 / n;
+        self.avg_confidence = self.avg_confidence * (n - 1.0) / n + event.confidence as f64 / n;
     }
 
     pub fn record_error(&mut self) {

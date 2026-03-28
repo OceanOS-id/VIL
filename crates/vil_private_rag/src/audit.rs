@@ -27,11 +27,18 @@ pub struct PrivacyAuditLog {
 
 impl PrivacyAuditLog {
     pub fn new() -> Self {
-        Self { entries: Vec::new() }
+        Self {
+            entries: Vec::new(),
+        }
     }
 
     /// Log a redaction event.
-    pub fn log_redaction(&mut self, pattern_name: &str, items_affected: usize, document_id: Option<&str>) {
+    pub fn log_redaction(
+        &mut self,
+        pattern_name: &str,
+        items_affected: usize,
+        document_id: Option<&str>,
+    ) {
         self.entries.push(AuditEntry {
             timestamp_ms: current_time_ms(),
             operation: AuditOperation::Redaction,

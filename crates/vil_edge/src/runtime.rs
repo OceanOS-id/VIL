@@ -26,7 +26,9 @@ impl EdgeRuntime {
 
         // Account for runtime overhead: model needs ~1.5x its size in memory.
         let estimated_memory = (model.size_mb as f64 * memory_multiplier(model)) as u64;
-        let currently_used: u64 = self.models.iter()
+        let currently_used: u64 = self
+            .models
+            .iter()
             .map(|m| (m.size_mb as f64 * memory_multiplier(m)) as u64)
             .sum();
 
@@ -95,7 +97,11 @@ pub enum EdgeError {
 impl std::fmt::Display for EdgeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InsufficientMemory { model_name, model_size_mb, available_mb } => {
+            Self::InsufficientMemory {
+                model_name,
+                model_size_mb,
+                available_mb,
+            } => {
                 write!(f, "insufficient memory for model '{model_name}': needs {model_size_mb}MB, available {available_mb}MB")
             }
         }

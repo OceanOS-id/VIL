@@ -49,7 +49,10 @@ impl SseEvent {
     /// Create a named SSE event with JSON data.
     ///
     /// Uses vil_json (SIMD-accelerated when the "simd" feature is enabled).
-    pub fn named_json<T: serde::Serialize>(event_type: &str, data: &T) -> Result<Event, Infallible> {
+    pub fn named_json<T: serde::Serialize>(
+        event_type: &str,
+        data: &T,
+    ) -> Result<Event, Infallible> {
         let json = vil_json::to_string(data).unwrap_or_default();
         Ok(Event::default().event(event_type).data(json))
     }
@@ -70,8 +73,6 @@ pub fn sse_stream_with_keepalive<S>(stream: S, interval_secs: u64) -> Sse<S>
 where
     S: Stream<Item = Result<Event, Infallible>> + Send + 'static,
 {
-    Sse::new(stream).keep_alive(
-        KeepAlive::new()
-            .interval(std::time::Duration::from_secs(interval_secs))
-    )
+    Sse::new(stream)
+        .keep_alive(KeepAlive::new().interval(std::time::Duration::from_secs(interval_secs)))
 }

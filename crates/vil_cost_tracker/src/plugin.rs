@@ -1,11 +1,11 @@
 //! VilPlugin implementation for cost tracking integration.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::handlers;
-use crate::tracker::CostTracker;
 use crate::semantic::{CostEvent, CostFault, CostState};
+use crate::tracker::CostTracker;
 
 /// Cost tracker plugin — per-request cost tracking across providers.
 pub struct CostTrackerPlugin {
@@ -53,7 +53,7 @@ impl VilPlugin for CostTrackerPlugin {
         vec![PluginCapability::Service {
             name: "cost".into(),
             endpoints: vec![
-                EndpointSpec::get("/api/cost/stats").with_description("Cost tracking stats"),
+                EndpointSpec::get("/api/cost/stats").with_description("Cost tracking stats")
             ],
         }]
     }

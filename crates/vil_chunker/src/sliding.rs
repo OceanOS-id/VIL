@@ -1,4 +1,4 @@
-use crate::strategy::{ChunkMeta, ChunkStrategy, ChunkType, TextChunk, estimate_tokens};
+use crate::strategy::{estimate_tokens, ChunkMeta, ChunkStrategy, ChunkType, TextChunk};
 
 /// Sliding-window chunker with configurable window size and overlap.
 ///
@@ -15,7 +15,10 @@ impl SlidingWindowChunker {
     pub fn new(window_size: usize, overlap: usize) -> Self {
         assert!(window_size > 0, "window_size must be > 0");
         assert!(overlap < window_size, "overlap must be < window_size");
-        Self { window_size, overlap }
+        Self {
+            window_size,
+            overlap,
+        }
     }
 }
 

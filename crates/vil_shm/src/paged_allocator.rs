@@ -12,8 +12,8 @@
 // [x] Unit tests
 // =============================================================================
 
-use std::sync::atomic::{AtomicUsize, Ordering};
 use crate::offset::Offset;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub const PAGE_SIZE: usize = 1024 * 1024; // 1MB default page size
 
@@ -108,7 +108,7 @@ impl PagedAllocator {
                 idx,
                 next_idx,
                 Ordering::SeqCst,
-                Ordering::Relaxed
+                Ordering::Relaxed,
             ) {
                 Ok(_) => {
                     idx = next_idx;
@@ -157,7 +157,8 @@ impl PagedAllocator {
                 self.pages[i].cursor.store(0, Ordering::Release);
             }
         }
-        self.active_page_idx.store(page_idx.min(self.pages.len() - 1), Ordering::Release);
+        self.active_page_idx
+            .store(page_idx.min(self.pages.len() - 1), Ordering::Release);
     }
 }
 

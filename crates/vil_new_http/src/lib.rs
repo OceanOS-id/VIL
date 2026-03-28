@@ -6,11 +6,13 @@
 // mapper over vil_rt::session (core reactive primitives).
 // =============================================================================
 
-pub mod source;
 pub mod sink;
+pub mod source;
 
 pub mod format;
 pub use format::HttpFormat;
 
-pub use source::{HttpSource, HttpSourceBuilder, FromStreamData, WorkflowBuilderExt, SseSourceDialect};
 pub use sink::{HttpSink, HttpSinkBuilder};
+pub use source::{
+    FromStreamData, HttpSource, HttpSourceBuilder, SseSourceDialect, WorkflowBuilderExt,
+};

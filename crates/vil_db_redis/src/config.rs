@@ -13,15 +13,30 @@ pub struct RedisConfig {
     pub services: Vec<String>,
 }
 
-fn default_max() -> u32 { 20 }
-fn default_db() -> u32 { 0 }
+fn default_max() -> u32 {
+    20
+}
+fn default_db() -> u32 {
+    0
+}
 
 impl Default for RedisConfig {
     fn default() -> Self {
-        Self { url: "redis://127.0.0.1:6379".into(), max_connections: 20, database: 0, password: None, services: Vec::new() }
+        Self {
+            url: "redis://127.0.0.1:6379".into(),
+            max_connections: 20,
+            database: 0,
+            password: None,
+            services: Vec::new(),
+        }
     }
 }
 
 impl RedisConfig {
-    pub fn new(url: &str) -> Self { Self { url: url.into(), ..Default::default() } }
+    pub fn new(url: &str) -> Self {
+        Self {
+            url: url.into(),
+            ..Default::default()
+        }
+    }
 }

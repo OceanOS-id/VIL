@@ -7,7 +7,7 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use vil_server::prelude::*;
 
-use crate::stream::{StreamingIngester, compute_embedding};
+use crate::stream::{compute_embedding, StreamingIngester};
 
 // ── Request / Response types ────────────────────────────────────────────────
 
@@ -45,7 +45,9 @@ pub async fn handle_query(
     ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<QueryResponse>> {
-    let ingester = ctx.state::<Arc<StreamingIngester>>().expect("StreamingIngester");
+    let ingester = ctx
+        .state::<Arc<StreamingIngester>>()
+        .expect("StreamingIngester");
     let req: QueryRequest = body.json().expect("invalid JSON");
     let top_k = req.top_k.unwrap_or(5);
     let embedding = compute_embedding(&req.query);
@@ -69,7 +71,9 @@ pub async fn handle_query(
 pub async fn handle_stats(
     ctx: ServiceCtx,
 ) -> HandlerResult<VilResponse<StreamingRagStatsResponse>> {
-    let ingester = ctx.state::<Arc<StreamingIngester>>().expect("StreamingIngester");
+    let ingester = ctx
+        .state::<Arc<StreamingIngester>>()
+        .expect("StreamingIngester");
     let config = ingester.config();
     let resp = StreamingRagStatsResponse {
         chunk_count: ingester.chunk_count(),

@@ -68,8 +68,7 @@ impl BatchEmbedder {
 
             while let Some(result) = join_set.join_next().await {
                 let (idx, vecs) = result
-                    .map_err(|e| EmbedError::RequestFailed(format!("task join error: {e}")))?
-                    ?;
+                    .map_err(|e| EmbedError::RequestFailed(format!("task join error: {e}")))??;
                 results.push((idx, vecs));
             }
         }

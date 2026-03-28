@@ -95,13 +95,11 @@ impl BenchRunner {
         // Sequential benchmark (for accurate latency measurement)
         for _ in 0..self.requests {
             let req = match &self.method {
-                BenchMethod::Get => {
-                    axum::http::Request::builder()
-                        .method("GET")
-                        .uri(&self.path)
-                        .body(Body::empty())
-                        .unwrap()
-                }
+                BenchMethod::Get => axum::http::Request::builder()
+                    .method("GET")
+                    .uri(&self.path)
+                    .body(Body::empty())
+                    .unwrap(),
                 BenchMethod::Post => {
                     let body = self.body.clone().unwrap_or_default();
                     axum::http::Request::builder()
@@ -148,7 +146,11 @@ impl BenchRunner {
             requests_per_sec: self.requests as f64 / total_duration.as_secs_f64(),
             latency_min_us: *latencies.first().unwrap_or(&0),
             latency_max_us: *latencies.last().unwrap_or(&0),
-            latency_mean_us: if len > 0 { latencies.iter().sum::<u64>() / len as u64 } else { 0 },
+            latency_mean_us: if len > 0 {
+                latencies.iter().sum::<u64>() / len as u64
+            } else {
+                0
+            },
             latency_p50_us: percentile(&latencies, 50),
             latency_p95_us: percentile(&latencies, 95),
             latency_p99_us: percentile(&latencies, 99),
@@ -168,9 +170,16 @@ fn percentile(sorted: &[u64], pct: usize) -> u64 {
 impl std::fmt::Display for BenchReport {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "=== VIL Server Benchmark Report ===")?;
-        writeln!(f, "  Requests:     {} total, {} ok, {} failed",
-            self.total_requests, self.successful, self.failed)?;
-        writeln!(f, "  Duration:     {:.2}s", self.total_duration.as_secs_f64())?;
+        writeln!(
+            f,
+            "  Requests:     {} total, {} ok, {} failed",
+            self.total_requests, self.successful, self.failed
+        )?;
+        writeln!(
+            f,
+            "  Duration:     {:.2}s",
+            self.total_duration.as_secs_f64()
+        )?;
         writeln!(f, "  Throughput:   {:.0} req/s", self.requests_per_sec)?;
         writeln!(f, "  Latency:")?;
         writeln!(f, "    min:  {}µs", self.latency_min_us)?;

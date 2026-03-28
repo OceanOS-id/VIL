@@ -24,7 +24,12 @@ pub fn run_test(
 ) -> Result<(), String> {
     // 1. Parse manifest
     let manifest = WorkflowManifest::from_file(manifest_path)?;
-    println!("{} Testing: {} ({})", ">>>".cyan().bold(), manifest.name, manifest_path);
+    println!(
+        "{} Testing: {} ({})",
+        ">>>".cyan().bold(),
+        manifest.name,
+        manifest_path
+    );
 
     // 2. Load fixture
     let fixture_content = std::fs::read_to_string(fixture_path)
@@ -35,15 +40,29 @@ pub fn run_test(
 
     // 3. Find workflow
     let wf_name = workflow_name.unwrap_or_else(|| {
-        manifest.workflows.keys().next().map(|s| s.as_str()).unwrap_or("default")
+        manifest
+            .workflows
+            .keys()
+            .next()
+            .map(|s| s.as_str())
+            .unwrap_or("default")
     });
 
     let workflow = manifest.workflows.get(wf_name);
     if let Some(wf) = workflow {
-        println!("  {} Workflow: {} ({} tasks, {} branches)",
-            "OK".green(), wf_name, wf.tasks.len(), wf.branches.len());
+        println!(
+            "  {} Workflow: {} ({} tasks, {} branches)",
+            "OK".green(),
+            wf_name,
+            wf.tasks.len(),
+            wf.branches.len()
+        );
     } else {
-        println!("  {} No workflow '{}' found — running manifest-level test", "Note:".cyan(), wf_name);
+        println!(
+            "  {} No workflow '{}' found — running manifest-level test",
+            "Note:".cyan(),
+            wf_name
+        );
     }
 
     // 4. Execute tasks
@@ -66,7 +85,8 @@ pub fn run_test(
                 format!("{}", "FAIL".red().bold())
             };
 
-            println!("    [{}] {} ({}) — {:?}",
+            println!(
+                "    [{}] {} ({}) — {:?}",
                 status,
                 task.name.as_deref().unwrap_or(&task.id),
                 task_type,
@@ -83,14 +103,24 @@ pub fn run_test(
 
     // 5. Compare with expected
     if let Some(expected) = &fixture.expected {
-        println!("\n  {} Expected output defined (comparison pending full executor integration)",
-            "Note:".cyan());
-        println!("    expected keys: {:?}",
-            expected.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>()));
+        println!(
+            "\n  {} Expected output defined (comparison pending full executor integration)",
+            "Note:".cyan()
+        );
+        println!(
+            "    expected keys: {:?}",
+            expected
+                .as_object()
+                .map(|o| o.keys().cloned().collect::<Vec<_>>())
+        );
     }
 
     // 6. Report
-    println!("\n{} Test completed in {:?}", "DONE".green().bold(), total_elapsed);
+    println!(
+        "\n{} Test completed in {:?}",
+        "DONE".green().bold(),
+        total_elapsed
+    );
 
     Ok(())
 }

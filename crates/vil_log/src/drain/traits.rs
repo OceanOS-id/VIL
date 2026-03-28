@@ -20,7 +20,10 @@ pub trait LogDrain: Send + Sync + 'static {
     fn name(&self) -> &'static str;
 
     /// Process a batch of log slots. Called by the runtime drain loop.
-    async fn flush(&mut self, batch: &[LogSlot]) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    async fn flush(
+        &mut self,
+        batch: &[LogSlot],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     /// Graceful shutdown. Flush any buffered data, close file handles, etc.
     async fn shutdown(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;

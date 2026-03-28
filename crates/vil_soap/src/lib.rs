@@ -12,16 +12,16 @@
 // Add 0 extra log threads (uses caller thread for emit).
 // =============================================================================
 
-pub mod config;
 pub mod client;
+pub mod config;
 pub mod envelope;
 pub mod error;
 pub mod events;
 pub mod process;
 pub mod state;
 
-pub use config::SoapConfig;
 pub use client::SoapClient;
+pub use config::SoapConfig;
 pub use error::SoapFault;
 pub use events::ActionCalled;
 pub use state::SoapClientState;

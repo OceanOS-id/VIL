@@ -1,7 +1,7 @@
 //! VIL pattern HTTP handlers for the Agent plugin.
 
-use vil_server::prelude::*;
 use serde::{Deserialize, Serialize};
+use vil_server::prelude::*;
 
 use crate::extractors::AgentHandle;
 
@@ -58,7 +58,9 @@ pub async fn run_handler(
 ) -> HandlerResult<VilResponse<RunResponseBody>> {
     let state = ctx.state::<AgentServiceState>()?;
     let agent = &state.agent;
-    let req: RunRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: RunRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     if req.query.trim().is_empty() {
         return Err(VilError::bad_request("query must not be empty"));
     }
@@ -84,17 +86,13 @@ pub async fn run_handler(
 }
 
 /// GET /tools — List available tools.
-pub async fn tools_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<ToolsResponseBody> {
+pub async fn tools_handler(ctx: ServiceCtx) -> VilResponse<ToolsResponseBody> {
     let state = ctx.state::<AgentServiceState>().expect("AgentServiceState");
     VilResponse::ok(state.tools_resp.clone())
 }
 
 /// POST /memory/clear — Clear conversation memory.
-pub async fn clear_memory_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<ClearMemoryResponse> {
+pub async fn clear_memory_handler(ctx: ServiceCtx) -> VilResponse<ClearMemoryResponse> {
     let state = ctx.state::<AgentServiceState>().expect("AgentServiceState");
     state.agent.memory().clear().await;
     VilResponse::ok(ClearMemoryResponse {

@@ -36,11 +36,16 @@ fn test_qos_values() {
 async fn test_mqtt_client_lifecycle() {
     use vil_mq_mqtt::{MqttClient, MqttConfig, QoS};
 
-    let client = MqttClient::new(MqttConfig::new("mqtt://localhost:1883")).await.unwrap();
+    let client = MqttClient::new(MqttConfig::new("mqtt://localhost:1883"))
+        .await
+        .unwrap();
     assert!(client.is_connected());
     assert_eq!(client.published_count(), 0);
 
-    client.publish("sensors/temp", b"25.5", QoS::AtLeastOnce).await.unwrap();
+    client
+        .publish("sensors/temp", b"25.5", QoS::AtLeastOnce)
+        .await
+        .unwrap();
     assert_eq!(client.published_count(), 1);
 
     client.subscribe("sensors/+/temperature").await.unwrap();

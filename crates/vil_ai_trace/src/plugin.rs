@@ -1,5 +1,5 @@
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::handlers;
 use crate::tracer::AiTracer;
@@ -28,24 +28,32 @@ impl AiTracePlugin {
 }
 
 impl Default for AiTracePlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for AiTracePlugin {
-    fn id(&self) -> &str { "vil-ai-trace" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Distributed tracing for AI pipelines with metrics export" }
+    fn id(&self) -> &str {
+        "vil-ai-trace"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Distributed tracing for AI pipelines with metrics export"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "trace".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/trace/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/trace/stats")],
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let tracer = Arc::clone(&self.tracer);
@@ -59,5 +67,7 @@ impl VilPlugin for AiTracePlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

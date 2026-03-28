@@ -83,13 +83,16 @@ async fn submit_claim(body: ShmSlice) -> Result<VilResponse<ClaimResponse>, VilE
 
     // Business validation: amount must be positive and claim type recognized
     if claim.amount_cents == 0 {
-        return Err(VilError::bad_request("Claim amount must be greater than zero"));
+        return Err(VilError::bad_request(
+            "Claim amount must be greater than zero",
+        ));
     }
 
     // Serialize to JSON bytes for mesh forwarding to the adjuster service.
     // to_json_bytes() produces Bytes that can be placed directly into ExchangeHeap
     // for the adjuster service to read via SHM (no network round-trip).
-    let shm_bytes = claim.to_json_bytes()
+    let shm_bytes = claim
+        .to_json_bytes()
         .map_err(|e| VilError::internal(format!("Claim serialization failed: {}", e)))?;
 
     // Assign adjuster based on claim type (in production: load-balanced queue)
@@ -128,7 +131,8 @@ async fn sample_claim() -> Result<VilResponse<ClaimResponse>, VilError> {
     };
 
     // Serialize to SHM bytes
-    let shm_bytes = claim.to_json_bytes()
+    let shm_bytes = claim
+        .to_json_bytes()
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Round-trip: deserialize from the bytes we just serialized

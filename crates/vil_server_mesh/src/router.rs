@@ -5,7 +5,7 @@
 use dashmap::DashMap;
 use std::sync::Arc;
 
-use super::channel::{MeshSender, MeshReceiver, mesh_channel};
+use super::channel::{mesh_channel, MeshReceiver, MeshSender};
 use super::MeshConfig;
 
 /// The mesh router manages channels between services.

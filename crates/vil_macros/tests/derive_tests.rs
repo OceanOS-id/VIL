@@ -76,8 +76,7 @@ fn vil_model_to_json_bytes_produces_valid_json() {
     assert!(!bytes.is_empty());
 
     // The bytes must be valid JSON that round-trips back
-    let parsed: serde_json::Value =
-        serde_json::from_slice(&bytes).expect("should be valid JSON");
+    let parsed: serde_json::Value = serde_json::from_slice(&bytes).expect("should be valid JSON");
 
     assert_eq!(parsed["id"], 7);
     assert_eq!(parsed["title"], "Deploy");

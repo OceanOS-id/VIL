@@ -1,5 +1,5 @@
-use async_trait::async_trait;
 use crate::reranker::{RerankCandidate, RerankError, RerankResult, Reranker};
+use async_trait::async_trait;
 
 /// Keyword-based reranker that boosts candidates containing query terms.
 ///
@@ -49,7 +49,11 @@ impl Reranker for KeywordReranker {
             })
             .collect();
 
-        scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        scored.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         scored.truncate(top_k);
 
         for (i, r) in scored.iter_mut().enumerate() {
@@ -87,7 +91,10 @@ mod tests {
     #[tokio::test]
     async fn boosts_matching_candidates() {
         let reranker = KeywordReranker::new(1.0);
-        let results = reranker.rerank("cat mat", &make_candidates(), 10).await.unwrap();
+        let results = reranker
+            .rerank("cat mat", &make_candidates(), 10)
+            .await
+            .unwrap();
         // "a" matches both "cat" and "mat", should rank first.
         assert_eq!(results[0].id, "a");
     }
@@ -109,7 +116,10 @@ mod tests {
     #[tokio::test]
     async fn rank_ordering() {
         let reranker = KeywordReranker::new(1.0);
-        let results = reranker.rerank("cat", &make_candidates(), 10).await.unwrap();
+        let results = reranker
+            .rerank("cat", &make_candidates(), 10)
+            .await
+            .unwrap();
         for (i, r) in results.iter().enumerate() {
             assert_eq!(r.rank, i);
         }

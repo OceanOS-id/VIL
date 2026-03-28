@@ -30,7 +30,8 @@ impl PoolMetrics {
 
     pub fn record_query(&self, duration_us: u64, is_error: bool) {
         self.queries_total.fetch_add(1, Ordering::Relaxed);
-        self.query_duration_sum_us.fetch_add(duration_us, Ordering::Relaxed);
+        self.query_duration_sum_us
+            .fetch_add(duration_us, Ordering::Relaxed);
         if is_error {
             self.query_errors.fetch_add(1, Ordering::Relaxed);
         }
@@ -38,7 +39,8 @@ impl PoolMetrics {
 
     pub fn record_acquire(&self, duration_us: u64) {
         self.acquires_total.fetch_add(1, Ordering::Relaxed);
-        self.acquire_duration_sum_us.fetch_add(duration_us, Ordering::Relaxed);
+        self.acquire_duration_sum_us
+            .fetch_add(duration_us, Ordering::Relaxed);
     }
 
     pub fn record_health_check(&self, ok: bool) {
@@ -73,18 +75,26 @@ impl PoolMetrics {
              vil_db_acquires_total{{pool=\"{}\"}} {}\n\
              vil_db_health_ok{{pool=\"{}\"}} {}\n\
              vil_db_health_fail{{pool=\"{}\"}} {}\n",
-            pool_name, s.queries_total,
-            pool_name, s.query_errors,
-            pool_name, s.avg_query_us,
-            pool_name, s.acquires_total,
-            pool_name, s.health_checks_ok,
-            pool_name, s.health_checks_fail,
+            pool_name,
+            s.queries_total,
+            pool_name,
+            s.query_errors,
+            pool_name,
+            s.avg_query_us,
+            pool_name,
+            s.acquires_total,
+            pool_name,
+            s.health_checks_ok,
+            pool_name,
+            s.health_checks_fail,
         )
     }
 }
 
 impl Default for PoolMetrics {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Metrics snapshot (serializable).

@@ -37,7 +37,9 @@ pub fn truncate_to_tokens(
         TruncateStrategy::TailDrop => {
             // Binary search for the right cut point
             let mut end = target_chars;
-            while end > 0 && tokenizer.count_tokens(&text[..text.floor_char_boundary(end)]) > max_tokens {
+            while end > 0
+                && tokenizer.count_tokens(&text[..text.floor_char_boundary(end)]) > max_tokens
+            {
                 end = end.saturating_sub(end / 10 + 1);
             }
             // Adjust to char boundary
@@ -61,7 +63,7 @@ pub fn truncate_to_tokens(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::vocab::{Vocabulary, VocabSource, BuiltInVocab};
+    use crate::vocab::{BuiltInVocab, VocabSource, Vocabulary};
 
     fn make_tokenizer() -> BpeTokenizer {
         let vocab = Vocabulary::load(VocabSource::BuiltIn(BuiltInVocab::Cl100kBase)).unwrap();
@@ -80,7 +82,11 @@ mod tests {
         let tok = make_tokenizer();
         let long = "a".repeat(1000);
         let result = truncate_to_tokens(&tok, &long, 10, TruncateStrategy::TailDrop);
-        assert!(tok.count_tokens(&result) <= 10, "got {} tokens", tok.count_tokens(&result));
+        assert!(
+            tok.count_tokens(&result) <= 10,
+            "got {} tokens",
+            tok.count_tokens(&result)
+        );
         assert!(result.len() < long.len());
     }
 

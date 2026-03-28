@@ -69,7 +69,8 @@ pub fn build_vlb(config: VlbBuildConfig) -> Result<String, String> {
         build_cmd.arg("--release");
     }
 
-    let build_output = build_cmd.output()
+    let build_output = build_cmd
+        .output()
         .map_err(|e| format!("Failed to run cargo build: {}", e))?;
 
     if !build_output.status.success() {
@@ -93,8 +94,8 @@ pub fn build_vlb(config: VlbBuildConfig) -> Result<String, String> {
     let native_code = if Path::new(&binary_path).exists() {
         // Read first 64KB of binary as "native code" section (placeholder)
         // In full implementation, this would be the relocatable .o file
-        let data = std::fs::read(&binary_path)
-            .map_err(|e| format!("Failed to read binary: {}", e))?;
+        let data =
+            std::fs::read(&binary_path).map_err(|e| format!("Failed to read binary: {}", e))?;
         // Take a hash/fingerprint instead of full binary (for now)
         let fingerprint = data.len() as u64;
         fingerprint.to_le_bytes().to_vec()
@@ -112,8 +113,7 @@ pub fn build_vlb(config: VlbBuildConfig) -> Result<String, String> {
         format!("{}/{}-{}.vlb", dir, name, config.version)
     });
 
-    std::fs::write(&output_path, &vlb_data)
-        .map_err(|e| format!("Failed to write VLB: {}", e))?;
+    std::fs::write(&output_path, &vlb_data).map_err(|e| format!("Failed to write VLB: {}", e))?;
 
     println!("  Output:   {}", output_path);
     println!("  Size:     {} bytes", vlb_data.len());
@@ -153,12 +153,16 @@ fn validate_vlb_rules(cargo_toml: &str) -> Result<Vec<(String, bool)>, String> {
     rules.push(("State uses #[vil_service_state]".into(), rule3_pass));
 
     // Rule 4: Mesh requires explicit
-    let has_hidden_http = src_content.contains("reqwest::") || src_content.contains("hyper::Client");
+    let has_hidden_http =
+        src_content.contains("reqwest::") || src_content.contains("hyper::Client");
     let has_mesh = src_content.contains("VxMeshConfig")
         || src_content.contains("mesh_requires")
         || src_content.contains("vil_service");
     let rule4_pass = !has_hidden_http || has_mesh;
-    rules.push(("Mesh requires explicit (no hidden HTTP calls)".into(), rule4_pass));
+    rules.push((
+        "Mesh requires explicit (no hidden HTTP calls)".into(),
+        rule4_pass,
+    ));
 
     // Rule 5: Uses VilApp / vil_app! (not vil_server::new())
     let uses_vil_app = src_content.contains("VilApp::") || src_content.contains("vil_app!");

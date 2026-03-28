@@ -31,18 +31,18 @@
 
 pub mod budget;
 pub mod dedup;
-pub mod optimizer;
-pub mod scorer;
-pub mod strategy;
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod optimizer;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod scorer;
+pub mod semantic;
+pub mod strategy;
 
 pub use budget::TokenBudget;
 pub use dedup::deduplicate;
 pub use optimizer::{ContextOptimizer, OptimizedContext};
-pub use scorer::{score_chunks, ChunkScore, ScoringWeights};
-pub use strategy::OptimizeStrategy;
 pub use plugin::OptimizerPlugin;
+pub use scorer::{score_chunks, ChunkScore, ScoringWeights};
 pub use semantic::{OptimizeEvent, OptimizeFault, OptimizeFaultType, OptimizerState};
+pub use strategy::OptimizeStrategy;

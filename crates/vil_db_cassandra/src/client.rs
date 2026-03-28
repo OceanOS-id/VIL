@@ -11,8 +11,8 @@
 
 use scylla::{Session, SessionBuilder};
 
-use vil_log::{db_log, types::DbPayload};
 use vil_log::dict::register_str;
+use vil_log::{db_log, types::DbPayload};
 
 use crate::config::CassandraConfig;
 use crate::error::CassandraFault;
@@ -47,12 +47,13 @@ impl CassandraClient {
         }
         builder = builder.use_keyspace(&config.keyspace, false);
 
-        let session = builder.build().await.map_err(|e| {
-            CassandraFault::ConnectionFailed {
+        let session = builder
+            .build()
+            .await
+            .map_err(|e| CassandraFault::ConnectionFailed {
                 uri_hash,
                 reason_code: fault_code_from_err(&e),
-            }
-        })?;
+            })?;
 
         Ok(Self {
             session,
@@ -93,17 +94,20 @@ pub(crate) fn emit_db_log(
     pool_id: u16,
 ) {
     let query_hash = register_str(query);
-    db_log!(Info, DbPayload {
-        db_hash,
-        query_hash,
-        duration_us,
-        rows_affected,
-        op_type,
-        prepared,
-        error_code,
-        pool_id,
-        ..DbPayload::default()
-    });
+    db_log!(
+        Info,
+        DbPayload {
+            db_hash,
+            query_hash,
+            duration_us,
+            rows_affected,
+            op_type,
+            prepared,
+            error_code,
+            pool_id,
+            ..DbPayload::default()
+        }
+    );
 }
 
 // =============================================================================
@@ -111,8 +115,8 @@ pub(crate) fn emit_db_log(
 // =============================================================================
 
 pub(crate) fn fault_code_from_err<E: std::fmt::Debug>(e: &E) -> u32 {
-    use std::hash::{Hash, Hasher};
     use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
     let mut h = DefaultHasher::new();
     format!("{:?}", e).hash(&mut h);
     (h.finish() & 0xFFFF_FFFF) as u32

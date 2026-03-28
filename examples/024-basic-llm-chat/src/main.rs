@@ -36,8 +36,8 @@
 //     -d '{"prompt": "What is Rust?"}' \
 //     http://localhost:3090/api/chat
 
+use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 use vil_server::prelude::*;
-use vil_llm::semantic::{LlmResponseEvent, LlmFault, LlmUsageState};
 
 // Upstream LLM endpoint — the chatbot's "brain". In production, this
 // would point to a managed LLM service or a self-hosted model
@@ -76,9 +76,7 @@ struct ChatResponse {
 // - Detect escalation signals ("speak to a human", frustration)
 // - Track satisfaction metrics per response
 
-async fn chat_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<ChatResponse>> {
+async fn chat_handler(body: ShmSlice) -> HandlerResult<VilResponse<ChatResponse>> {
     // ShmSlice: zero-copy body extraction from VIL's ExchangeHeap.
     // Critical for customer service portals during peak hours
     // (e.g., product launches, outage notifications).
@@ -114,7 +112,9 @@ async fn chat_handler(
     // Collect the full response. In a ticket deflection system,
     // the complete answer is needed before sending to the customer
     // (vs. streaming partial tokens to the UI).
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     Ok(VilResponse::ok(ChatResponse { content }))
@@ -139,7 +139,14 @@ async fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode (no auth)" } else { "OPENAI_API_KEY (Bearer)" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode (no auth)"
+        } else {
+            "OPENAI_API_KEY (Bearer)"
+        }
+    );
     println!("  Listening on http://localhost:3090/api/chat");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!();
@@ -159,9 +166,5 @@ async fn main() {
     // Port 3090: the customer support chatbot's internal service port.
     // In production, an API gateway (like example 002) sits in front
     // of this service to handle auth, rate limiting, and tenant routing.
-    VilApp::new("llm-chat")
-        .port(3090)
-        .service(svc)
-        .run()
-        .await;
+    VilApp::new("llm-chat").port(3090).service(svc).run().await;
 }

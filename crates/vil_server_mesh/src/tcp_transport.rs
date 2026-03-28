@@ -56,7 +56,11 @@ impl std::fmt::Display for TcpLaneError {
             TcpLaneError::ReceiveFailed(e) => write!(f, "TCP receive failed: {}", e),
             TcpLaneError::ListenFailed(e) => write!(f, "TCP listen failed: {}", e),
             TcpLaneError::FrameTooLarge(sz) => {
-                write!(f, "TCP frame too large: {} bytes (max {})", sz, MAX_FRAME_SIZE)
+                write!(
+                    f,
+                    "TCP frame too large: {} bytes (max {})",
+                    sz, MAX_FRAME_SIZE
+                )
             }
             TcpLaneError::InvalidFrame(e) => write!(f, "Invalid TCP frame: {}", e),
         }
@@ -174,8 +178,8 @@ pub fn decode_frame(body: &[u8]) -> Result<LaneMessage, TcpLaneError> {
     if pos + 4 > body.len() {
         return Err(TcpLaneError::InvalidFrame("truncated payload_len".into()));
     }
-    let payload_len = u32::from_le_bytes([body[pos], body[pos + 1], body[pos + 2], body[pos + 3]])
-        as usize;
+    let payload_len =
+        u32::from_le_bytes([body[pos], body[pos + 1], body[pos + 2], body[pos + 3]]) as usize;
     pos += 4;
     if pos + payload_len > body.len() {
         return Err(TcpLaneError::InvalidFrame("truncated payload".into()));
@@ -304,9 +308,7 @@ impl TcpTriLaneListener {
     ///
     /// Spawns a background tokio task that accepts TCP connections and
     /// reads framed messages, routing each to the correct lane channel.
-    pub async fn start(
-        &self,
-    ) -> Result<(TcpTriLaneReceivers, std::net::SocketAddr), TcpLaneError> {
+    pub async fn start(&self) -> Result<(TcpTriLaneReceivers, std::net::SocketAddr), TcpLaneError> {
         let listener = TcpListener::bind(&self.addr)
             .await
             .map_err(|e| TcpLaneError::ListenFailed(format!("{}: {}", self.addr, e)))?;
@@ -330,9 +332,9 @@ impl TcpTriLaneListener {
                         tokio::spawn(async move {
                             if let Err(e) = handle_connection(stream, &senders).await {
                                 {
-                            use vil_log::app_log;
-                            app_log!(Debug, "mesh.tcp.conn.ended", { peer: vil_log::dict::register_str(&peer.to_string()) as u64, error: e.to_string() });
-                        }
+                                    use vil_log::app_log;
+                                    app_log!(Debug, "mesh.tcp.conn.ended", { peer: vil_log::dict::register_str(&peer.to_string()) as u64, error: e.to_string() });
+                                }
                             }
                         });
                     }
@@ -664,13 +666,10 @@ mod tests {
             .unwrap();
         assert_eq!(n, b"hello-router".len());
 
-        let msg = tokio::time::timeout(
-            std::time::Duration::from_secs(2),
-            receivers.trigger.recv(),
-        )
-        .await
-        .unwrap()
-        .unwrap();
+        let msg = tokio::time::timeout(std::time::Duration::from_secs(2), receivers.trigger.recv())
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(msg.from, "svc-origin");
         assert_eq!(msg.to, "svc-target");
         assert_eq!(msg.data, b"hello-router");
@@ -679,9 +678,7 @@ mod tests {
     #[tokio::test]
     async fn test_router_unknown_peer() {
         let router = TcpTriLaneRouter::new("127.0.0.1:0");
-        let result = router
-            .send("a", "nonexistent", Lane::Data, b"fail")
-            .await;
+        let result = router.send("a", "nonexistent", Lane::Data, b"fail").await;
         assert!(result.is_err());
         match result.unwrap_err() {
             TcpLaneError::ConnectionFailed(msg) => {

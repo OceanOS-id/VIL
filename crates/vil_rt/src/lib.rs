@@ -37,26 +37,26 @@
 // [ ] TODO(future): periodic liveness probe
 // =============================================================================
 
-pub mod error;
-pub mod metrics;
-pub mod handle;
-pub mod world;
-pub mod supervisor;
-pub mod session;
 pub mod clock;
+pub mod error;
+pub mod handle;
+pub mod metrics;
+pub mod session;
+pub mod supervisor;
+pub mod world;
 
 pub use error::RtError;
-pub use metrics::RuntimeMetrics;
 pub use handle::{ProcessHandle, RegisteredPort};
+pub use metrics::RuntimeMetrics;
+pub use session::{PendingSlot, SessionConfig, SessionEntry, SessionRegistry};
+pub use supervisor::{CleanupReport, Supervisor};
 pub use world::VastarRuntimeWorld;
-pub use supervisor::{Supervisor, CleanupReport};
-pub use session::{SessionRegistry, SessionEntry, PendingSlot, SessionConfig};
 
 // Re-export registry types that users may need for inspection
-pub use vil_registry::{SampleRecord, ProcessRecord};
+pub use vil_registry::{ProcessRecord, SampleRecord};
 
 // Re-export observability types
-pub use vil_obs::{ObservabilityHub, TraceEvent, RuntimeCounters, LatencyTracker, LatencySnapshot};
+pub use vil_obs::{LatencySnapshot, LatencyTracker, ObservabilityHub, RuntimeCounters, TraceEvent};
 
 // Re-export vil_shm for ShmToken resolve_payload
 pub use vil_shm;

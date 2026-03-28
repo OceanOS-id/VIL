@@ -116,56 +116,91 @@ fn compute_confidence(field_type: &FieldType, value: &str) -> f32 {
 /// Pre-built field definitions for invoice extraction.
 pub fn invoice_fields() -> Vec<FieldDef> {
     vec![
-        FieldDef::new("invoice_number", FieldType::Text, vec![
-            r"(?i)invoice\s*#?\s*:?\s*([A-Z0-9\-]+)".into(),
-            r"(?i)inv\s*#?\s*:?\s*([A-Z0-9\-]+)".into(),
-        ], true),
-        FieldDef::new("date", FieldType::Date, vec![
-            r"(\d{4}-\d{2}-\d{2})".into(),
-            r"(\d{2}/\d{2}/\d{4})".into(),
-            r"(\d{2}-\d{2}-\d{4})".into(),
-        ], true),
-        FieldDef::new("total", FieldType::Currency, vec![
-            r"(?i)total\s*:?\s*\$?([\d,]+\.?\d*)".into(),
-            r"\$([\d,]+\.\d{2})".into(),
-        ], true),
-        FieldDef::new("email", FieldType::Email, vec![
-            r"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})".into(),
-        ], false),
+        FieldDef::new(
+            "invoice_number",
+            FieldType::Text,
+            vec![
+                r"(?i)invoice\s*#?\s*:?\s*([A-Z0-9\-]+)".into(),
+                r"(?i)inv\s*#?\s*:?\s*([A-Z0-9\-]+)".into(),
+            ],
+            true,
+        ),
+        FieldDef::new(
+            "date",
+            FieldType::Date,
+            vec![
+                r"(\d{4}-\d{2}-\d{2})".into(),
+                r"(\d{2}/\d{2}/\d{4})".into(),
+                r"(\d{2}-\d{2}-\d{4})".into(),
+            ],
+            true,
+        ),
+        FieldDef::new(
+            "total",
+            FieldType::Currency,
+            vec![
+                r"(?i)total\s*:?\s*\$?([\d,]+\.?\d*)".into(),
+                r"\$([\d,]+\.\d{2})".into(),
+            ],
+            true,
+        ),
+        FieldDef::new(
+            "email",
+            FieldType::Email,
+            vec![r"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})".into()],
+            false,
+        ),
     ]
 }
 
 /// Pre-built field definitions for receipt extraction.
 pub fn receipt_fields() -> Vec<FieldDef> {
     vec![
-        FieldDef::new("store_name", FieldType::Text, vec![
-            r"^(.+)$".into(),
-        ], false),
-        FieldDef::new("date", FieldType::Date, vec![
-            r"(\d{4}-\d{2}-\d{2})".into(),
-            r"(\d{2}/\d{2}/\d{4})".into(),
-        ], false),
-        FieldDef::new("total", FieldType::Currency, vec![
-            r"(?i)total\s*:?\s*\$?([\d,]+\.?\d*)".into(),
-        ], true),
-        FieldDef::new("tax", FieldType::Currency, vec![
-            r"(?i)tax\s*:?\s*\$?([\d,]+\.?\d*)".into(),
-        ], false),
+        FieldDef::new("store_name", FieldType::Text, vec![r"^(.+)$".into()], false),
+        FieldDef::new(
+            "date",
+            FieldType::Date,
+            vec![r"(\d{4}-\d{2}-\d{2})".into(), r"(\d{2}/\d{2}/\d{4})".into()],
+            false,
+        ),
+        FieldDef::new(
+            "total",
+            FieldType::Currency,
+            vec![r"(?i)total\s*:?\s*\$?([\d,]+\.?\d*)".into()],
+            true,
+        ),
+        FieldDef::new(
+            "tax",
+            FieldType::Currency,
+            vec![r"(?i)tax\s*:?\s*\$?([\d,]+\.?\d*)".into()],
+            false,
+        ),
     ]
 }
 
 /// Pre-built field definitions for resume extraction.
 pub fn resume_fields() -> Vec<FieldDef> {
     vec![
-        FieldDef::new("email", FieldType::Email, vec![
-            r"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})".into(),
-        ], true),
-        FieldDef::new("phone", FieldType::Phone, vec![
-            r"(\+?[\d\-\(\)\s]{10,})".into(),
-            r"(\d{3}[\-\.]\d{3}[\-\.]\d{4})".into(),
-        ], false),
-        FieldDef::new("name", FieldType::Text, vec![
-            r"^([A-Z][a-z]+\s+[A-Z][a-z]+)".into(),
-        ], false),
+        FieldDef::new(
+            "email",
+            FieldType::Email,
+            vec![r"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})".into()],
+            true,
+        ),
+        FieldDef::new(
+            "phone",
+            FieldType::Phone,
+            vec![
+                r"(\+?[\d\-\(\)\s]{10,})".into(),
+                r"(\d{3}[\-\.]\d{3}[\-\.]\d{4})".into(),
+            ],
+            false,
+        ),
+        FieldDef::new(
+            "name",
+            FieldType::Text,
+            vec![r"^([A-Z][a-z]+\s+[A-Z][a-z]+)".into()],
+            false,
+        ),
     ]
 }

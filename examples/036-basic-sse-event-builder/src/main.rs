@@ -29,9 +29,9 @@
 // Run:  cargo run -p vil-basic-sse-event-builder
 // Test: curl -N http://localhost:8080/api/ticker/stream
 
-use vil_server::prelude::*;
 use std::convert::Infallible;
 use std::time::Duration;
+use vil_server::prelude::*;
 
 // ── Business Domain Types ───────────────────────────────────────────────
 

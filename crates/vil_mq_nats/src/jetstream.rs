@@ -3,9 +3,9 @@
 // =============================================================================
 
 use bytes::Bytes;
-use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use futures::StreamExt;
+use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 /// JetStream stream configuration (user-facing config, mapped to async-nats types).
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,9 +20,15 @@ pub struct StreamConfig {
     pub max_bytes: i64,
 }
 
-fn default_retention() -> String { "limits".into() }
-fn default_max_msgs() -> i64 { -1 }
-fn default_max_bytes() -> i64 { -1 }
+fn default_retention() -> String {
+    "limits".into()
+}
+fn default_max_msgs() -> i64 {
+    -1
+}
+fn default_max_bytes() -> i64 {
+    -1
+}
 
 /// JetStream consumer configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,8 +41,12 @@ pub struct ConsumerConfig {
     pub deliver_policy: String,
 }
 
-fn default_ack() -> String { "explicit".into() }
-fn default_deliver() -> String { "all".into() }
+fn default_ack() -> String {
+    "explicit".into()
+}
+fn default_deliver() -> String {
+    "all".into()
+}
 
 /// JetStream message (with ack support).
 pub struct JsMessage {
@@ -52,7 +62,10 @@ impl JsMessage {
     /// Acknowledge the message.
     pub async fn ack(&self) -> Result<(), String> {
         if let Some(ref inner) = self.inner {
-            inner.ack().await.map_err(|e| format!("jetstream ack failed: {}", e))?;
+            inner
+                .ack()
+                .await
+                .map_err(|e| format!("jetstream ack failed: {}", e))?;
         }
         self.acked.store(true, Ordering::Relaxed);
         // debug-level: skip vil_log
@@ -62,14 +75,18 @@ impl JsMessage {
     /// Negative-acknowledge (request redelivery).
     pub async fn nack(&self) -> Result<(), String> {
         if let Some(ref inner) = self.inner {
-            inner.ack_with(async_nats::jetstream::AckKind::Nak(None)).await
+            inner
+                .ack_with(async_nats::jetstream::AckKind::Nak(None))
+                .await
                 .map_err(|e| format!("jetstream nack failed: {}", e))?;
         }
         // debug-level: skip vil_log
         Ok(())
     }
 
-    pub fn is_acked(&self) -> bool { self.acked.load(Ordering::Relaxed) }
+    pub fn is_acked(&self) -> bool {
+        self.acked.load(Ordering::Relaxed)
+    }
 }
 
 /// JetStream consumer handle (wraps real async-nats pull consumer stream).
@@ -93,15 +110,18 @@ impl JsConsumer {
                 let __elapsed = __mq_start.elapsed();
                 {
                     use vil_log::{mq_log, types::MqPayload};
-                    mq_log!(Info, MqPayload {
-                        broker_hash: register_str("nats"),
-                        topic_hash: register_str(&subject_str),
-                        message_bytes: payload_len as u32,
-                        e2e_latency_us: __elapsed.as_micros() as u32,
-                        op_type: 1,
-                        offset: sequence,
-                        ..Default::default()
-                    });
+                    mq_log!(
+                        Info,
+                        MqPayload {
+                            broker_hash: register_str("nats"),
+                            topic_hash: register_str(&subject_str),
+                            message_bytes: payload_len as u32,
+                            e2e_latency_us: __elapsed.as_micros() as u32,
+                            op_type: 1,
+                            offset: sequence,
+                            ..Default::default()
+                        }
+                    );
                 }
                 Some(JsMessage {
                     subject: subject_str,
@@ -122,8 +142,12 @@ impl JsConsumer {
         }
     }
 
-    pub fn messages_received(&self) -> u64 { self.messages_received.load(Ordering::Relaxed) }
-    pub fn config(&self) -> &ConsumerConfig { &self.config }
+    pub fn messages_received(&self) -> u64 {
+        self.messages_received.load(Ordering::Relaxed)
+    }
+    pub fn config(&self) -> &ConsumerConfig {
+        &self.config
+    }
 }
 
 /// JetStream client backed by real async-nats JetStream context.
@@ -149,14 +173,17 @@ impl JetStreamClient {
             _ => async_nats::jetstream::stream::RetentionPolicy::Limits,
         };
 
-        self.js.get_or_create_stream(async_nats::jetstream::stream::Config {
-            name: config.name.clone(),
-            subjects: config.subjects.clone(),
-            retention,
-            max_messages: config.max_msgs,
-            max_bytes: config.max_bytes,
-            ..Default::default()
-        }).await.map_err(|e| format!("jetstream create_stream failed: {}", e))?;
+        self.js
+            .get_or_create_stream(async_nats::jetstream::stream::Config {
+                name: config.name.clone(),
+                subjects: config.subjects.clone(),
+                retention,
+                max_messages: config.max_msgs,
+                max_bytes: config.max_bytes,
+                ..Default::default()
+            })
+            .await
+            .map_err(|e| format!("jetstream create_stream failed: {}", e))?;
 
         {
             use vil_log::app_log;
@@ -167,8 +194,15 @@ impl JetStreamClient {
     }
 
     /// Create a durable consumer on a stream.
-    pub async fn create_consumer(&self, stream: &str, config: ConsumerConfig) -> Result<JsConsumer, String> {
-        let stream_handle = self.js.get_stream(stream).await
+    pub async fn create_consumer(
+        &self,
+        stream: &str,
+        config: ConsumerConfig,
+    ) -> Result<JsConsumer, String> {
+        let stream_handle = self
+            .js
+            .get_stream(stream)
+            .await
             .map_err(|e| format!("jetstream get_stream failed: {}", e))?;
 
         let deliver_policy = match config.deliver_policy.as_str() {
@@ -191,10 +225,14 @@ impl JetStreamClient {
             ..Default::default()
         };
 
-        let consumer = stream_handle.create_consumer(consumer_cfg).await
+        let consumer = stream_handle
+            .create_consumer(consumer_cfg)
+            .await
             .map_err(|e| format!("jetstream create_consumer failed: {}", e))?;
 
-        let messages = consumer.messages().await
+        let messages = consumer
+            .messages()
+            .await
             .map_err(|e| format!("jetstream consumer messages failed: {}", e))?;
 
         {
@@ -212,23 +250,30 @@ impl JetStreamClient {
     /// Publish to a JetStream subject.
     pub async fn publish(&self, subject: &str, payload: &[u8]) -> Result<u64, String> {
         let __mq_start = std::time::Instant::now();
-        let ack = self.js.publish(subject.to_string(), Bytes::copy_from_slice(payload)).await
+        let ack = self
+            .js
+            .publish(subject.to_string(), Bytes::copy_from_slice(payload))
+            .await
             .map_err(|e| format!("jetstream publish failed: {}", e))?;
-        let ack = ack.await
+        let ack = ack
+            .await
             .map_err(|e| format!("jetstream publish ack failed: {}", e))?;
         let seq = ack.sequence;
         let __elapsed = __mq_start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash: register_str("nats"),
-                topic_hash: register_str(subject),
-                message_bytes: payload.len() as u32,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type: 0,
-                offset: seq,
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("nats"),
+                    topic_hash: register_str(subject),
+                    message_bytes: payload.len() as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 0,
+                    offset: seq,
+                    ..Default::default()
+                }
+            );
         }
         // debug-level: skip vil_log (mq_log already captures this)
         Ok(seq)
@@ -239,8 +284,12 @@ impl JetStreamClient {
         self.stream_names.iter().map(|e| e.key().clone()).collect()
     }
 
-    pub fn stream_count(&self) -> usize { self.stream_names.len() }
+    pub fn stream_count(&self) -> usize {
+        self.stream_names.len()
+    }
 
     /// Access the underlying JetStream context for advanced use cases.
-    pub fn inner(&self) -> &async_nats::jetstream::Context { &self.js }
+    pub fn inner(&self) -> &async_nats::jetstream::Context {
+        &self.js
+    }
 }

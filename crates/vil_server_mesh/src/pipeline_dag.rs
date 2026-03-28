@@ -95,7 +95,11 @@ impl PipelineDag {
             }
         }
 
-        if errors.is_empty() { Ok(()) } else { Err(errors) }
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 
     /// Topological sort using Kahn's algorithm.
@@ -112,7 +116,8 @@ impl PipelineDag {
             }
         }
 
-        let mut queue: VecDeque<&str> = in_degree.iter()
+        let mut queue: VecDeque<&str> = in_degree
+            .iter()
             .filter(|(_, &deg)| deg == 0)
             .map(|(&id, _)| id)
             .collect();
@@ -160,7 +165,8 @@ impl PipelineDag {
 
         while !remaining.is_empty() {
             // Find all nodes with in_degree == 0 among remaining
-            let stage: Vec<String> = remaining.iter()
+            let stage: Vec<String> = remaining
+                .iter()
                 .filter(|&&id| *in_degree.get(id).unwrap_or(&0) == 0)
                 .map(|&id| id.to_string())
                 .collect();
@@ -192,16 +198,22 @@ impl PipelineDag {
 
     /// Get entry nodes (no dependencies — DAG roots).
     pub fn entry_nodes(&self) -> Vec<&DagNode> {
-        self.nodes.iter().filter(|n| n.depends_on.is_empty()).collect()
+        self.nodes
+            .iter()
+            .filter(|n| n.depends_on.is_empty())
+            .collect()
     }
 
     /// Get exit nodes (no dependents — DAG leaves).
     pub fn exit_nodes(&self) -> Vec<&DagNode> {
-        let has_dependents: HashSet<&str> = self.nodes.iter()
+        let has_dependents: HashSet<&str> = self
+            .nodes
+            .iter()
             .flat_map(|n| n.depends_on.iter().map(|d| d.as_str()))
             .collect();
 
-        self.nodes.iter()
+        self.nodes
+            .iter()
             .filter(|n| !has_dependents.contains(n.id.as_str()))
             .collect()
     }

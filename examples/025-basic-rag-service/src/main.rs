@@ -37,7 +37,7 @@ use vil_server::prelude::*;
 
 // Semantic types from vil_rag plugin — compile-time validation ensures
 // this service correctly participates in the RAG observability pipeline.
-use vil_rag::semantic::{RagQueryEvent, RagFault, RagIndexState};
+use vil_rag::semantic::{RagFault, RagIndexState, RagQueryEvent};
 
 // Upstream LLM endpoint for answer generation. The RAG service retrieves
 // context documents first, then sends them with the query to the LLM.
@@ -87,9 +87,7 @@ struct RagResponse {
 // In production, step 2 would use vector similarity search to find
 // only the most relevant documents from thousands of product pages.
 
-async fn rag_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<RagResponse>> {
+async fn rag_handler(body: ShmSlice) -> HandlerResult<VilResponse<RagResponse>> {
     let req: RagRequest = body.json().expect("invalid JSON body");
 
     // Build the RAG system prompt. The key instruction: "Answer using ONLY
@@ -99,7 +97,9 @@ async fn rag_handler(
         "You are a helpful RAG assistant. Answer the user's question using ONLY the \
          context documents below. Cite sources as [DocN].\n\n\
          Context:\n{}",
-        CONTEXT_DOCS.iter().enumerate()
+        CONTEXT_DOCS
+            .iter()
+            .enumerate()
             .map(|(i, d)| format!("[Doc{}] {}", i + 1, d))
             .collect::<Vec<_>>()
             .join("\n\n")
@@ -128,7 +128,9 @@ async fn rag_handler(
         collector = collector.bearer_token(&api_key);
     }
 
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Semantic audit: record the RAG query event for observability.
@@ -167,7 +169,14 @@ async fn main() {
     println!("======================================================================");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode (no auth)" } else { "OPENAI_API_KEY (Bearer)" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode (no auth)"
+        } else {
+            "OPENAI_API_KEY (Bearer)"
+        }
+    );
     println!("  Listening on http://localhost:3091/api/rag");
     println!("  Upstream: {} (stream: true)", UPSTREAM_URL);
     println!();
@@ -176,9 +185,9 @@ async fn main() {
     // Semantic types enable automatic tracking of retrieval quality,
     // index health, and query fault rates across the product catalog.
     let svc = ServiceProcess::new("rag")
-        .emits::<RagQueryEvent>()       // Data lane: query + retrieval metrics
-        .faults::<RagFault>()           // Fault lane: retrieval/LLM failures
-        .manages::<RagIndexState>()     // Control lane: index health status
+        .emits::<RagQueryEvent>() // Data lane: query + retrieval metrics
+        .faults::<RagFault>() // Fault lane: retrieval/LLM failures
+        .manages::<RagIndexState>() // Control lane: index health status
         .prefix("/api")
         .endpoint(Method::POST, "/rag", post(rag_handler));
 

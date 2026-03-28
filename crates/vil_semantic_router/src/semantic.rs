@@ -39,15 +39,24 @@ pub struct RouteFault {
 
 impl RouteFault {
     pub fn no_routes(msg: impl Into<String>) -> Self {
-        Self { error_type: RouteFaultType::NoRoutesConfigured, message: msg.into() }
+        Self {
+            error_type: RouteFaultType::NoRoutesConfigured,
+            message: msg.into(),
+        }
     }
 
     pub fn classification_failed(msg: impl Into<String>) -> Self {
-        Self { error_type: RouteFaultType::ClassificationFailed, message: msg.into() }
+        Self {
+            error_type: RouteFaultType::ClassificationFailed,
+            message: msg.into(),
+        }
     }
 
     pub fn invalid_route(msg: impl Into<String>) -> Self {
-        Self { error_type: RouteFaultType::InvalidRoute, message: msg.into() }
+        Self {
+            error_type: RouteFaultType::InvalidRoute,
+            message: msg.into(),
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::metrics::VariantMetrics;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Promotion / rollback policy for model variants.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,9 +32,10 @@ impl PromotionPolicy {
     /// Evaluate whether a variant should be promoted based on its metrics.
     pub fn should_promote(&self, metrics: &VariantMetrics) -> bool {
         match self {
-            Self::AutoPromote { min_requests, min_quality } => {
-                metrics.requests >= *min_requests && metrics.avg_quality_score >= *min_quality
-            }
+            Self::AutoPromote {
+                min_requests,
+                min_quality,
+            } => metrics.requests >= *min_requests && metrics.avg_quality_score >= *min_quality,
             _ => false,
         }
     }
@@ -42,9 +43,10 @@ impl PromotionPolicy {
     /// Evaluate whether a variant should be rolled back based on its metrics.
     pub fn should_rollback(&self, metrics: &VariantMetrics) -> bool {
         match self {
-            Self::AutoRollback { max_error_rate, min_requests } => {
-                metrics.requests >= *min_requests && metrics.error_rate() > *max_error_rate
-            }
+            Self::AutoRollback {
+                max_error_rate,
+                min_requests,
+            } => metrics.requests >= *min_requests && metrics.error_rate() > *max_error_rate,
             _ => false,
         }
     }

@@ -1,4 +1,4 @@
-use axum::{Router, routing::get, response::Html};
+use axum::{response::Html, routing::get, Router};
 
 const DASHBOARD_HTML: &str = include_str!("dashboard.html");
 

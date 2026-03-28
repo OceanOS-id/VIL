@@ -8,18 +8,18 @@
 // =============================================================================
 
 pub mod host;
-pub mod runner;
 pub mod pool;
+pub mod runner;
 
 #[cfg(feature = "wasi")]
 pub mod wasi_host;
 
-pub use host::{CapsuleHost, CapsuleConfig, CapsuleInput, CapsuleOutput};
+pub use host::{CapsuleConfig, CapsuleHost, CapsuleInput, CapsuleOutput};
+pub use pool::{WasmFaaSConfig, WasmFaaSRegistry, WasmPool};
 pub use runner::CapsuleRunner;
-pub use pool::{WasmFaaSConfig, WasmPool, WasmFaaSRegistry};
 
 #[cfg(feature = "wasi")]
-pub use wasi_host::{WasiCapsuleHost, WasiCapabilities};
+pub use wasi_host::{WasiCapabilities, WasiCapsuleHost};
 
 /// Errors that may occur during the capsule lifecycle.
 #[derive(Debug)]
@@ -43,7 +43,10 @@ impl std::fmt::Display for CapsuleError {
             Self::CompileFailed(msg) => write!(f, "capsule compile failed: {}", msg),
             Self::InstantiateFailed(msg) => write!(f, "capsule instantiate failed: {}", msg),
             Self::ExecutionFailed(msg) => write!(f, "capsule execution failed: {}", msg),
-            Self::WasmFeatureNotEnabled => write!(f, "wasm feature not enabled; recompile with --features wasm"),
+            Self::WasmFeatureNotEnabled => write!(
+                f,
+                "wasm feature not enabled; recompile with --features wasm"
+            ),
         }
     }
 }

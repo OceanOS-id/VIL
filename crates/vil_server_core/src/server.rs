@@ -82,7 +82,11 @@ impl VilServer {
     }
 
     /// Add a route to the server (same as Axum Router::route).
-    pub fn route(mut self, path: &str, method_router: axum::routing::MethodRouter<AppState>) -> Self {
+    pub fn route(
+        mut self,
+        path: &str,
+        method_router: axum::routing::MethodRouter<AppState>,
+    ) -> Self {
         self.app_router = self.app_router.route(path, method_router);
         self
     }
@@ -126,7 +130,18 @@ impl VilServer {
     }
 
     /// Build the final Axum application with all middleware and health endpoints.
-    fn build(self) -> (Router, AppState, u16, Option<u16>, Option<(Arc<vil_observer::metrics::MetricsCollector>, vil_observer::api::UpstreamData)>) {
+    fn build(
+        self,
+    ) -> (
+        Router,
+        AppState,
+        u16,
+        Option<u16>,
+        Option<(
+            Arc<vil_observer::metrics::MetricsCollector>,
+            vil_observer::api::UpstreamData,
+        )>,
+    ) {
         let state = AppState::new(&self.name);
 
         // Merge service routers
@@ -137,9 +152,7 @@ impl VilServer {
         };
 
         // Build the main application router
-        let mut app = self
-            .app_router
-            .merge(service_router);
+        let mut app = self.app_router.merge(service_router);
 
         // Health endpoints on main port (unless separate metrics port)
         if self.metrics_port.is_none() {
@@ -171,11 +184,10 @@ impl VilServer {
         };
 
         // Add VIL middleware stack (order: outermost layer runs first)
-        app = app
-            .layer(axum_mw::from_fn_with_state(
-                state.clone(),
-                crate::trace_middleware::tracing_middleware,
-            ));
+        app = app.layer(axum_mw::from_fn_with_state(
+            state.clone(),
+            crate::trace_middleware::tracing_middleware,
+        ));
 
         // handler_metrics only when observer is enabled — true zero overhead when OFF
         if self.observer {
@@ -226,19 +238,34 @@ impl VilServer {
 
         let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
-        system_log!(Info, SystemPayload {
-            event_type: 4, // startup
-            ..Default::default()
-        });
+        system_log!(
+            Info,
+            SystemPayload {
+                event_type: 4, // startup
+                ..Default::default()
+            }
+        );
         app_log!(Info, "server.starting", { name: name.as_str(), port: port as u64 });
 
         println!();
         println!("  vil-server: {}", name);
         println!("  Listening:    http://0.0.0.0:{}", port);
-        println!("  Health:       http://localhost:{}/health", metrics_port.unwrap_or(port));
-        println!("  Readiness:    http://localhost:{}/ready", metrics_port.unwrap_or(port));
-        println!("  Metrics:      http://localhost:{}/metrics", metrics_port.unwrap_or(port));
-        println!("  Info:         http://localhost:{}/info", metrics_port.unwrap_or(port));
+        println!(
+            "  Health:       http://localhost:{}/health",
+            metrics_port.unwrap_or(port)
+        );
+        println!(
+            "  Readiness:    http://localhost:{}/ready",
+            metrics_port.unwrap_or(port)
+        );
+        println!(
+            "  Metrics:      http://localhost:{}/metrics",
+            metrics_port.unwrap_or(port)
+        );
+        println!(
+            "  Info:         http://localhost:{}/info",
+            metrics_port.unwrap_or(port)
+        );
         if observer_enabled {
             println!("  Observer:     http://localhost:{}/_vil/dashboard/", port);
         }
@@ -253,7 +280,8 @@ impl VilServer {
 
                     // Sync upstream metrics → observer
                     let snapshots = crate::upstream_metrics::global().all_snapshots();
-                    let json_snapshots: Vec<serde_json::Value> = snapshots.iter()
+                    let json_snapshots: Vec<serde_json::Value> = snapshots
+                        .iter()
                         .map(|s| serde_json::to_value(s).unwrap_or_default())
                         .collect();
                     *upstream_data.0.lock().unwrap() = json_snapshots;
@@ -297,10 +325,13 @@ impl VilServer {
             .await
             .expect("Server error");
 
-        system_log!(Info, SystemPayload {
-            event_type: 5, // shutdown
-            ..Default::default()
-        });
+        system_log!(
+            Info,
+            SystemPayload {
+                event_type: 5, // shutdown
+                ..Default::default()
+            }
+        );
         app_log!(Info, "server.shutdown", {});
     }
 }

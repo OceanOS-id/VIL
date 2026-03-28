@@ -46,7 +46,8 @@ impl<T: Serialize> IntoResponse for VilResponse<T> {
                 self.status,
                 [(axum::http::header::CONTENT_TYPE, "application/json")],
                 bytes::Bytes::from(bytes),
-            ).into_response(),
+            )
+                .into_response(),
             Err(_) => (self.status, axum::Json(self.data)).into_response(),
         }
     }
@@ -72,7 +73,8 @@ impl<T: Serialize> IntoResponse for ShmVilResponse<T> {
                     self.inner.status,
                     [(axum::http::header::CONTENT_TYPE, "application/json")],
                     bytes::Bytes::from(bytes),
-                ).into_response()
+                )
+                    .into_response()
             }
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }

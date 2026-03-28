@@ -20,16 +20,27 @@ pub struct GrpcServerConfig {
     pub max_concurrent_streams: u32,
 }
 
-fn default_port() -> u16 { 50051 }
-fn default_max_msg() -> usize { 4 * 1024 * 1024 }
-fn default_true() -> bool { true }
-fn default_streams() -> u32 { 200 }
+fn default_port() -> u16 {
+    50051
+}
+fn default_max_msg() -> usize {
+    4 * 1024 * 1024
+}
+fn default_true() -> bool {
+    true
+}
+fn default_streams() -> u32 {
+    200
+}
 
 impl Default for GrpcServerConfig {
     fn default() -> Self {
         Self {
-            port: 50051, max_message_size: 4 * 1024 * 1024,
-            health_check: true, reflection: true, max_concurrent_streams: 200,
+            port: 50051,
+            max_message_size: 4 * 1024 * 1024,
+            health_check: true,
+            reflection: true,
+            max_concurrent_streams: 200,
         }
     }
 }

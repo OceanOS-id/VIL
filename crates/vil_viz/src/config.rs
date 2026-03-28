@@ -20,7 +20,10 @@ impl VizFormat {
             "dot" | "graphviz" => Ok(VizFormat::Dot),
             "json" => Ok(VizFormat::Json),
             "ascii" | "text" | "txt" => Ok(VizFormat::Ascii),
-            _ => Err(format!("Unknown format '{}'. Supported: html, svg, mermaid, dot, json, ascii", s)),
+            _ => Err(format!(
+                "Unknown format '{}'. Supported: html, svg, mermaid, dot, json, ascii",
+                s
+            )),
         }
     }
 }
@@ -39,7 +42,10 @@ impl VizLevel {
             "topology" | "topo" => Ok(VizLevel::Topology),
             "dag" | "workflow" => Ok(VizLevel::Dag),
             "full" | "all" => Ok(VizLevel::Full),
-            _ => Err(format!("Unknown level '{}'. Supported: topology, dag, full", s)),
+            _ => Err(format!(
+                "Unknown level '{}'. Supported: topology, dag, full",
+                s
+            )),
         }
     }
 }

@@ -1,7 +1,6 @@
+use dashmap::DashMap;
 use std::sync::Arc;
 use vil_types::HostId;
-use dashmap::DashMap;
-
 
 /// Trait abstracting the Verbs driver (Simulation or Native).
 pub trait VerbsDriver: Send + Sync {
@@ -59,14 +58,17 @@ impl VerbsDriver for VerbsContext {
     fn reg_mr(&self, addr: u64, length: u64) -> Result<MemoryRegion, String> {
         // SIMULATED HARDWARE PREP: Pin memory region
         // On Linux, RDMA requires pinned memory so the HCA can access it via DMA.
-        let pinned = match unsafe { 
-            nix::sys::mman::mlock(addr as *const std::ffi::c_void, length as usize) 
+        let pinned = match unsafe {
+            nix::sys::mman::mlock(addr as *const std::ffi::c_void, length as usize)
         } {
             Ok(_) => true,
             Err(e) => {
                 // In non-root simulation, mlock may fail due to rlimit.
                 // Allow continuation for simulation purposes, but log the status.
-                eprintln!("[vil_net] Warning: mlock failed (expected in non-privileged simulation): {}", e);
+                eprintln!(
+                    "[vil_net] Warning: mlock failed (expected in non-privileged simulation): {}",
+                    e
+                );
                 false
             }
         };

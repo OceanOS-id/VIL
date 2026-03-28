@@ -33,14 +33,26 @@ pub enum VersionSource {
 
 impl ApiVersion {
     pub fn new(major: u32, minor: u32, source: VersionSource) -> Self {
-        Self { major, minor, source }
+        Self {
+            major,
+            minor,
+            source,
+        }
     }
 
-    pub fn v1() -> Self { Self::new(1, 0, VersionSource::Default) }
-    pub fn v2() -> Self { Self::new(2, 0, VersionSource::Default) }
+    pub fn v1() -> Self {
+        Self::new(1, 0, VersionSource::Default)
+    }
+    pub fn v2() -> Self {
+        Self::new(2, 0, VersionSource::Default)
+    }
 
-    pub fn is_v1(&self) -> bool { self.major == 1 }
-    pub fn is_v2(&self) -> bool { self.major == 2 }
+    pub fn is_v1(&self) -> bool {
+        self.major == 1
+    }
+    pub fn is_v2(&self) -> bool {
+        self.major == 2
+    }
 }
 
 impl std::fmt::Display for ApiVersion {
@@ -60,10 +72,7 @@ impl std::fmt::Display for ApiVersion {
 impl<S: Send + Sync> FromRequestParts<S> for ApiVersion {
     type Rejection = std::convert::Infallible;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let path = parts.uri.path();
 
         // 1. URL path prefix

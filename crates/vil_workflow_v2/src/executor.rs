@@ -10,10 +10,7 @@ pub async fn execute_task(task: &Task) -> TaskResult {
     // Simulate work based on task type
     let (output, status) = if task.timeout_ms > 0 && task.timeout_ms < 5 {
         // Simulate timeout for very small timeout values (used in tests)
-        (
-            serde_json::json!({"error": "timeout"}),
-            TaskStatus::Timeout,
-        )
+        (serde_json::json!({"error": "timeout"}), TaskStatus::Timeout)
     } else {
         let output = match &task.task_type {
             TaskType::Embed => serde_json::json!({"embedding": [0.1, 0.2, 0.3]}),

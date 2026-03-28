@@ -18,10 +18,10 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS};
 
-use vil_log::{mq_log, types::MqPayload};
 use vil_log::dict::register_str;
+use vil_log::{mq_log, types::MqPayload};
 
-use vil_trigger_core::traits::{TriggerSource, EventCallback};
+use vil_trigger_core::traits::{EventCallback, TriggerSource};
 use vil_trigger_core::types::{TriggerEvent, TriggerFault};
 
 use crate::config::IotConfig;
@@ -32,22 +32,22 @@ use crate::error::IotFault;
 /// Subscribes to a topic on an MQTT broker using `rumqttc` and fires a
 /// `TriggerEvent` on every matching `PUBLISH` packet.
 pub struct IotTrigger {
-    config:     IotConfig,
-    paused:     Arc<AtomicBool>,
-    sequence:   Arc<AtomicU64>,
+    config: IotConfig,
+    paused: Arc<AtomicBool>,
+    sequence: Arc<AtomicU64>,
     /// Cached hashes for hot-path log emission.
-    host_hash:  u32,
+    host_hash: u32,
     topic_hash: u32,
-    kind_hash:  u32,
+    kind_hash: u32,
 }
 
 impl IotTrigger {
     /// Create a new `IotTrigger` from config.
     pub fn new(config: IotConfig) -> Self {
-        let host_addr  = format!("{}:{}", config.mqtt_host, config.port);
-        let host_hash  = register_str(&host_addr);
+        let host_addr = format!("{}:{}", config.mqtt_host, config.port);
+        let host_hash = register_str(&host_addr);
         let topic_hash = register_str(&config.topic);
-        let kind_hash  = register_str("iot");
+        let kind_hash = register_str("iot");
         Self {
             config,
             paused: Arc::new(AtomicBool::new(false)),
@@ -66,9 +66,9 @@ impl IotTrigger {
     }
 
     async fn run_loop(&self, on_event: &EventCallback) -> Result<(), IotFault> {
-        let host_hash  = self.host_hash;
+        let host_hash = self.host_hash;
         let topic_hash = self.topic_hash;
-        let kind_hash  = self.kind_hash;
+        let kind_hash = self.kind_hash;
 
         let mut opts = MqttOptions::new(
             &self.config.client_id,
@@ -105,23 +105,26 @@ impl IotTrigger {
 
             if let Event::Incoming(Packet::Publish(publish)) = notification {
                 let elapsed = start.elapsed();
-                let seq     = self.sequence.fetch_add(1, Ordering::Relaxed);
+                let seq = self.sequence.fetch_add(1, Ordering::Relaxed);
                 let msg_len = publish.payload.len() as u32;
 
                 // Emit mq_log! on every MQTT message arrival.
-                mq_log!(Info, MqPayload {
-                    broker_hash:    host_hash,
-                    topic_hash:     register_str(&publish.topic),
-                    group_hash:     kind_hash,
-                    offset:         seq,
-                    message_bytes:  msg_len,
-                    e2e_latency_us: elapsed.as_micros() as u32,
-                    op_type:        1, // consume
-                    partition:      publish.qos as u8,
-                    retries:        0,
-                    compression:    0,
-                    ..MqPayload::default()
-                });
+                mq_log!(
+                    Info,
+                    MqPayload {
+                        broker_hash: host_hash,
+                        topic_hash: register_str(&publish.topic),
+                        group_hash: kind_hash,
+                        offset: seq,
+                        message_bytes: msg_len,
+                        e2e_latency_us: elapsed.as_micros() as u32,
+                        op_type: 1, // consume
+                        partition: publish.qos as u8,
+                        retries: 0,
+                        compression: 0,
+                        ..MqPayload::default()
+                    }
+                );
 
                 let ts = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
@@ -130,9 +133,9 @@ impl IotTrigger {
 
                 on_event(TriggerEvent {
                     kind_hash,
-                    source_hash:   topic_hash,
-                    sequence:      seq,
-                    timestamp_ns:  ts,
+                    source_hash: topic_hash,
+                    sequence: seq,
+                    timestamp_ns: ts,
                     payload_bytes: msg_len,
                     op: 0,
                     _pad: [0; 3],

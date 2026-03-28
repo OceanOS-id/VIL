@@ -18,12 +18,7 @@
 
 use vil_log::dict::register_str;
 
-use crate::{
-    config::EdgeConfig,
-    error::EdgeFault,
-    profile::EdgeProfile,
-    targets::EdgeTarget,
-};
+use crate::{config::EdgeConfig, error::EdgeFault, profile::EdgeProfile, targets::EdgeTarget};
 
 /// Build an `EdgeConfig` from a target and profile, registering all relevant
 /// strings in `vil_log::dict` for structured log hash lookups.

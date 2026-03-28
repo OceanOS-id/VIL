@@ -21,10 +21,10 @@ pub use noop::NoOpBackend;
 pub use pool::ModelPool;
 pub use registry::ModelRegistry;
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::InferencePlugin;
 pub use semantic::{InferEvent, InferFault, InferState};
@@ -94,7 +94,9 @@ mod tests {
         assert_eq!(pool.model_name(), "test-pool");
 
         // Round-robin: should cycle through 0, 1, 2, 0, 1, 2
-        let names: Vec<String> = (0..6).map(|_| pool.get().model_name().to_string()).collect();
+        let names: Vec<String> = (0..6)
+            .map(|_| pool.get().model_name().to_string())
+            .collect();
         assert_eq!(names[0], "model-0");
         assert_eq!(names[1], "model-1");
         assert_eq!(names[2], "model-2");
@@ -254,7 +256,10 @@ mod tests {
 
     #[test]
     fn infer_error_display() {
-        assert_eq!(format!("{}", InferError::ModelNotLoaded), "model not loaded");
+        assert_eq!(
+            format!("{}", InferError::ModelNotLoaded),
+            "model not loaded"
+        );
         assert_eq!(format!("{}", InferError::Timeout), "inference timeout");
         assert_eq!(
             format!("{}", InferError::ExecutionFailed("boom".into())),

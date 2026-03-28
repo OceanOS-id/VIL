@@ -7,13 +7,13 @@
 // This implementation provides the API surface and Tri-Lane bridge.
 // Production: add `rdkafka = { version = "0.36", features = ["cmake-build"] }`
 
-pub mod config;
-pub mod producer;
-pub mod consumer;
 pub mod bridge;
+pub mod config;
+pub mod consumer;
 pub mod metrics;
+pub mod producer;
 
-pub use config::KafkaConfig;
-pub use producer::KafkaProducer;
-pub use consumer::KafkaConsumer;
 pub use bridge::KafkaBridge;
+pub use config::KafkaConfig;
+pub use consumer::KafkaConsumer;
+pub use producer::KafkaProducer;

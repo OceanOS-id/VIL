@@ -299,55 +299,125 @@ async fn stack_info() -> VilResponse<StackInfoResponse> {
     let config = FullServerConfig::default();
 
     let mut subsystems = std::collections::HashMap::new();
-    subsystems.insert("rest", SubsystemFeatures {
-        framework: Some("Axum 0.7"),
-        orm: None, enabled: None, port: None, playground: None,
-        pool_size: None, mode: None, channels: None, discovery: None,
-        features: vec!["JSON extraction", "path params", "query params", "validation"],
-    });
-    subsystems.insert("grpc", SubsystemFeatures {
-        framework: Some("tonic 0.12"),
-        enabled: Some(config.grpc.enabled),
-        port: Some(config.grpc.port),
-        orm: None, playground: None, pool_size: None, mode: None,
-        channels: None, discovery: None,
-        features: vec!["health check", "per-service metrics", "dual-port"],
-    });
-    subsystems.insert("nats", SubsystemFeatures {
-        framework: None, orm: None, enabled: None, port: None,
-        playground: None, pool_size: None, mode: None, channels: None,
-        discovery: None,
-        features: vec!["pub/sub", "JetStream", "KV Store", "Tri-Lane bridge"],
-    });
-    subsystems.insert("database", SubsystemFeatures {
-        orm: Some("SeaORM + SQLx"),
-        framework: None, enabled: None, port: None, playground: None,
-        pool_size: None, mode: None, channels: None, discovery: None,
-        features: vec!["VilEntity derive", "DbProvider (1 vtable)", "DatasourceRegistry", "VilCache"],
-    });
-    subsystems.insert("graphql", SubsystemFeatures {
-        framework: Some("async-graphql 7"),
-        enabled: Some(config.graphql.enabled),
-        playground: Some(config.graphql.playground),
-        orm: None, port: None, pool_size: None, mode: None,
-        channels: None, discovery: None,
-        features: vec!["auto-schema from VilEntity", "CRUD resolvers", "subscriptions"],
-    });
-    subsystems.insert("shm", SubsystemFeatures {
-        enabled: Some(config.shm.enabled),
-        pool_size: Some(config.shm.pool_size.clone()),
-        framework: None, orm: None, port: None, playground: None,
-        mode: None, channels: None, discovery: None,
-        features: vec!["zero-copy IPC", "query cache", "ShmSlice extractors"],
-    });
-    subsystems.insert("mesh", SubsystemFeatures {
-        mode: Some(config.mesh.mode.clone()),
-        channels: Some(vec!["trigger", "data", "control"]),
-        discovery: Some(config.mesh.discovery.mode.clone()),
-        framework: None, orm: None, enabled: None, port: None,
-        playground: None, pool_size: None,
-        features: vec![],
-    });
+    subsystems.insert(
+        "rest",
+        SubsystemFeatures {
+            framework: Some("Axum 0.7"),
+            orm: None,
+            enabled: None,
+            port: None,
+            playground: None,
+            pool_size: None,
+            mode: None,
+            channels: None,
+            discovery: None,
+            features: vec![
+                "JSON extraction",
+                "path params",
+                "query params",
+                "validation",
+            ],
+        },
+    );
+    subsystems.insert(
+        "grpc",
+        SubsystemFeatures {
+            framework: Some("tonic 0.12"),
+            enabled: Some(config.grpc.enabled),
+            port: Some(config.grpc.port),
+            orm: None,
+            playground: None,
+            pool_size: None,
+            mode: None,
+            channels: None,
+            discovery: None,
+            features: vec!["health check", "per-service metrics", "dual-port"],
+        },
+    );
+    subsystems.insert(
+        "nats",
+        SubsystemFeatures {
+            framework: None,
+            orm: None,
+            enabled: None,
+            port: None,
+            playground: None,
+            pool_size: None,
+            mode: None,
+            channels: None,
+            discovery: None,
+            features: vec!["pub/sub", "JetStream", "KV Store", "Tri-Lane bridge"],
+        },
+    );
+    subsystems.insert(
+        "database",
+        SubsystemFeatures {
+            orm: Some("SeaORM + SQLx"),
+            framework: None,
+            enabled: None,
+            port: None,
+            playground: None,
+            pool_size: None,
+            mode: None,
+            channels: None,
+            discovery: None,
+            features: vec![
+                "VilEntity derive",
+                "DbProvider (1 vtable)",
+                "DatasourceRegistry",
+                "VilCache",
+            ],
+        },
+    );
+    subsystems.insert(
+        "graphql",
+        SubsystemFeatures {
+            framework: Some("async-graphql 7"),
+            enabled: Some(config.graphql.enabled),
+            playground: Some(config.graphql.playground),
+            orm: None,
+            port: None,
+            pool_size: None,
+            mode: None,
+            channels: None,
+            discovery: None,
+            features: vec![
+                "auto-schema from VilEntity",
+                "CRUD resolvers",
+                "subscriptions",
+            ],
+        },
+    );
+    subsystems.insert(
+        "shm",
+        SubsystemFeatures {
+            enabled: Some(config.shm.enabled),
+            pool_size: Some(config.shm.pool_size.clone()),
+            framework: None,
+            orm: None,
+            port: None,
+            playground: None,
+            mode: None,
+            channels: None,
+            discovery: None,
+            features: vec!["zero-copy IPC", "query cache", "ShmSlice extractors"],
+        },
+    );
+    subsystems.insert(
+        "mesh",
+        SubsystemFeatures {
+            mode: Some(config.mesh.mode.clone()),
+            channels: Some(vec!["trigger", "data", "control"]),
+            discovery: Some(config.mesh.discovery.mode.clone()),
+            framework: None,
+            orm: None,
+            enabled: None,
+            port: None,
+            playground: None,
+            pool_size: None,
+            features: vec![],
+        },
+    );
 
     VilResponse::ok(StackInfoResponse {
         server: ServerSummary {
@@ -377,23 +447,74 @@ async fn full_config() -> VilResponse<FullConfigResponse> {
     VilResponse::ok(FullConfigResponse {
         description: "Full FullServerConfig from vil_server_config",
         sections: vec![
-            ConfigSection { name: "server",          controls: "Host, port, workers, timeouts, body size, graceful shutdown" },
-            ConfigSection { name: "logging",         controls: "Log level, format (text/json), per-module overrides" },
-            ConfigSection { name: "shm",             controls: "Shared memory pool, query cache, reset threshold" },
-            ConfigSection { name: "mesh",            controls: "Tri-Lane channels (trigger/data/control), discovery mode" },
-            ConfigSection { name: "services",        controls: "Service definitions with visibility (public/internal)" },
-            ConfigSection { name: "middleware",       controls: "CORS, compression, timeouts, tracing, security headers, HSTS" },
-            ConfigSection { name: "security",        controls: "JWT, rate limiting, CSRF, brute-force protection" },
-            ConfigSection { name: "session",         controls: "Session storage backend and TTL" },
-            ConfigSection { name: "observability",   controls: "Prometheus metrics, health checks, readiness probes" },
-            ConfigSection { name: "performance",     controls: "Thread pool sizing, benchmark baselines" },
-            ConfigSection { name: "grpc",            controls: "gRPC server port, health service, per-service metrics" },
-            ConfigSection { name: "graphql",         controls: "GraphQL endpoint path, playground toggle" },
-            ConfigSection { name: "feature_flags",   controls: "Hot reload, experimental feature toggles" },
-            ConfigSection { name: "scheduler",       controls: "Background job scheduling" },
-            ConfigSection { name: "plugins",         controls: "Plugin system for extensibility" },
-            ConfigSection { name: "rolling_restart",  controls: "Zero-downtime restart coordination" },
-            ConfigSection { name: "admin",           controls: "Admin dashboard and internal API" },
+            ConfigSection {
+                name: "server",
+                controls: "Host, port, workers, timeouts, body size, graceful shutdown",
+            },
+            ConfigSection {
+                name: "logging",
+                controls: "Log level, format (text/json), per-module overrides",
+            },
+            ConfigSection {
+                name: "shm",
+                controls: "Shared memory pool, query cache, reset threshold",
+            },
+            ConfigSection {
+                name: "mesh",
+                controls: "Tri-Lane channels (trigger/data/control), discovery mode",
+            },
+            ConfigSection {
+                name: "services",
+                controls: "Service definitions with visibility (public/internal)",
+            },
+            ConfigSection {
+                name: "middleware",
+                controls: "CORS, compression, timeouts, tracing, security headers, HSTS",
+            },
+            ConfigSection {
+                name: "security",
+                controls: "JWT, rate limiting, CSRF, brute-force protection",
+            },
+            ConfigSection {
+                name: "session",
+                controls: "Session storage backend and TTL",
+            },
+            ConfigSection {
+                name: "observability",
+                controls: "Prometheus metrics, health checks, readiness probes",
+            },
+            ConfigSection {
+                name: "performance",
+                controls: "Thread pool sizing, benchmark baselines",
+            },
+            ConfigSection {
+                name: "grpc",
+                controls: "gRPC server port, health service, per-service metrics",
+            },
+            ConfigSection {
+                name: "graphql",
+                controls: "GraphQL endpoint path, playground toggle",
+            },
+            ConfigSection {
+                name: "feature_flags",
+                controls: "Hot reload, experimental feature toggles",
+            },
+            ConfigSection {
+                name: "scheduler",
+                controls: "Background job scheduling",
+            },
+            ConfigSection {
+                name: "plugins",
+                controls: "Plugin system for extensibility",
+            },
+            ConfigSection {
+                name: "rolling_restart",
+                controls: "Zero-downtime restart coordination",
+            },
+            ConfigSection {
+                name: "admin",
+                controls: "Admin dashboard and internal API",
+            },
         ],
         server: ServerConfigDetail {
             name: config.server.name.clone(),
@@ -446,24 +567,133 @@ async fn sprints() -> VilResponse<SprintsResponse> {
         total_crates: 21,
         total_tests: 245,
         sprints: vec![
-            SprintInfo { id: "S1",  name: "Foundation",        modules: 3, status: "complete", description: "VilServer builder, Router, AppState, health/ready/metrics" },
-            SprintInfo { id: "S2",  name: "SHM Zero-Copy",     modules: 2, status: "complete", description: "ShmSlice, ShmContext, ShmJson, blocking_with, process isolation" },
-            SprintInfo { id: "S3",  name: "Middleware Stack",   modules: 1, status: "complete", description: "CORS, compression, timeouts, security headers, request tracking" },
-            SprintInfo { id: "S4",  name: "Auth & Security",    modules: 1, status: "complete", description: "JWT, rate limiting, CSRF, brute-force protection" },
-            SprintInfo { id: "S5",  name: "Config System",      modules: 2, status: "complete", description: "Multi-source config (YAML < ENV < CLI), profiles, FullServerConfig" },
-            SprintInfo { id: "S6",  name: "SeaORM Integration", modules: 1, status: "complete", description: "Database layer with SeaORM + SQLx, migrations" },
-            SprintInfo { id: "S7",  name: "DB Semantic Layer",  modules: 2, status: "complete", description: "VilEntity derive, DbProvider (1 vtable/~11ns), DatasourceRegistry, VilCache" },
-            SprintInfo { id: "S8",  name: "GraphQL Plugin",     modules: 1, status: "complete", description: "Auto-schema from VilEntity, CRUD resolvers, subscriptions" },
-            SprintInfo { id: "S9",  name: "Tri-Lane Mesh",      modules: 1, status: "complete", description: "Trigger/Data/Control channels, SHM discovery, unified mode" },
-            SprintInfo { id: "S10", name: "NATS + JetStream",   modules: 1, status: "complete", description: "Pub/sub, JetStream, KV Store, Tri-Lane bridge" },
-            SprintInfo { id: "S11", name: "gRPC Server",        modules: 1, status: "complete", description: "Tonic integration, health check, per-service metrics" },
-            SprintInfo { id: "S12", name: "Kafka Streams",      modules: 1, status: "complete", description: "Kafka producer/consumer, stream processing" },
-            SprintInfo { id: "S13", name: "MQTT IoT",           modules: 1, status: "complete", description: "MQTT client, IoT gateway patterns" },
-            SprintInfo { id: "S14", name: "Protobuf Codegen",   modules: 1, status: "complete", description: "Proto compilation, Rust code generation" },
-            SprintInfo { id: "S15", name: "Templates & CLI",    modules: 1, status: "complete", description: "12 project templates, vil-cli init command" },
-            SprintInfo { id: "S16", name: "Observability",      modules: 1, status: "complete", description: "Prometheus metrics, distributed tracing, W3C propagation" },
-            SprintInfo { id: "S17", name: "Performance",        modules: 0, status: "complete", description: "Thread pool tuning, benchmarks, zero regression" },
-            SprintInfo { id: "S18", name: "Examples & Docs",    modules: 0, status: "complete", description: "20+ examples, comprehensive documentation" },
+            SprintInfo {
+                id: "S1",
+                name: "Foundation",
+                modules: 3,
+                status: "complete",
+                description: "VilServer builder, Router, AppState, health/ready/metrics",
+            },
+            SprintInfo {
+                id: "S2",
+                name: "SHM Zero-Copy",
+                modules: 2,
+                status: "complete",
+                description: "ShmSlice, ShmContext, ShmJson, blocking_with, process isolation",
+            },
+            SprintInfo {
+                id: "S3",
+                name: "Middleware Stack",
+                modules: 1,
+                status: "complete",
+                description: "CORS, compression, timeouts, security headers, request tracking",
+            },
+            SprintInfo {
+                id: "S4",
+                name: "Auth & Security",
+                modules: 1,
+                status: "complete",
+                description: "JWT, rate limiting, CSRF, brute-force protection",
+            },
+            SprintInfo {
+                id: "S5",
+                name: "Config System",
+                modules: 2,
+                status: "complete",
+                description: "Multi-source config (YAML < ENV < CLI), profiles, FullServerConfig",
+            },
+            SprintInfo {
+                id: "S6",
+                name: "SeaORM Integration",
+                modules: 1,
+                status: "complete",
+                description: "Database layer with SeaORM + SQLx, migrations",
+            },
+            SprintInfo {
+                id: "S7",
+                name: "DB Semantic Layer",
+                modules: 2,
+                status: "complete",
+                description:
+                    "VilEntity derive, DbProvider (1 vtable/~11ns), DatasourceRegistry, VilCache",
+            },
+            SprintInfo {
+                id: "S8",
+                name: "GraphQL Plugin",
+                modules: 1,
+                status: "complete",
+                description: "Auto-schema from VilEntity, CRUD resolvers, subscriptions",
+            },
+            SprintInfo {
+                id: "S9",
+                name: "Tri-Lane Mesh",
+                modules: 1,
+                status: "complete",
+                description: "Trigger/Data/Control channels, SHM discovery, unified mode",
+            },
+            SprintInfo {
+                id: "S10",
+                name: "NATS + JetStream",
+                modules: 1,
+                status: "complete",
+                description: "Pub/sub, JetStream, KV Store, Tri-Lane bridge",
+            },
+            SprintInfo {
+                id: "S11",
+                name: "gRPC Server",
+                modules: 1,
+                status: "complete",
+                description: "Tonic integration, health check, per-service metrics",
+            },
+            SprintInfo {
+                id: "S12",
+                name: "Kafka Streams",
+                modules: 1,
+                status: "complete",
+                description: "Kafka producer/consumer, stream processing",
+            },
+            SprintInfo {
+                id: "S13",
+                name: "MQTT IoT",
+                modules: 1,
+                status: "complete",
+                description: "MQTT client, IoT gateway patterns",
+            },
+            SprintInfo {
+                id: "S14",
+                name: "Protobuf Codegen",
+                modules: 1,
+                status: "complete",
+                description: "Proto compilation, Rust code generation",
+            },
+            SprintInfo {
+                id: "S15",
+                name: "Templates & CLI",
+                modules: 1,
+                status: "complete",
+                description: "12 project templates, vil-cli init command",
+            },
+            SprintInfo {
+                id: "S16",
+                name: "Observability",
+                modules: 1,
+                status: "complete",
+                description: "Prometheus metrics, distributed tracing, W3C propagation",
+            },
+            SprintInfo {
+                id: "S17",
+                name: "Performance",
+                modules: 0,
+                status: "complete",
+                description: "Thread pool tuning, benchmarks, zero regression",
+            },
+            SprintInfo {
+                id: "S18",
+                name: "Examples & Docs",
+                modules: 0,
+                status: "complete",
+                description: "20+ examples, comprehensive documentation",
+            },
         ],
     })
 }
@@ -484,8 +714,11 @@ async fn middleware_info() -> VilResponse<MiddlewareInfoResponse> {
                 name: "RequestTracker",
                 enabled: config.middleware.request_tracker.enabled,
                 description: "Assigns unique request IDs (X-Request-Id), tracks timing",
-                sample_rate: None, propagation: None, mode: None,
-                min_body_size: None, duration_secs: None,
+                sample_rate: None,
+                propagation: None,
+                mode: None,
+                min_body_size: None,
+                duration_secs: None,
             },
             MiddlewareLayer {
                 layer: 2,
@@ -493,7 +726,10 @@ async fn middleware_info() -> VilResponse<MiddlewareInfoResponse> {
                 enabled: config.middleware.handler_metrics.enabled,
                 description: "Per-handler Prometheus metrics with configurable sampling",
                 sample_rate: Some(config.middleware.handler_metrics.sample_rate),
-                propagation: None, mode: None, min_body_size: None, duration_secs: None,
+                propagation: None,
+                mode: None,
+                min_body_size: None,
+                duration_secs: None,
             },
             MiddlewareLayer {
                 layer: 3,
@@ -501,7 +737,10 @@ async fn middleware_info() -> VilResponse<MiddlewareInfoResponse> {
                 enabled: config.middleware.tracing.enabled,
                 description: "Distributed tracing with context propagation",
                 propagation: Some(config.middleware.tracing.propagation.clone()),
-                sample_rate: None, mode: None, min_body_size: None, duration_secs: None,
+                sample_rate: None,
+                mode: None,
+                min_body_size: None,
+                duration_secs: None,
             },
             MiddlewareLayer {
                 layer: 4,
@@ -509,7 +748,10 @@ async fn middleware_info() -> VilResponse<MiddlewareInfoResponse> {
                 enabled: config.middleware.cors.enabled,
                 description: "Cross-Origin Resource Sharing",
                 mode: Some(config.middleware.cors.mode.clone()),
-                sample_rate: None, propagation: None, min_body_size: None, duration_secs: None,
+                sample_rate: None,
+                propagation: None,
+                min_body_size: None,
+                duration_secs: None,
             },
             MiddlewareLayer {
                 layer: 5,
@@ -517,7 +759,10 @@ async fn middleware_info() -> VilResponse<MiddlewareInfoResponse> {
                 enabled: config.middleware.compression.enabled,
                 description: "Response compression (gzip/deflate/br)",
                 min_body_size: Some(config.middleware.compression.min_body_size),
-                sample_rate: None, propagation: None, mode: None, duration_secs: None,
+                sample_rate: None,
+                propagation: None,
+                mode: None,
+                duration_secs: None,
             },
             MiddlewareLayer {
                 layer: 6,
@@ -525,30 +770,51 @@ async fn middleware_info() -> VilResponse<MiddlewareInfoResponse> {
                 enabled: config.middleware.timeout.enabled,
                 description: "Request timeout enforcement",
                 duration_secs: Some(config.middleware.timeout.duration_secs),
-                sample_rate: None, propagation: None, mode: None, min_body_size: None,
+                sample_rate: None,
+                propagation: None,
+                mode: None,
+                min_body_size: None,
             },
             MiddlewareLayer {
                 layer: 7,
                 name: "SecurityHeaders",
                 enabled: config.middleware.security_headers.enabled,
                 description: "X-Content-Type-Options, X-Frame-Options, X-XSS-Protection",
-                sample_rate: None, propagation: None, mode: None,
-                min_body_size: None, duration_secs: None,
+                sample_rate: None,
+                propagation: None,
+                mode: None,
+                min_body_size: None,
+                duration_secs: None,
             },
             MiddlewareLayer {
                 layer: 8,
                 name: "HSTS",
                 enabled: config.middleware.hsts.enabled,
                 description: "HTTP Strict Transport Security header",
-                sample_rate: None, propagation: None, mode: None,
-                min_body_size: None, duration_secs: None,
+                sample_rate: None,
+                propagation: None,
+                mode: None,
+                min_body_size: None,
+                duration_secs: None,
             },
         ],
         security_middleware: vec![
-            SecurityMiddleware { name: "JWT Auth",           enabled: config.security.jwt.enabled },
-            SecurityMiddleware { name: "Rate Limiter",       enabled: config.security.rate_limit.enabled },
-            SecurityMiddleware { name: "CSRF Protection",    enabled: config.security.csrf.enabled },
-            SecurityMiddleware { name: "Brute-Force Guard",  enabled: config.security.brute_force.enabled },
+            SecurityMiddleware {
+                name: "JWT Auth",
+                enabled: config.security.jwt.enabled,
+            },
+            SecurityMiddleware {
+                name: "Rate Limiter",
+                enabled: config.security.rate_limit.enabled,
+            },
+            SecurityMiddleware {
+                name: "CSRF Protection",
+                enabled: config.security.csrf.enabled,
+            },
+            SecurityMiddleware {
+                name: "Brute-Force Guard",
+                enabled: config.security.brute_force.enabled,
+            },
         ],
     })
 }
@@ -564,9 +830,9 @@ async fn main() {
     // restricted to cluster-internal traffic (different network policy).
     let public_api = ServiceProcess::new("fullstack")
         .prefix("/api")
-        .endpoint(Method::GET, "/stack",      get(stack_info))
-        .endpoint(Method::GET, "/config",     get(full_config))
-        .endpoint(Method::GET, "/sprints",    get(sprints))
+        .endpoint(Method::GET, "/stack", get(stack_info))
+        .endpoint(Method::GET, "/config", get(full_config))
+        .endpoint(Method::GET, "/sprints", get(sprints))
         .endpoint(Method::GET, "/middleware", get(middleware_info));
 
     // Internal admin: restricted to cluster-internal traffic only.
@@ -579,8 +845,7 @@ async fn main() {
     // ── Step 3: Assemble into VilApp and run ───────────────────────
     VilApp::new("production-fullstack")
         .port(8080)
-        .service(ServiceProcess::new("root")
-            .endpoint(Method::GET, "/", get(index)))
+        .service(ServiceProcess::new("root").endpoint(Method::GET, "/", get(index)))
         .service(public_api)
         .service(internal_admin)
         .run()

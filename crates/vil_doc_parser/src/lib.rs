@@ -15,26 +15,26 @@
 //!
 //! All parsers implement the [`DocParser`] trait.
 
-pub mod parser;
-pub mod markdown;
-pub mod html;
-pub mod plain;
 pub mod csv_parser;
+pub mod html;
+pub mod markdown;
+pub mod parser;
+pub mod plain;
 
-pub use parser::{DocParser, DocMetadata, DocSection, ParsedDoc, ParseError, SectionType};
-pub use markdown::MarkdownParser;
-pub use html::HtmlParser;
-pub use plain::PlainTextParser;
 pub use csv_parser::CsvParser;
+pub use html::HtmlParser;
+pub use markdown::MarkdownParser;
+pub use parser::{DocMetadata, DocParser, DocSection, ParseError, ParsedDoc, SectionType};
+pub use plain::PlainTextParser;
 
 // VIL integration layer
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::DocParserPlugin;
-pub use semantic::{ParseEvent, ParseFault, DocParserState};
+pub use semantic::{DocParserState, ParseEvent, ParseFault};
 
 /// Auto-detect parser based on file extension and parse the content.
 pub fn auto_parse(content: &[u8], file_type: &str) -> Result<ParsedDoc, ParseError> {

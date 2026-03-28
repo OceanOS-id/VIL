@@ -78,11 +78,14 @@ impl PluginRegistry {
             use vil_log::app_log;
             app_log!(Info, "plugin.registered", { plugin: name.as_str(), routes: manifest.routes.len() as u64 });
         }
-        self.plugins.insert(name, PluginInfo {
-            manifest,
-            status: PluginStatus::Active,
-            load_path: load_path.to_string(),
-        });
+        self.plugins.insert(
+            name,
+            PluginInfo {
+                manifest,
+                status: PluginStatus::Active,
+                load_path: load_path.to_string(),
+            },
+        );
     }
 
     /// Unregister a plugin.
@@ -103,13 +106,16 @@ impl PluginRegistry {
 
     /// List all registered plugins.
     pub fn list(&self) -> Vec<PluginSummary> {
-        self.plugins.iter().map(|(name, info)| PluginSummary {
-            name: name.clone(),
-            version: info.manifest.version.clone(),
-            description: info.manifest.description.clone(),
-            routes: info.manifest.routes.len(),
-            status: info.status.clone(),
-        }).collect()
+        self.plugins
+            .iter()
+            .map(|(name, info)| PluginSummary {
+                name: name.clone(),
+                version: info.manifest.version.clone(),
+                description: info.manifest.description.clone(),
+                routes: info.manifest.routes.len(),
+                status: info.status.clone(),
+            })
+            .collect()
     }
 
     /// Get plugin count.

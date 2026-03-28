@@ -18,9 +18,9 @@ use axum::middleware as axum_mw;
 use axum::Router;
 use std::time::Duration;
 
+use tower_http::compression::CompressionLayer;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tower_http::compression::CompressionLayer;
 
 use crate::state::AppState;
 use crate::timeout::TimeoutLayer;
@@ -45,8 +45,8 @@ impl MiddlewareStack {
         Self {
             timeout: None,
             compression: false,
-            cors: true,         // enabled by default
-            tracing: true,      // enabled by default
+            cors: true,    // enabled by default
+            tracing: true, // enabled by default
             security_headers: false,
             request_logging: false,
             handler_metrics: true, // enabled by default

@@ -19,10 +19,7 @@ pub enum ServingEvent {
     /// A variant was rolled back and removed.
     VariantRolledBack { variant_name: String },
     /// A quality score was recorded.
-    QualityRecorded {
-        variant_name: String,
-        score: f64,
-    },
+    QualityRecorded { variant_name: String, score: f64 },
     /// The auto-promote policy was applied.
     PolicyApplied { action: String },
 }

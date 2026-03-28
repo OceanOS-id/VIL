@@ -87,11 +87,7 @@ impl RealtimeRagPipeline {
     /// If the query string is found in the cache, uses the cached embedding.
     /// Otherwise, uses `fallback_embedding` and stores it in the cache for
     /// future lookups.
-    pub fn query_cached(
-        &self,
-        query: &str,
-        fallback_embedding: &[f32],
-    ) -> RealtimeQueryResult {
+    pub fn query_cached(&self, query: &str, fallback_embedding: &[f32]) -> RealtimeQueryResult {
         let (embedding, from_cache) = if let Some(cached) = self.query_cache.get(query) {
             (cached, true)
         } else {

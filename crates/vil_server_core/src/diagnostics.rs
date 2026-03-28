@@ -84,14 +84,19 @@ async fn errors_handler(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 async fn shm_handler(State(state): State<AppState>) -> impl IntoResponse {
-    let stats: Vec<serde_json::Value> = state.shm().all_stats().iter().map(|s| {
-        serde_json::json!({
-            "capacity": s.capacity,
-            "used": s.used,
-            "remaining": s.remaining,
-            "utilization_pct": if s.capacity > 0 { s.used * 100 / s.capacity } else { 0 },
+    let stats: Vec<serde_json::Value> = state
+        .shm()
+        .all_stats()
+        .iter()
+        .map(|s| {
+            serde_json::json!({
+                "capacity": s.capacity,
+                "used": s.used,
+                "remaining": s.remaining,
+                "utilization_pct": if s.capacity > 0 { s.used * 100 / s.capacity } else { 0 },
+            })
         })
-    }).collect();
+        .collect();
 
     axum::Json(serde_json::json!({
         "region_count": state.shm().region_count(),

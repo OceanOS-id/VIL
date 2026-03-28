@@ -85,7 +85,11 @@ pub async fn tracing_middleware(
     let response = next.run(request).await;
 
     let status_code = response.status().as_u16();
-    let span_status = if status_code >= 500 { SpanStatus::Error } else { SpanStatus::Ok };
+    let span_status = if status_code >= 500 {
+        SpanStatus::Error
+    } else {
+        SpanStatus::Ok
+    };
 
     // Finish span (optimized: use stack-allocated status string)
     let mut status_buf = itoa::Buffer::new();

@@ -120,8 +120,7 @@ fn configure_credit_ingest() -> HttpSourceBuilder {
 // ── Main ────────────────────────────────────────────────────────────────
 
 fn main() {
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     let gateway = configure_gateway();
     let ingest = configure_credit_ingest();

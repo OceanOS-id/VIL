@@ -5,9 +5,9 @@
 //! 2. Pending IngressBridge requests → responded with 503
 //! 3. Stale tokens cleaned up periodically
 
-use std::sync::Arc;
-use super::kernel::VxKernel;
 use super::ingress::IngressBridge;
+use super::kernel::VxKernel;
+use std::sync::Arc;
 
 /// Cleanup configuration
 pub struct CleanupConfig {
@@ -22,9 +22,9 @@ pub struct CleanupConfig {
 impl Default for CleanupConfig {
     fn default() -> Self {
         Self {
-            max_token_age_ns: 60_000_000_000,      // 60 seconds
-            orphan_timeout_ns: 30_000_000_000,      // 30 seconds
-            interval_ms: 5_000,                      // 5 seconds
+            max_token_age_ns: 60_000_000_000,  // 60 seconds
+            orphan_timeout_ns: 30_000_000_000, // 30 seconds
+            interval_ms: 5_000,                // 5 seconds
         }
     }
 }
@@ -53,7 +53,11 @@ pub fn cleanup_kernel(kernel: &VxKernel, config: &CleanupConfig) -> CleanupRepor
     // we track orphan detection via the in-flight count vs ready count
     let in_flight = kernel.in_flight();
     let ready = kernel.ready_count();
-    let stuck = if in_flight > ready { in_flight - ready } else { 0 };
+    let stuck = if in_flight > ready {
+        in_flight - ready
+    } else {
+        0
+    };
 
     if stuck > 0 {
         {
@@ -94,9 +98,8 @@ pub fn spawn_cleanup_task(
     config: CleanupConfig,
 ) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(
-            std::time::Duration::from_millis(config.interval_ms)
-        );
+        let mut interval =
+            tokio::time::interval(std::time::Duration::from_millis(config.interval_ms));
 
         loop {
             interval.tick().await;
@@ -137,11 +140,14 @@ mod tests {
         kernel.dequeue_ready();
         kernel.complete(1);
         // Cleanup with 0 max age (remove all completed immediately)
-        let report = cleanup_kernel(&kernel, &CleanupConfig {
-            max_token_age_ns: 0,
-            orphan_timeout_ns: 0,
-            interval_ms: 1000,
-        });
+        let report = cleanup_kernel(
+            &kernel,
+            &CleanupConfig {
+                max_token_age_ns: 0,
+                orphan_timeout_ns: 0,
+                interval_ms: 1000,
+            },
+        );
         assert_eq!(report.stale_removed, 1);
     }
 

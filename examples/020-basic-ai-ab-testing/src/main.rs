@@ -47,10 +47,10 @@
 //     -H 'Content-Type: application/json' \
 //     -d '{"model_a_pct": 90}'
 
-use vil_server::prelude::*;
-use vil_server::axum::extract::Extension;
 use std::sync::atomic::{AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
+use vil_server::axum::extract::Extension;
+use vil_server::prelude::*;
 
 // ── Semantic Types ───────────────────────────────────────────────────────
 
@@ -135,7 +135,7 @@ struct ConfigResult {
 // AtomicU8 for traffic split allows real-time adjustment without restart.
 
 struct AbState {
-    model_a_pct: AtomicU8,   // Traffic percentage for model A (0-100)
+    model_a_pct: AtomicU8, // Traffic percentage for model A (0-100)
     total: AtomicU64,
     model_a_count: AtomicU64,
     model_b_count: AtomicU64,
@@ -143,7 +143,7 @@ struct AbState {
     model_b_errors: AtomicU64,
     model_a_latency_sum: AtomicU64,
     model_b_latency_sum: AtomicU64,
-    counter: AtomicU64,      // Request counter for round-robin seed
+    counter: AtomicU64, // Request counter for round-robin seed
 }
 
 impl AbState {
@@ -172,9 +172,7 @@ impl AbState {
 
 // ── Handlers ─────────────────────────────────────────────────────────────
 
-async fn index(
-    ctx: ServiceCtx,
-) -> VilResponse<GatewayInfo> {
+async fn index(ctx: ServiceCtx) -> VilResponse<GatewayInfo> {
     let state = ctx.state::<Arc<AbState>>().expect("AbState");
     let pct_a = state.model_a_pct.load(Ordering::Relaxed);
     VilResponse::ok(GatewayInfo {
@@ -193,10 +191,7 @@ async fn index(
     })
 }
 
-async fn infer(
-    ctx: ServiceCtx,
-    body: ShmSlice,
-) -> VilResponse<InferResponse> {
+async fn infer(ctx: ServiceCtx, body: ShmSlice) -> VilResponse<InferResponse> {
     let req: InferRequest = body.json().expect("invalid JSON body");
     let state = ctx.state::<Arc<AbState>>().expect("AbState");
     let start = std::time::Instant::now();
@@ -221,9 +216,13 @@ async fn infer(
 
     let latency = start.elapsed().as_millis() as u64;
     if use_model_a {
-        state.model_a_latency_sum.fetch_add(latency, Ordering::Relaxed);
+        state
+            .model_a_latency_sum
+            .fetch_add(latency, Ordering::Relaxed);
     } else {
-        state.model_b_latency_sum.fetch_add(latency, Ordering::Relaxed);
+        state
+            .model_b_latency_sum
+            .fetch_add(latency, Ordering::Relaxed);
     }
 
     VilResponse::ok(InferResponse {
@@ -236,9 +235,7 @@ async fn infer(
     })
 }
 
-async fn metrics(
-    ctx: ServiceCtx,
-) -> VilResponse<AbMetrics> {
+async fn metrics(ctx: ServiceCtx) -> VilResponse<AbMetrics> {
     let state = ctx.state::<Arc<AbState>>().expect("AbState");
     let pct_a = state.model_a_pct.load(Ordering::Relaxed);
     let a_count = state.model_a_count.load(Ordering::Relaxed);
@@ -278,7 +275,9 @@ async fn update_config(
     if config.model_a_pct > 100 {
         return Err(VilError::bad_request("model_a_pct must be 0-100"));
     }
-    state.model_a_pct.store(config.model_a_pct, Ordering::Relaxed);
+    state
+        .model_a_pct
+        .store(config.model_a_pct, Ordering::Relaxed);
     Ok(VilResponse::ok(ConfigResult {
         model_a_pct: config.model_a_pct,
         model_b_pct: 100 - config.model_a_pct,

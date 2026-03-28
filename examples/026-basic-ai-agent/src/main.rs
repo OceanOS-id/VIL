@@ -86,9 +86,7 @@ struct AgentResponse {
 // In production, this would include actual tool execution (not just
 // LLM reasoning about tools) with a ReAct loop.
 
-async fn agent_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<AgentResponse>> {
+async fn agent_handler(body: ShmSlice) -> HandlerResult<VilResponse<AgentResponse>> {
     let req: AgentRequest = body.json().expect("invalid JSON body");
 
     // Build the agent system prompt with available IT diagnostic tools.
@@ -98,7 +96,8 @@ async fn agent_handler(
         "You are an AI agent with access to the following tools:\n\n{}\n\n\
          When the user asks a question, decide which tool to use, execute it, \
          and provide the final answer. Show your reasoning step by step.",
-        TOOLS.iter()
+        TOOLS
+            .iter()
             .map(|t| format!("- {}", t))
             .collect::<Vec<_>>()
             .join("\n")
@@ -127,7 +126,9 @@ async fn agent_handler(
         collector = collector.bearer_token(&api_key);
     }
 
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Semantic audit: record the agent completion event for IT metrics.
@@ -164,7 +165,14 @@ async fn main() {
     println!("======================================================================");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode (no auth)" } else { "OPENAI_API_KEY (Bearer)" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode (no auth)"
+        } else {
+            "OPENAI_API_KEY (Bearer)"
+        }
+    );
     println!("  Listening on http://localhost:3092/api/agent");
     println!("  Upstream: {} (stream: true)", UPSTREAM_URL);
     println!();
@@ -173,15 +181,11 @@ async fn main() {
     // Semantic types enable automatic tracking of agent performance,
     // tool usage, and fault rates for IT operations dashboards.
     let svc = ServiceProcess::new("agent")
-        .emits::<AgentCompletionEvent>()    // Data lane: completion metrics
-        .faults::<AgentFault>()             // Fault lane: tool/LLM failures
-        .manages::<AgentMemoryState>()      // Control lane: conversation memory
+        .emits::<AgentCompletionEvent>() // Data lane: completion metrics
+        .faults::<AgentFault>() // Fault lane: tool/LLM failures
+        .manages::<AgentMemoryState>() // Control lane: conversation memory
         .prefix("/api")
         .endpoint(Method::POST, "/agent", post(agent_handler));
 
-    VilApp::new("ai-agent")
-        .port(3092)
-        .service(svc)
-        .run()
-        .await;
+    VilApp::new("ai-agent").port(3092).service(svc).run().await;
 }

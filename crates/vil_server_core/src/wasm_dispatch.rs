@@ -53,7 +53,8 @@ pub async fn dispatch_to_wasm(
                     "error": format!("WASM handler '{}' not loaded", handler_name),
                     "available": registry.loaded_handlers(),
                 })),
-            ).into_response();
+            )
+                .into_response();
         }
     };
 
@@ -75,7 +76,8 @@ pub async fn dispatch_to_wasm(
                 axum::Json(serde_json::json!({
                     "error": format!("Failed to serialize context: {}", e),
                 })),
-            ).into_response();
+            )
+                .into_response();
         }
     };
 

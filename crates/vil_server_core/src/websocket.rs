@@ -59,7 +59,11 @@ async fn echo_socket(mut socket: WebSocket) {
     while let Some(Ok(msg)) = socket.recv().await {
         match msg {
             Message::Text(text) => {
-                if socket.send(Message::Text(format!("echo: {}", text))).await.is_err() {
+                if socket
+                    .send(Message::Text(format!("echo: {}", text)))
+                    .await
+                    .is_err()
+                {
                     break;
                 }
             }

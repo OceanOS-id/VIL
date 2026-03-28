@@ -1,9 +1,9 @@
 //! VIL pattern HTTP handlers for the LLM proxy plugin.
-use vil_server::prelude::*;
+use crate::metrics::ProxyMetrics;
+use crate::proxy::LlmProxy;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use crate::proxy::LlmProxy;
-use crate::metrics::ProxyMetrics;
+use vil_server::prelude::*;
 
 /// Combined service state for the LLM proxy (proxy + metrics).
 pub struct LlmProxyState {
@@ -18,7 +18,9 @@ pub struct ProxyChatRequest {
     pub api_key: String,
 }
 
-fn default_api_key() -> String { "default".into() }
+fn default_api_key() -> String {
+    "default".into()
+}
 
 #[derive(Debug, Serialize)]
 pub struct ProxyChatResponse {
@@ -39,11 +41,14 @@ pub async fn proxy_chat_handler(
 ) -> HandlerResult<VilResponse<ProxyChatResponse>> {
     let state = ctx.state::<LlmProxyState>()?;
     let proxy = &state.proxy;
-    let req: ProxyChatRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: ProxyChatRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     if req.messages.is_empty() {
         return Err(VilError::bad_request("messages must not be empty"));
     }
-    let result = proxy.chat(&req.api_key, &req.messages)
+    let result = proxy
+        .chat(&req.api_key, &req.messages)
         .await
         .map_err(|e| VilError::internal(e.to_string()))?;
     Ok(VilResponse::ok(ProxyChatResponse {
@@ -52,9 +57,7 @@ pub async fn proxy_chat_handler(
     }))
 }
 
-pub async fn proxy_stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<ProxyStatsResponse> {
+pub async fn proxy_stats_handler(ctx: ServiceCtx) -> VilResponse<ProxyStatsResponse> {
     let state = ctx.state::<LlmProxyState>().expect("LlmProxyState");
     let snap = state.metrics.snapshot();
     VilResponse::ok(ProxyStatsResponse {

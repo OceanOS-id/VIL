@@ -16,7 +16,7 @@ use std::sync::Arc;
 use dashmap::DashMap;
 use vil_shm::ExchangeHeap;
 
-use crate::shm_bridge::{ShmMeshChannel, ShmMeshReceiver, ShmChannelError};
+use crate::shm_bridge::{ShmChannelError, ShmMeshChannel, ShmMeshReceiver};
 use crate::{Lane, MeshConfig};
 
 /// A set of three separated channels for one service pair.
@@ -136,7 +136,9 @@ impl TriLaneRouter {
         data: &[u8],
     ) -> Result<usize, ShmChannelError> {
         let key = route_key(from, to);
-        let channels = self.senders.get(&key)
+        let channels = self
+            .senders
+            .get(&key)
             .ok_or(ShmChannelError::ChannelClosed)?;
 
         match lane {
@@ -179,7 +181,7 @@ impl TriLaneRouter {
 // TCP Tri-Lane Transport (production-grade, cross-host)
 // =============================================================================
 
-pub use crate::tcp_transport::{TcpTriLaneRouter, TcpTriLaneSender, TcpLaneError};
+pub use crate::tcp_transport::{TcpLaneError, TcpTriLaneRouter, TcpTriLaneSender};
 
 // =============================================================================
 // Unified Transport — auto-selects SHM or TCP
@@ -219,14 +221,14 @@ impl Transport {
         data: &[u8],
     ) -> Result<usize, String> {
         match self {
-            Transport::Shm(router) => {
-                router.send(from, to, lane, data).await
-                    .map_err(|e| e.to_string())
-            }
-            Transport::Tcp(router) => {
-                router.send(from, to, lane, data).await
-                    .map_err(|e| e.to_string())
-            }
+            Transport::Shm(router) => router
+                .send(from, to, lane, data)
+                .await
+                .map_err(|e| e.to_string()),
+            Transport::Tcp(router) => router
+                .send(from, to, lane, data)
+                .await
+                .map_err(|e| e.to_string()),
         }
     }
 }

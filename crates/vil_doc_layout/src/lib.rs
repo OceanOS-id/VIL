@@ -19,10 +19,10 @@ pub use analyzer::LayoutAnalyzer;
 pub use element::{DocSection, LayoutElement, LayoutRegion};
 
 // VIL integration layer
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::DocLayoutPlugin;
-pub use semantic::{LayoutAnalyzeEvent, LayoutFault, DocLayoutState};
+pub use semantic::{DocLayoutState, LayoutAnalyzeEvent, LayoutFault};

@@ -29,7 +29,8 @@ impl PreferenceDataset {
         chosen: impl Into<String>,
         rejected: impl Into<String>,
     ) {
-        self.pairs.push(PreferencePair::new(prompt, chosen, rejected));
+        self.pairs
+            .push(PreferencePair::new(prompt, chosen, rejected));
     }
 
     /// Add a pre-constructed pair.

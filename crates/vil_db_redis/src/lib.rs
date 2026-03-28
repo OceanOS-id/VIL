@@ -11,10 +11,10 @@
 // This crate uses real Redis connections via the `redis` crate
 // with ConnectionManager for automatic reconnection.
 
-pub mod pool;
 pub mod cache;
 pub mod config;
+pub mod pool;
 
-pub use pool::RedisPool;
 pub use cache::RedisCache;
 pub use config::RedisConfig;
+pub use pool::RedisPool;

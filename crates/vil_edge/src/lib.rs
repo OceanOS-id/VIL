@@ -12,10 +12,10 @@ pub use model::{EdgeModel, ModelFormat, Quantization};
 pub use runtime::{EdgeError, EdgeRuntime};
 
 // VIL integration layer
-pub mod vil_semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod vil_semantic;
 
 pub use plugin::EdgePlugin;
 pub use vil_semantic::{EdgeEvent, EdgeFault, EdgeState};
@@ -131,8 +131,18 @@ mod tests {
             max_model_size_mb: 60,
             target_arch: TargetArch::Aarch64,
         });
-        let m1 = EdgeModel { name: "a".into(), format: ModelFormat::GGUF, size_mb: 50, quantization: Quantization::Int4 };
-        let m2 = EdgeModel { name: "b".into(), format: ModelFormat::GGUF, size_mb: 50, quantization: Quantization::Int4 };
+        let m1 = EdgeModel {
+            name: "a".into(),
+            format: ModelFormat::GGUF,
+            size_mb: 50,
+            quantization: Quantization::Int4,
+        };
+        let m2 = EdgeModel {
+            name: "b".into(),
+            format: ModelFormat::GGUF,
+            size_mb: 50,
+            quantization: Quantization::Int4,
+        };
         assert!(rt.register_model(m1).is_ok());
         // Second model should fail due to cumulative memory.
         assert!(!rt.can_load(&m2));

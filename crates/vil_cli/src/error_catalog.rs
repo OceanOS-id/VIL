@@ -38,7 +38,8 @@ pub fn explain(code: &str) -> Result<(), String> {
 
 fn lookup(code: &str) -> Option<(&'static str, &'static str, &'static str)> {
     let normalized = code.to_uppercase();
-    ERROR_CATALOG.iter()
+    ERROR_CATALOG
+        .iter()
         .find(|(c, _, _, _)| *c == normalized)
         .map(|(_, title, explanation, fix)| (*title, *explanation, *fix))
 }

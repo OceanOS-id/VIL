@@ -22,16 +22,18 @@
 //! # }
 //! ```
 
-pub mod extractor;
 pub mod builder;
+pub mod extractor;
+pub mod handlers;
+pub mod pipeline_sse;
+pub mod plugin;
 pub mod query;
 pub mod semantic;
-pub mod handlers;
-pub mod plugin;
-pub mod pipeline_sse;
 
-pub use extractor::{EntityExtractor, ExtractedEntity, ExtractedEntityType, KeywordEntityExtractor};
 pub use builder::GraphRagBuilder;
-pub use query::{GraphRagQuery, GraphRagResult, EntityInfo, RelationInfo};
+pub use extractor::{
+    EntityExtractor, ExtractedEntity, ExtractedEntityType, KeywordEntityExtractor,
+};
 pub use plugin::GraphRagPlugin;
+pub use query::{EntityInfo, GraphRagQuery, GraphRagResult, RelationInfo};
 pub use semantic::{GraphRagEvent, GraphRagFault, GraphRagFaultType, GraphRagState};

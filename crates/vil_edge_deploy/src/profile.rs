@@ -25,9 +25,9 @@ pub enum EdgeProfile {
 impl std::fmt::Display for EdgeProfile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            EdgeProfile::Minimal  => write!(f, "Minimal"),
+            EdgeProfile::Minimal => write!(f, "Minimal"),
             EdgeProfile::Standard => write!(f, "Standard"),
-            EdgeProfile::Full     => write!(f, "Full"),
+            EdgeProfile::Full => write!(f, "Full"),
         }
     }
 }
@@ -35,9 +35,9 @@ impl std::fmt::Display for EdgeProfile {
 /// Preset values bundled with each profile.
 #[derive(Debug, Clone, Copy)]
 pub struct ProfilePreset {
-    pub shm_size_kb:       u32,
-    pub max_processes:     u16,
-    pub scheduler_mode:    SchedulerMode,
+    pub shm_size_kb: u32,
+    pub max_processes: u16,
+    pub scheduler_mode: SchedulerMode,
     pub offline_buffer_kb: u32,
 }
 
@@ -46,21 +46,21 @@ impl EdgeProfile {
     pub fn preset(self) -> ProfilePreset {
         match self {
             EdgeProfile::Minimal => ProfilePreset {
-                shm_size_kb:       4_096,   // 4 MB
-                max_processes:     16,
-                scheduler_mode:    SchedulerMode::SingleCore,
+                shm_size_kb: 4_096, // 4 MB
+                max_processes: 16,
+                scheduler_mode: SchedulerMode::SingleCore,
                 offline_buffer_kb: 512,
             },
             EdgeProfile::Standard => ProfilePreset {
-                shm_size_kb:       65_536,  // 64 MB
-                max_processes:     64,
-                scheduler_mode:    SchedulerMode::MultiCore,
+                shm_size_kb: 65_536, // 64 MB
+                max_processes: 64,
+                scheduler_mode: SchedulerMode::MultiCore,
                 offline_buffer_kb: 8_192,
             },
             EdgeProfile::Full => ProfilePreset {
-                shm_size_kb:       262_144, // 256 MB
-                max_processes:     256,
-                scheduler_mode:    SchedulerMode::MultiCore,
+                shm_size_kb: 262_144, // 256 MB
+                max_processes: 256,
+                scheduler_mode: SchedulerMode::MultiCore,
                 offline_buffer_kb: 32_768,
             },
         }

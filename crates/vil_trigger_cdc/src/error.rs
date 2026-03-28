@@ -57,13 +57,13 @@ impl CdcFault {
     /// Return a stable numeric error code for log fields.
     pub fn as_error_code(&self) -> u32 {
         match self {
-            CdcFault::ConnectionFailed { .. }        => 1,
-            CdcFault::ReplicationStartFailed { .. }  => 2,
-            CdcFault::UnknownMessage { .. }          => 3,
-            CdcFault::SlotNotFound { .. }            => 4,
-            CdcFault::PublicationNotFound { .. }     => 5,
-            CdcFault::StreamClosed { .. }            => 6,
-            CdcFault::KeepaliveFailed { .. }         => 7,
+            CdcFault::ConnectionFailed { .. } => 1,
+            CdcFault::ReplicationStartFailed { .. } => 2,
+            CdcFault::UnknownMessage { .. } => 3,
+            CdcFault::SlotNotFound { .. } => 4,
+            CdcFault::PublicationNotFound { .. } => 5,
+            CdcFault::StreamClosed { .. } => 6,
+            CdcFault::KeepaliveFailed { .. } => 7,
         }
     }
 }

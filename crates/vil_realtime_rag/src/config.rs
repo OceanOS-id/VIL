@@ -18,8 +18,7 @@ impl Default for RealtimeRagConfig {
             top_k: 5,
             cache_size: 10_000,
             context_template:
-                "Context:\n{chunks}\n\nAnswer the question based on the context above."
-                    .into(),
+                "Context:\n{chunks}\n\nAnswer the question based on the context above.".into(),
         }
     }
 }

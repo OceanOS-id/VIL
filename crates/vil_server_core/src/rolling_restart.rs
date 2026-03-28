@@ -52,7 +52,13 @@ impl RestartCoordinator {
         self.draining.store(true, Ordering::Relaxed);
         {
             use vil_log::{system_log, types::SystemPayload};
-            system_log!(Info, SystemPayload { event_type: 5, ..Default::default() });
+            system_log!(
+                Info,
+                SystemPayload {
+                    event_type: 5,
+                    ..Default::default()
+                }
+            );
         }
     }
 

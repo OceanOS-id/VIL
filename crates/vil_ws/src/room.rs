@@ -8,8 +8,8 @@
 // =============================================================================
 
 use dashmap::DashMap;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use tokio::sync::mpsc;
 
 use crate::error::WsFault;
@@ -83,7 +83,10 @@ impl RoomManager {
     /// (disconnected client) and the faulty count is returned in the Err.
     pub fn broadcast_room(&self, room: &str, msg: &[u8]) -> Result<u32, WsFault> {
         let room_hash = register_str(room);
-        let members = self.rooms.get(&room_hash).ok_or(WsFault::RoomNotFound { room_hash })?;
+        let members = self
+            .rooms
+            .get(&room_hash)
+            .ok_or(WsFault::RoomNotFound { room_hash })?;
 
         let mut sent = 0u32;
         let mut failed = 0u32;
@@ -98,7 +101,10 @@ impl RoomManager {
         }
 
         if failed > 0 {
-            Err(WsFault::BroadcastPartialFail { room_hash, failed_count: failed })
+            Err(WsFault::BroadcastPartialFail {
+                room_hash,
+                failed_count: failed,
+            })
         } else {
             Ok(sent)
         }

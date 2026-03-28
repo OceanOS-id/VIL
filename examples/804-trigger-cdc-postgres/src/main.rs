@@ -28,17 +28,16 @@
 // Without Docker, this example documents the setup and exits gracefully.
 // =============================================================================
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 
 use vil_log::drain::{StdoutDrain, StdoutFormat};
 use vil_log::runtime::init_logging;
 use vil_log::{LogConfig, LogLevel};
-use vil_trigger_cdc::{CdcConfig, process::create_trigger};
+use vil_trigger_cdc::{process::create_trigger, CdcConfig};
 use vil_trigger_core::{EventCallback, TriggerEvent, TriggerSource};
 
-const CONN_STRING: &str =
-    "host=localhost port=5432 dbname=vildb user=postgres password=secret";
+const CONN_STRING: &str = "host=localhost port=5432 dbname=vildb user=postgres password=secret";
 const SLOT_NAME: &str = "vil_cdc_slot";
 const PUBLICATION: &str = "vil_pub";
 
@@ -46,11 +45,11 @@ const PUBLICATION: &str = "vil_pub";
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let log_config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -90,10 +89,9 @@ async fn main() {
 
     let on_event: EventCallback = Arc::new(move |event: TriggerEvent| {
         let n = event_count_cb.fetch_add(1, Ordering::Relaxed) + 1;
-        println!("  CDC ROW #{n}  seq={}  source_hash={:#010x}  payload_bytes={}",
-            event.sequence,
-            event.source_hash,
-            event.payload_bytes,
+        println!(
+            "  CDC ROW #{n}  seq={}  source_hash={:#010x}  payload_bytes={}",
+            event.sequence, event.source_hash, event.payload_bytes,
         );
     });
 

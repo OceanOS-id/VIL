@@ -50,7 +50,8 @@ impl ToxicityChecker {
 
     /// Add a word with its toxicity weight (0.0 - 1.0).
     pub fn add_word(&mut self, word: &str, weight: f32) {
-        self.words.push((word.to_lowercase(), weight.clamp(0.0, 1.0)));
+        self.words
+            .push((word.to_lowercase(), weight.clamp(0.0, 1.0)));
         self.rebuild_automaton();
     }
 
@@ -91,7 +92,8 @@ impl ToxicityChecker {
         // Normalize: average weight, clamped to [0, 1]
         // More matches increase the score
         let avg = total_weight / match_count as f32;
-        let density = (match_count as f32 / (text.split_whitespace().count().max(1) as f32)).min(1.0);
+        let density =
+            (match_count as f32 / (text.split_whitespace().count().max(1) as f32)).min(1.0);
         (avg * 0.7 + density * 0.3).clamp(0.0, 1.0)
     }
 }

@@ -97,13 +97,41 @@ async fn menu() -> VilResponse<MenuResponse> {
     VilResponse::ok(MenuResponse {
         restaurant: "Trattoria VIL — Italian Kitchen",
         items: vec![
-            MenuItem { name: "Bruschetta", price_cents: 899, category: "appetizer" },
-            MenuItem { name: "Caesar Salad", price_cents: 1299, category: "appetizer" },
-            MenuItem { name: "Margherita Pizza", price_cents: 1599, category: "main" },
-            MenuItem { name: "Spaghetti Carbonara", price_cents: 1899, category: "main" },
-            MenuItem { name: "Grilled Salmon", price_cents: 2499, category: "main" },
-            MenuItem { name: "Tiramisu", price_cents: 999, category: "dessert" },
-            MenuItem { name: "Panna Cotta", price_cents: 899, category: "dessert" },
+            MenuItem {
+                name: "Bruschetta",
+                price_cents: 899,
+                category: "appetizer",
+            },
+            MenuItem {
+                name: "Caesar Salad",
+                price_cents: 1299,
+                category: "appetizer",
+            },
+            MenuItem {
+                name: "Margherita Pizza",
+                price_cents: 1599,
+                category: "main",
+            },
+            MenuItem {
+                name: "Spaghetti Carbonara",
+                price_cents: 1899,
+                category: "main",
+            },
+            MenuItem {
+                name: "Grilled Salmon",
+                price_cents: 2499,
+                category: "main",
+            },
+            MenuItem {
+                name: "Tiramisu",
+                price_cents: 999,
+                category: "dessert",
+            },
+            MenuItem {
+                name: "Panna Cotta",
+                price_cents: 899,
+                category: "dessert",
+            },
         ],
         specials_today: "Chef's special: Truffle Risotto ($22.99)",
     })
@@ -112,11 +140,14 @@ async fn menu() -> VilResponse<MenuResponse> {
 /// Place a new food order.
 /// Calculates total based on ordered items and estimates prep time.
 async fn place_order(body: ShmSlice) -> Result<VilResponse<OrderConfirmation>, VilError> {
-    let req: PlaceOrderRequest = body.json()
+    let req: PlaceOrderRequest = body
+        .json()
         .map_err(|_| VilError::bad_request("Invalid order — need table_number and items array"))?;
 
     if req.items.is_empty() {
-        return Err(VilError::bad_request("Order must contain at least one item"));
+        return Err(VilError::bad_request(
+            "Order must contain at least one item",
+        ));
     }
 
     // Calculate total (simplified — in production: lookup menu prices)

@@ -70,10 +70,8 @@ impl WasmPool {
     pub fn new(config: WasmFaaSConfig) -> Self {
         let mut instances = Vec::with_capacity(config.pool_size);
         for _ in 0..config.pool_size {
-            let capsule_config = CapsuleConfig::new(
-                &config.module_name,
-                config.wasm_bytes.clone(),
-            ).max_memory_pages(config.max_memory_pages);
+            let capsule_config = CapsuleConfig::new(&config.module_name, config.wasm_bytes.clone())
+                .max_memory_pages(config.max_memory_pages);
             #[allow(unused_mut)]
             let mut host = CapsuleHost::new(capsule_config);
             #[cfg(feature = "wasm")]
@@ -116,12 +114,7 @@ impl WasmPool {
     /// Dispatch a typed i32 function call: (i32, i32) -> i32.
     /// This is the recommended API for calling WASM functions with explicit arguments.
     #[cfg(feature = "wasm")]
-    pub fn call_i32(
-        &self,
-        function_name: &str,
-        arg0: i32,
-        arg1: i32,
-    ) -> Result<i32, CapsuleError> {
+    pub fn call_i32(&self, function_name: &str, arg0: i32, arg1: i32) -> Result<i32, CapsuleError> {
         if self.instances.is_empty() {
             return Err(CapsuleError::ExecutionFailed("empty pool".into()));
         }

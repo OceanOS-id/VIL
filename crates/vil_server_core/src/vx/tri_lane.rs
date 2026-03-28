@@ -65,7 +65,10 @@ pub struct LaneReceiver {
 impl LaneSender {
     /// Send a message on this lane.
     pub async fn send(&self, msg: LaneMessage) -> Result<(), TriLaneError> {
-        self.tx.send(msg).await.map_err(|_| TriLaneError::ChannelClosed)
+        self.tx
+            .send(msg)
+            .await
+            .map_err(|_| TriLaneError::ChannelClosed)
     }
 }
 
@@ -163,8 +166,7 @@ impl TriLaneRouter {
         data: &[u8],
     ) -> Result<usize, TriLaneError> {
         let key = route_key(from, to);
-        let channels = self.senders.get(&key)
-            .ok_or(TriLaneError::RouteNotFound)?;
+        let channels = self.senders.get(&key).ok_or(TriLaneError::RouteNotFound)?;
 
         let msg = LaneMessage {
             from: from.to_string(),
@@ -227,7 +229,10 @@ mod tests {
         assert_eq!(router.route_count(), 1);
 
         // Send on Data Lane
-        let sent = router.send("svc-a", "svc-b", Lane::Data, b"hello").await.unwrap();
+        let sent = router
+            .send("svc-a", "svc-b", Lane::Data, b"hello")
+            .await
+            .unwrap();
         assert_eq!(sent, 5);
 
         // Receive

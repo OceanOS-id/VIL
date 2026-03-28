@@ -128,9 +128,24 @@ mod dag_tests {
     #[test]
     fn test_linear_dag() {
         let mut dag = PipelineDag::new("linear");
-        dag.add_node(DagNode { id: "a".into(), handler: "h1".into(), depends_on: vec![], config: None });
-        dag.add_node(DagNode { id: "b".into(), handler: "h2".into(), depends_on: vec!["a".into()], config: None });
-        dag.add_node(DagNode { id: "c".into(), handler: "h3".into(), depends_on: vec!["b".into()], config: None });
+        dag.add_node(DagNode {
+            id: "a".into(),
+            handler: "h1".into(),
+            depends_on: vec![],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "b".into(),
+            handler: "h2".into(),
+            depends_on: vec!["a".into()],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "c".into(),
+            handler: "h3".into(),
+            depends_on: vec!["b".into()],
+            config: None,
+        });
 
         assert!(dag.validate().is_ok());
         let plan = dag.plan().unwrap();
@@ -143,11 +158,36 @@ mod dag_tests {
     #[test]
     fn test_parallel_dag() {
         let mut dag = PipelineDag::new("parallel");
-        dag.add_node(DagNode { id: "root".into(), handler: "h".into(), depends_on: vec![], config: None });
-        dag.add_node(DagNode { id: "a".into(), handler: "h".into(), depends_on: vec!["root".into()], config: None });
-        dag.add_node(DagNode { id: "b".into(), handler: "h".into(), depends_on: vec!["root".into()], config: None });
-        dag.add_node(DagNode { id: "c".into(), handler: "h".into(), depends_on: vec!["root".into()], config: None });
-        dag.add_node(DagNode { id: "merge".into(), handler: "h".into(), depends_on: vec!["a".into(), "b".into(), "c".into()], config: None });
+        dag.add_node(DagNode {
+            id: "root".into(),
+            handler: "h".into(),
+            depends_on: vec![],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "a".into(),
+            handler: "h".into(),
+            depends_on: vec!["root".into()],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "b".into(),
+            handler: "h".into(),
+            depends_on: vec!["root".into()],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "c".into(),
+            handler: "h".into(),
+            depends_on: vec!["root".into()],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "merge".into(),
+            handler: "h".into(),
+            depends_on: vec!["a".into(), "b".into(), "c".into()],
+            config: None,
+        });
 
         let plan = dag.plan().unwrap();
         assert_eq!(plan.stages.len(), 3);
@@ -159,8 +199,18 @@ mod dag_tests {
     #[test]
     fn test_cycle_detection() {
         let mut dag = PipelineDag::new("cycle");
-        dag.add_node(DagNode { id: "a".into(), handler: "h".into(), depends_on: vec!["b".into()], config: None });
-        dag.add_node(DagNode { id: "b".into(), handler: "h".into(), depends_on: vec!["a".into()], config: None });
+        dag.add_node(DagNode {
+            id: "a".into(),
+            handler: "h".into(),
+            depends_on: vec!["b".into()],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "b".into(),
+            handler: "h".into(),
+            depends_on: vec!["a".into()],
+            config: None,
+        });
 
         let result = dag.validate();
         assert!(result.is_err());
@@ -170,7 +220,12 @@ mod dag_tests {
     #[test]
     fn test_missing_dependency() {
         let mut dag = PipelineDag::new("missing");
-        dag.add_node(DagNode { id: "a".into(), handler: "h".into(), depends_on: vec!["ghost".into()], config: None });
+        dag.add_node(DagNode {
+            id: "a".into(),
+            handler: "h".into(),
+            depends_on: vec!["ghost".into()],
+            config: None,
+        });
 
         let result = dag.validate();
         assert!(result.is_err());
@@ -180,10 +235,30 @@ mod dag_tests {
     #[test]
     fn test_entry_exit_nodes() {
         let mut dag = PipelineDag::new("test");
-        dag.add_node(DagNode { id: "entry1".into(), handler: "h".into(), depends_on: vec![], config: None });
-        dag.add_node(DagNode { id: "entry2".into(), handler: "h".into(), depends_on: vec![], config: None });
-        dag.add_node(DagNode { id: "middle".into(), handler: "h".into(), depends_on: vec!["entry1".into()], config: None });
-        dag.add_node(DagNode { id: "exit".into(), handler: "h".into(), depends_on: vec!["middle".into(), "entry2".into()], config: None });
+        dag.add_node(DagNode {
+            id: "entry1".into(),
+            handler: "h".into(),
+            depends_on: vec![],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "entry2".into(),
+            handler: "h".into(),
+            depends_on: vec![],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "middle".into(),
+            handler: "h".into(),
+            depends_on: vec!["entry1".into()],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "exit".into(),
+            handler: "h".into(),
+            depends_on: vec!["middle".into(), "entry2".into()],
+            config: None,
+        });
 
         let entries = dag.entry_nodes();
         assert_eq!(entries.len(), 2);
@@ -196,8 +271,18 @@ mod dag_tests {
     #[test]
     fn test_duplicate_node_id() {
         let mut dag = PipelineDag::new("dup");
-        dag.add_node(DagNode { id: "a".into(), handler: "h".into(), depends_on: vec![], config: None });
-        dag.add_node(DagNode { id: "a".into(), handler: "h".into(), depends_on: vec![], config: None });
+        dag.add_node(DagNode {
+            id: "a".into(),
+            handler: "h".into(),
+            depends_on: vec![],
+            config: None,
+        });
+        dag.add_node(DagNode {
+            id: "a".into(),
+            handler: "h".into(),
+            depends_on: vec![],
+            config: None,
+        });
 
         let result = dag.validate();
         assert!(result.is_err());
@@ -320,7 +405,10 @@ mod backpressure_tests {
         let signal = BackpressureSignal::Throttle { max_rate: 500 };
         let bytes = signal.to_bytes();
         let parsed = BackpressureSignal::from_bytes(&bytes).unwrap();
-        assert!(matches!(parsed, BackpressureSignal::Throttle { max_rate: 500 }));
+        assert!(matches!(
+            parsed,
+            BackpressureSignal::Throttle { max_rate: 500 }
+        ));
     }
 }
 
@@ -409,10 +497,7 @@ mod load_balancer_tests {
 
     #[test]
     fn test_endpoint_count() {
-        let endpoints = vec![
-            LbEndpoint::new("a"),
-            LbEndpoint::new("b"),
-        ];
+        let endpoints = vec![LbEndpoint::new("a"), LbEndpoint::new("b")];
         let lb = LoadBalancer::new(endpoints, LbStrategy::RoundRobin);
         assert_eq!(lb.endpoint_count(), 2);
     }
@@ -422,20 +507,25 @@ mod load_balancer_tests {
 
 #[cfg(test)]
 mod rpc_tests {
-    use vil_server_mesh::typed_rpc::RpcRegistry;
     use serde::{Deserialize, Serialize};
+    use vil_server_mesh::typed_rpc::RpcRegistry;
 
     #[derive(Serialize, Deserialize)]
-    struct AddRequest { a: i32, b: i32 }
+    struct AddRequest {
+        a: i32,
+        b: i32,
+    }
 
     #[derive(Serialize, Deserialize)]
-    struct AddResponse { result: i32 }
+    struct AddResponse {
+        result: i32,
+    }
 
     #[test]
     fn test_register_and_invoke() {
         let mut registry = RpcRegistry::new();
-        registry.register::<AddRequest, AddResponse, _>("add", |req| {
-            AddResponse { result: req.a + req.b }
+        registry.register::<AddRequest, AddResponse, _>("add", |req| AddResponse {
+            result: req.a + req.b,
         });
 
         let input = serde_json::to_vec(&AddRequest { a: 3, b: 4 }).unwrap();
@@ -454,11 +544,11 @@ mod rpc_tests {
     #[test]
     fn test_list_endpoints() {
         let mut registry = RpcRegistry::new();
-        registry.register::<AddRequest, AddResponse, _>("add", |req| {
-            AddResponse { result: req.a + req.b }
+        registry.register::<AddRequest, AddResponse, _>("add", |req| AddResponse {
+            result: req.a + req.b,
         });
-        registry.register::<AddRequest, AddResponse, _>("multiply", |req| {
-            AddResponse { result: req.a * req.b }
+        registry.register::<AddRequest, AddResponse, _>("multiply", |req| AddResponse {
+            result: req.a * req.b,
         });
         assert_eq!(registry.count(), 2);
         assert_eq!(registry.endpoints().len(), 2);

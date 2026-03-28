@@ -2,8 +2,8 @@
 // VIL Server Router — Service-aware routing
 // =============================================================================
 
-use axum::Router;
 use crate::state::AppState;
+use axum::Router;
 
 /// A named service with its own route namespace.
 /// In unified mode, multiple services share one binary.

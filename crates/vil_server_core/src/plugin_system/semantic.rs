@@ -12,7 +12,7 @@
 //! Tier A: `#[vil_event]` → SHM zero-copy, fixed-size only
 //! Tier B: `#[derive(VilAiEvent)]` → JSON-compatible, any type
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Semantic kind for AI types (Tier B).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

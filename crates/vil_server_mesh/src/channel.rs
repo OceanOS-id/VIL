@@ -41,7 +41,10 @@ pub fn mesh_channel(buffer_size: usize) -> (MeshSender, MeshReceiver) {
 impl MeshSender {
     /// Send a message through the channel.
     pub async fn send(&self, msg: MeshMessage) -> Result<(), MeshSendError> {
-        self.tx.send(msg).await.map_err(|_| MeshSendError::ChannelClosed)
+        self.tx
+            .send(msg)
+            .await
+            .map_err(|_| MeshSendError::ChannelClosed)
     }
 }
 

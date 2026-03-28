@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use vil_server::prelude::*;
 
 use crate::gateway::AiGateway;
-use crate::metrics::MetricsSnapshot;
 use crate::health::ModelHealth;
+use crate::metrics::MetricsSnapshot;
 
 // ── Request / Response types ────────────────────────────────────────────────
 
@@ -74,9 +74,7 @@ pub async fn handle_chat(
 }
 
 /// GET /api/gateway/stats — return gateway metrics.
-pub async fn handle_stats(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<GatewayStatsResponse>> {
+pub async fn handle_stats(ctx: ServiceCtx) -> HandlerResult<VilResponse<GatewayStatsResponse>> {
     let gateway = ctx.state::<Arc<AiGateway>>().expect("AiGateway");
     let metrics = gateway.metrics();
     let resp = GatewayStatsResponse { metrics };
@@ -84,9 +82,7 @@ pub async fn handle_stats(
 }
 
 /// GET /api/gateway/health — return per-model health status.
-pub async fn handle_health(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<GatewayHealthResponse>> {
+pub async fn handle_health(ctx: ServiceCtx) -> HandlerResult<VilResponse<GatewayHealthResponse>> {
     let gateway = ctx.state::<Arc<AiGateway>>().expect("AiGateway");
     let models = gateway.health();
     let resp = GatewayHealthResponse { models };

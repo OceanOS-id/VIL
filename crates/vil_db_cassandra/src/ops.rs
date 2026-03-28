@@ -28,13 +28,13 @@
 
 use std::time::Instant;
 
-use scylla::prepared_statement::PreparedStatement;
 use scylla::batch::Batch;
-use scylla::QueryResult;
 use scylla::frame::response::result::Row;
-use scylla::statement::PagingState;
+use scylla::prepared_statement::PreparedStatement;
 use scylla::serialize::batch::BatchValues;
 use scylla::serialize::row::SerializeRow;
+use scylla::statement::PagingState;
+use scylla::QueryResult;
 
 use vil_log::dict::register_str;
 
@@ -44,7 +44,7 @@ use crate::types::CassandraResult;
 
 // op_type codes
 const OP_SELECT: u8 = 0;
-const OP_BATCH: u8  = 4;
+const OP_BATCH: u8 = 4;
 
 impl CassandraClient {
     // =========================================================================
@@ -88,11 +88,29 @@ impl CassandraClient {
         match result {
             Ok(qr) => {
                 let rows = qr.rows.as_ref().map(|r| r.len() as u32).unwrap_or(0);
-                emit_db_log(self.db_hash(), cql, OP_SELECT, 1, elapsed_us, rows, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    cql,
+                    OP_SELECT,
+                    1,
+                    elapsed_us,
+                    rows,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(qr)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), cql, OP_SELECT, 1, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    cql,
+                    OP_SELECT,
+                    1,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(CassandraFault::ExecuteFailed {
                     query_hash,
                     reason_code: fault_code_from_err(&e),
@@ -122,11 +140,29 @@ impl CassandraClient {
         match result {
             Ok(qr) => {
                 let rows = qr.rows.as_ref().map(|r| r.len() as u32).unwrap_or(0);
-                emit_db_log(self.db_hash(), cql, OP_SELECT, 0, elapsed_us, rows, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    cql,
+                    OP_SELECT,
+                    0,
+                    elapsed_us,
+                    rows,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(qr)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), cql, OP_SELECT, 0, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    cql,
+                    OP_SELECT,
+                    0,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(CassandraFault::QueryFailed {
                     query_hash,
                     reason_code: fault_code_from_err(&e),
@@ -153,11 +189,29 @@ impl CassandraClient {
 
         match result {
             Ok(qr) => {
-                emit_db_log(self.db_hash(), "batch", OP_BATCH, 0, elapsed_us, 0, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    "batch",
+                    OP_BATCH,
+                    0,
+                    elapsed_us,
+                    0,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(qr)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), "batch", OP_BATCH, 0, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    "batch",
+                    OP_BATCH,
+                    0,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(CassandraFault::BatchFailed {
                     reason_code: fault_code_from_err(&e),
                 })
@@ -196,7 +250,16 @@ impl CassandraClient {
                 Ok((qr, paging_state_response)) => {
                     let page_rows = qr.rows.unwrap_or_default();
                     let count = page_rows.len() as u32;
-                    emit_db_log(self.db_hash(), cql, OP_SELECT, 1, elapsed_us, count, 0, self.pool_id());
+                    emit_db_log(
+                        self.db_hash(),
+                        cql,
+                        OP_SELECT,
+                        1,
+                        elapsed_us,
+                        count,
+                        0,
+                        self.pool_id(),
+                    );
                     all_rows.extend(page_rows);
 
                     use std::ops::ControlFlow;
@@ -208,7 +271,16 @@ impl CassandraClient {
                     }
                 }
                 Err(e) => {
-                    emit_db_log(self.db_hash(), cql, OP_SELECT, 1, elapsed_us, 0, 1, self.pool_id());
+                    emit_db_log(
+                        self.db_hash(),
+                        cql,
+                        OP_SELECT,
+                        1,
+                        elapsed_us,
+                        0,
+                        1,
+                        self.pool_id(),
+                    );
                     return Err(CassandraFault::PagedFailed {
                         query_hash,
                         reason_code: fault_code_from_err(&e),

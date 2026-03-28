@@ -83,7 +83,12 @@ fn parse_markdown_sections(text: &str) -> Vec<DocSection> {
                 in_code_block = false;
             } else {
                 // Start code block — flush current text.
-                flush_text(&mut current_content, &mut current_title, current_level, &mut sections);
+                flush_text(
+                    &mut current_content,
+                    &mut current_title,
+                    current_level,
+                    &mut sections,
+                );
                 in_code_block = true;
             }
             continue;
@@ -99,7 +104,12 @@ fn parse_markdown_sections(text: &str) -> Vec<DocSection> {
 
         // Detect headings.
         if let Some(caps) = detect_heading(line) {
-            flush_text(&mut current_content, &mut current_title, current_level, &mut sections);
+            flush_text(
+                &mut current_content,
+                &mut current_title,
+                current_level,
+                &mut sections,
+            );
             current_title = Some(caps.1.clone());
             current_level = caps.0;
             continue;
@@ -107,8 +117,12 @@ fn parse_markdown_sections(text: &str) -> Vec<DocSection> {
 
         // Detect list items.
         let trimmed = line.trim_start();
-        if trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("+ ")
-            || (trimmed.len() > 2 && trimmed.as_bytes()[0].is_ascii_digit() && trimmed.contains(". "))
+        if trimmed.starts_with("- ")
+            || trimmed.starts_with("* ")
+            || trimmed.starts_with("+ ")
+            || (trimmed.len() > 2
+                && trimmed.as_bytes()[0].is_ascii_digit()
+                && trimmed.contains(". "))
         {
             if !current_content.is_empty() {
                 current_content.push('\n');
@@ -125,7 +139,12 @@ fn parse_markdown_sections(text: &str) -> Vec<DocSection> {
     }
 
     // Flush remaining.
-    flush_text(&mut current_content, &mut current_title, current_level, &mut sections);
+    flush_text(
+        &mut current_content,
+        &mut current_title,
+        current_level,
+        &mut sections,
+    );
 
     sections
 }

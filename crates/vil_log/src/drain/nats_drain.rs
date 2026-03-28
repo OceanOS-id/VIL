@@ -85,13 +85,13 @@ impl NatsLogMessage {
 
 fn category_subject(prefix: &str, category: u8) -> String {
     let name = match LogCategory::from(category) {
-        LogCategory::Access   => "access",
-        LogCategory::App      => "app",
-        LogCategory::System   => "system",
+        LogCategory::Access => "access",
+        LogCategory::App => "app",
+        LogCategory::System => "system",
         LogCategory::Security => "security",
-        LogCategory::Ai       => "ai",
-        LogCategory::Db       => "db",
-        LogCategory::Mq       => "mq",
+        LogCategory::Ai => "ai",
+        LogCategory::Db => "db",
+        LogCategory::Mq => "mq",
     };
     format!("{}.{}", prefix, name)
 }
@@ -115,7 +115,9 @@ impl NatsDrain {
     }
 
     /// Ensure connected, lazily.
-    async fn ensure_connected(&mut self) -> Result<&async_nats::Client, Box<dyn std::error::Error + Send + Sync>> {
+    async fn ensure_connected(
+        &mut self,
+    ) -> Result<&async_nats::Client, Box<dyn std::error::Error + Send + Sync>> {
         if self.client.is_none() {
             let client = async_nats::connect(&self.config.url).await?;
             self.client = Some(client);
@@ -130,7 +132,10 @@ impl LogDrain for NatsDrain {
         "nats"
     }
 
-    async fn flush(&mut self, batch: &[LogSlot]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn flush(
+        &mut self,
+        batch: &[LogSlot],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if batch.is_empty() {
             return Ok(());
         }

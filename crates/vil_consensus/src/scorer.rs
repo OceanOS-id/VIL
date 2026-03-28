@@ -17,8 +17,7 @@ pub fn score_response(response: &str) -> ResponseScore {
         response.contains('\n') || response.contains("1.") || response.contains("- ");
     let structure_score = if has_structure { 0.3 } else { 0.0 };
 
-    let coherence_score =
-        1.0 - (response.matches("I don't know").count() as f32 * 0.3).min(1.0);
+    let coherence_score = 1.0 - (response.matches("I don't know").count() as f32 * 0.3).min(1.0);
 
     ResponseScore {
         total: (length_score * 0.3 + structure_score + coherence_score * 0.4).min(1.0),

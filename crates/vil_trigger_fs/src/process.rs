@@ -20,9 +20,7 @@ use crate::source::FsTrigger;
 /// Call `TriggerSource::start()` on the returned trigger to begin watching.
 /// The `mpsc::Receiver<TriggerEvent>` should be handed to the downstream
 /// pipeline stage that consumes events on the Trigger Lane.
-pub fn create_fs_trigger(
-    config: FsConfig,
-) -> (FsTrigger, mpsc::Receiver<TriggerEvent>) {
+pub fn create_fs_trigger(config: FsConfig) -> (FsTrigger, mpsc::Receiver<TriggerEvent>) {
     register_str(config.watch_path);
     register_str("fs");
 

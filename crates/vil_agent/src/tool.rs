@@ -169,7 +169,10 @@ mod tests {
         assert_eq!(tools.len(), 1);
         assert_eq!(tools[0]["type"], "function");
         assert_eq!(tools[0]["function"]["name"], "example");
-        assert_eq!(tools[0]["function"]["description"], "An example tool for testing");
+        assert_eq!(
+            tools[0]["function"]["description"],
+            "An example tool for testing"
+        );
         assert!(tools[0]["function"]["parameters"]["properties"]["input"].is_object());
     }
 
@@ -187,9 +190,7 @@ mod tests {
     #[tokio::test]
     async fn test_registry_execute_not_found() {
         let registry = ToolRegistry::new();
-        let result = registry
-            .execute("nonexistent", serde_json::json!({}))
-            .await;
+        let result = registry.execute("nonexistent", serde_json::json!({})).await;
         assert!(result.is_err());
     }
 }

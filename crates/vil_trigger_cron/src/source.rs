@@ -60,11 +60,10 @@ impl CronTrigger {
     ///
     /// Returns `CronFault::InvalidSchedule` if parsing fails.
     pub fn new(config: CronConfig, tx: mpsc::Sender<TriggerEvent>) -> Result<Self, CronFault> {
-        let schedule = Schedule::from_str(config.schedule).map_err(|_| {
-            CronFault::InvalidSchedule {
+        let schedule =
+            Schedule::from_str(config.schedule).map_err(|_| CronFault::InvalidSchedule {
                 expr_hash: register_str(config.schedule),
-            }
-        })?;
+            })?;
 
         register_str(config.schedule);
         register_str("cron");
@@ -91,12 +90,12 @@ impl TriggerSource for CronTrigger {
     }
 
     async fn start(&self, on_event: EventCallback) -> Result<(), TriggerFault> {
-        let schedule    = self.schedule.clone();
-        let trigger_id  = self.config.trigger_id;
+        let schedule = self.schedule.clone();
+        let trigger_id = self.config.trigger_id;
         let missed_fire = self.config.missed_fire;
-        let sequence    = Arc::clone(&self.sequence);
-        let expr        = self.schedule_expr;
-        let tx          = self.tx.clone();
+        let sequence = Arc::clone(&self.sequence);
+        let expr = self.schedule_expr;
+        let tx = self.tx.clone();
 
         let (cancel_tx, cancel_rx) = watch::channel(false);
 
@@ -166,8 +165,8 @@ async fn cron_loop(
     on_event: EventCallback,
     mut cancel_rx: watch::Receiver<bool>,
 ) {
-    let kind_hash   = register_str("cron");
-    let topic_hash  = register_str(expr);
+    let kind_hash = register_str("cron");
+    let topic_hash = register_str(expr);
     let broker_hash = register_str("cron");
 
     loop {
@@ -183,9 +182,7 @@ async fn cron_loop(
             .unwrap_or_default()
             .as_nanos() as u64;
 
-        let next_ns = next
-            .timestamp_nanos_opt()
-            .unwrap_or(0) as u64;
+        let next_ns = next.timestamp_nanos_opt().unwrap_or(0) as u64;
 
         if next_ns <= now_ns {
             match missed_fire {
@@ -229,13 +226,16 @@ async fn cron_loop(
 
         let elapsed_us = fire_start.elapsed().as_micros() as u32;
 
-        mq_log!(Info, MqPayload {
-            broker_hash,
-            topic_hash,
-            offset:         seq,
-            e2e_latency_us: elapsed_us,
-            op_type:        0, // publish
-            ..MqPayload::default()
-        });
+        mq_log!(
+            Info,
+            MqPayload {
+                broker_hash,
+                topic_hash,
+                offset: seq,
+                e2e_latency_us: elapsed_us,
+                op_type: 0, // publish
+                ..MqPayload::default()
+            }
+        );
     }
 }

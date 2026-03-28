@@ -3,10 +3,10 @@
 //! Watches src/ for file changes and automatically rebuilds + restarts.
 //! This is for DEVELOPMENT only — not production hot-reload.
 
-use std::process::{Command, Child};
-use std::path::Path;
-use std::time::{SystemTime, Duration};
 use std::collections::HashMap;
+use std::path::Path;
+use std::process::{Child, Command};
+use std::time::{Duration, SystemTime};
 
 pub struct DevConfig {
     pub port: u16,
@@ -22,9 +22,9 @@ pub fn run_dev(config: DevConfig) -> Result<(), String> {
     println!();
 
     // Read package name from Cargo.toml if not specified
-    let package = config.package.unwrap_or_else(|| {
-        read_package_name().unwrap_or_else(|| "app".to_string())
-    });
+    let package = config
+        .package
+        .unwrap_or_else(|| read_package_name().unwrap_or_else(|| "app".to_string()));
 
     println!("  Package:   {}", package);
     println!("  Port:      {}", config.port);
@@ -129,7 +129,9 @@ fn collect_mtimes(dir: &str) -> HashMap<String, SystemTime> {
 }
 
 fn has_changes(old: &HashMap<String, SystemTime>, new: &HashMap<String, SystemTime>) -> bool {
-    if old.len() != new.len() { return true; }
+    if old.len() != new.len() {
+        return true;
+    }
     for (path, mtime) in new {
         match old.get(path) {
             Some(old_mtime) if old_mtime == mtime => continue,

@@ -10,8 +10,10 @@ pub struct KafkaMetrics {
 impl KafkaMetrics {
     pub fn new() -> Self {
         Self {
-            produced: AtomicU64::new(0), consumed: AtomicU64::new(0),
-            bridged: AtomicU64::new(0), errors: AtomicU64::new(0),
+            produced: AtomicU64::new(0),
+            consumed: AtomicU64::new(0),
+            bridged: AtomicU64::new(0),
+            errors: AtomicU64::new(0),
         }
     }
 
@@ -26,4 +28,8 @@ impl KafkaMetrics {
     }
 }
 
-impl Default for KafkaMetrics { fn default() -> Self { Self::new() } }
+impl Default for KafkaMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
+}

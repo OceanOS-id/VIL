@@ -34,7 +34,8 @@ impl RedisPool {
         let client = redis::Client::open(config.url.as_str())
             .map_err(|e| format!("Redis client open failed: {}", e))?;
 
-        let conn = ConnectionManager::new(client).await
+        let conn = ConnectionManager::new(client)
+            .await
             .map_err(|e| format!("Redis ConnectionManager failed: {}", e))?;
 
         Ok(Self {
@@ -45,58 +46,88 @@ impl RedisPool {
         })
     }
 
-    pub fn name(&self) -> &str { &self.pool_name }
-    pub fn config(&self) -> &RedisConfig { &self.config }
-    pub fn ops_count(&self) -> u64 { self.ops_count.load(Ordering::Relaxed) }
+    pub fn name(&self) -> &str {
+        &self.pool_name
+    }
+    pub fn config(&self) -> &RedisConfig {
+        &self.config
+    }
+    pub fn ops_count(&self) -> u64 {
+        self.ops_count.load(Ordering::Relaxed)
+    }
 
     /// Get a value by key (async, real Redis).
     pub async fn get(&self, key: &str) -> Option<String> {
         self.ops_count.fetch_add(1, Ordering::Relaxed);
         let mut conn = self.conn.clone();
-        redis::cmd("GET").arg(key).query_async::<Option<String>>(&mut conn).await.ok().flatten()
+        redis::cmd("GET")
+            .arg(key)
+            .query_async::<Option<String>>(&mut conn)
+            .await
+            .ok()
+            .flatten()
     }
 
     /// Set a value (async, real Redis).
     pub async fn set(&self, key: &str, value: &str) {
         self.ops_count.fetch_add(1, Ordering::Relaxed);
         let mut conn = self.conn.clone();
-        let _: Result<(), _> = redis::cmd("SET").arg(key).arg(value)
-            .query_async(&mut conn).await;
+        let _: Result<(), _> = redis::cmd("SET")
+            .arg(key)
+            .arg(value)
+            .query_async(&mut conn)
+            .await;
     }
 
     /// Set a value with TTL in seconds (async, real Redis).
     pub async fn set_ex(&self, key: &str, value: &str, ttl_secs: u64) {
         self.ops_count.fetch_add(1, Ordering::Relaxed);
         let mut conn = self.conn.clone();
-        let _: Result<(), _> = redis::cmd("SET").arg(key).arg(value).arg("EX").arg(ttl_secs)
-            .query_async(&mut conn).await;
+        let _: Result<(), _> = redis::cmd("SET")
+            .arg(key)
+            .arg(value)
+            .arg("EX")
+            .arg(ttl_secs)
+            .query_async(&mut conn)
+            .await;
     }
 
     /// Delete a key (async, real Redis).
     pub async fn del(&self, key: &str) -> bool {
         self.ops_count.fetch_add(1, Ordering::Relaxed);
         let mut conn = self.conn.clone();
-        redis::cmd("DEL").arg(key).query_async::<i64>(&mut conn).await.unwrap_or(0) > 0
+        redis::cmd("DEL")
+            .arg(key)
+            .query_async::<i64>(&mut conn)
+            .await
+            .unwrap_or(0)
+            > 0
     }
 
     /// Get number of keys matching a pattern (uses DBSIZE for all keys).
     pub async fn keys_count(&self) -> usize {
         let mut conn = self.conn.clone();
-        redis::cmd("DBSIZE").query_async::<usize>(&mut conn).await.unwrap_or(0)
+        redis::cmd("DBSIZE")
+            .query_async::<usize>(&mut conn)
+            .await
+            .unwrap_or(0)
     }
 
     /// Ping the Redis server.
     pub async fn ping(&self) -> Result<String, String> {
         let mut conn = self.conn.clone();
-        redis::cmd("PING").query_async::<String>(&mut conn).await
+        redis::cmd("PING")
+            .query_async::<String>(&mut conn)
+            .await
             .map_err(|e| format!("Redis PING failed: {}", e))
     }
 
-    pub async fn close(&self) {
-    }
+    pub async fn close(&self) {}
 
     /// Access the underlying ConnectionManager for advanced use cases.
-    pub fn inner(&self) -> ConnectionManager { self.conn.clone() }
+    pub fn inner(&self) -> ConnectionManager {
+        self.conn.clone()
+    }
 }
 
 #[async_trait]
@@ -112,5 +143,6 @@ impl vil_server_db::DbPool for RedisPool {
         self.ping().await.map(|_| ()).map_err(|e| RedisError(e))
     }
 
-    async fn close(&self) { /* ConnectionManager handles cleanup */ }
+    async fn close(&self) { /* ConnectionManager handles cleanup */
+    }
 }

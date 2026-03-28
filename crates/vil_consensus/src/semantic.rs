@@ -38,15 +38,24 @@ pub struct ConsensusFault {
 
 impl ConsensusFault {
     pub fn all_providers_failed(msg: impl Into<String>) -> Self {
-        Self { error_type: ConsensusFaultType::AllProvidersFailed, message: msg.into() }
+        Self {
+            error_type: ConsensusFaultType::AllProvidersFailed,
+            message: msg.into(),
+        }
     }
 
     pub fn timeout_exceeded(msg: impl Into<String>) -> Self {
-        Self { error_type: ConsensusFaultType::TimeoutExceeded, message: msg.into() }
+        Self {
+            error_type: ConsensusFaultType::TimeoutExceeded,
+            message: msg.into(),
+        }
     }
 
     pub fn strategy_failed(msg: impl Into<String>) -> Self {
-        Self { error_type: ConsensusFaultType::StrategyFailed, message: msg.into() }
+        Self {
+            error_type: ConsensusFaultType::StrategyFailed,
+            message: msg.into(),
+        }
     }
 }
 

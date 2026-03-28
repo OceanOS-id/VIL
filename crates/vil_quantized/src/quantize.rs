@@ -38,10 +38,7 @@ pub struct QuantizeResult {
 /// This is a placeholder — real quantization requires a backend like `candle`.
 /// The function estimates the output size based on the parameter count and
 /// target format's bytes-per-parameter.
-pub fn simulate_quantize(
-    config: &QuantizeConfig,
-    param_count: u64,
-) -> QuantizeResult {
+pub fn simulate_quantize(config: &QuantizeConfig, param_count: u64) -> QuantizeResult {
     let size = (param_count as f64 * config.target_format.bytes_per_param()) as u64;
 
     app_log!(Info, "quantize_simulate", {

@@ -48,9 +48,7 @@ pub struct RegistryStatsBody {
 // ── Handlers ────────────────────────────────────────────────────────
 
 /// GET /models — List all registered models.
-pub async fn models_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<ModelsResponseBody> {
+pub async fn models_handler(ctx: ServiceCtx) -> VilResponse<ModelsResponseBody> {
     let registry = ctx.state::<Arc<ModelRegistry>>().expect("ModelRegistry");
     let all = registry.list();
     let models: Vec<ModelSummary> = all
@@ -62,9 +60,7 @@ pub async fn models_handler(
 }
 
 /// GET /stats — Registry service stats.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<RegistryStatsBody> {
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<RegistryStatsBody> {
     let registry = ctx.state::<Arc<ModelRegistry>>().expect("ModelRegistry");
     VilResponse::ok(RegistryStatsBody {
         model_count: registry.list().len(),

@@ -129,9 +129,10 @@ fn manifest_to_graph(manifest: &WorkflowManifest, args: &VizArgs) -> VizGraph {
             });
         }
 
-        let host = manifest.topology.as_ref().and_then(|t| {
-            t.placement.get(name).map(|p| p.host.clone())
-        });
+        let host = manifest
+            .topology
+            .as_ref()
+            .and_then(|t| t.placement.get(name).map(|p| p.host.clone()));
 
         let mut metadata = std::collections::HashMap::new();
         metadata.insert("type".into(), node.node_type.clone());
@@ -287,7 +288,9 @@ fn open_browser(path: &str) {
     #[cfg(target_os = "macos")]
     let _ = std::process::Command::new("open").arg(path).spawn();
     #[cfg(target_os = "windows")]
-    let _ = std::process::Command::new("cmd").args(["/c", "start", path]).spawn();
+    let _ = std::process::Command::new("cmd")
+        .args(["/c", "start", path])
+        .spawn();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -302,7 +305,10 @@ fn run_call_graph_viz(dir: &str, args: &VizArgs) -> Result<(), String> {
     let mut edges = Vec::new();
 
     for node in &call_graph.nodes {
-        let label = format!("{}\\n{} nodes, {} wf", node.name, node.node_count, node.workflow_count);
+        let label = format!(
+            "{}\\n{} nodes, {} wf",
+            node.name, node.node_count, node.workflow_count
+        );
         nodes.push(VizNode {
             id: node.name.replace('/', "_").replace('.', "_"),
             label,
@@ -374,7 +380,11 @@ fn call_to_subgraph(call_path: &str, resolved: &crate::call_resolver::ResolvedCa
 
     for task in &resolved.workflow.tasks {
         nodes.push(VizNode {
-            id: format!("{}_{}", call_path.replace('/', "_").replace('.', "_"), task.id),
+            id: format!(
+                "{}_{}",
+                call_path.replace('/', "_").replace('.', "_"),
+                task.id
+            ),
             label: task.name.as_deref().unwrap_or(&task.id).to_string(),
             node_type: VizNodeType::Task,
             ports: Vec::new(),
@@ -384,9 +394,17 @@ fn call_to_subgraph(call_path: &str, resolved: &crate::call_resolver::ResolvedCa
 
         for dep in &task.deps {
             edges.push(VizEdge {
-                from_node: format!("{}_{}", call_path.replace('/', "_").replace('.', "_"), dep.task_id()),
+                from_node: format!(
+                    "{}_{}",
+                    call_path.replace('/', "_").replace('.', "_"),
+                    dep.task_id()
+                ),
                 from_port: None,
-                to_node: format!("{}_{}", call_path.replace('/', "_").replace('.', "_"), task.id),
+                to_node: format!(
+                    "{}_{}",
+                    call_path.replace('/', "_").replace('.', "_"),
+                    task.id
+                ),
                 to_port: None,
                 lane: None,
                 mode: None,

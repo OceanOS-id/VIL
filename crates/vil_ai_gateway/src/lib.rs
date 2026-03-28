@@ -32,19 +32,19 @@ pub mod circuit_breaker;
 pub mod config;
 pub mod cost;
 pub mod gateway;
+pub mod handlers;
 pub mod health;
 pub mod metrics;
-pub mod semantic;
 pub mod pipeline_sse;
-pub mod handlers;
 pub mod plugin;
+pub mod semantic;
 
 // Re-exports
+pub use circuit_breaker::CircuitBreaker;
 pub use config::{GatewayConfig, RoutingPolicy};
-pub use cost::{BudgetExceeded, Budget, CostTracker, ModelCost};
+pub use cost::{Budget, BudgetExceeded, CostTracker, ModelCost};
 pub use gateway::{AiGateway, AiGatewayBuilder, GatewayError, GatewayResponse};
 pub use health::{HealthStatus, HealthTracker, ModelHealth};
-pub use circuit_breaker::CircuitBreaker;
 pub use metrics::{GatewayMetrics, MetricsSnapshot};
 pub use plugin::AiGatewayPlugin;
 pub use semantic::{GatewayEvent, GatewayFault, GatewayState};

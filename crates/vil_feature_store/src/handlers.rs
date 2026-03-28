@@ -53,7 +53,9 @@ pub async fn handle_get_feature(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<GetFeatureResponse>> {
     let store = ctx.state::<Arc<FeatureStore>>()?;
-    let req: GetFeatureRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: GetFeatureRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     let key = FeatureKey::new(&req.entity_id, &req.feature_name);
     let value = store.get(&key);
     let resp = GetFeatureResponse {
@@ -69,7 +71,9 @@ pub async fn handle_set_feature(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<SetFeatureResponse>> {
     let store = ctx.state::<Arc<FeatureStore>>()?;
-    let req: SetFeatureRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: SetFeatureRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     let key = FeatureKey::new(&req.entity_id, &req.feature_name);
     let value = FeatureValue {
         data: req.data,

@@ -29,10 +29,10 @@ impl EdgeTarget {
     /// The canonical Rust target triple for this target.
     pub fn rustc_target_triple(self) -> &'static str {
         match self {
-            EdgeTarget::Aarch64Linux  => "aarch64-unknown-linux-gnu",
-            EdgeTarget::Armv7Linux    => "armv7-unknown-linux-gnueabihf",
-            EdgeTarget::Riscv64Linux  => "riscv64gc-unknown-linux-gnu",
-            EdgeTarget::X86_64Linux   => "x86_64-unknown-linux-gnu",
+            EdgeTarget::Aarch64Linux => "aarch64-unknown-linux-gnu",
+            EdgeTarget::Armv7Linux => "armv7-unknown-linux-gnueabihf",
+            EdgeTarget::Riscv64Linux => "riscv64gc-unknown-linux-gnu",
+            EdgeTarget::X86_64Linux => "x86_64-unknown-linux-gnu",
         }
     }
 
@@ -44,7 +44,7 @@ impl EdgeTarget {
     /// ```
     pub fn cargo_build_args(self) -> Vec<&'static str> {
         match self {
-            EdgeTarget::X86_64Linux => vec![],  // native — no --target needed
+            EdgeTarget::X86_64Linux => vec![], // native — no --target needed
             _ => vec!["--target", self.rustc_target_triple()],
         }
     }
@@ -52,10 +52,10 @@ impl EdgeTarget {
     /// Linker prefix used by the GNU cross-toolchain for this target.
     pub fn linker_prefix(self) -> Option<&'static str> {
         match self {
-            EdgeTarget::Aarch64Linux  => Some("aarch64-linux-gnu-gcc"),
-            EdgeTarget::Armv7Linux    => Some("arm-linux-gnueabihf-gcc"),
-            EdgeTarget::Riscv64Linux  => Some("riscv64-linux-gnu-gcc"),
-            EdgeTarget::X86_64Linux   => None,
+            EdgeTarget::Aarch64Linux => Some("aarch64-linux-gnu-gcc"),
+            EdgeTarget::Armv7Linux => Some("arm-linux-gnueabihf-gcc"),
+            EdgeTarget::Riscv64Linux => Some("riscv64-linux-gnu-gcc"),
+            EdgeTarget::X86_64Linux => None,
         }
     }
 

@@ -24,8 +24,8 @@ impl CapsuleConfig {
         Self {
             wasm_bytes,
             module_name: module_name.into(),
-            max_memory_pages: 256,       // Default: 16MB
-            max_fuel: 1_000_000_000,     // Default: 1B instructions (~1 second)
+            max_memory_pages: 256,   // Default: 16MB
+            max_fuel: 1_000_000_000, // Default: 1B instructions (~1 second)
             epoch_interruption: false,
         }
     }
@@ -167,7 +167,10 @@ impl CapsuleHost {
         let func = instance
             .get_typed_func::<(i32, i32), i32>(&mut store, function_name)
             .map_err(|e| {
-                CapsuleError::ExecutionFailed(format!("function '{}' not found: {}", function_name, e))
+                CapsuleError::ExecutionFailed(format!(
+                    "function '{}' not found: {}",
+                    function_name, e
+                ))
             })?;
 
         func.call(&mut store, (arg0, arg1))
@@ -332,7 +335,9 @@ impl CapsuleHost {
         if result_end > wasm_mem.len() {
             return Err(CapsuleError::ExecutionFailed(format!(
                 "Result region ({}-{}) exceeds WASM memory ({} bytes)",
-                result_start, result_end, wasm_mem.len()
+                result_start,
+                result_end,
+                wasm_mem.len()
             )));
         }
 

@@ -69,20 +69,27 @@ fn exec_class_completions() -> Vec<CompletionItem> {
         completion("BlockingTask", "spawn_blocking for CPU-bound work"),
         completion("DedicatedThread", "Pinned OS thread"),
         completion("PinnedWorker", "CPU-pinned worker thread"),
-        completion("WasmFaaS", "WASM sandbox execution (requires .wasm_module())"),
-        completion("SidecarProcess", "External sidecar via UDS (requires .sidecar_target())"),
+        completion(
+            "WasmFaaS",
+            "WASM sandbox execution (requires .wasm_module())",
+        ),
+        completion(
+            "SidecarProcess",
+            "External sidecar via UDS (requires .sidecar_target())",
+        ),
     ]
 }
 
 fn http_method_completions() -> Vec<CompletionItem> {
-    ["GET", "POST", "PUT", "DELETE", "PATCH"].iter().map(|m| {
-        CompletionItem {
+    ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        .iter()
+        .map(|m| CompletionItem {
             label: m.to_string(),
             kind: Some(CompletionItemKind::ENUM_MEMBER),
             detail: Some(format!("HTTP {} method", m)),
             ..Default::default()
-        }
-    }).collect()
+        })
+        .collect()
 }
 
 fn vil_app_completions() -> Vec<CompletionItem> {
@@ -100,7 +107,10 @@ fn vil_app_completions() -> Vec<CompletionItem> {
 fn service_process_completions() -> Vec<CompletionItem> {
     vec![
         completion("new(\"name\")", "Create a new ServiceProcess"),
-        completion("endpoint(Method::GET, \"/path\", handler)", "Add an endpoint"),
+        completion(
+            "endpoint(Method::GET, \"/path\", handler)",
+            "Add an endpoint",
+        ),
         completion("middleware(layer)", "Add middleware"),
         completion("extension(data)", "Add shared state"),
         completion("exec_class(ExecClass::AsyncTask)", "Set execution class"),
@@ -176,9 +186,18 @@ fn service_ctx_method_completions() -> Vec<CompletionItem> {
     vec![
         completion("state::<T>()", "Downcast service state to concrete type"),
         completion("service_name()", "Name of the owning service process"),
-        completion("send(target, data)", "Send on Data Lane (zero-copy payload)"),
-        completion("trigger(target, data)", "Send on Trigger Lane (request init)"),
-        completion("control(target, data)", "Send on Control Lane (backpressure/health)"),
+        completion(
+            "send(target, data)",
+            "Send on Data Lane (zero-copy payload)",
+        ),
+        completion(
+            "trigger(target, data)",
+            "Send on Trigger Lane (request init)",
+        ),
+        completion(
+            "control(target, data)",
+            "Send on Control Lane (backpressure/health)",
+        ),
         completion("tri_lane()", "Access the underlying TriLaneRouter"),
     ]
 }

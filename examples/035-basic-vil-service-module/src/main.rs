@@ -103,8 +103,9 @@ async fn overview() -> VilResponse<SystemOverview> {
 /// In production: validate insurance, check for duplicate records,
 /// assign a unique medical record number (MRN).
 async fn register_patient(body: ShmSlice) -> Result<VilResponse<Patient>, VilError> {
-    let reg: PatientRegistration = body.json()
-        .map_err(|_| VilError::bad_request("Invalid patient JSON — need name, date_of_birth, insurance_id"))?;
+    let reg: PatientRegistration = body.json().map_err(|_| {
+        VilError::bad_request("Invalid patient JSON — need name, date_of_birth, insurance_id")
+    })?;
 
     // Generate patient ID (in production: database auto-increment or UUID)
     let patient_id = 1000 + (reg.name.len() as u64 * 7);
@@ -122,8 +123,11 @@ async fn register_patient(body: ShmSlice) -> Result<VilResponse<Patient>, VilErr
 /// In production: check doctor availability, verify patient exists,
 /// send confirmation SMS/email, update the scheduling calendar.
 async fn schedule_appointment(body: ShmSlice) -> Result<VilResponse<Appointment>, VilError> {
-    let req: ScheduleRequest = body.json()
-        .map_err(|_| VilError::bad_request("Invalid appointment JSON — need patient_id, doctor_id, department, date, time_slot"))?;
+    let req: ScheduleRequest = body.json().map_err(|_| {
+        VilError::bad_request(
+            "Invalid appointment JSON — need patient_id, doctor_id, department, date, time_slot",
+        )
+    })?;
 
     // Generate appointment ID
     let appointment_id = req.patient_id * 100 + req.doctor_id;

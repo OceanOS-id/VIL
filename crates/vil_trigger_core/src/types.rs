@@ -80,10 +80,10 @@ impl TriggerFault {
     pub fn as_error_code(&self) -> u32 {
         match self {
             TriggerFault::SourceUnavailable { .. } => 1,
-            TriggerFault::ConfigInvalid { .. }     => 2,
-            TriggerFault::RateLimited { .. }       => 3,
-            TriggerFault::IoError { .. }           => 4,
-            TriggerFault::AuthFailed { .. }        => 5,
+            TriggerFault::ConfigInvalid { .. } => 2,
+            TriggerFault::RateLimited { .. } => 3,
+            TriggerFault::IoError { .. } => 4,
+            TriggerFault::AuthFailed { .. } => 5,
         }
     }
 }

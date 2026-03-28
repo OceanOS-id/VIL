@@ -23,8 +23,8 @@ use vil_log::{LogConfig, LogLevel};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Product {
-    name:     String,
-    price:    u32,
+    name: String,
+    price: u32,
     in_stock: bool,
 }
 
@@ -32,11 +32,11 @@ struct Product {
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -67,8 +67,8 @@ async fn main() {
     };
 
     let product = Product {
-        name:     "Laptop Pro X".into(),
-        price:    15_000_000,
+        name: "Laptop Pro X".into(),
+        price: 15_000_000,
         in_stock: true,
     };
 
@@ -88,8 +88,8 @@ async fn main() {
     let filter = bson::doc! { "_id": &id };
     match client.find_one::<Product>("products", filter.clone()).await {
         Ok(Some(p)) => println!("  FIND    products  name={} price={}", p.name, p.price),
-        Ok(None)    => println!("  FIND    not found"),
-        Err(e)      => println!("  FIND    error: {:?}", e),
+        Ok(None) => println!("  FIND    not found"),
+        Err(e) => println!("  FIND    error: {:?}", e),
     }
 
     // ── UPDATE ──

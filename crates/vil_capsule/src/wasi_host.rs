@@ -142,9 +142,13 @@ impl WasiCapsuleHost {
     /// Run the WASI module's `_start` entry point (like a CLI program).
     /// Returns exit code (0 = success).
     pub fn run_start(&self) -> Result<i32, CapsuleError> {
-        let engine = self.engine.as_ref()
+        let engine = self
+            .engine
+            .as_ref()
             .ok_or_else(|| CapsuleError::ExecutionFailed("not precompiled".into()))?;
-        let module = self.module.as_ref()
+        let module = self
+            .module
+            .as_ref()
             .ok_or_else(|| CapsuleError::ExecutionFailed("not precompiled".into()))?;
 
         let wasi_ctx = self.build_wasi_p1_ctx();
@@ -155,10 +159,12 @@ impl WasiCapsuleHost {
 
         let mut store = wasmtime::Store::new(engine, wasi_ctx);
 
-        let instance = linker.instantiate(&mut store, module)
+        let instance = linker
+            .instantiate(&mut store, module)
             .map_err(|e| CapsuleError::InstantiateFailed(e.to_string()))?;
 
-        let start = instance.get_typed_func::<(), ()>(&mut store, "_start")
+        let start = instance
+            .get_typed_func::<(), ()>(&mut store, "_start")
             .map_err(|e| CapsuleError::ExecutionFailed(format!("no _start function: {}", e)))?;
 
         match start.call(&mut store, ()) {
@@ -176,9 +182,13 @@ impl WasiCapsuleHost {
     /// Call a named export function with (i32, i32) -> i32 signature,
     /// with WASI capabilities available to the WASM module.
     pub fn call_i32(&self, function_name: &str, arg0: i32, arg1: i32) -> Result<i32, CapsuleError> {
-        let engine = self.engine.as_ref()
+        let engine = self
+            .engine
+            .as_ref()
             .ok_or_else(|| CapsuleError::ExecutionFailed("not precompiled".into()))?;
-        let module = self.module.as_ref()
+        let module = self
+            .module
+            .as_ref()
             .ok_or_else(|| CapsuleError::ExecutionFailed("not precompiled".into()))?;
 
         let wasi_ctx = self.build_wasi_p1_ctx();
@@ -188,16 +198,24 @@ impl WasiCapsuleHost {
             .map_err(|e| CapsuleError::InstantiateFailed(e.to_string()))?;
 
         // Also add vil_log host function
-        linker.func_wrap("env", "vil_log", |_: i32, _: i32| {})
+        linker
+            .func_wrap("env", "vil_log", |_: i32, _: i32| {})
             .map_err(|e| CapsuleError::InstantiateFailed(e.to_string()))?;
 
         let mut store = wasmtime::Store::new(engine, wasi_ctx);
 
-        let instance = linker.instantiate(&mut store, module)
+        let instance = linker
+            .instantiate(&mut store, module)
             .map_err(|e| CapsuleError::InstantiateFailed(e.to_string()))?;
 
-        let func = instance.get_typed_func::<(i32, i32), i32>(&mut store, function_name)
-            .map_err(|e| CapsuleError::ExecutionFailed(format!("function '{}' not found: {}", function_name, e)))?;
+        let func = instance
+            .get_typed_func::<(i32, i32), i32>(&mut store, function_name)
+            .map_err(|e| {
+                CapsuleError::ExecutionFailed(format!(
+                    "function '{}' not found: {}",
+                    function_name, e
+                ))
+            })?;
 
         func.call(&mut store, (arg0, arg1))
             .map_err(|e| CapsuleError::ExecutionFailed(e.to_string()))

@@ -100,10 +100,8 @@ impl<K: Send + 'static, V: Send + 'static> Coalescer<K, V> {
                 let results = batch_handler(keys).await;
 
                 // Build result map
-                let result_map: std::collections::HashMap<K, V> = results
-                    .into_iter()
-                    .map(|(k, v)| (k, v))
-                    .collect();
+                let result_map: std::collections::HashMap<K, V> =
+                    results.into_iter().map(|(k, v)| (k, v)).collect();
 
                 // Distribute responses
                 for pending in batch {

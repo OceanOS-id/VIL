@@ -78,12 +78,10 @@ impl LocalEncryption {
         } else {
             let key = generate_random_key();
             if let Some(parent) = key_path.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| SecretError::IoError(e.to_string()))?;
+                std::fs::create_dir_all(parent).map_err(|e| SecretError::IoError(e.to_string()))?;
             }
             let hex = bytes_to_hex(&key);
-            std::fs::write(key_path, &hex)
-                .map_err(|e| SecretError::IoError(e.to_string()))?;
+            std::fs::write(key_path, &hex).map_err(|e| SecretError::IoError(e.to_string()))?;
             // Restrict permissions (Unix only)
             #[cfg(unix)]
             {
@@ -140,12 +138,13 @@ impl SecretProvider for LocalEncryption {
         let cipher = Aes256Gcm::new_from_slice(&self.key)
             .map_err(|e| SecretError::DecryptionFailed(e.to_string()))?;
 
-        let plaintext = cipher
-            .decrypt(nonce, ciphertext_and_tag)
-            .map_err(|_| SecretError::DecryptionFailed("Authentication failed — wrong key or tampered data".into()))?;
+        let plaintext = cipher.decrypt(nonce, ciphertext_and_tag).map_err(|_| {
+            SecretError::DecryptionFailed(
+                "Authentication failed — wrong key or tampered data".into(),
+            )
+        })?;
 
-        String::from_utf8(plaintext)
-            .map_err(|e| SecretError::DecryptionFailed(e.to_string()))
+        String::from_utf8(plaintext).map_err(|e| SecretError::DecryptionFailed(e.to_string()))
     }
 
     fn resolve(&self, reference: &str) -> Result<String, SecretError> {
@@ -184,8 +183,7 @@ impl SecretProvider for EnvVarProvider {
             .and_then(|s| s.strip_suffix('}'))
             .ok_or_else(|| SecretError::ProviderError("Invalid ENV reference format".into()))?;
 
-        std::env::var(var_name)
-            .map_err(|_| SecretError::KeyNotFound(format!("ENV:{}", var_name)))
+        std::env::var(var_name).map_err(|_| SecretError::KeyNotFound(format!("ENV:{}", var_name)))
     }
 
     fn provider_name(&self) -> &str {
@@ -205,7 +203,9 @@ pub struct KubernetesSecretsProvider {
 
 impl KubernetesSecretsProvider {
     pub fn new(namespace: &str) -> Self {
-        Self { namespace: namespace.to_string() }
+        Self {
+            namespace: namespace.to_string(),
+        }
     }
 }
 
@@ -215,7 +215,9 @@ impl SecretProvider for KubernetesSecretsProvider {
     }
 
     fn decrypt(&self, _ciphertext: &str) -> Result<String, SecretError> {
-        Err(SecretError::ProviderError("K8s decrypt not applicable — use resolve".into()))
+        Err(SecretError::ProviderError(
+            "K8s decrypt not applicable — use resolve".into(),
+        ))
     }
 
     fn resolve(&self, reference: &str) -> Result<String, SecretError> {
@@ -231,7 +233,7 @@ impl SecretProvider for KubernetesSecretsProvider {
 
         app_log!(Debug, "secrets.k8s.resolve", { namespace: vil_log::dict::register_str(&self.namespace) as u64, secret: vil_log::dict::register_str(parts[0]) as u64, key: vil_log::dict::register_str(parts[1]) as u64 });
         Err(SecretError::ProviderError(
-            "K8s Secrets provider — requires kube-rs crate. Enable with feature flag.".into()
+            "K8s Secrets provider — requires kube-rs crate. Enable with feature flag.".into(),
         ))
     }
 
@@ -254,7 +256,10 @@ pub struct VaultProvider {
 
 impl VaultProvider {
     pub fn new(addr: &str, token: &str) -> Self {
-        Self { addr: addr.to_string(), token: token.to_string() }
+        Self {
+            addr: addr.to_string(),
+            token: token.to_string(),
+        }
     }
 }
 
@@ -264,7 +269,9 @@ impl SecretProvider for VaultProvider {
     }
 
     fn decrypt(&self, _ciphertext: &str) -> Result<String, SecretError> {
-        Err(SecretError::ProviderError("Vault decrypt not applicable — use resolve".into()))
+        Err(SecretError::ProviderError(
+            "Vault decrypt not applicable — use resolve".into(),
+        ))
     }
 
     fn resolve(&self, reference: &str) -> Result<String, SecretError> {
@@ -280,7 +287,7 @@ impl SecretProvider for VaultProvider {
 
         app_log!(Debug, "secrets.vault.resolve", { vault_addr: vil_log::dict::register_str(&self.addr) as u64, path: vil_log::dict::register_str(parts[0]) as u64, key: vil_log::dict::register_str(parts[1]) as u64 });
         Err(SecretError::ProviderError(
-            "Vault provider — requires Vault HTTP API. Enable with feature flag.".into()
+            "Vault provider — requires Vault HTTP API. Enable with feature flag.".into(),
         ))
     }
 
@@ -314,14 +321,20 @@ impl SecretResolver {
         if value.starts_with("ENC[") {
             match &self.local {
                 Some(enc) => enc.decrypt(value),
-                None => Err(SecretError::ProviderError("No encryption key configured".into())),
+                None => Err(SecretError::ProviderError(
+                    "No encryption key configured".into(),
+                )),
             }
         } else if value.starts_with("${ENV:") {
             self.env.resolve(value)
         } else if value.starts_with("${K8S_SECRET:") {
-            Err(SecretError::ProviderError("K8s provider not configured".into()))
+            Err(SecretError::ProviderError(
+                "K8s provider not configured".into(),
+            ))
         } else if value.starts_with("${VAULT:") {
-            Err(SecretError::ProviderError("Vault provider not configured".into()))
+            Err(SecretError::ProviderError(
+                "Vault provider not configured".into(),
+            ))
         } else {
             Ok(value.to_string()) // Plaintext
         }
@@ -331,7 +344,9 @@ impl SecretResolver {
     pub fn encrypt(&self, plaintext: &str) -> Result<String, SecretError> {
         match &self.local {
             Some(enc) => enc.encrypt(plaintext),
-            None => Err(SecretError::ProviderError("No encryption key configured".into())),
+            None => Err(SecretError::ProviderError(
+                "No encryption key configured".into(),
+            )),
         }
     }
 }
@@ -356,9 +371,10 @@ fn generate_nonce() -> [u8; 12] {
 
 fn hex_to_bytes(hex: &str) -> Result<[u8; 32], SecretError> {
     if hex.len() != 64 {
-        return Err(SecretError::DecryptionFailed(
-            format!("Key must be 64 hex chars, got {}", hex.len()),
-        ));
+        return Err(SecretError::DecryptionFailed(format!(
+            "Key must be 64 hex chars, got {}",
+            hex.len()
+        )));
     }
     let mut bytes = [0u8; 32];
     for i in 0..32 {
@@ -382,8 +398,16 @@ fn base64_encode(data: &[u8]) -> String {
         let n = (b0 << 16) | (b1 << 8) | b2;
         result.push(CHARS[((n >> 18) & 0x3F) as usize] as char);
         result.push(CHARS[((n >> 12) & 0x3F) as usize] as char);
-        if chunk.len() > 1 { result.push(CHARS[((n >> 6) & 0x3F) as usize] as char); } else { result.push('='); }
-        if chunk.len() > 2 { result.push(CHARS[(n & 0x3F) as usize] as char); } else { result.push('='); }
+        if chunk.len() > 1 {
+            result.push(CHARS[((n >> 6) & 0x3F) as usize] as char);
+        } else {
+            result.push('=');
+        }
+        if chunk.len() > 2 {
+            result.push(CHARS[(n & 0x3F) as usize] as char);
+        } else {
+            result.push('=');
+        }
     }
     result
 }
@@ -403,15 +427,29 @@ fn base64_decode(input: &str) -> Result<Vec<u8>, SecretError> {
     let bytes: Vec<u8> = input.bytes().filter(|&b| b != b'=').collect();
     let mut result = Vec::new();
     for chunk in bytes.chunks(4) {
-        if chunk.len() < 2 { break; }
+        if chunk.len() < 2 {
+            break;
+        }
         let b0 = DECODE.get(chunk[0] as usize).copied().unwrap_or(0) as u32;
         let b1 = DECODE.get(chunk[1] as usize).copied().unwrap_or(0) as u32;
-        let b2 = if chunk.len() > 2 { DECODE.get(chunk[2] as usize).copied().unwrap_or(0) as u32 } else { 0 };
-        let b3 = if chunk.len() > 3 { DECODE.get(chunk[3] as usize).copied().unwrap_or(0) as u32 } else { 0 };
+        let b2 = if chunk.len() > 2 {
+            DECODE.get(chunk[2] as usize).copied().unwrap_or(0) as u32
+        } else {
+            0
+        };
+        let b3 = if chunk.len() > 3 {
+            DECODE.get(chunk[3] as usize).copied().unwrap_or(0) as u32
+        } else {
+            0
+        };
         let n = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3;
         result.push(((n >> 16) & 0xFF) as u8);
-        if chunk.len() > 2 { result.push(((n >> 8) & 0xFF) as u8); }
-        if chunk.len() > 3 { result.push((n & 0xFF) as u8); }
+        if chunk.len() > 2 {
+            result.push(((n >> 8) & 0xFF) as u8);
+        }
+        if chunk.len() > 3 {
+            result.push((n & 0xFF) as u8);
+        }
     }
     Ok(result)
 }

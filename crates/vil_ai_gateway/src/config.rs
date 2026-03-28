@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Routing policy for the AI Gateway.
 #[derive(Debug, Clone, Serialize, Deserialize)]

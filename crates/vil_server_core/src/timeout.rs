@@ -91,8 +91,5 @@ fn timeout_response(duration: Duration) -> Response {
         "message": format!("Request exceeded {}ms timeout", duration.as_millis()),
         "status": 408,
     });
-    (
-        StatusCode::REQUEST_TIMEOUT,
-        axum::Json(body),
-    ).into_response()
+    (StatusCode::REQUEST_TIMEOUT, axum::Json(body)).into_response()
 }

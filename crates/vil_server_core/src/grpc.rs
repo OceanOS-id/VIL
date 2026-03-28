@@ -63,13 +63,9 @@ impl GrpcConfig {
 #[derive(Debug, Clone)]
 pub enum GrpcTransport {
     /// SHM via Tri-Lane — zero-copy, co-located only
-    Shm {
-        service_name: String,
-    },
+    Shm { service_name: String },
     /// Standard gRPC over HTTP/2 — for remote services
-    Remote {
-        endpoint: String,
-    },
+    Remote { endpoint: String },
 }
 
 impl GrpcTransport {
@@ -131,7 +127,8 @@ impl GrpcServiceRegistry {
 
     /// List all registered services.
     pub fn list_services(&self) -> Vec<(String, String)> {
-        self.services.iter()
+        self.services
+            .iter()
             .map(|e| (e.key().clone(), e.value().endpoint()))
             .collect()
     }

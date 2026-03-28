@@ -31,8 +31,8 @@
 //         -H 'Content-Type: application/json' \
 //         -d '{"card_token":"tok_4242","merchant":"Electronics Store","amount_cents":125000,"country":"US","city":"New York","transactions_last_hour":3}'
 
-use vil_server::prelude::*;
 use vil_agent::semantic::{AgentCompletionEvent, AgentFault, AgentMemoryState};
+use vil_server::prelude::*;
 
 // ── Fraud Detection Tools ───────────────────────────────────────────────
 // Each tool represents a specialized analysis capability.
@@ -55,10 +55,16 @@ fn geo_analyzer(country: &str, city: &str) -> (f64, &'static str) {
     // Simplified: in production, compare with cardholder's home region
     // and recent transaction locations
     match (country, city) {
-        ("US", _) => (0.1, "Domestic transaction — consistent with cardholder profile"),
+        ("US", _) => (
+            0.1,
+            "Domestic transaction — consistent with cardholder profile",
+        ),
         ("GB", "London") | ("CA", _) => (0.3, "Common travel destination — low risk"),
         ("NG", _) | ("RU", _) => (0.8, "High-risk region — manual review recommended"),
-        _ => (0.5, "International — moderate risk, checking travel patterns"),
+        _ => (
+            0.5,
+            "International — moderate risk, checking travel patterns",
+        ),
     }
 }
 
@@ -145,9 +151,21 @@ async fn detect_fraud(body: ShmSlice) -> Result<VilResponse<FraudAssessment>, Vi
     let (amount_score, amount_reason) = amount_calculator(txn.amount_cents);
 
     let tool_results = vec![
-        ToolResult { tool: "velocity_checker", score: velocity_score, reasoning: velocity_reason },
-        ToolResult { tool: "geo_analyzer", score: geo_score, reasoning: geo_reason },
-        ToolResult { tool: "amount_calculator", score: amount_score, reasoning: amount_reason },
+        ToolResult {
+            tool: "velocity_checker",
+            score: velocity_score,
+            reasoning: velocity_reason,
+        },
+        ToolResult {
+            tool: "geo_analyzer",
+            score: geo_score,
+            reasoning: geo_reason,
+        },
+        ToolResult {
+            tool: "amount_calculator",
+            score: amount_score,
+            reasoning: amount_reason,
+        },
     ];
 
     // ── Combine scores into final fraud assessment ──────────────────
@@ -174,7 +192,8 @@ async fn detect_fraud(body: ShmSlice) -> Result<VilResponse<FraudAssessment>, Vi
         recommendation,
         tool_results,
         tools_used: FRAUD_TOOLS.to_vec(),
-        handler_mode: "#[vil_handler(shm)] — ShmSlice zero-copy extraction + auto RequestId + tracing",
+        handler_mode:
+            "#[vil_handler(shm)] — ShmSlice zero-copy extraction + auto RequestId + tracing",
     }))
 }
 

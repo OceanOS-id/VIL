@@ -6,12 +6,12 @@
 // would be distributed as a pre-compiled binary (.a / .lib).
 // =============================================================================
 
-pub use vil_rt as rt;
-pub use vil_shm as shm;
+pub use vil_obs as obs;
 pub use vil_queue as queue;
 pub use vil_registry as registry;
+pub use vil_rt as rt;
+pub use vil_shm as shm;
 pub use vil_types as types;
-pub use vil_obs as obs;
 
 /// Entry point to initialize the engine world from the binary.
 pub fn create_runtime_world() -> std::sync::Arc<vil_rt::VastarRuntimeWorld> {

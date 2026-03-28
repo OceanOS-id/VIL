@@ -1,6 +1,6 @@
-use async_trait::async_trait;
 use crate::message::*;
 use crate::provider::*;
+use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
 pub struct OpenAiConfig {
@@ -73,7 +73,8 @@ impl LlmProvider for OpenAiProvider {
             body["temperature"] = serde_json::json!(temp);
         }
 
-        let resp = self.client
+        let resp = self
+            .client
             .post(format!("{}/chat/completions", self.config.base_url))
             .header("Authorization", format!("Bearer {}", self.config.api_key))
             .header("Content-Type", "application/json")
@@ -86,12 +87,15 @@ impl LlmProvider for OpenAiProvider {
             return Err(LlmError::AuthenticationFailed);
         }
         if resp.status() == 429 {
-            let retry_after = resp.headers()
+            let retry_after = resp
+                .headers()
                 .get("retry-after")
                 .and_then(|v| v.to_str().ok())
                 .and_then(|v| v.parse::<u64>().ok())
                 .map(|s| s * 1000);
-            return Err(LlmError::RateLimited { retry_after_ms: retry_after });
+            return Err(LlmError::RateLimited {
+                retry_after_ms: retry_after,
+            });
         }
         if !resp.status().is_success() {
             let status = resp.status();
@@ -100,7 +104,8 @@ impl LlmProvider for OpenAiProvider {
         }
 
         // Detect SSE streaming response (content-type: text/event-stream)
-        let content_type = resp.headers()
+        let content_type = resp
+            .headers()
             .get("content-type")
             .and_then(|v| v.to_str().ok())
             .unwrap_or("")
@@ -111,10 +116,13 @@ impl LlmProvider for OpenAiProvider {
             return self.collect_sse_response(resp).await;
         }
 
-        let json: serde_json::Value = resp.json().await
+        let json: serde_json::Value = resp
+            .json()
+            .await
             .map_err(|e| LlmError::InvalidResponse(e.to_string()))?;
 
-        let choice = json["choices"].get(0)
+        let choice = json["choices"]
+            .get(0)
             .ok_or_else(|| LlmError::InvalidResponse("no choices".into()))?;
 
         let content = choice["message"]["content"]
@@ -122,19 +130,21 @@ impl LlmProvider for OpenAiProvider {
             .unwrap_or("")
             .to_string();
 
-        let tool_calls = choice["message"]["tool_calls"]
-            .as_array()
-            .map(|calls| {
-                calls.iter().filter_map(|c| {
+        let tool_calls = choice["message"]["tool_calls"].as_array().map(|calls| {
+            calls
+                .iter()
+                .filter_map(|c| {
                     Some(ToolCall {
                         id: c["id"].as_str()?.to_string(),
                         name: c["function"]["name"].as_str()?.to_string(),
                         arguments: serde_json::from_str(
-                            c["function"]["arguments"].as_str().unwrap_or("{}")
-                        ).unwrap_or(serde_json::json!({})),
+                            c["function"]["arguments"].as_str().unwrap_or("{}"),
+                        )
+                        .unwrap_or(serde_json::json!({})),
                     })
-                }).collect()
-            });
+                })
+                .collect()
+        });
 
         let usage = json["usage"].as_object().map(|u| Usage {
             prompt_tokens: u["prompt_tokens"].as_u64().unwrap_or(0) as u32,
@@ -145,29 +155,36 @@ impl LlmProvider for OpenAiProvider {
         {
             use vil_log::{ai_log, types::AiPayload};
             let __elapsed = __ai_start.elapsed();
-            let (input_tokens, output_tokens) = usage.as_ref()
+            let (input_tokens, output_tokens) = usage
+                .as_ref()
                 .map(|u| (u.prompt_tokens, u.completion_tokens))
                 .unwrap_or((0, 0));
-            ai_log!(Info, AiPayload {
-                model_hash: vil_log::dict::register_str(self.model()),
-                provider_hash: vil_log::dict::register_str(self.provider_name()),
-                input_tokens,
-                output_tokens,
-                latency_us: __elapsed.as_micros() as u32,
-                cost_micro_usd: 0,
-                provider_status: 200,
-                op_type: 0,
-                streaming: 0,
-                retries: 0,
-                cache_hit: 0,
-                _pad: [0; 2],
-                meta_bytes: [0; 160],
-            });
+            ai_log!(
+                Info,
+                AiPayload {
+                    model_hash: vil_log::dict::register_str(self.model()),
+                    provider_hash: vil_log::dict::register_str(self.provider_name()),
+                    input_tokens,
+                    output_tokens,
+                    latency_us: __elapsed.as_micros() as u32,
+                    cost_micro_usd: 0,
+                    provider_status: 200,
+                    op_type: 0,
+                    streaming: 0,
+                    retries: 0,
+                    cache_hit: 0,
+                    _pad: [0; 2],
+                    meta_bytes: [0; 160],
+                }
+            );
         }
 
         Ok(ChatResponse {
             content,
-            model: json["model"].as_str().unwrap_or(&self.config.model).to_string(),
+            model: json["model"]
+                .as_str()
+                .unwrap_or(&self.config.model)
+                .to_string(),
             tool_calls,
             usage,
             finish_reason: choice["finish_reason"].as_str().map(|s| s.to_string()),
@@ -190,7 +207,8 @@ impl LlmProvider for OpenAiProvider {
             body["max_tokens"] = serde_json::json!(max_tokens);
         }
 
-        let resp = self.client
+        let resp = self
+            .client
             .post(format!("{}/chat/completions", self.config.base_url))
             .header("Authorization", format!("Bearer {}", self.config.api_key))
             .header("Content-Type", "application/json")
@@ -204,62 +222,89 @@ impl LlmProvider for OpenAiProvider {
             return Err(LlmError::RequestFailed(text));
         }
 
-        let json: serde_json::Value = resp.json().await
+        let json: serde_json::Value = resp
+            .json()
+            .await
             .map_err(|e| LlmError::InvalidResponse(e.to_string()))?;
 
-        let choice = json["choices"].get(0)
+        let choice = json["choices"]
+            .get(0)
             .ok_or_else(|| LlmError::InvalidResponse("no choices".into()))?;
 
-        let content = choice["message"]["content"].as_str().unwrap_or("").to_string();
+        let content = choice["message"]["content"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
 
         let tool_calls = choice["message"]["tool_calls"].as_array().map(|calls| {
-            calls.iter().filter_map(|c| {
-                Some(ToolCall {
-                    id: c["id"].as_str()?.to_string(),
-                    name: c["function"]["name"].as_str()?.to_string(),
-                    arguments: serde_json::from_str(c["function"]["arguments"].as_str().unwrap_or("{}")).unwrap_or(serde_json::json!({})),
+            calls
+                .iter()
+                .filter_map(|c| {
+                    Some(ToolCall {
+                        id: c["id"].as_str()?.to_string(),
+                        name: c["function"]["name"].as_str()?.to_string(),
+                        arguments: serde_json::from_str(
+                            c["function"]["arguments"].as_str().unwrap_or("{}"),
+                        )
+                        .unwrap_or(serde_json::json!({})),
+                    })
                 })
-            }).collect()
+                .collect()
         });
 
         {
             use vil_log::{ai_log, types::AiPayload};
             let __elapsed = __ai_start.elapsed();
-            ai_log!(Info, AiPayload {
-                model_hash: vil_log::dict::register_str(self.model()),
-                provider_hash: vil_log::dict::register_str(self.provider_name()),
-                input_tokens: 0,
-                output_tokens: 0,
-                latency_us: __elapsed.as_micros() as u32,
-                cost_micro_usd: 0,
-                provider_status: 200,
-                op_type: 0,
-                streaming: 0,
-                retries: 0,
-                cache_hit: 0,
-                _pad: [0; 2],
-                meta_bytes: [0; 160],
-            });
+            ai_log!(
+                Info,
+                AiPayload {
+                    model_hash: vil_log::dict::register_str(self.model()),
+                    provider_hash: vil_log::dict::register_str(self.provider_name()),
+                    input_tokens: 0,
+                    output_tokens: 0,
+                    latency_us: __elapsed.as_micros() as u32,
+                    cost_micro_usd: 0,
+                    provider_status: 200,
+                    op_type: 0,
+                    streaming: 0,
+                    retries: 0,
+                    cache_hit: 0,
+                    _pad: [0; 2],
+                    meta_bytes: [0; 160],
+                }
+            );
         }
 
         Ok(ChatResponse {
             content,
-            model: json["model"].as_str().unwrap_or(&self.config.model).to_string(),
+            model: json["model"]
+                .as_str()
+                .unwrap_or(&self.config.model)
+                .to_string(),
             tool_calls,
             usage: None,
             finish_reason: choice["finish_reason"].as_str().map(|s| s.to_string()),
         })
     }
 
-    fn model(&self) -> &str { &self.config.model }
-    fn provider_name(&self) -> &str { "openai" }
+    fn model(&self) -> &str {
+        &self.config.model
+    }
+    fn provider_name(&self) -> &str {
+        "openai"
+    }
 }
 
 impl OpenAiProvider {
     /// Collect SSE streaming response into a single ChatResponse.
     /// Handles the `data: {...}` SSE format from OpenAI-compatible endpoints.
-    async fn collect_sse_response(&self, resp: reqwest::Response) -> Result<ChatResponse, LlmError> {
-        let body = resp.text().await
+    async fn collect_sse_response(
+        &self,
+        resp: reqwest::Response,
+    ) -> Result<ChatResponse, LlmError> {
+        let body = resp
+            .text()
+            .await
             .map_err(|e| LlmError::RequestFailed(e.to_string()))?;
 
         let mut content = String::new();
@@ -298,7 +343,8 @@ impl OpenAiProvider {
                         if total > 0 {
                             usage = Some(Usage {
                                 prompt_tokens: u["prompt_tokens"].as_u64().unwrap_or(0) as u32,
-                                completion_tokens: u["completion_tokens"].as_u64().unwrap_or(0) as u32,
+                                completion_tokens: u["completion_tokens"].as_u64().unwrap_or(0)
+                                    as u32,
                                 total_tokens: total as u32,
                             });
                         }
@@ -345,7 +391,8 @@ impl OpenAiEmbedder {
     pub fn from_env() -> Self {
         Self::new(
             std::env::var("OPENAI_API_KEY").unwrap_or_default(),
-            std::env::var("OPENAI_EMBEDDING_MODEL").unwrap_or_else(|_| "text-embedding-3-small".into()),
+            std::env::var("OPENAI_EMBEDDING_MODEL")
+                .unwrap_or_else(|_| "text-embedding-3-small".into()),
         )
     }
 }
@@ -359,7 +406,8 @@ impl EmbeddingProvider for OpenAiEmbedder {
             "input": texts,
         });
 
-        let resp = self.client
+        let resp = self
+            .client
             .post(format!("{}/embeddings", self.config.base_url))
             .header("Authorization", format!("Bearer {}", self.config.api_key))
             .json(&body)
@@ -372,15 +420,20 @@ impl EmbeddingProvider for OpenAiEmbedder {
             return Err(LlmError::RequestFailed(text));
         }
 
-        let json: serde_json::Value = resp.json().await
+        let json: serde_json::Value = resp
+            .json()
+            .await
             .map_err(|e| LlmError::InvalidResponse(e.to_string()))?;
 
-        let embeddings = json["data"].as_array()
+        let embeddings = json["data"]
+            .as_array()
             .ok_or_else(|| LlmError::InvalidResponse("no data field".into()))?
             .iter()
             .filter_map(|item| {
                 item["embedding"].as_array().map(|arr| {
-                    arr.iter().filter_map(|v| v.as_f64().map(|f| f as f32)).collect()
+                    arr.iter()
+                        .filter_map(|v| v.as_f64().map(|f| f as f32))
+                        .collect()
                 })
             })
             .collect();
@@ -388,26 +441,33 @@ impl EmbeddingProvider for OpenAiEmbedder {
         {
             use vil_log::{ai_log, types::AiPayload};
             let __elapsed = __ai_start.elapsed();
-            ai_log!(Info, AiPayload {
-                model_hash: vil_log::dict::register_str(self.model()),
-                provider_hash: vil_log::dict::register_str("openai"),
-                input_tokens: 0,
-                output_tokens: 0,
-                latency_us: __elapsed.as_micros() as u32,
-                cost_micro_usd: 0,
-                provider_status: 200,
-                op_type: 2,
-                streaming: 0,
-                retries: 0,
-                cache_hit: 0,
-                _pad: [0; 2],
-                meta_bytes: [0; 160],
-            });
+            ai_log!(
+                Info,
+                AiPayload {
+                    model_hash: vil_log::dict::register_str(self.model()),
+                    provider_hash: vil_log::dict::register_str("openai"),
+                    input_tokens: 0,
+                    output_tokens: 0,
+                    latency_us: __elapsed.as_micros() as u32,
+                    cost_micro_usd: 0,
+                    provider_status: 200,
+                    op_type: 2,
+                    streaming: 0,
+                    retries: 0,
+                    cache_hit: 0,
+                    _pad: [0; 2],
+                    meta_bytes: [0; 160],
+                }
+            );
         }
 
         Ok(embeddings)
     }
 
-    fn dimension(&self) -> usize { self.dim }
-    fn model(&self) -> &str { &self.embedding_model }
+    fn dimension(&self) -> usize {
+        self.dim
+    }
+    fn model(&self) -> &str {
+        &self.embedding_model
+    }
 }

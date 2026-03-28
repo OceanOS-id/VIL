@@ -12,14 +12,22 @@ pub struct MultiAgentPlugin {
 
 impl MultiAgentPlugin {
     pub fn new(orchestrator: Orchestrator) -> Self {
-        Self { orchestrator: Arc::new(tokio::sync::Mutex::new(orchestrator)) }
+        Self {
+            orchestrator: Arc::new(tokio::sync::Mutex::new(orchestrator)),
+        }
     }
 }
 
 impl VilPlugin for MultiAgentPlugin {
-    fn id(&self) -> &str { "vil-multi-agent" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Orchestrated multi-agent collaboration" }
+    fn id(&self) -> &str {
+        "vil-multi-agent"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Orchestrated multi-agent collaboration"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -32,7 +40,10 @@ impl VilPlugin for MultiAgentPlugin {
     }
 
     fn register(&self, ctx: &mut PluginContext) {
-        ctx.provide::<Arc<tokio::sync::Mutex<Orchestrator>>>("multi-agent", self.orchestrator.clone());
+        ctx.provide::<Arc<tokio::sync::Mutex<Orchestrator>>>(
+            "multi-agent",
+            self.orchestrator.clone(),
+        );
 
         let svc = ServiceProcess::new("multi-agent")
             .state(self.orchestrator.clone())
@@ -42,5 +53,7 @@ impl VilPlugin for MultiAgentPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

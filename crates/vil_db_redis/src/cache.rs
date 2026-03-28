@@ -19,34 +19,51 @@ impl RedisCache {
 
     /// Create a cache by connecting directly to a Redis URL.
     pub async fn connect(url: &str) -> Result<Self, String> {
-        let client = redis::Client::open(url)
-            .map_err(|e| format!("Redis client open failed: {}", e))?;
-        let conn = ConnectionManager::new(client).await
+        let client =
+            redis::Client::open(url).map_err(|e| format!("Redis client open failed: {}", e))?;
+        let conn = ConnectionManager::new(client)
+            .await
             .map_err(|e| format!("Redis ConnectionManager failed: {}", e))?;
         Ok(Self { conn })
     }
 
     pub async fn get(&self, key: &str) -> Option<String> {
         let mut conn = self.conn.clone();
-        redis::cmd("GET").arg(key).query_async::<Option<String>>(&mut conn).await.ok().flatten()
+        redis::cmd("GET")
+            .arg(key)
+            .query_async::<Option<String>>(&mut conn)
+            .await
+            .ok()
+            .flatten()
     }
 
     pub async fn set(&self, key: &str, value: &str, ttl: Option<Duration>) {
         let mut conn = self.conn.clone();
         if let Some(ttl) = ttl {
             let _: Result<(), _> = redis::cmd("SET")
-                .arg(key).arg(value).arg("EX").arg(ttl.as_secs())
-                .query_async(&mut conn).await;
+                .arg(key)
+                .arg(value)
+                .arg("EX")
+                .arg(ttl.as_secs())
+                .query_async(&mut conn)
+                .await;
         } else {
             let _: Result<(), _> = redis::cmd("SET")
-                .arg(key).arg(value)
-                .query_async(&mut conn).await;
+                .arg(key)
+                .arg(value)
+                .query_async(&mut conn)
+                .await;
         }
     }
 
     pub async fn del(&self, key: &str) -> bool {
         let mut conn = self.conn.clone();
-        redis::cmd("DEL").arg(key).query_async::<i64>(&mut conn).await.unwrap_or(0) > 0
+        redis::cmd("DEL")
+            .arg(key)
+            .query_async::<i64>(&mut conn)
+            .await
+            .unwrap_or(0)
+            > 0
     }
 
     pub async fn set_json<T: serde::Serialize>(&self, key: &str, value: &T, ttl: Option<Duration>) {
@@ -63,7 +80,10 @@ impl RedisCache {
     /// Get number of keys in the current database.
     pub async fn keys_count(&self) -> usize {
         let mut conn = self.conn.clone();
-        redis::cmd("DBSIZE").query_async::<usize>(&mut conn).await.unwrap_or(0)
+        redis::cmd("DBSIZE")
+            .query_async::<usize>(&mut conn)
+            .await
+            .unwrap_or(0)
     }
 
     /// Cleanup expired keys is handled automatically by Redis server.

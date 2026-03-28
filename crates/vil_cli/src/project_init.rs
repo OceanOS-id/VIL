@@ -353,11 +353,17 @@ fn generate_project(
         }
         "python" => {
             let src = format!("app.vil.py");
-            println!("    vil compile --from python --input {} --output {}  # compile to native binary", src, config.name);
+            println!(
+                "    vil compile --from python --input {} --output {}  # compile to native binary",
+                src, config.name
+            );
             println!("    ./{}", config.name);
         }
         "go" => {
-            println!("    vil compile --from go --input main.go --output {}  # compile to native binary", config.name);
+            println!(
+                "    vil compile --from go --input main.go --output {}  # compile to native binary",
+                config.name
+            );
             println!("    ./{}", config.name);
         }
         "java" => {
@@ -472,16 +478,17 @@ fn generate_sdk_project(
 
     std::fs::write(project_dir.join(filename), &sdk_source)
         .map_err(|e| format!("Failed to write {}: {}", filename, e))?;
-    println!("  {} {} (VIL SDK pipeline definition)", lang_label.green(), filename);
+    println!(
+        "  {} {} (VIL SDK pipeline definition)",
+        lang_label.green(),
+        filename
+    );
 
     // Language-specific project files
     match config.lang.as_str() {
         "python" => {
-            std::fs::write(
-                project_dir.join("requirements.txt"),
-                "vil-sdk>=1.0.0\n",
-            )
-            .map_err(|e| format!("Failed to write requirements.txt: {}", e))?;
+            std::fs::write(project_dir.join("requirements.txt"), "vil-sdk>=1.0.0\n")
+                .map_err(|e| format!("Failed to write requirements.txt: {}", e))?;
             println!("  {} requirements.txt", "PIP".green());
         }
         "go" => {
@@ -2150,49 +2157,74 @@ mod tests {
     fn yaml_optional_fields_observer_true() {
         let c = test_config(true);
         let fields = yaml_optional_fields(&c);
-        assert!(fields.contains("observer: true"), "should emit observer: true");
+        assert!(
+            fields.contains("observer: true"),
+            "should emit observer: true"
+        );
     }
 
     #[test]
     fn yaml_optional_fields_observer_false() {
         let c = test_config(false);
         let fields = yaml_optional_fields(&c);
-        assert!(!fields.contains("observer"), "should emit nothing when observer=false");
+        assert!(
+            !fields.contains("observer"),
+            "should emit nothing when observer=false"
+        );
     }
 
     #[test]
     fn yaml_ai_gateway_includes_observer_placeholder() {
         let c = test_config(true);
         let yaml = yaml_ai_gateway(&c);
-        assert!(yaml.contains("observer: true"), "ai-gateway YAML must include observer: true\n{}", yaml);
+        assert!(
+            yaml.contains("observer: true"),
+            "ai-gateway YAML must include observer: true\n{}",
+            yaml
+        );
     }
 
     #[test]
     fn yaml_rest_crud_includes_observer_placeholder() {
         let c = test_config(true);
         let yaml = yaml_rest_crud(&c);
-        assert!(yaml.contains("observer: true"), "rest-crud YAML must include observer: true\n{}", yaml);
+        assert!(
+            yaml.contains("observer: true"),
+            "rest-crud YAML must include observer: true\n{}",
+            yaml
+        );
     }
 
     #[test]
     fn yaml_blank_includes_observer_placeholder() {
         let c = test_config(true);
         let yaml = yaml_blank(&c);
-        assert!(yaml.contains("observer: true"), "blank YAML must include observer: true\n{}", yaml);
+        assert!(
+            yaml.contains("observer: true"),
+            "blank YAML must include observer: true\n{}",
+            yaml
+        );
     }
 
     #[test]
     fn yaml_data_pipeline_includes_observer_placeholder() {
         let c = test_config(true);
         let yaml = yaml_data_pipeline(&c);
-        assert!(yaml.contains("observer: true"), "data-pipeline YAML must include observer: true\n{}", yaml);
+        assert!(
+            yaml.contains("observer: true"),
+            "data-pipeline YAML must include observer: true\n{}",
+            yaml
+        );
     }
 
     #[test]
     fn yaml_templates_omit_observer_when_false() {
         let c = test_config(false);
         let yaml = yaml_ai_gateway(&c);
-        assert!(!yaml.contains("observer: true"), "should NOT contain observer: true when disabled");
+        assert!(
+            !yaml.contains("observer: true"),
+            "should NOT contain observer: true when disabled"
+        );
         // Should not have stray blank line from empty optional
         let yaml2 = yaml_blank(&c);
         assert!(!yaml2.contains("observer: true"));

@@ -1,10 +1,10 @@
+use std::collections::HashMap;
+use std::sync::Mutex;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
-use std::collections::HashMap;
-use std::sync::Mutex;
 
-use crate::{parser, diagnostics, completions, hover};
+use crate::{completions, diagnostics, hover, parser};
 
 pub struct VilBackend {
     client: Client,
@@ -36,7 +36,11 @@ impl LanguageServer for VilBackend {
                 )),
                 completion_provider: Some(CompletionOptions {
                     trigger_characters: Some(vec![
-                        "#".into(), "[".into(), ":".into(), ".".into(), "\"".into(),
+                        "#".into(),
+                        "[".into(),
+                        ":".into(),
+                        ".".into(),
+                        "\"".into(),
                     ]),
                     ..Default::default()
                 }),
@@ -63,7 +67,10 @@ impl LanguageServer for VilBackend {
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri.clone();
         let text = params.text_document.text.clone();
-        self.documents.lock().unwrap().insert(uri.clone(), text.clone());
+        self.documents
+            .lock()
+            .unwrap()
+            .insert(uri.clone(), text.clone());
         self.publish_diagnostics(uri, &text).await;
     }
 
@@ -71,7 +78,10 @@ impl LanguageServer for VilBackend {
         let uri = params.text_document.uri.clone();
         if let Some(change) = params.content_changes.into_iter().last() {
             let text = change.text.clone();
-            self.documents.lock().unwrap().insert(uri.clone(), text.clone());
+            self.documents
+                .lock()
+                .unwrap()
+                .insert(uri.clone(), text.clone());
             self.publish_diagnostics(uri, &text).await;
         }
     }

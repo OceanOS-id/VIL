@@ -19,25 +19,17 @@
 //       fn register(&self, ctx: &mut PluginContext) { ... }
 //   }
 
-pub mod prelude;
 pub mod builder;
 pub mod manifest;
+pub mod prelude;
 pub mod testing;
 
 // ── Stable re-exports from vil_server_core ──────────────────────────────
 
 // Core trait + plugin system types
 pub use vil_server_core::{
-    VilPlugin,
-    PluginContext,
-    ResourceRegistry,
-    PluginRegistry,
-    PluginCapability,
-    PluginEndpointSpec as EndpointSpec,
-    PluginDependency,
-    PluginHealth,
-    PluginInfo,
-    PluginError,
+    PluginCapability, PluginContext, PluginDependency, PluginEndpointSpec as EndpointSpec,
+    PluginError, PluginHealth, PluginInfo, PluginRegistry, ResourceRegistry, VilPlugin,
 };
 
 // Service building
@@ -51,8 +43,8 @@ pub use vil_server_core::ServiceCtx;
 pub use vil_server_core::ShmSlice;
 
 // Axum routing (plugins need these for endpoint registration)
-pub use vil_server_core::axum::routing::{get, post, put, delete};
 pub use vil_server_core::axum::http::Method;
+pub use vil_server_core::axum::routing::{delete, get, post, put};
 
 // Re-export serde for plugin config types
 pub use serde;

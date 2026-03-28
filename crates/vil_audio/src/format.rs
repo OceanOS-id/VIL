@@ -49,9 +49,7 @@ pub fn detect_format(header: &[u8]) -> AudioFormat {
     }
 
     // MP3: starts with 0xFF 0xFB, 0xFF 0xF3, 0xFF 0xF2 (frame sync) or ID3 tag
-    if (header[0] == 0xFF && (header[1] & 0xE0) == 0xE0)
-        || &header[0..3] == b"ID3"
-    {
+    if (header[0] == 0xFF && (header[1] & 0xE0) == 0xE0) || &header[0..3] == b"ID3" {
         return AudioFormat::Mp3;
     }
 
@@ -66,7 +64,12 @@ pub fn detect_format(header: &[u8]) -> AudioFormat {
     }
 
     // WebM: starts with 0x1A 0x45 0xDF 0xA3 (EBML header, shared with Matroska)
-    if header.len() >= 4 && header[0] == 0x1A && header[1] == 0x45 && header[2] == 0xDF && header[3] == 0xA3 {
+    if header.len() >= 4
+        && header[0] == 0x1A
+        && header[1] == 0x45
+        && header[2] == 0xDF
+        && header[3] == 0xA3
+    {
         return AudioFormat::Webm;
     }
 

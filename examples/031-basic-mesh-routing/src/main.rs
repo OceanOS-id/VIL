@@ -80,7 +80,8 @@ async fn teller_submit(
     ctx: ServiceCtx,
     body: ShmSlice,
 ) -> Result<VilResponse<FraudCheckResult>, VilError> {
-    let txn: TransactionRequest = body.json()
+    let txn: TransactionRequest = body
+        .json()
         .map_err(|_| VilError::bad_request("Invalid transaction JSON"))?;
 
     // Generate a reference number for tracking
@@ -99,7 +100,11 @@ async fn teller_submit(
         transaction_ref: txn_ref,
         fraud_score,
         is_approved,
-        rule_triggered: if is_approved { "none" } else { "high_value_transfer" },
+        rule_triggered: if is_approved {
+            "none"
+        } else {
+            "high_value_transfer"
+        },
     }))
 }
 
@@ -201,10 +206,12 @@ async fn main() {
         .service(fraud_svc)
         .service(banking_svc)
         .service(notification_svc)
-        .mesh(VxMeshConfig::new()
-            .route("teller", "fraud_check", VxLane::Data)           // transaction details
-            .route("fraud_check", "core_banking", VxLane::Data)     // approved transaction
-            .route("core_banking", "notification", VxLane::Control)) // customer alert (priority)
+        .mesh(
+            VxMeshConfig::new()
+                .route("teller", "fraud_check", VxLane::Data) // transaction details
+                .route("fraud_check", "core_banking", VxLane::Data) // approved transaction
+                .route("core_banking", "notification", VxLane::Control),
+        ) // customer alert (priority)
         .run()
         .await;
 }

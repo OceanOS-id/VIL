@@ -26,24 +26,24 @@
 // [ ] TODO(future): VOption<T> for relative-safe optional
 // =============================================================================
 
-pub mod ids;
 pub mod enums;
-pub mod specs;
 pub mod faults;
+pub mod ids;
 pub mod markers;
-pub mod wrappers;
 pub mod signals;
+pub mod specs;
 pub mod vstr;
+pub mod wrappers;
 
 // Re-export all public items for ergonomic use
-pub use ids::*;
 pub use enums::*;
-pub use specs::*;
 pub use faults::*;
+pub use ids::*;
 pub use markers::*;
-pub use wrappers::*;
 pub use signals::*;
+pub use specs::*;
 pub use vstr::VStr;
+pub use wrappers::*;
 
 #[cfg(test)]
 mod tests {

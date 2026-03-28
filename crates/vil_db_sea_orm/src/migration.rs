@@ -47,9 +47,15 @@ pub trait MigrationRunner: Send + Sync {
 pub struct NoopMigrationRunner;
 
 impl MigrationRunner for NoopMigrationRunner {
-    fn pending(&self) -> Vec<String> { Vec::new() }
-    fn applied(&self) -> Vec<String> { Vec::new() }
-    fn run_pending(&self) -> Result<usize, String> { Ok(0) }
+    fn pending(&self) -> Vec<String> {
+        Vec::new()
+    }
+    fn applied(&self) -> Vec<String> {
+        Vec::new()
+    }
+    fn run_pending(&self) -> Result<usize, String> {
+        Ok(0)
+    }
     fn rollback_last(&self) -> Result<String, String> {
         Err("No migrations to rollback".into())
     }

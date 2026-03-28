@@ -46,7 +46,10 @@ impl LogDrain for MultiDrain {
         "multi"
     }
 
-    async fn flush(&mut self, batch: &[LogSlot]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn flush(
+        &mut self,
+        batch: &[LogSlot],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut last_err: Option<Box<dyn std::error::Error + Send + Sync>> = None;
         for drain in self.drains.iter_mut() {
             if let Err(e) = drain.flush(batch).await {
@@ -56,7 +59,7 @@ impl LogDrain for MultiDrain {
         }
         match last_err {
             Some(e) => Err(e),
-            None    => Ok(()),
+            None => Ok(()),
         }
     }
 
@@ -70,7 +73,7 @@ impl LogDrain for MultiDrain {
         }
         match last_err {
             Some(e) => Err(e),
-            None    => Ok(()),
+            None => Ok(()),
         }
     }
 }

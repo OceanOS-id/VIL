@@ -15,8 +15,8 @@ use std::collections::HashMap;
 
 use vil_types::{CleanupPolicy, PortId, PortSpec, ProcessId, ProcessSpec};
 
-use crate::world::VastarRuntimeWorld;
 use crate::error::RtError;
+use crate::world::VastarRuntimeWorld;
 
 /// Port registered in the runtime, with an assigned ID.
 #[derive(Clone, Copy, Debug)]

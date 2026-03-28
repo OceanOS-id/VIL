@@ -64,9 +64,7 @@ pub fn heuristic_score(text: &str) -> f64 {
     // Mixed languages/scripts (obfuscation)
     let has_latin = text.chars().any(|c| c.is_ascii_alphabetic());
     let has_cjk = text.chars().any(|c| ('\u{4E00}'..='\u{9FFF}').contains(&c));
-    let has_cyrillic = text
-        .chars()
-        .any(|c| ('\u{0400}'..='\u{04FF}').contains(&c));
+    let has_cyrillic = text.chars().any(|c| ('\u{0400}'..='\u{04FF}').contains(&c));
     let script_count = [has_latin, has_cjk, has_cyrillic]
         .iter()
         .filter(|&&x| x)

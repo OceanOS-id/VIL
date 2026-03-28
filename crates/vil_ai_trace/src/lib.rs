@@ -13,10 +13,10 @@ pub use span::{AiOperation, SpanStatus, TraceSpan};
 pub use tracer::{AiTracer, SpanGuard};
 
 // VIL integration layer
-pub mod vil_semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod vil_semantic;
 
 pub use plugin::AiTracePlugin;
 pub use vil_semantic::{TraceEvent, TraceFault, TraceState};

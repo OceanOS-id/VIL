@@ -10,21 +10,21 @@
 //! - Batch retrieval
 //! - Lock-free concurrent access
 
+pub mod handlers;
 pub mod key;
+pub mod pipeline_sse;
+pub mod plugin;
+pub mod semantic;
 pub mod snapshot;
 pub mod store;
 pub mod ttl;
-pub mod semantic;
-pub mod pipeline_sse;
-pub mod handlers;
-pub mod plugin;
 
 // Re-exports
 pub use key::FeatureKey;
-pub use snapshot::FeatureSnapshot;
-pub use store::{FeatureStore, FeatureValue};
 pub use plugin::FeatureStorePlugin;
 pub use semantic::{FeatureEvent, FeatureFault, FeatureStoreState};
+pub use snapshot::FeatureSnapshot;
+pub use store::{FeatureStore, FeatureValue};
 
 #[cfg(test)]
 mod tests {
@@ -118,14 +118,8 @@ mod tests {
         let store = FeatureStore::new();
         assert_eq!(store.count(), 0);
 
-        store.set(
-            &FeatureKey::new("a", "f1"),
-            make_value(vec![1.0]),
-        );
-        store.set(
-            &FeatureKey::new("b", "f2"),
-            make_value(vec![2.0]),
-        );
+        store.set(&FeatureKey::new("a", "f1"), make_value(vec![1.0]));
+        store.set(&FeatureKey::new("b", "f2"), make_value(vec![2.0]));
         assert_eq!(store.count(), 2);
     }
 
@@ -188,14 +182,8 @@ mod tests {
     #[test]
     fn test_snapshot() {
         let store = FeatureStore::new();
-        store.set(
-            &FeatureKey::new("u1", "f1"),
-            make_value(vec![1.0, 2.0]),
-        );
-        store.set(
-            &FeatureKey::new("u2", "f2"),
-            make_value(vec![3.0]),
-        );
+        store.set(&FeatureKey::new("u1", "f1"), make_value(vec![1.0, 2.0]));
+        store.set(&FeatureKey::new("u2", "f2"), make_value(vec![3.0]));
 
         let snap = store.snapshot();
         assert_eq!(snap.len(), 2);
@@ -210,10 +198,7 @@ mod tests {
             &FeatureKey::new("u1", "short"),
             make_value_with_ttl(vec![1.0], 50),
         );
-        store.set(
-            &FeatureKey::new("u2", "long"),
-            make_value(vec![2.0]),
-        );
+        store.set(&FeatureKey::new("u2", "long"), make_value(vec![2.0]));
 
         thread::sleep(std::time::Duration::from_millis(80));
 

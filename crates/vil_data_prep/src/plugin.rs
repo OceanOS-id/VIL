@@ -1,5 +1,5 @@
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::handlers;
 use crate::pipeline::DataPipeline;
@@ -28,24 +28,32 @@ impl DataPrepPlugin {
 }
 
 impl Default for DataPrepPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for DataPrepPlugin {
-    fn id(&self) -> &str { "vil-data-prep" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Dataset preparation and cleaning for LLM fine-tuning" }
+    fn id(&self) -> &str {
+        "vil-data-prep"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Dataset preparation and cleaning for LLM fine-tuning"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "data-prep".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/data-prep/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/data-prep/stats")],
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let pipeline = Arc::clone(&self.pipeline);
@@ -59,5 +67,7 @@ impl VilPlugin for DataPrepPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

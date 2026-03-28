@@ -17,8 +17,8 @@
 // Blueprint reference: Section 9.2 "Relative Profile" lists VStr as a
 // first-class relative-safe abstraction alongside VRef<T> and VSlice<T>.
 
+use crate::markers::{PodLike, Vasi};
 use crate::wrappers::VSlice;
-use crate::markers::{Vasi, PodLike};
 use bytes::Bytes;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;

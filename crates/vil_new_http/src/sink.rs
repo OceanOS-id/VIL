@@ -23,11 +23,10 @@ static INBOUND_MAX_US: AtomicU64 = AtomicU64::new(0);
 
 /// Latency histogram — same bucket boundaries as obs_middleware.
 const LATENCY_BUCKETS: [u64; 40] = [
-    10, 25, 50, 75, 100, 150, 200, 300, 500, 750,
-    1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5_000, 6_000, 7_500, 10_000,
-    12_500, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000, 60_000, 75_000, 100_000,
-    125_000, 150_000, 200_000, 300_000, 500_000, 750_000, 1_000_000,
-    1_500_000, 2_000_000, 5_000_000,
+    10, 25, 50, 75, 100, 150, 200, 300, 500, 750, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5_000,
+    6_000, 7_500, 10_000, 12_500, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000, 60_000, 75_000,
+    100_000, 125_000, 150_000, 200_000, 300_000, 500_000, 750_000, 1_000_000, 1_500_000, 2_000_000,
+    5_000_000,
 ];
 static INBOUND_BUCKETS: [AtomicU64; 41] = {
     // const init workaround
@@ -42,35 +41,59 @@ fn record_inbound_latency(duration_us: u64) {
     // min (CAS)
     let mut cur = INBOUND_MIN_US.load(Ordering::Relaxed);
     while duration_us < cur {
-        match INBOUND_MIN_US.compare_exchange_weak(cur, duration_us, Ordering::Relaxed, Ordering::Relaxed) {
-            Ok(_) => break, Err(c) => cur = c,
+        match INBOUND_MIN_US.compare_exchange_weak(
+            cur,
+            duration_us,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        ) {
+            Ok(_) => break,
+            Err(c) => cur = c,
         }
     }
     // max (CAS)
     let mut cur = INBOUND_MAX_US.load(Ordering::Relaxed);
     while duration_us > cur {
-        match INBOUND_MAX_US.compare_exchange_weak(cur, duration_us, Ordering::Relaxed, Ordering::Relaxed) {
-            Ok(_) => break, Err(c) => cur = c,
+        match INBOUND_MAX_US.compare_exchange_weak(
+            cur,
+            duration_us,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        ) {
+            Ok(_) => break,
+            Err(c) => cur = c,
         }
     }
     // bucket
-    let idx = LATENCY_BUCKETS.iter().position(|&b| duration_us <= b).unwrap_or(LATENCY_BUCKETS.len());
+    let idx = LATENCY_BUCKETS
+        .iter()
+        .position(|&b| duration_us <= b)
+        .unwrap_or(LATENCY_BUCKETS.len());
     INBOUND_BUCKETS[idx].fetch_add(1, Ordering::Relaxed);
 }
 
 fn percentile_from_buckets(pct: f64) -> u64 {
-    let counts: Vec<u64> = INBOUND_BUCKETS.iter().map(|b| b.load(Ordering::Relaxed)).collect();
+    let counts: Vec<u64> = INBOUND_BUCKETS
+        .iter()
+        .map(|b| b.load(Ordering::Relaxed))
+        .collect();
     let total: u64 = counts.iter().sum();
-    if total == 0 { return 0; }
+    if total == 0 {
+        return 0;
+    }
     let target = (total as f64 * pct).ceil() as u64;
     let mut cum = 0u64;
     for (i, &c) in counts.iter().enumerate() {
         cum += c;
         if cum >= target {
-            return if i < LATENCY_BUCKETS.len() { LATENCY_BUCKETS[i] } else { LATENCY_BUCKETS[LATENCY_BUCKETS.len()-1] * 2 };
+            return if i < LATENCY_BUCKETS.len() {
+                LATENCY_BUCKETS[i]
+            } else {
+                LATENCY_BUCKETS[LATENCY_BUCKETS.len() - 1] * 2
+            };
         }
     }
-    LATENCY_BUCKETS[LATENCY_BUCKETS.len()-1]
+    LATENCY_BUCKETS[LATENCY_BUCKETS.len() - 1]
 }
 
 /// Get inbound HTTP request counters for observer sidecar.
@@ -119,16 +142,18 @@ use axum::{
 use tokio::runtime::Runtime;
 
 use crate::source::FromStreamData;
-use vil_rt::session::{SessionRegistry, SessionConfig};
+use vil_rt::session::{SessionConfig, SessionRegistry};
 use vil_rt::world::SampleGuard;
 use vil_rt::VastarRuntimeWorld;
 use vil_types::{
-    BoundaryKind, CleanupPolicy, DeliveryGuarantee, ExecClass, GenericToken, ObservabilitySpec,
-    PortDirection, PortSpec, Priority, ProcessSpec, QueueKind, TransferMode, ControlSignal, LaneKind,
-    ReactiveInterfaceKind
+    BoundaryKind, CleanupPolicy, ControlSignal, DeliveryGuarantee, ExecClass, GenericToken,
+    LaneKind, ObservabilitySpec, PortDirection, PortSpec, Priority, ProcessSpec, QueueKind,
+    ReactiveInterfaceKind, TransferMode,
 };
 
-pub trait StreamTokenLike: vil_types::MessageContract + FromStreamData + Send + Sync + 'static {
+pub trait StreamTokenLike:
+    vil_types::MessageContract + FromStreamData + Send + Sync + 'static
+{
     fn session_id(&self) -> u64;
     fn is_done(&self) -> bool;
     fn data_slice(&self) -> &vil_types::VSlice<u8>;
@@ -140,8 +165,16 @@ pub trait StreamTokenLike: vil_types::MessageContract + FromStreamData + Send + 
         let _ = world;
         let vslice = self.data_slice();
         let data = vslice.as_slice();
-        if data.is_empty() { return None; }
-        let offset = if data.starts_with(b"data: ") { 6 } else if data.starts_with(b"data:") { 5 } else { 0 };
+        if data.is_empty() {
+            return None;
+        }
+        let offset = if data.starts_with(b"data: ") {
+            6
+        } else if data.starts_with(b"data:") {
+            5
+        } else {
+            0
+        };
         if offset > 0 {
             Some(vslice.slice_bytes(offset..data.len()).to_bytes())
         } else {
@@ -151,9 +184,15 @@ pub trait StreamTokenLike: vil_types::MessageContract + FromStreamData + Send + 
 }
 
 impl StreamTokenLike for GenericToken {
-    fn session_id(&self) -> u64 { self.session_id }
-    fn is_done(&self) -> bool { self.is_done }
-    fn data_slice(&self) -> &vil_types::VSlice<u8> { &self.data }
+    fn session_id(&self) -> u64 {
+        self.session_id
+    }
+    fn is_done(&self) -> bool {
+        self.is_done
+    }
+    fn data_slice(&self) -> &vil_types::VSlice<u8> {
+        &self.data
+    }
 }
 
 // ShmToken: data lives in SHM at offset. data_slice() returns empty because
@@ -167,9 +206,15 @@ fn empty_vslice() -> &'static vil_types::VSlice<u8> {
 }
 
 impl StreamTokenLike for vil_types::ShmToken {
-    fn session_id(&self) -> u64 { self.session_id }
-    fn is_done(&self) -> bool { self.status == 1 }
-    fn data_slice(&self) -> &vil_types::VSlice<u8> { empty_vslice() }
+    fn session_id(&self) -> u64 {
+        self.session_id
+    }
+    fn is_done(&self) -> bool {
+        self.status == 1
+    }
+    fn data_slice(&self) -> &vil_types::VSlice<u8> {
+        empty_vslice()
+    }
 
     /// LOCK-FREE READ: Read payload via bump region (direct pointer, no mutex).
     fn resolve_payload(&self, world: &VastarRuntimeWorld) -> Option<bytes::Bytes> {
@@ -217,19 +262,40 @@ impl HttpSinkBuilder {
     }
 
     #[doc(alias = "vil_keep")]
-    pub fn port(mut self, port: u16) -> Self { self.port = port; self }
+    pub fn port(mut self, port: u16) -> Self {
+        self.port = port;
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn path(mut self, path: impl Into<String>) -> Self { self.path = path.into(); self }
+    pub fn path(mut self, path: impl Into<String>) -> Self {
+        self.path = path.into();
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn out_port(mut self, name: impl Into<String>) -> Self { self.out_port_name = name.into(); self }
+    pub fn out_port(mut self, name: impl Into<String>) -> Self {
+        self.out_port_name = name.into();
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn in_port(mut self, name: impl Into<String>) -> Self { self.in_port_name = Some(name.into()); self }
+    pub fn in_port(mut self, name: impl Into<String>) -> Self {
+        self.in_port_name = Some(name.into());
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn ctrl_in_port(mut self, name: impl Into<String>) -> Self { self.ctrl_in_port_name = Some(name.into()); self }
+    pub fn ctrl_in_port(mut self, name: impl Into<String>) -> Self {
+        self.ctrl_in_port_name = Some(name.into());
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn disable_ctrl_in_port(mut self) -> Self { self.ctrl_in_port_name = None; self }
+    pub fn disable_ctrl_in_port(mut self) -> Self {
+        self.ctrl_in_port_name = None;
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn queue_capacity(mut self, capacity: usize) -> Self { self.capacity = capacity; self }
+    pub fn queue_capacity(mut self, capacity: usize) -> Self {
+        self.capacity = capacity;
+        self
+    }
 
     #[doc(alias = "vil_keep")]
     pub fn build_interface_ir(&self) -> vil_ir::core::InterfaceIR {
@@ -386,12 +452,24 @@ impl HttpSink {
     ) -> std::thread::JoinHandle<()> {
         let port = self.builder.port;
         let path = self.builder.path.clone();
-        let out_port = runtime_process.port_id(&self.builder.out_port_name).expect("Out Port not found");
-        let data_in_port = self.builder.in_port_name.as_ref().map(|name| runtime_process.port_id(name).expect("Data in-port not found"));
-        let ctrl_in_port = self.builder.ctrl_in_port_name.as_ref().map(|name| runtime_process.port_id(name).expect("Control in-port not found"));
+        let out_port = runtime_process
+            .port_id(&self.builder.out_port_name)
+            .expect("Out Port not found");
+        let data_in_port = self.builder.in_port_name.as_ref().map(|name| {
+            runtime_process
+                .port_id(name)
+                .expect("Data in-port not found")
+        });
+        let ctrl_in_port = self.builder.ctrl_in_port_name.as_ref().map(|name| {
+            runtime_process
+                .port_id(name)
+                .expect("Control in-port not found")
+        });
 
         // CORE PRIMITIVE: Core session fabric replaces custom DashMaps
-        let registry = Arc::new(SessionRegistry::<SampleGuard<T>>::with_config(SessionConfig::default()));
+        let registry = Arc::new(SessionRegistry::<SampleGuard<T>>::with_config(
+            SessionConfig::default(),
+        ));
 
         // Combined dispatch: single thread polls both data + ctrl queues.
         // Eliminates 1 thread wake + 1 context switch per message vs separate threads.
@@ -422,7 +500,10 @@ impl HttpSink {
                 let listener = match tokio::net::TcpListener::bind(addr).await {
                     Ok(l) => l,
                     Err(e) => {
-                        eprintln!("❌ [HttpSink] Failed to bind to {} : {}. Is another process running?", addr, e);
+                        eprintln!(
+                            "❌ [HttpSink] Failed to bind to {} : {}. Is another process running?",
+                            addr, e
+                        );
                         return;
                     }
                 };
@@ -493,15 +574,25 @@ fn dispatch_combined_loop<T: StreamTokenLike>(
             spins = 0;
         } else {
             spins += 1;
-            if spins < 1024 { std::hint::spin_loop(); }
-            else if spins < 2048 { std::thread::yield_now(); }
-            else { std::thread::sleep(Duration::from_micros(10)); spins = 0; }
+            if spins < 1024 {
+                std::hint::spin_loop();
+            } else if spins < 2048 {
+                std::thread::yield_now();
+            } else {
+                std::thread::sleep(Duration::from_micros(10));
+                spins = 0;
+            }
         }
     }
 }
 
-fn normalize_payload<T: StreamTokenLike>(token_guard: &SampleGuard<T>, world: &VastarRuntimeWorld) -> Option<bytes::Bytes> {
-    if token_guard.is_done() { return None; }
+fn normalize_payload<T: StreamTokenLike>(
+    token_guard: &SampleGuard<T>,
+    world: &VastarRuntimeWorld,
+) -> Option<bytes::Bytes> {
+    if token_guard.is_done() {
+        return None;
+    }
     token_guard.get().resolve_payload(world)
 }
 
@@ -530,10 +621,18 @@ async fn handle_webhook<T: StreamTokenLike>(
         }
     }
 
-    let guard = SessionGuard { id: session_id, registry: state.registry.clone(), start: _req_start };
+    let guard = SessionGuard {
+        id: session_id,
+        registry: state.registry.clone(),
+        start: _req_start,
+    };
 
     let trigger_msg = T::from_ndjson_line_shm(payload, session_id, &state.world);
-    if state.world.publish_value(state.process_id, state.out_port, trigger_msg).is_err() {
+    if state
+        .world
+        .publish_value(state.process_id, state.out_port, trigger_msg)
+        .is_err()
+    {
         return axum::http::StatusCode::SERVICE_UNAVAILABLE.into_response();
     }
 

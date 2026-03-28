@@ -9,19 +9,19 @@
 
 pub mod config;
 pub mod format;
+pub mod handlers;
+pub mod pipeline_sse;
+pub mod plugin;
 pub mod quantize;
 pub mod runtime;
 pub mod semantic;
-pub mod pipeline_sse;
-pub mod handlers;
-pub mod plugin;
 
 // Re-exports for convenience
 pub use config::{QuantizedModelConfig, QuantizedModelConfigBuilder};
 pub use format::QuantFormat;
+pub use plugin::QuantizedPlugin;
 pub use quantize::{simulate_quantize, QuantizeConfig, QuantizeResult};
 pub use runtime::QuantizedRuntime;
-pub use plugin::QuantizedPlugin;
 pub use semantic::{QuantizeEvent, QuantizeFault, QuantizeFaultType, QuantizedState};
 
 #[cfg(test)]

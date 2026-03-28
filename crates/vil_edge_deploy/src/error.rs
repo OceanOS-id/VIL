@@ -26,12 +26,12 @@ impl EdgeFault {
     /// Returns the registered hash for this fault variant's name.
     pub fn code_hash(&self) -> u32 {
         match self {
-            EdgeFault::ConfigReadFailed  => register_str("edge_deploy.fault.config_read_failed"),
+            EdgeFault::ConfigReadFailed => register_str("edge_deploy.fault.config_read_failed"),
             EdgeFault::ConfigParseFailed => register_str("edge_deploy.fault.config_parse_failed"),
-            EdgeFault::SerializeFailed   => register_str("edge_deploy.fault.serialize_failed"),
+            EdgeFault::SerializeFailed => register_str("edge_deploy.fault.serialize_failed"),
             EdgeFault::UnsupportedTarget => register_str("edge_deploy.fault.unsupported_target"),
-            EdgeFault::InvalidProfile    => register_str("edge_deploy.fault.invalid_profile"),
-            EdgeFault::MissingField      => register_str("edge_deploy.fault.missing_field"),
+            EdgeFault::InvalidProfile => register_str("edge_deploy.fault.invalid_profile"),
+            EdgeFault::MissingField => register_str("edge_deploy.fault.missing_field"),
         }
     }
 }

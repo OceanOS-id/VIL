@@ -20,8 +20,8 @@ use std::sync::Arc;
 use opcua::client::prelude::*;
 use opcua::sync::RwLock;
 
-use vil_log::{db_log, types::DbPayload};
 use vil_log::dict::register_str;
+use vil_log::{db_log, types::DbPayload};
 
 use crate::config::OpcUaConfig;
 use crate::error::OpcUaFault;
@@ -70,7 +70,10 @@ impl OpcUaClient {
                 status_code: e.bits(),
             })?;
 
-        Ok(Self { session, endpoint_hash })
+        Ok(Self {
+            session,
+            endpoint_hash,
+        })
     }
 
     /// Read the value of a single OPC-UA node.
@@ -105,20 +108,23 @@ impl OpcUaClient {
 
         let elapsed = start.elapsed();
         let (rows, err_code) = match &result {
-            Ok(_)  => (1u32, 0u8),
+            Ok(_) => (1u32, 0u8),
             Err(f) => (0, f.as_error_code()),
         };
 
-        db_log!(Info, DbPayload {
-            db_hash:      self.endpoint_hash,
-            table_hash:   node_hash,
-            query_hash:   node_hash,
-            duration_us:  elapsed.as_micros() as u32,
-            rows_affected: rows,
-            op_type:      0,   // SELECT / read
-            error_code:   err_code,
-            ..DbPayload::default()
-        });
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: self.endpoint_hash,
+                table_hash: node_hash,
+                query_hash: node_hash,
+                duration_us: elapsed.as_micros() as u32,
+                rows_affected: rows,
+                op_type: 0, // SELECT / read
+                error_code: err_code,
+                ..DbPayload::default()
+            }
+        );
 
         result
     }
@@ -155,20 +161,23 @@ impl OpcUaClient {
 
         let elapsed = start.elapsed();
         let err_code = match &result {
-            Ok(_)  => 0u8,
+            Ok(_) => 0u8,
             Err(f) => f.as_error_code(),
         };
 
-        db_log!(Info, DbPayload {
-            db_hash:       self.endpoint_hash,
-            table_hash:    node_hash,
-            query_hash:    node_hash,
-            duration_us:   elapsed.as_micros() as u32,
-            rows_affected: 1,
-            op_type:       2,   // UPDATE / write
-            error_code:    err_code,
-            ..DbPayload::default()
-        });
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: self.endpoint_hash,
+                table_hash: node_hash,
+                query_hash: node_hash,
+                duration_us: elapsed.as_micros() as u32,
+                rows_affected: 1,
+                op_type: 2, // UPDATE / write
+                error_code: err_code,
+                ..DbPayload::default()
+            }
+        );
 
         result
     }
@@ -176,11 +185,7 @@ impl OpcUaClient {
     /// Subscribe to value changes on a node.
     ///
     /// Returns the subscription ID. Emits `db_log!` (op_type=4 CALL) with timing.
-    pub fn subscribe(
-        &self,
-        node_id: &str,
-        publishing_interval_ms: f64,
-    ) -> Result<u32, OpcUaFault> {
+    pub fn subscribe(&self, node_id: &str, publishing_interval_ms: f64) -> Result<u32, OpcUaFault> {
         let start = std::time::Instant::now();
         let node_hash = register_str(node_id);
 
@@ -230,20 +235,23 @@ impl OpcUaClient {
 
         let elapsed = start.elapsed();
         let err_code = match &result {
-            Ok(_)  => 0u8,
+            Ok(_) => 0u8,
             Err(f) => f.as_error_code(),
         };
 
-        db_log!(Info, DbPayload {
-            db_hash:       self.endpoint_hash,
-            table_hash:    node_hash,
-            query_hash:    node_hash,
-            duration_us:   elapsed.as_micros() as u32,
-            rows_affected: 0,
-            op_type:       4,   // CALL — subscribe
-            error_code:    err_code,
-            ..DbPayload::default()
-        });
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: self.endpoint_hash,
+                table_hash: node_hash,
+                query_hash: node_hash,
+                duration_us: elapsed.as_micros() as u32,
+                rows_affected: 0,
+                op_type: 4, // CALL — subscribe
+                error_code: err_code,
+                ..DbPayload::default()
+            }
+        );
 
         result
     }

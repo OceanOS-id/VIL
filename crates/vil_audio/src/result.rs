@@ -36,7 +36,9 @@ impl Segment {
 impl Transcript {
     /// Check if segments are in chronological order.
     pub fn is_ordered(&self) -> bool {
-        self.segments.windows(2).all(|w| w[0].start_ms <= w[1].start_ms)
+        self.segments
+            .windows(2)
+            .all(|w| w[0].start_ms <= w[1].start_ms)
     }
 
     /// Get average confidence across all segments.
@@ -57,8 +59,18 @@ mod tests {
         Transcript {
             text: "Hello world. How are you?".into(),
             segments: vec![
-                Segment { start_ms: 0, end_ms: 1000, text: "Hello world.".into(), confidence: 0.95 },
-                Segment { start_ms: 1200, end_ms: 2500, text: "How are you?".into(), confidence: 0.88 },
+                Segment {
+                    start_ms: 0,
+                    end_ms: 1000,
+                    text: "Hello world.".into(),
+                    confidence: 0.95,
+                },
+                Segment {
+                    start_ms: 1200,
+                    end_ms: 2500,
+                    text: "How are you?".into(),
+                    confidence: 0.88,
+                },
             ],
             language: "en".into(),
             duration_ms: 2500,
@@ -67,7 +79,12 @@ mod tests {
 
     #[test]
     fn test_segment_duration() {
-        let seg = Segment { start_ms: 100, end_ms: 500, text: "test".into(), confidence: 0.9 };
+        let seg = Segment {
+            start_ms: 100,
+            end_ms: 500,
+            text: "test".into(),
+            confidence: 0.9,
+        };
         assert_eq!(seg.duration_ms(), 400);
     }
 
@@ -89,8 +106,18 @@ mod tests {
         let t = Transcript {
             text: "".into(),
             segments: vec![
-                Segment { start_ms: 2000, end_ms: 3000, text: "b".into(), confidence: 0.9 },
-                Segment { start_ms: 0, end_ms: 1000, text: "a".into(), confidence: 0.9 },
+                Segment {
+                    start_ms: 2000,
+                    end_ms: 3000,
+                    text: "b".into(),
+                    confidence: 0.9,
+                },
+                Segment {
+                    start_ms: 0,
+                    end_ms: 1000,
+                    text: "a".into(),
+                    confidence: 0.9,
+                },
             ],
             language: "en".into(),
             duration_ms: 3000,

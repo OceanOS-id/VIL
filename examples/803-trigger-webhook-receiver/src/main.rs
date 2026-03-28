@@ -19,8 +19,8 @@
 //   set SECRET to a non-empty value. The server checks X-Hub-Signature-256.
 // =============================================================================
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 
 use vil_log::drain::{StdoutDrain, StdoutFormat};
 use vil_log::runtime::init_logging;
@@ -38,11 +38,11 @@ const SECRET: &str = "";
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let log_config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -54,7 +54,10 @@ async fn main() {
     println!("  Webhook receiver with mq_log! auto-emit");
     println!();
     println!("  Listen:  http://{}{}", LISTEN_ADDR, WEBHOOK_PATH);
-    println!("  Secret:  {} (empty = no HMAC check)", if SECRET.is_empty() { "(none)" } else { SECRET });
+    println!(
+        "  Secret:  {} (empty = no HMAC check)",
+        if SECRET.is_empty() { "(none)" } else { SECRET }
+    );
     println!();
 
     let cfg = WebhookConfig::new(LISTEN_ADDR, SECRET, WEBHOOK_PATH);
@@ -66,10 +69,9 @@ async fn main() {
 
     let on_event: EventCallback = Arc::new(move |event: TriggerEvent| {
         let n = event_count_cb.fetch_add(1, Ordering::Relaxed) + 1;
-        println!("  WEBHOOK #{n}  seq={}  payload_bytes={}  ts_ns={}",
-            event.sequence,
-            event.payload_bytes,
-            event.timestamp_ns,
+        println!(
+            "  WEBHOOK #{n}  seq={}  payload_bytes={}  ts_ns={}",
+            event.sequence, event.payload_bytes, event.timestamp_ns,
         );
     });
 
@@ -96,7 +98,8 @@ async fn main() {
             "event": "order.created",
             "id":    i * 100,
             "amount": i * 50_000u32,
-        }).to_string();
+        })
+        .to_string();
 
         match http
             .post(&target_url)
@@ -105,8 +108,13 @@ async fn main() {
             .send()
             .await
         {
-            Ok(resp) => println!("  POST [{}]  status={}  body={:.60}", i, resp.status(), body),
-            Err(e)   => println!("  POST [{}]  error: {}", i, e),
+            Ok(resp) => println!(
+                "  POST [{}]  status={}  body={:.60}",
+                i,
+                resp.status(),
+                body
+            ),
+            Err(e) => println!("  POST [{}]  error: {}", i, e),
         }
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     }
@@ -122,7 +130,9 @@ async fn main() {
     // Allow drain to flush
     tokio::time::sleep(std::time::Duration::from_millis(200)).await;
     println!();
-    println!("  Done. {} webhook events received. mq_log! entries emitted above.",
-        event_count.load(Ordering::Relaxed));
+    println!(
+        "  Done. {} webhook events received. mq_log! entries emitted above.",
+        event_count.load(Ordering::Relaxed)
+    );
     println!();
 }

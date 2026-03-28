@@ -31,12 +31,12 @@
 //! RequestDescriptor from the Trigger Lane and parses the body itself.
 
 pub mod app;
-pub mod service;
+pub mod cleanup;
 pub mod ctx;
-pub mod ingress;
+pub mod descriptor;
 pub mod egress;
 pub mod endpoint;
-pub mod descriptor;
-pub mod tri_lane;
+pub mod ingress;
 pub mod kernel;
-pub mod cleanup;
+pub mod service;
+pub mod tri_lane;

@@ -14,10 +14,10 @@ pub use optimizer::PromptOptimizer;
 pub use strategy::OptimizeStrategy;
 
 // VIL integration layer
-pub mod vil_semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod vil_semantic;
 
 pub use plugin::PromptOptimizerPlugin;
 pub use vil_semantic::{OptimizeEvent, OptimizeFault, OptimizerState};
@@ -50,8 +50,14 @@ mod tests {
 
     fn test_cases() -> Vec<TestCase> {
         vec![
-            TestCase { input: "What is AI?".into(), expected_output: "Artificial Intelligence".into() },
-            TestCase { input: "Explain ML".into(), expected_output: "Machine Learning".into() },
+            TestCase {
+                input: "What is AI?".into(),
+                expected_output: "Artificial Intelligence".into(),
+            },
+            TestCase {
+                input: "Explain ML".into(),
+                expected_output: "Machine Learning".into(),
+            },
         ]
     }
 
@@ -130,8 +136,16 @@ mod tests {
     #[tokio::test]
     async fn test_candidate_avg_score() {
         let mut c = PromptCandidate::new("test");
-        c.evaluations.push(EvaluationResult { test_case: "a".into(), score: 0.6, notes: None });
-        c.evaluations.push(EvaluationResult { test_case: "b".into(), score: 0.8, notes: None });
+        c.evaluations.push(EvaluationResult {
+            test_case: "a".into(),
+            score: 0.6,
+            notes: None,
+        });
+        c.evaluations.push(EvaluationResult {
+            test_case: "b".into(),
+            score: 0.8,
+            notes: None,
+        });
         assert!((c.avg_score() - 0.7).abs() < 0.01);
     }
 
@@ -142,7 +156,9 @@ mod tests {
             input: "What is AI?".into(),
             expected_output: "artificial intelligence systems".into(),
         };
-        let score = eval.evaluate("Tell me about artificial intelligence", &tc).await;
+        let score = eval
+            .evaluate("Tell me about artificial intelligence", &tc)
+            .await;
         assert!(score > 0.0);
     }
 }

@@ -26,11 +26,11 @@ use vil_mq_rabbitmq::{RabbitClient, RabbitConfig};
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           Some(2),
+        threads: Some(2),
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -49,7 +49,10 @@ async fn main() {
     );
 
     println!("  Connecting to RabbitMQ: {}", rabbit_cfg.uri);
-    println!("  Exchange: {}  Queue: {}", rabbit_cfg.exchange, rabbit_cfg.queue);
+    println!(
+        "  Exchange: {}  Queue: {}",
+        rabbit_cfg.exchange, rabbit_cfg.queue
+    );
     println!();
     println!("  NOTE: Requires RabbitMQ running locally.");
     println!("  Start with:");
@@ -57,7 +60,7 @@ async fn main() {
     println!();
 
     let client = match RabbitClient::connect(rabbit_cfg.clone()).await {
-        Ok(c)  => c,
+        Ok(c) => c,
         Err(e) => {
             println!("  [SKIP] Cannot connect to RabbitMQ: {:?}", e);
             println!("  (All mq_log! calls would appear above in resolved format)");
@@ -69,7 +72,7 @@ async fn main() {
     for i in 1u32..=3 {
         let body = format!(r#"{{"task_id":{},"payload":"process-batch-{i}"}}"#, i * 100);
         match client.publish("", &rabbit_cfg.queue, body.as_bytes()).await {
-            Ok(_)  => println!("  PUBLISH [{}] {}", i, body),
+            Ok(_) => println!("  PUBLISH [{}] {}", i, body),
             Err(e) => println!("  PUBLISH error: {:?}", e),
         }
     }
@@ -77,8 +80,11 @@ async fn main() {
     // ── CONSUME up to 3 messages ──
     println!();
     let mut rx = match client.consume(&rabbit_cfg.queue).await {
-        Ok(r)  => r,
-        Err(e) => { println!("  CONSUME error: {:?}", e); return; }
+        Ok(r) => r,
+        Err(e) => {
+            println!("  CONSUME error: {:?}", e);
+            return;
+        }
     };
 
     println!("  Consuming (up to 3 messages)...");
@@ -86,14 +92,23 @@ async fn main() {
         match tokio::time::timeout(std::time::Duration::from_secs(2), rx.recv()).await {
             Ok(Some(msg)) => {
                 let body = String::from_utf8_lossy(&msg.payload);
-                println!("  RECEIVE  delivery_tag={}  body={}", msg.delivery_tag, body);
+                println!(
+                    "  RECEIVE  delivery_tag={}  body={}",
+                    msg.delivery_tag, body
+                );
                 // Acknowledge
                 if let Err(e) = client.ack(msg.delivery_tag).await {
                     println!("  ACK     error: {:?}", e);
                 }
             }
-            Ok(None) => { println!("  Channel closed"); break; }
-            Err(_)   => { println!("  Timeout — no more messages"); break; }
+            Ok(None) => {
+                println!("  Channel closed");
+                break;
+            }
+            Err(_) => {
+                println!("  Timeout — no more messages");
+                break;
+            }
         }
     }
 

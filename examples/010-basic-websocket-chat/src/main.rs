@@ -56,14 +56,14 @@
 //   curl http://localhost:8080/metrics
 // =============================================================================
 
-use vil_server::prelude::*;
-use vil_server::axum::extract::ws::{WebSocket, WebSocketUpgrade, Message};
-use vil_server::axum::response::Html;
-use vil_server::WsHub;
 use futures::{SinkExt, StreamExt};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::sync::OnceLock;
+use vil_server::axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use vil_server::axum::response::Html;
+use vil_server::prelude::*;
+use vil_server::WsHub;
 
 // ---------------------------------------------------------------------------
 // VIL WebSocket Events — typed WS messages via VilWsEvent
@@ -127,7 +127,8 @@ fn chat_state() -> &'static ChatState {
 
 /// GET / — serves a simple HTML chat client with embedded JavaScript.
 async fn index() -> Html<&'static str> {
-    Html(r#"<!DOCTYPE html>
+    Html(
+        r#"<!DOCTYPE html>
 <html>
 <head>
     <title>VLang WebSocket Chat</title>
@@ -197,7 +198,8 @@ async fn index() -> Html<&'static str> {
         }
     </script>
 </body>
-</html>"#)
+</html>"#,
+    )
 }
 
 /// GET /ws — WebSocket upgrade handler.
@@ -218,7 +220,9 @@ async fn handle_socket(socket: WebSocket) {
     state.connected.fetch_add(1, Ordering::Relaxed);
 
     // Broadcast join notification
-    let join = UserJoined { username: "anonymous".to_string() };
+    let join = UserJoined {
+        username: "anonymous".to_string(),
+    };
     join.broadcast(&state.hub);
 
     // Task: forward hub messages to this WebSocket client.
@@ -245,10 +249,12 @@ async fn handle_socket(socket: WebSocket) {
                     Message::Text(text) => {
                         // Parse client JSON: { "username": "...", "message": "..." }
                         if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text) {
-                            let username = parsed.get("username")
-                                .and_then(|v| v.as_str()).unwrap_or("anonymous");
-                            let message = parsed.get("message")
-                                .and_then(|v| v.as_str()).unwrap_or("");
+                            let username = parsed
+                                .get("username")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("anonymous");
+                            let message =
+                                parsed.get("message").and_then(|v| v.as_str()).unwrap_or("");
 
                             let timestamp = {
                                 use std::time::{SystemTime, UNIX_EPOCH};
@@ -284,7 +290,9 @@ async fn handle_socket(socket: WebSocket) {
     }
 
     // Broadcast leave notification
-    let leave = UserLeft { username: "anonymous".to_string() };
+    let leave = UserLeft {
+        username: "anonymous".to_string(),
+    };
     leave.broadcast(&state.hub);
 
     // Decrement connected count

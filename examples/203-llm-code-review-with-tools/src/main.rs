@@ -30,8 +30,8 @@
 //         -> feed result back into conversation -> second LLM call -> return
 //   This is a MULTI-TURN conversation with LOCAL tool execution.
 
+use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 use vil_server::prelude::*;
-use vil_llm::semantic::{LlmResponseEvent, LlmFault, LlmUsageState};
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -144,7 +144,13 @@ fn execute_tool(name: &str, input: &str) -> String {
                         "+" => a + b,
                         "-" => a - b,
                         "*" => a * b,
-                        "/" => if b != 0.0 { a / b } else { f64::NAN },
+                        "/" => {
+                            if b != 0.0 {
+                                a / b
+                            } else {
+                                f64::NAN
+                            }
+                        }
                         _ => f64::NAN,
                     };
                     format!("{}", result)
@@ -210,7 +216,8 @@ Always include at least one tool call in your first response.";
 // ── Handler: multi-turn with tool execution ─────────────────────────
 
 async fn code_review_handler(
-    ctx: ServiceCtx, body: ShmSlice,
+    ctx: ServiceCtx,
+    body: ShmSlice,
 ) -> HandlerResult<VilResponse<CodeReviewResponse>> {
     let req: CodeReviewRequest = body.json().expect("invalid JSON body");
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
@@ -240,7 +247,9 @@ async fn code_review_handler(
             collector = collector.bearer_token(&api_key);
         }
 
-        let llm_output = collector.collect_text().await
+        let llm_output = collector
+            .collect_text()
+            .await
             .map_err(|e| VilError::internal(e.to_string()))?;
 
         // Parse for tool calls
@@ -262,7 +271,10 @@ async fn code_review_handler(
         let mut tool_results = Vec::new();
         for (name, input) in &tool_calls {
             let output = execute_tool(name, input);
-            tool_results.push(format!("[Tool: {}]\nInput: {}\nResult: {}", name, input, output));
+            tool_results.push(format!(
+                "[Tool: {}]\nInput: {}\nResult: {}",
+                name, input, output
+            ));
             all_tools.push(ToolInvocation {
                 tool: name.clone(),
                 input: input.clone(),
@@ -302,7 +314,14 @@ async fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     println!("  Listening on http://localhost:3102/api/code/review");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!();

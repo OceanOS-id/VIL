@@ -29,8 +29,8 @@
 //         parses actual JSON, feeds real data to LLM + calculator
 //   This example includes a built-in mock product REST endpoint.
 
-use vil_server::prelude::*;
 use vil_agent::semantic::{AgentCompletionEvent, AgentFault, AgentMemoryState};
+use vil_server::prelude::*;
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -81,14 +81,70 @@ struct Product {
 
 fn mock_product_data() -> Vec<Product> {
     vec![
-        Product { id: 1, name: "Wireless Keyboard".into(), category: "Electronics".into(), price: 49.99, stock: 150, rating: 4.3 },
-        Product { id: 2, name: "USB-C Hub".into(), category: "Electronics".into(), price: 29.99, stock: 200, rating: 4.5 },
-        Product { id: 3, name: "Ergonomic Mouse".into(), category: "Electronics".into(), price: 79.99, stock: 80, rating: 4.7 },
-        Product { id: 4, name: "Standing Desk".into(), category: "Furniture".into(), price: 499.99, stock: 25, rating: 4.8 },
-        Product { id: 5, name: "Monitor Arm".into(), category: "Furniture".into(), price: 89.99, stock: 60, rating: 4.1 },
-        Product { id: 6, name: "Desk Lamp".into(), category: "Lighting".into(), price: 34.99, stock: 300, rating: 4.0 },
-        Product { id: 7, name: "Webcam HD".into(), category: "Electronics".into(), price: 69.99, stock: 110, rating: 4.4 },
-        Product { id: 8, name: "Noise-Cancel Headphones".into(), category: "Audio".into(), price: 199.99, stock: 45, rating: 4.9 },
+        Product {
+            id: 1,
+            name: "Wireless Keyboard".into(),
+            category: "Electronics".into(),
+            price: 49.99,
+            stock: 150,
+            rating: 4.3,
+        },
+        Product {
+            id: 2,
+            name: "USB-C Hub".into(),
+            category: "Electronics".into(),
+            price: 29.99,
+            stock: 200,
+            rating: 4.5,
+        },
+        Product {
+            id: 3,
+            name: "Ergonomic Mouse".into(),
+            category: "Electronics".into(),
+            price: 79.99,
+            stock: 80,
+            rating: 4.7,
+        },
+        Product {
+            id: 4,
+            name: "Standing Desk".into(),
+            category: "Furniture".into(),
+            price: 499.99,
+            stock: 25,
+            rating: 4.8,
+        },
+        Product {
+            id: 5,
+            name: "Monitor Arm".into(),
+            category: "Furniture".into(),
+            price: 89.99,
+            stock: 60,
+            rating: 4.1,
+        },
+        Product {
+            id: 6,
+            name: "Desk Lamp".into(),
+            category: "Lighting".into(),
+            price: 34.99,
+            stock: 300,
+            rating: 4.0,
+        },
+        Product {
+            id: 7,
+            name: "Webcam HD".into(),
+            category: "Electronics".into(),
+            price: 69.99,
+            stock: 110,
+            rating: 4.4,
+        },
+        Product {
+            id: 8,
+            name: "Noise-Cancel Headphones".into(),
+            category: "Audio".into(),
+            price: 199.99,
+            stock: 45,
+            rating: 4.9,
+        },
     ]
 }
 
@@ -102,7 +158,8 @@ fn execute_http_fetch(url: &str) -> String {
         if let Some(cat_start) = url.find("category=") {
             let cat = &url[cat_start + 9..];
             let cat = cat.split('&').next().unwrap_or(cat);
-            let filtered: Vec<&Product> = products.iter()
+            let filtered: Vec<&Product> = products
+                .iter()
                 .filter(|p| p.category.to_lowercase() == cat.to_lowercase())
                 .collect();
             serde_json::to_string_pretty(&filtered).unwrap_or_default()
@@ -121,7 +178,8 @@ fn execute_http_fetch(url: &str) -> String {
             "max_price": max_price,
             "min_price": min_price,
             "total_stock": total_stock,
-        }).to_string()
+        })
+        .to_string()
     } else {
         format!("{{\"error\": \"Unknown endpoint: {}\"}}", url)
     }
@@ -141,7 +199,13 @@ fn execute_calculator(expr: &str) -> String {
             "+" => a + b,
             "-" => a - b,
             "*" => a * b,
-            "/" => if b != 0.0 { a / b } else { f64::NAN },
+            "/" => {
+                if b != 0.0 {
+                    a / b
+                } else {
+                    f64::NAN
+                }
+            }
             _ => f64::NAN,
         };
         format!("{}", (result * 100.0).round() / 100.0)
@@ -160,7 +224,7 @@ fn execute_calculator(expr: &str) -> String {
 /// Market research query — natural language question about product/market data
 #[derive(Debug, Deserialize)]
 struct ResearchRequest {
-    prompt: String,   // e.g., "Compare electronics vs furniture inventory levels"
+    prompt: String, // e.g., "Compare electronics vs furniture inventory levels"
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -186,9 +250,7 @@ struct ResearchResponse {
 // This demonstrates autonomous tool usage — not just prompt engineering.
 
 /// POST /api/research — market research with autonomous data gathering
-async fn research_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<ResearchResponse>> {
+async fn research_handler(body: ShmSlice) -> HandlerResult<VilResponse<ResearchResponse>> {
     let req: ResearchRequest = body.json().expect("invalid JSON body");
     // Step 1: Fetch product data (real HTTP tool execution)
     // Step 1: Fetch full product catalog via HTTP tool (real I/O, not just prompts)
@@ -238,7 +300,9 @@ async fn research_handler(
     }
 
     // Step 5: Collect the LLM's market research analysis response
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Semantic anchors
@@ -275,11 +339,21 @@ async fn main() {
     println!("  Tools:");
     println!("    - http_fetch: GET /products, /stats (mock REST data)");
     println!("    - calculator: arithmetic on fetched data");
-    println!("  Products: {} items in mock catalog", mock_product_data().len());
+    println!(
+        "  Products: {} items in mock catalog",
+        mock_product_data().len()
+    );
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
     // Display authentication mode (API key vs simulator)
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     // Display the endpoint URL for this service
     println!("  Listening on http://localhost:3121/api/research");
     // Display the endpoint URL for this service

@@ -1,13 +1,13 @@
+use crate::parser::{UsageKind, VilUsage};
 use tower_lsp::lsp_types::*;
-use crate::parser::{VilUsage, UsageKind};
 
 /// Generate hover documentation for a position.
 pub fn hover_for(usages: &[VilUsage], position: Position) -> Option<Hover> {
     // Find the usage at or near this position
     let usage = usages.iter().find(|u| {
-        u.line == position.line &&
-        position.character >= u.col &&
-        position.character <= u.col + u.text.len() as u32 + 10
+        u.line == position.line
+            && position.character >= u.col
+            && position.character <= u.col + u.text.len() as u32 + 10
     })?;
 
     let docs = match &usage.kind {
@@ -28,8 +28,14 @@ pub fn hover_for(usages: &[VilUsage], position: Position) -> Option<Hover> {
             value: docs,
         }),
         range: Some(Range {
-            start: Position { line: usage.line, character: usage.col },
-            end: Position { line: usage.line, character: usage.col + usage.text.len() as u32 },
+            start: Position {
+                line: usage.line,
+                character: usage.col,
+            },
+            end: Position {
+                line: usage.line,
+                character: usage.col + usage.text.len() as u32,
+            },
         }),
     })
 }
@@ -101,7 +107,8 @@ fn wasm_docs() -> String {
     "## `WasmFaaSConfig`\n\nConfiguration for a WASM FaaS module.\n\n\
      - `pool_size`: Number of pre-warmed instances (default: 4)\n\
      - `timeout_ms`: Execution timeout (default: 5000)\n\
-     - `max_memory_pages`: Memory limit in 64KB pages (default: 256 = 16MB)".into()
+     - `max_memory_pages`: Memory limit in 64KB pages (default: 256 = 16MB)"
+        .into()
 }
 
 fn sidecar_docs() -> String {
@@ -109,7 +116,8 @@ fn sidecar_docs() -> String {
      - `command`: Shell command to spawn the sidecar\n\
      - `pool_size`: Connection pool size (default: 4)\n\
      - `timeout_ms`: Invoke timeout (default: 5000)\n\
-     - `retry`: Number of retries on transient failure (default: 3)".into()
+     - `retry`: Number of retries on transient failure (default: 3)"
+        .into()
 }
 
 fn vil_model_docs() -> String {
@@ -126,5 +134,8 @@ fn vil_error_docs() -> String {
 }
 
 fn endpoint_docs(text: &str) -> String {
-    format!("## Endpoint: `{}`\n\nRegistered HTTP endpoint in this ServiceProcess.", text)
+    format!(
+        "## Endpoint: `{}`\n\nRegistered HTTP endpoint in this ServiceProcess.",
+        text
+    )
 }

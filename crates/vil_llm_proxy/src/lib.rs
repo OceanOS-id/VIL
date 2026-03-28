@@ -23,19 +23,19 @@
 //! ```
 
 pub mod cache;
+pub mod handlers;
 pub mod metrics;
+pub mod pipeline_sse;
+pub mod plugin;
 pub mod proxy;
 pub mod rate_limiter;
 pub mod router;
 pub mod semantic;
-pub mod pipeline_sse;
-pub mod handlers;
-pub mod plugin;
 
 pub use cache::ResponseCache;
 pub use metrics::{MetricsSnapshot, ProxyMetrics};
+pub use plugin::LlmProxyPlugin;
 pub use proxy::{LlmProxy, ProxyConfig, ProxyError};
 pub use rate_limiter::{RateLimitExceeded, RateLimiter, RateLimiterConfig};
 pub use router::{ModelEndpoint, ModelRouter, RoutingStrategy};
-pub use plugin::LlmProxyPlugin;
-pub use semantic::{ProxyRequestEvent, ProxyFault, ProxyState};
+pub use semantic::{ProxyFault, ProxyRequestEvent, ProxyState};

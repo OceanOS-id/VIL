@@ -31,12 +31,7 @@ impl Collection {
     }
 
     /// Add a vector with optional metadata and text. Returns the assigned ID.
-    pub fn add(
-        &self,
-        vector: Vec<f32>,
-        metadata: serde_json::Value,
-        text: Option<String>,
-    ) -> u64 {
+    pub fn add(&self, vector: Vec<f32>, metadata: serde_json::Value, text: Option<String>) -> u64 {
         let id = self.storage.next_id();
         let record = VectorRecord {
             id,
@@ -110,9 +105,21 @@ mod tests {
     #[test]
     fn search_returns_sorted_by_score() {
         let col = test_collection();
-        col.add(vec![1.0, 0.0, 0.0], serde_json::json!({"label": "a"}), Some("doc a".into()));
-        col.add(vec![0.9, 0.1, 0.0], serde_json::json!({"label": "b"}), Some("doc b".into()));
-        col.add(vec![0.0, 1.0, 0.0], serde_json::json!({"label": "c"}), Some("doc c".into()));
+        col.add(
+            vec![1.0, 0.0, 0.0],
+            serde_json::json!({"label": "a"}),
+            Some("doc a".into()),
+        );
+        col.add(
+            vec![0.9, 0.1, 0.0],
+            serde_json::json!({"label": "b"}),
+            Some("doc b".into()),
+        );
+        col.add(
+            vec![0.0, 1.0, 0.0],
+            serde_json::json!({"label": "c"}),
+            Some("doc c".into()),
+        );
 
         let results = col.search(&[1.0, 0.0, 0.0], 3);
         assert_eq!(results.len(), 3);

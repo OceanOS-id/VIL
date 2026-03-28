@@ -92,8 +92,7 @@ pub fn export_yaml(config: ExportConfig) -> Result<(), String> {
     // Output
     match config.output {
         Some(path) => {
-            std::fs::write(&path, &yaml)
-                .map_err(|e| format!("Cannot write {}: {}", path, e))?;
+            std::fs::write(&path, &yaml).map_err(|e| format!("Cannot write {}: {}", path, e))?;
             println!("Exported topology to: {}", path);
         }
         None => {
@@ -124,7 +123,13 @@ pub fn scaffold_yaml(config: ScaffoldConfig) -> Result<(), String> {
             name = trimmed.split(':').nth(1).unwrap_or("").trim().to_string();
         }
         if trimmed.starts_with("port:") {
-            port = trimmed.split(':').nth(1).unwrap_or("8080").trim().parse().unwrap_or(8080);
+            port = trimmed
+                .split(':')
+                .nth(1)
+                .unwrap_or("8080")
+                .trim()
+                .parse()
+                .unwrap_or(8080);
         }
         if trimmed == "services:" {
             in_services = true;
@@ -135,7 +140,11 @@ pub fn scaffold_yaml(config: ScaffoldConfig) -> Result<(), String> {
             if let Some(svc) = current_service.take() {
                 services.push(svc);
             }
-            let svc_name = trimmed.strip_prefix("- name:").unwrap_or("").trim().to_string();
+            let svc_name = trimmed
+                .strip_prefix("- name:")
+                .unwrap_or("")
+                .trim()
+                .to_string();
             current_service = Some(ScaffoldService {
                 name: svc_name,
                 prefix: String::new(),
@@ -145,7 +154,13 @@ pub fn scaffold_yaml(config: ScaffoldConfig) -> Result<(), String> {
         }
         if in_services && trimmed.starts_with("prefix:") {
             if let Some(ref mut svc) = current_service {
-                svc.prefix = trimmed.split(':').nth(1).unwrap_or("").trim().trim_matches('"').to_string();
+                svc.prefix = trimmed
+                    .split(':')
+                    .nth(1)
+                    .unwrap_or("")
+                    .trim()
+                    .trim_matches('"')
+                    .to_string();
             }
         }
         if trimmed == "endpoints:" {
@@ -153,7 +168,11 @@ pub fn scaffold_yaml(config: ScaffoldConfig) -> Result<(), String> {
             continue;
         }
         if in_endpoints && trimmed.starts_with("- method:") {
-            let method = trimmed.strip_prefix("- method:").unwrap_or("GET").trim().to_string();
+            let method = trimmed
+                .strip_prefix("- method:")
+                .unwrap_or("GET")
+                .trim()
+                .to_string();
             if let Some(ref mut svc) = current_service {
                 svc.endpoints.push(ScaffoldEndpoint {
                     method,
@@ -165,7 +184,13 @@ pub fn scaffold_yaml(config: ScaffoldConfig) -> Result<(), String> {
         if in_endpoints && trimmed.starts_with("path:") {
             if let Some(ref mut svc) = current_service {
                 if let Some(ep) = svc.endpoints.last_mut() {
-                    ep.path = trimmed.split(':').nth(1).unwrap_or("").trim().trim_matches('"').to_string();
+                    ep.path = trimmed
+                        .split(':')
+                        .nth(1)
+                        .unwrap_or("")
+                        .trim()
+                        .trim_matches('"')
+                        .to_string();
                 }
             }
         }
@@ -196,13 +221,20 @@ pub fn scaffold_yaml(config: ScaffoldConfig) -> Result<(), String> {
         code.push_str(&format!("// ── Service: {} ──\n\n", svc.name));
         for ep in &svc.endpoints {
             let fn_name = if ep.handler.is_empty() {
-                ep.path.replace('/', "_").replace(':', "").trim_start_matches('_').to_string()
+                ep.path
+                    .replace('/', "_")
+                    .replace(':', "")
+                    .trim_start_matches('_')
+                    .to_string()
             } else {
                 ep.handler.clone()
             };
             code.push_str("#[vil_endpoint]\n");
             code.push_str(&format!("async fn {}() -> &'static str {{\n", fn_name));
-            code.push_str(&format!("    \"TODO: implement {} {}\"\n", ep.method, ep.path));
+            code.push_str(&format!(
+                "    \"TODO: implement {} {}\"\n",
+                ep.method, ep.path
+            ));
             code.push_str("}\n\n");
         }
     }
@@ -213,19 +245,28 @@ pub fn scaffold_yaml(config: ScaffoldConfig) -> Result<(), String> {
 
     for svc in &services {
         let var_name = svc.name.replace('-', "_");
-        code.push_str(&format!("    let {} = ServiceProcess::new(\"{}\")\n", var_name, svc.name));
+        code.push_str(&format!(
+            "    let {} = ServiceProcess::new(\"{}\")\n",
+            var_name, svc.name
+        ));
         if !svc.prefix.is_empty() {
             code.push_str(&format!("        .prefix(\"{}\")\n", svc.prefix));
         }
         for ep in &svc.endpoints {
             let fn_name = if ep.handler.is_empty() {
-                ep.path.replace('/', "_").replace(':', "").trim_start_matches('_').to_string()
+                ep.path
+                    .replace('/', "_")
+                    .replace(':', "")
+                    .trim_start_matches('_')
+                    .to_string()
             } else {
                 ep.handler.clone()
             };
             let method_fn = ep.method.to_lowercase();
-            code.push_str(&format!("        .endpoint(Method::{}, \"{}\", {}({}))\n",
-                ep.method, ep.path, method_fn, fn_name));
+            code.push_str(&format!(
+                "        .endpoint(Method::{}, \"{}\", {}({}))\n",
+                ep.method, ep.path, method_fn, fn_name
+            ));
         }
         code.push_str("        ;\n\n");
     }
@@ -243,8 +284,7 @@ pub fn scaffold_yaml(config: ScaffoldConfig) -> Result<(), String> {
     // Output
     match config.output {
         Some(path) => {
-            std::fs::write(&path, &code)
-                .map_err(|e| format!("Cannot write {}: {}", path, e))?;
+            std::fs::write(&path, &code).map_err(|e| format!("Cannot write {}: {}", path, e))?;
             println!("Scaffolded to: {}", path);
         }
         None => {
@@ -308,15 +348,21 @@ fn extract_mesh_routes(src: &str) -> Vec<(String, String, String)> {
     // Look for .route("from", "to", VxLane::Data) or .route("from", "to", Lane::Data)
     for line in src.lines() {
         let trimmed = line.trim();
-        if trimmed.contains(".route(") && (trimmed.contains("Lane::") || trimmed.contains("VxLane::")) {
+        if trimmed.contains(".route(")
+            && (trimmed.contains("Lane::") || trimmed.contains("VxLane::"))
+        {
             // Simple extraction — parse quoted strings
             let parts: Vec<&str> = trimmed.split('"').collect();
             if parts.len() >= 5 {
                 let from = parts[1].to_string();
                 let to = parts[3].to_string();
-                let lane = if trimmed.contains("Data") { "data" }
-                    else if trimmed.contains("Trigger") { "trigger" }
-                    else { "control" };
+                let lane = if trimmed.contains("Data") {
+                    "data"
+                } else if trimmed.contains("Trigger") {
+                    "trigger"
+                } else {
+                    "control"
+                };
                 routes.push((from, to, lane.to_string()));
             }
         }

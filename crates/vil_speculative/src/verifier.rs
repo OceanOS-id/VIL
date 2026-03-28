@@ -1,6 +1,6 @@
-use vil_llm::{ChatMessage, ChatResponse, LlmProvider};
-use vil_llm::message::LlmError;
 use std::sync::Arc;
+use vil_llm::message::LlmError;
+use vil_llm::{ChatMessage, ChatResponse, LlmProvider};
 use vil_log::app_log;
 
 /// Result of verifying draft tokens against the target model.

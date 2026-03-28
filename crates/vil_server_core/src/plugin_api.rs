@@ -35,10 +35,7 @@ async fn list_plugins(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 /// Get plugin detail (manifest + state + masked config).
-async fn get_plugin(
-    State(state): State<AppState>,
-    Path(name): Path<String>,
-) -> impl IntoResponse {
+async fn get_plugin(State(state): State<AppState>, Path(name): Path<String>) -> impl IntoResponse {
     let mgr = state.plugin_manager();
 
     let manifest = mgr.get_manifest(&name);
@@ -46,16 +43,21 @@ async fn get_plugin(
     let config = mgr.get_config_masked(&name);
 
     if manifest.is_none() {
-        return (StatusCode::NOT_FOUND, axum::Json(serde_json::json!({
-            "error": format!("Plugin '{}' not found", name),
-        }))).into_response();
+        return (
+            StatusCode::NOT_FOUND,
+            axum::Json(serde_json::json!({
+                "error": format!("Plugin '{}' not found", name),
+            })),
+        )
+            .into_response();
     }
 
     axum::Json(serde_json::json!({
         "manifest": manifest,
         "state": plugin_state,
         "config": config,
-    })).into_response()
+    }))
+    .into_response()
 }
 
 /// Enable a plugin.
@@ -67,10 +69,15 @@ async fn enable_plugin(
         Ok(()) => axum::Json(serde_json::json!({
             "status": "enabled",
             "plugin": name,
-        })).into_response(),
-        Err(e) => (StatusCode::BAD_REQUEST, axum::Json(serde_json::json!({
-            "error": e,
-        }))).into_response(),
+        }))
+        .into_response(),
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({
+                "error": e,
+            })),
+        )
+            .into_response(),
     }
 }
 
@@ -83,26 +90,33 @@ async fn disable_plugin(
         Ok(()) => axum::Json(serde_json::json!({
             "status": "disabled",
             "plugin": name,
-        })).into_response(),
-        Err(e) => (StatusCode::BAD_REQUEST, axum::Json(serde_json::json!({
-            "error": e,
-        }))).into_response(),
+        }))
+        .into_response(),
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({
+                "error": e,
+            })),
+        )
+            .into_response(),
     }
 }
 
 /// Get plugin config (secrets masked).
-async fn get_config(
-    State(state): State<AppState>,
-    Path(name): Path<String>,
-) -> impl IntoResponse {
+async fn get_config(State(state): State<AppState>, Path(name): Path<String>) -> impl IntoResponse {
     match state.plugin_manager().get_config_masked(&name) {
         Some(config) => axum::Json(serde_json::json!({
             "plugin": name,
             "config": config,
-        })).into_response(),
-        None => (StatusCode::NOT_FOUND, axum::Json(serde_json::json!({
-            "error": format!("Plugin '{}' not found", name),
-        }))).into_response(),
+        }))
+        .into_response(),
+        None => (
+            StatusCode::NOT_FOUND,
+            axum::Json(serde_json::json!({
+                "error": format!("Plugin '{}' not found", name),
+            })),
+        )
+            .into_response(),
     }
 }
 
@@ -118,18 +132,20 @@ async fn update_config(
             "plugin": name,
             "changes": changes,
             "reload_required": false,
-        })).into_response(),
-        Err(e) => (StatusCode::BAD_REQUEST, axum::Json(serde_json::json!({
-            "error": e,
-        }))).into_response(),
+        }))
+        .into_response(),
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({
+                "error": e,
+            })),
+        )
+            .into_response(),
     }
 }
 
 /// Test plugin connection.
-async fn test_plugin(
-    State(state): State<AppState>,
-    Path(name): Path<String>,
-) -> impl IntoResponse {
+async fn test_plugin(State(state): State<AppState>, Path(name): Path<String>) -> impl IntoResponse {
     // Placeholder: in production, call plugin's health_check method
     let is_enabled = state.plugin_manager().is_enabled(&name);
     axum::Json(serde_json::json!({
@@ -160,10 +176,15 @@ async fn remove_plugin(
         Ok(()) => axum::Json(serde_json::json!({
             "status": "removed",
             "plugin": name,
-        })).into_response(),
-        Err(e) => (StatusCode::BAD_REQUEST, axum::Json(serde_json::json!({
-            "error": e,
-        }))).into_response(),
+        }))
+        .into_response(),
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({
+                "error": e,
+            })),
+        )
+            .into_response(),
     }
 }
 
@@ -175,14 +196,26 @@ async fn plugins_gui(State(state): State<AppState>) -> impl IntoResponse {
     let mut plugin_rows = String::new();
     for p in &plugins {
         let state_badge = match &p.state {
-            crate::plugin_manifest::PluginState::Enabled => r#"<span style="color:#2ecc71">● Enabled</span>"#,
-            crate::plugin_manifest::PluginState::Disabled => r#"<span style="color:#e74c3c">● Disabled</span>"#,
-            crate::plugin_manifest::PluginState::Installed => r#"<span style="color:#f39c12">● Installed</span>"#,
-            crate::plugin_manifest::PluginState::Error => r#"<span style="color:#e74c3c">✗ Error</span>"#,
+            crate::plugin_manifest::PluginState::Enabled => {
+                r#"<span style="color:#2ecc71">● Enabled</span>"#
+            }
+            crate::plugin_manifest::PluginState::Disabled => {
+                r#"<span style="color:#e74c3c">● Disabled</span>"#
+            }
+            crate::plugin_manifest::PluginState::Installed => {
+                r#"<span style="color:#f39c12">● Installed</span>"#
+            }
+            crate::plugin_manifest::PluginState::Error => {
+                r#"<span style="color:#e74c3c">✗ Error</span>"#
+            }
         };
         let tier_badge = match &p.tier {
-            crate::plugin_manifest::PluginTier::Official => r#"<span style="background:#336791;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px">Official</span>"#,
-            crate::plugin_manifest::PluginTier::Community => r#"<span style="background:#555;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px">Community</span>"#,
+            crate::plugin_manifest::PluginTier::Official => {
+                r#"<span style="background:#336791;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px">Official</span>"#
+            }
+            crate::plugin_manifest::PluginTier::Community => {
+                r#"<span style="background:#555;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px">Community</span>"#
+            }
         };
 
         plugin_rows.push_str(&format!(
@@ -206,7 +239,8 @@ async fn plugins_gui(State(state): State<AppState>) -> impl IntoResponse {
         plugin_rows = r#"<tr><td colspan="5" style="text-align:center;color:#888;padding:30px">No plugins installed. Use the API to install plugins.</td></tr>"#.to_string();
     }
 
-    let html = format!(r#"<!DOCTYPE html>
+    let html = format!(
+        r#"<!DOCTYPE html>
 <html>
 <head>
     <title>{name} — Plugin Manager</title>
@@ -261,7 +295,10 @@ POST /admin/plugins/:name/test    Test connection
     }}
     </script>
 </body>
-</html>"#, name = name, rows = plugin_rows);
+</html>"#,
+        name = name,
+        rows = plugin_rows
+    );
 
     axum::response::Html(html)
 }

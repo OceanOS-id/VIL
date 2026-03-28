@@ -6,7 +6,7 @@ use axum::extract::Request;
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
-use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
+use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use vil_log::app_log;
 
@@ -85,15 +85,9 @@ impl std::fmt::Display for JwtError {
 
 /// Axum middleware function for JWT authentication.
 /// Use with `axum::middleware::from_fn`.
-pub async fn jwt_middleware(
-    request: Request,
-    next: Next,
-) -> Response {
+pub async fn jwt_middleware(request: Request, next: Next) -> Response {
     // Extract JWT config from extensions
-    let jwt_auth = request
-        .extensions()
-        .get::<JwtAuth>()
-        .cloned();
+    let jwt_auth = request.extensions().get::<JwtAuth>().cloned();
 
     let jwt_auth = match jwt_auth {
         Some(auth) => auth,

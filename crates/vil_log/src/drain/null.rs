@@ -19,7 +19,10 @@ impl LogDrain for NullDrain {
         "null"
     }
 
-    async fn flush(&mut self, _batch: &[LogSlot]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn flush(
+        &mut self,
+        _batch: &[LogSlot],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(())
     }
 

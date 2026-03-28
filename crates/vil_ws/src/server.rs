@@ -13,15 +13,15 @@
 // Add 1 to LogConfig.threads for optimal log ring sizing.
 // =============================================================================
 
+use futures_util::{SinkExt, StreamExt};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::mpsc;
 use tokio_tungstenite::{accept_async, tungstenite::Message};
-use futures_util::{SinkExt, StreamExt};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
 
-use vil_log::{mq_log, types::MqPayload};
 use vil_log::dict::register_str;
+use vil_log::{mq_log, types::MqPayload};
 
 use crate::config::WsConfig;
 use crate::error::WsFault;
@@ -69,12 +69,13 @@ impl WsServer {
     /// Returns a `JoinHandle` that resolves when the server shuts down.
     pub async fn start(self: Arc<Self>) -> Result<tokio::task::JoinHandle<()>, WsFault> {
         let addr_hash = self.addr_hash;
-        let listener = TcpListener::bind(&self.config.addr)
-            .await
-            .map_err(|e| WsFault::BindFailed {
-                addr_hash,
-                reason_code: e.raw_os_error().unwrap_or(0) as u32,
-            })?;
+        let listener =
+            TcpListener::bind(&self.config.addr)
+                .await
+                .map_err(|e| WsFault::BindFailed {
+                    addr_hash,
+                    reason_code: e.raw_os_error().unwrap_or(0) as u32,
+                })?;
 
         let server = self.clone();
         let handle = tokio::spawn(async move {
@@ -116,14 +117,17 @@ impl WsServer {
         let sent = self.rooms.broadcast_all(msg);
 
         let elapsed = start.elapsed();
-        mq_log!(Info, MqPayload {
-            broker_hash:   self.addr_hash,
-            topic_hash,
-            message_bytes: msg.len() as u32,
-            e2e_latency_us: elapsed.as_micros() as u32,
-            op_type:       0,   // publish / send
-            ..MqPayload::default()
-        });
+        mq_log!(
+            Info,
+            MqPayload {
+                broker_hash: self.addr_hash,
+                topic_hash,
+                message_bytes: msg.len() as u32,
+                e2e_latency_us: elapsed.as_micros() as u32,
+                op_type: 0, // publish / send
+                ..MqPayload::default()
+            }
+        );
 
         sent
     }
@@ -139,18 +143,21 @@ impl WsServer {
 
         let elapsed = start.elapsed();
         let (_sent, _err_code) = match &result {
-            Ok(n)  => (*n, 0u8),
+            Ok(n) => (*n, 0u8),
             Err(f) => (0, f.as_error_code()),
         };
 
-        mq_log!(Info, MqPayload {
-            broker_hash:    self.addr_hash,
-            topic_hash,
-            message_bytes:  msg.len() as u32,
-            e2e_latency_us: elapsed.as_micros() as u32,
-            op_type:        0,   // publish / send
-            ..MqPayload::default()
-        });
+        mq_log!(
+            Info,
+            MqPayload {
+                broker_hash: self.addr_hash,
+                topic_hash,
+                message_bytes: msg.len() as u32,
+                e2e_latency_us: elapsed.as_micros() as u32,
+                op_type: 0, // publish / send
+                ..MqPayload::default()
+            }
+        );
 
         result
     }
@@ -184,14 +191,17 @@ async fn handle_connection(
             let send_result = ws_sink.send(msg).await;
             let elapsed = start.elapsed();
 
-            mq_log!(Info, MqPayload {
-                broker_hash,
-                topic_hash:     0,
-                message_bytes:  msg_bytes.len() as u32,
-                e2e_latency_us: elapsed.as_micros() as u32,
-                op_type:        0,   // publish / send
-                ..MqPayload::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash,
+                    topic_hash: 0,
+                    message_bytes: msg_bytes.len() as u32,
+                    e2e_latency_us: elapsed.as_micros() as u32,
+                    op_type: 0, // publish / send
+                    ..MqPayload::default()
+                }
+            );
 
             if send_result.is_err() {
                 break;
@@ -216,14 +226,17 @@ async fn handle_connection(
                 }
 
                 let elapsed = start.elapsed();
-                mq_log!(Info, MqPayload {
-                    broker_hash,
-                    topic_hash:     client_id as u32,
-                    message_bytes:  msg_bytes.len() as u32,
-                    e2e_latency_us: elapsed.as_micros() as u32,
-                    op_type:        1,   // consume / receive
-                    ..MqPayload::default()
-                });
+                mq_log!(
+                    Info,
+                    MqPayload {
+                        broker_hash,
+                        topic_hash: client_id as u32,
+                        message_bytes: msg_bytes.len() as u32,
+                        e2e_latency_us: elapsed.as_micros() as u32,
+                        op_type: 1, // consume / receive
+                        ..MqPayload::default()
+                    }
+                );
             }
             Err(_) => break,
         }

@@ -75,8 +75,7 @@ impl GraphRagState {
         self.total_entities += event.entities_found as u64;
         self.total_relations += event.relations_found as u64;
         let n = self.total_queries as f64;
-        self.avg_latency_ms =
-            self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
+        self.avg_latency_ms = self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
     }
 
     pub fn record_error(&mut self) {

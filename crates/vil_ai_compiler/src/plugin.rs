@@ -1,5 +1,5 @@
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::handlers::{self, CompilerStats};
 use crate::semantic::{CompileEvent, CompileFault, CompilerState};
@@ -33,16 +33,20 @@ impl Default for AiCompilerPlugin {
 }
 
 impl VilPlugin for AiCompilerPlugin {
-    fn id(&self) -> &str { "vil-ai-compiler" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "AI pipeline compiler for optimized execution plans" }
+    fn id(&self) -> &str {
+        "vil-ai-compiler"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "AI pipeline compiler for optimized execution plans"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "ai-compiler".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/compiler/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/compiler/stats")],
         }]
     }
 
@@ -58,5 +62,7 @@ impl VilPlugin for AiCompilerPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

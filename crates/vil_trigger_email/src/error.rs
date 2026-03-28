@@ -52,11 +52,11 @@ impl EmailFault {
     pub fn as_error_code(&self) -> u32 {
         match self {
             EmailFault::TlsConnectFailed { .. } => 1,
-            EmailFault::LoginFailed { .. }      => 2,
-            EmailFault::FolderNotFound { .. }   => 3,
-            EmailFault::IdleFailed { .. }       => 4,
-            EmailFault::Disconnected { .. }     => 5,
-            EmailFault::FetchFailed { .. }      => 6,
+            EmailFault::LoginFailed { .. } => 2,
+            EmailFault::FolderNotFound { .. } => 3,
+            EmailFault::IdleFailed { .. } => 4,
+            EmailFault::Disconnected { .. } => 5,
+            EmailFault::FetchFailed { .. } => 6,
         }
     }
 }

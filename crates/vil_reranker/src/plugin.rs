@@ -9,28 +9,38 @@ use std::sync::Arc;
 pub struct RerankerPlugin;
 
 impl RerankerPlugin {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl Default for RerankerPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for RerankerPlugin {
-    fn id(&self) -> &str { "vil-reranker" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Keyword, cross-encoder, and RRF reranking for RAG retrieval" }
+    fn id(&self) -> &str {
+        "vil-reranker"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Keyword, cross-encoder, and RRF reranking for RAG retrieval"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "reranker".into(),
-            endpoints: vec![
-                EndpointSpec::post("/api/reranker/rerank"),
-            ],
+            endpoints: vec![EndpointSpec::post("/api/reranker/rerank")],
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let reranker: Arc<dyn Reranker> = Arc::new(KeywordReranker::new(1.0));
@@ -44,5 +54,7 @@ impl VilPlugin for RerankerPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

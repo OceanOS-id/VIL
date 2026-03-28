@@ -23,8 +23,8 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
     parse::{Parse, ParseStream},
-    parse_macro_input, DeriveInput, FnArg, Ident, ItemFn, ItemMod, LitInt, LitStr,
-    Pat, ReturnType, Token, Type,
+    parse_macro_input, DeriveInput, FnArg, Ident, ItemFn, ItemMod, LitInt, LitStr, Pat, ReturnType,
+    Token, Type,
 };
 
 /// Attribute macro that wraps an async handler function with:
@@ -84,13 +84,34 @@ impl Parse for VilHandlerAttr {
 fn is_vil_extractor(ty: &Type) -> bool {
     let type_str = quote!(#ty).to_string().replace(' ', "");
     let known = [
-        "Path", "Query", "State", "Extension", "Json",
-        "ShmSlice", "ShmContext", "ServiceCtx", "TriLaneCtx",
-        "TriLaneRouter", "IngressBridge", "RequestId", "Bytes",
-        "String", "&str", "u8", "u16", "u32", "u64", "i32", "i64",
-        "bool", "usize", "Request",
+        "Path",
+        "Query",
+        "State",
+        "Extension",
+        "Json",
+        "ShmSlice",
+        "ShmContext",
+        "ServiceCtx",
+        "TriLaneCtx",
+        "TriLaneRouter",
+        "IngressBridge",
+        "RequestId",
+        "Bytes",
+        "String",
+        "&str",
+        "u8",
+        "u16",
+        "u32",
+        "u64",
+        "i32",
+        "i64",
+        "bool",
+        "usize",
+        "Request",
     ];
-    known.iter().any(|k| type_str.starts_with(k) || type_str.contains(&format!("::{}", k)))
+    known
+        .iter()
+        .any(|k| type_str.starts_with(k) || type_str.contains(&format!("::{}", k)))
 }
 
 #[proc_macro_attribute]

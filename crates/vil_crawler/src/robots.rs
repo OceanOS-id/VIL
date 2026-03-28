@@ -25,7 +25,10 @@ impl RobotsChecker {
                 continue;
             }
 
-            if let Some(rest) = line.strip_prefix("User-agent:").or_else(|| line.strip_prefix("user-agent:")) {
+            if let Some(rest) = line
+                .strip_prefix("User-agent:")
+                .or_else(|| line.strip_prefix("user-agent:"))
+            {
                 // Flush previous rule
                 if let Some(ua) = current_ua.take() {
                     rules.push(RobotsRule {
@@ -35,12 +38,18 @@ impl RobotsChecker {
                     });
                 }
                 current_ua = Some(rest.trim().to_string());
-            } else if let Some(rest) = line.strip_prefix("Disallow:").or_else(|| line.strip_prefix("disallow:")) {
+            } else if let Some(rest) = line
+                .strip_prefix("Disallow:")
+                .or_else(|| line.strip_prefix("disallow:"))
+            {
                 let path = rest.trim().to_string();
                 if !path.is_empty() {
                     current_disallow.push(path);
                 }
-            } else if let Some(rest) = line.strip_prefix("Allow:").or_else(|| line.strip_prefix("allow:")) {
+            } else if let Some(rest) = line
+                .strip_prefix("Allow:")
+                .or_else(|| line.strip_prefix("allow:"))
+            {
                 let path = rest.trim().to_string();
                 if !path.is_empty() {
                     current_allow.push(path);

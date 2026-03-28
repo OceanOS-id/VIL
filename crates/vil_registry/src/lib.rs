@@ -26,17 +26,16 @@
 // [ ] TODO(future): lock-free registry for hot path
 // =============================================================================
 
-pub mod registry;
 pub mod epoch;
+pub mod registry;
 pub mod shm_registry;
 
-pub use registry::*;
 pub use epoch::EpochTracker;
+pub use registry::*;
 pub use shm_registry::{
-    SharedRegistryLayout, ShmRegistry,
-    ProcessSnapshot, PortSnapshot, SampleSnapshot
+    PortSnapshot, ProcessSnapshot, SampleSnapshot, SharedRegistryLayout, ShmRegistry,
 };
 pub use vil_types::{
-    Descriptor, Loaned, LoanedRead, PortId, ProcessId, ProcessSpec, Published,
-    QueueKind, RegionId, SampleId, VSlice, GenericToken, MessageContract,
+    Descriptor, GenericToken, Loaned, LoanedRead, MessageContract, PortId, ProcessId, ProcessSpec,
+    Published, QueueKind, RegionId, SampleId, VSlice,
 };

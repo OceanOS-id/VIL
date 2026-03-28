@@ -4,8 +4,8 @@
 
 use crate::config::NatsConfig;
 use bytes::Bytes;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use futures::StreamExt;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 /// NATS message.
 #[derive(Debug, Clone)]
@@ -30,14 +30,17 @@ impl NatsSubscription {
         let subject_str = msg.subject.to_string();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash: register_str("nats"),
-                topic_hash: register_str(&subject_str),
-                message_bytes: payload_len as u32,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type: 1,
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("nats"),
+                    topic_hash: register_str(&subject_str),
+                    message_bytes: payload_len as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 1,
+                    ..Default::default()
+                }
+            );
         }
         Some(NatsMessage {
             subject: subject_str,
@@ -45,7 +48,9 @@ impl NatsSubscription {
             reply_to: msg.reply.as_ref().map(|s| s.to_string()),
         })
     }
-    pub fn subject(&self) -> &str { &self.subject }
+    pub fn subject(&self) -> &str {
+        &self.subject
+    }
 }
 
 /// NATS core client backed by real async-nats connection.
@@ -82,7 +87,9 @@ impl NatsClient {
             opts
         };
 
-        let client = opts.connect(&config.url).await
+        let client = opts
+            .connect(&config.url)
+            .await
             .map_err(|e| format!("NATS connect failed: {}", e))?;
 
         {
@@ -104,7 +111,10 @@ impl NatsClient {
             return Err("NATS not connected".into());
         }
         let __mq_start = std::time::Instant::now();
-        let result = self.client.publish(subject.to_string(), Bytes::copy_from_slice(payload)).await
+        let result = self
+            .client
+            .publish(subject.to_string(), Bytes::copy_from_slice(payload))
+            .await
             .map_err(|e| format!("NATS publish failed: {}", e));
         if result.is_ok() {
             self.published.fetch_add(1, Ordering::Relaxed);
@@ -112,14 +122,17 @@ impl NatsClient {
         let __elapsed = __mq_start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash: register_str("nats"),
-                topic_hash: register_str(subject),
-                message_bytes: payload.len() as u32,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type: 0,
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("nats"),
+                    topic_hash: register_str(subject),
+                    message_bytes: payload.len() as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 0,
+                    ..Default::default()
+                }
+            );
         }
         // debug-level: skip vil_log (mq_log already captures this)
         result
@@ -127,18 +140,27 @@ impl NatsClient {
 
     /// Subscribe to a subject (supports wildcards: *, >).
     pub async fn subscribe(&self, subject: &str) -> Result<NatsSubscription, String> {
-        let sub = self.client.subscribe(subject.to_string()).await
+        let sub = self
+            .client
+            .subscribe(subject.to_string())
+            .await
             .map_err(|e| format!("NATS subscribe failed: {}", e))?;
         {
             use vil_log::app_log;
             app_log!(Info, "nats.subscribe", { subject: subject });
         }
-        Ok(NatsSubscription { inner: sub, subject: subject.to_string() })
+        Ok(NatsSubscription {
+            inner: sub,
+            subject: subject.to_string(),
+        })
     }
 
     /// Request/reply (sends and waits for one response).
     pub async fn request(&self, subject: &str, payload: &[u8]) -> Result<NatsMessage, String> {
-        let resp = self.client.request(subject.to_string(), Bytes::copy_from_slice(payload)).await
+        let resp = self
+            .client
+            .request(subject.to_string(), Bytes::copy_from_slice(payload))
+            .await
             .map_err(|e| format!("NATS request failed: {}", e))?;
         self.published.fetch_add(1, Ordering::Relaxed);
         self.received.fetch_add(1, Ordering::Relaxed);
@@ -160,11 +182,21 @@ impl NatsClient {
         }
     }
 
-    pub fn is_connected(&self) -> bool { self.connected.load(Ordering::Relaxed) }
-    pub fn published_count(&self) -> u64 { self.published.load(Ordering::Relaxed) }
-    pub fn received_count(&self) -> u64 { self.received.load(Ordering::Relaxed) }
-    pub fn config(&self) -> &NatsConfig { &self.config }
+    pub fn is_connected(&self) -> bool {
+        self.connected.load(Ordering::Relaxed)
+    }
+    pub fn published_count(&self) -> u64 {
+        self.published.load(Ordering::Relaxed)
+    }
+    pub fn received_count(&self) -> u64 {
+        self.received.load(Ordering::Relaxed)
+    }
+    pub fn config(&self) -> &NatsConfig {
+        &self.config
+    }
 
     /// Access the underlying async-nats client for advanced use cases.
-    pub fn inner(&self) -> &async_nats::Client { &self.client }
+    pub fn inner(&self) -> &async_nats::Client {
+        &self.client
+    }
 }

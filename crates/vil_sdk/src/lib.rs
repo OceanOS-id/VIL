@@ -37,15 +37,15 @@ pub mod validate {
     pub use vil_validate::Validator;
 }
 
+pub use vil_macros::latency_marker;
 pub use vil_macros::message;
 pub use vil_macros::process;
 pub use vil_macros::trace_hop;
-pub use vil_macros::latency_marker;
-pub use vil_macros::vil_obs_trace_hop;
-pub use vil_macros::vil_obs_latency_label;
 pub use vil_macros::vil_decision;
 pub use vil_macros::vil_event;
 pub use vil_macros::vil_fault;
+pub use vil_macros::vil_obs_latency_label;
+pub use vil_macros::vil_obs_trace_hop;
 /// Semantic Type Macros
 pub use vil_macros::vil_state;
 /// Proc-Macros for Workflow & Messages
@@ -422,14 +422,14 @@ pub mod prelude {
     pub use crate::rt::*;
     pub use crate::GenericToken;
     pub use crate::{GatewayBuilder, Pipeline, PipelineNode, RouteMode};
+    pub use vil_macros::latency_marker;
     pub use vil_macros::process;
     pub use vil_macros::trace_hop;
-    pub use vil_macros::latency_marker;
-    pub use vil_macros::vil_obs_trace_hop;
-    pub use vil_macros::vil_obs_latency_label;
     pub use vil_macros::vil_decision;
     pub use vil_macros::vil_event;
     pub use vil_macros::vil_fault;
+    pub use vil_macros::vil_obs_latency_label;
+    pub use vil_macros::vil_obs_trace_hop;
     pub use vil_macros::vil_state;
     pub use vil_macros::vil_workflow;
     pub use vil_types::ShmToken;

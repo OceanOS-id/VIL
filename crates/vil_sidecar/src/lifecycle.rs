@@ -21,10 +21,7 @@ use tokio::sync::Mutex;
 ///
 /// After successful handshake, the sidecar entry in the registry is updated
 /// with the connection, SHM region, methods, and health = Healthy.
-pub async fn connect_sidecar(
-    registry: &SidecarRegistry,
-    name: &str,
-) -> Result<(), LifecycleError> {
+pub async fn connect_sidecar(registry: &SidecarRegistry, name: &str) -> Result<(), LifecycleError> {
     let config = {
         let entry = registry
             .get(name)
@@ -57,24 +54,18 @@ pub async fn connect_sidecar(
     };
 
     // Accept connection with timeout
-    let conn = tokio::time::timeout(
-        std::time::Duration::from_secs(30),
-        listener.accept(),
-    )
-    .await
-    .map_err(|_| LifecycleError::HandshakeTimeout(name.to_string()))?
-    .map_err(LifecycleError::Transport)?;
+    let conn = tokio::time::timeout(std::time::Duration::from_secs(30), listener.accept())
+        .await
+        .map_err(|_| LifecycleError::HandshakeTimeout(name.to_string()))?
+        .map_err(LifecycleError::Transport)?;
 
     let mut conn = conn;
 
     // Wait for Handshake message from sidecar
-    let handshake = tokio::time::timeout(
-        std::time::Duration::from_secs(10),
-        conn.recv(),
-    )
-    .await
-    .map_err(|_| LifecycleError::HandshakeTimeout(name.to_string()))?
-    .map_err(LifecycleError::Transport)?;
+    let handshake = tokio::time::timeout(std::time::Duration::from_secs(10), conn.recv())
+        .await
+        .map_err(|_| LifecycleError::HandshakeTimeout(name.to_string()))?
+        .map_err(LifecycleError::Transport)?;
 
     let methods = match handshake {
         Message::Handshake(h) => {
@@ -168,7 +159,13 @@ fn spawn_sidecar_process(command: &str) -> Result<u32, LifecycleError> {
     let pid = child.id();
     {
         use vil_log::{system_log, types::SystemPayload};
-        system_log!(Info, SystemPayload { event_type: 4, ..Default::default() });
+        system_log!(
+            Info,
+            SystemPayload {
+                event_type: 4,
+                ..Default::default()
+            }
+        );
         {
             use vil_log::app_log;
             app_log!(Info, "sidecar.process.spawned", { command: command, pid: pid as u64 });
@@ -235,7 +232,10 @@ pub async fn health_check(
 fn mark_unhealthy(registry: &SidecarRegistry, name: &str, max_failures: u64) {
     if let Some(entry) = registry.get(name) {
         entry.metrics.health_failure();
-        let failures = entry.metrics.health_failures.load(std::sync::atomic::Ordering::Relaxed);
+        let failures = entry
+            .metrics
+            .health_failures
+            .load(std::sync::atomic::Ordering::Relaxed);
 
         if failures >= max_failures {
             drop(entry);
@@ -257,10 +257,7 @@ fn mark_unhealthy(registry: &SidecarRegistry, name: &str, max_failures: u64) {
 }
 
 /// Gracefully drain a sidecar: send DRAIN, wait for DRAINED, then SHUTDOWN.
-pub async fn drain_sidecar(
-    registry: &SidecarRegistry,
-    name: &str,
-) -> Result<(), LifecycleError> {
+pub async fn drain_sidecar(registry: &SidecarRegistry, name: &str) -> Result<(), LifecycleError> {
     let conn = {
         let mut entry = registry
             .get_mut(name)

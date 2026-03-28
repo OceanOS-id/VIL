@@ -51,7 +51,10 @@ mod tests {
     fn cosine_identical_vectors() {
         let v = vec![1.0, 2.0, 3.0];
         let sim = cosine_similarity(&v, &v);
-        assert!((sim - 1.0).abs() < 1e-6, "identical vectors should be 1.0, got {sim}");
+        assert!(
+            (sim - 1.0).abs() < 1e-6,
+            "identical vectors should be 1.0, got {sim}"
+        );
     }
 
     #[test]
@@ -59,7 +62,10 @@ mod tests {
         let a = vec![1.0, 0.0];
         let b = vec![0.0, 1.0];
         let sim = cosine_similarity(&a, &b);
-        assert!(sim.abs() < 1e-6, "orthogonal vectors should be 0.0, got {sim}");
+        assert!(
+            sim.abs() < 1e-6,
+            "orthogonal vectors should be 0.0, got {sim}"
+        );
     }
 
     #[test]
@@ -67,7 +73,10 @@ mod tests {
         let a = vec![1.0, 2.0, 3.0];
         let b = vec![-1.0, -2.0, -3.0];
         let sim = cosine_similarity(&a, &b);
-        assert!((sim + 1.0).abs() < 1e-6, "opposite vectors should be -1.0, got {sim}");
+        assert!(
+            (sim + 1.0).abs() < 1e-6,
+            "opposite vectors should be -1.0, got {sim}"
+        );
     }
 
     #[test]
@@ -84,7 +93,10 @@ mod tests {
         let a = vec![1.0, 2.0, 3.0];
         let b = vec![2.0, 4.0, 6.0]; // same direction, scaled
         let sim = cosine_similarity(&a, &b);
-        assert!((sim - 1.0).abs() < 1e-6, "parallel vectors should be 1.0, got {sim}");
+        assert!(
+            (sim - 1.0).abs() < 1e-6,
+            "parallel vectors should be 1.0, got {sim}"
+        );
     }
 
     #[test]

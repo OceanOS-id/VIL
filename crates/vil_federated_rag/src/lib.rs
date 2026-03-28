@@ -14,10 +14,10 @@ pub use merger::{FederatedResult, ResultMerger};
 pub use source::{RagSource, RagSourceError, SourceResult};
 
 // VIL integration layer
-pub mod vil_semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod vil_semantic;
 
 pub use plugin::FederatedRagPlugin;
 pub use vil_semantic::{FederatedEvent, FederatedFault, FederatedState};
@@ -38,19 +38,33 @@ mod tests {
 
     impl MockSource {
         fn new(id: &str, results: Vec<SourceResult>) -> Self {
-            Self { id: id.to_string(), results, should_fail: false }
+            Self {
+                id: id.to_string(),
+                results,
+                should_fail: false,
+            }
         }
 
         fn failing(id: &str) -> Self {
-            Self { id: id.to_string(), results: vec![], should_fail: true }
+            Self {
+                id: id.to_string(),
+                results: vec![],
+                should_fail: true,
+            }
         }
     }
 
     #[async_trait]
     impl RagSource for MockSource {
-        fn source_id(&self) -> &str { &self.id }
+        fn source_id(&self) -> &str {
+            &self.id
+        }
 
-        async fn retrieve(&self, _query: &str, top_k: usize) -> Result<Vec<SourceResult>, RagSourceError> {
+        async fn retrieve(
+            &self,
+            _query: &str,
+            top_k: usize,
+        ) -> Result<Vec<SourceResult>, RagSourceError> {
             if self.should_fail {
                 return Err(RagSourceError::Unavailable("mock failure".into()));
             }
@@ -71,9 +85,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_single_source() {
-        let src = MockSource::new("s1", vec![
-            make_result("s1", "hello world", 0.9),
-        ]);
+        let src = MockSource::new("s1", vec![make_result("s1", "hello world", 0.9)]);
         let mut retriever = FederatedRetriever::new(FederatedConfig::default());
         retriever.add_source(Arc::new(src));
 

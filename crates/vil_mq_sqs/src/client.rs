@@ -34,16 +34,13 @@ impl SqsClient {
         let region_hash = register_str(&config.region);
         let region = Region::new(config.region.clone());
 
-        let mut cfg_builder = aws_config::defaults(BehaviorVersion::latest())
-            .region(region);
+        let mut cfg_builder = aws_config::defaults(BehaviorVersion::latest()).region(region);
 
         if let Some(ref endpoint) = config.endpoint {
             cfg_builder = cfg_builder.endpoint_url(endpoint);
         }
 
-        let aws_cfg = cfg_builder
-            .load()
-            .await;
+        let aws_cfg = cfg_builder.load().await;
 
         let inner = AwsSqsClient::new(&aws_cfg);
 
@@ -72,14 +69,17 @@ impl SqsClient {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("sqs"),
-                topic_hash:     queue_hash,
-                message_bytes:  body.len() as u32,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        0, // publish
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("sqs"),
+                    topic_hash: queue_hash,
+                    message_bytes: body.len() as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 0, // publish
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(())
@@ -90,7 +90,8 @@ impl SqsClient {
         let __start = std::time::Instant::now();
         let queue_hash = register_str(&self.config.queue_url);
 
-        let resp = self.inner
+        let resp = self
+            .inner
             .receive_message()
             .queue_url(&self.config.queue_url)
             .max_number_of_messages(self.config.max_messages)
@@ -106,14 +107,17 @@ impl SqsClient {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("sqs"),
-                topic_hash:     queue_hash,
-                message_bytes:  count,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        1, // consume
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("sqs"),
+                    topic_hash: queue_hash,
+                    message_bytes: count,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 1, // consume
+                    ..Default::default()
+                }
+            );
         }
 
         let result = messages
@@ -161,14 +165,17 @@ impl SqsClient {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("sqs"),
-                topic_hash:     queue_hash,
-                message_bytes:  0,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        2, // ack (delete = ack in SQS)
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("sqs"),
+                    topic_hash: queue_hash,
+                    message_bytes: 0,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 2, // ack (delete = ack in SQS)
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(())
@@ -190,8 +197,7 @@ impl SnsClient {
         let region_hash = register_str(&config.region);
         let region = Region::new(config.region.clone());
 
-        let mut cfg_builder = aws_config::defaults(BehaviorVersion::latest())
-            .region(region);
+        let mut cfg_builder = aws_config::defaults(BehaviorVersion::latest()).region(region);
 
         if let Some(ref endpoint) = config.endpoint {
             cfg_builder = cfg_builder.endpoint_url(endpoint);
@@ -226,14 +232,17 @@ impl SnsClient {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("sns"),
-                topic_hash,
-                message_bytes:  message.len() as u32,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        0, // publish
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("sns"),
+                    topic_hash,
+                    message_bytes: message.len() as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 0, // publish
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(())

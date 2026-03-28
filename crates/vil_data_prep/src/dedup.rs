@@ -21,9 +21,9 @@ pub fn fuzzy_dedup(texts: &[String], threshold: f64) -> Vec<String> {
     let mut kept: Vec<usize> = Vec::new();
 
     for (i, shingles_i) in shingled.iter().enumerate() {
-        let is_dup = kept.iter().any(|&j| {
-            jaccard(shingles_i, &shingled[j]) >= threshold
-        });
+        let is_dup = kept
+            .iter()
+            .any(|&j| jaccard(shingles_i, &shingled[j]) >= threshold);
         if !is_dup {
             kept.push(i);
         }
@@ -50,7 +50,11 @@ fn jaccard<'a>(a: &HashSet<&'a str>, b: &HashSet<&'a str>) -> f64 {
     }
     let intersection = a.intersection(b).count() as f64;
     let union = a.union(b).count() as f64;
-    if union == 0.0 { 1.0 } else { intersection / union }
+    if union == 0.0 {
+        1.0
+    } else {
+        intersection / union
+    }
 }
 
 #[cfg(test)]
@@ -91,10 +95,7 @@ mod tests {
 
     #[test]
     fn fuzzy_dedup_keeps_all_when_threshold_high() {
-        let input = vec![
-            "alpha beta gamma".into(),
-            "alpha beta delta".into(),
-        ];
+        let input = vec!["alpha beta gamma".into(), "alpha beta delta".into()];
         let result = fuzzy_dedup(&input, 0.99);
         assert_eq!(result.len(), 2);
     }

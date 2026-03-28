@@ -115,7 +115,10 @@ impl AlertEngine {
 
     /// Evaluate all rules against provided metric values.
     /// Returns list of alert statuses.
-    pub fn evaluate(&mut self, metrics: &std::collections::HashMap<String, f64>) -> Vec<AlertStatus> {
+    pub fn evaluate(
+        &mut self,
+        metrics: &std::collections::HashMap<String, f64>,
+    ) -> Vec<AlertStatus> {
         let mut statuses = Vec::new();
 
         for rule in &self.rules {

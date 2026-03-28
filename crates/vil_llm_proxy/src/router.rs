@@ -21,7 +21,7 @@ pub enum RoutingStrategy {
 pub struct ModelEndpoint {
     pub provider: String,
     pub model: String,
-    pub health: AtomicU32,         // 0-100 health score
+    pub health: AtomicU32, // 0-100 health score
     pub total_requests: AtomicU64,
     pub avg_latency_ms: AtomicU64,
     pub cost_per_1k_tokens: f64,
@@ -29,7 +29,11 @@ pub struct ModelEndpoint {
 
 impl ModelEndpoint {
     /// Create a new endpoint (starts fully healthy).
-    pub fn new(provider: impl Into<String>, model: impl Into<String>, cost_per_1k_tokens: f64) -> Self {
+    pub fn new(
+        provider: impl Into<String>,
+        model: impl Into<String>,
+        cost_per_1k_tokens: f64,
+    ) -> Self {
         Self {
             provider: provider.into(),
             model: model.into(),
@@ -107,31 +111,29 @@ impl ModelRouter {
     /// Select the best endpoint based on the current strategy.
     /// Returns None if no healthy endpoints are available.
     pub fn select(&self) -> Option<&ModelEndpoint> {
-        let healthy: Vec<&ModelEndpoint> = self.endpoints.iter()
-            .filter(|e| e.is_healthy())
-            .collect();
+        let healthy: Vec<&ModelEndpoint> =
+            self.endpoints.iter().filter(|e| e.is_healthy()).collect();
 
         if healthy.is_empty() {
             return None;
         }
 
         match self.strategy {
-            RoutingStrategy::LeastCost => {
-                healthy.into_iter()
-                    .min_by(|a, b| a.cost_per_1k_tokens.partial_cmp(&b.cost_per_1k_tokens).unwrap())
-            }
-            RoutingStrategy::LeastLatency => {
-                healthy.into_iter()
-                    .min_by_key(|e| e.avg_latency_ms.load(Ordering::Relaxed))
-            }
+            RoutingStrategy::LeastCost => healthy.into_iter().min_by(|a, b| {
+                a.cost_per_1k_tokens
+                    .partial_cmp(&b.cost_per_1k_tokens)
+                    .unwrap()
+            }),
+            RoutingStrategy::LeastLatency => healthy
+                .into_iter()
+                .min_by_key(|e| e.avg_latency_ms.load(Ordering::Relaxed)),
             RoutingStrategy::RoundRobin => {
                 let idx = self.round_robin_idx.fetch_add(1, Ordering::Relaxed) as usize;
                 Some(healthy[idx % healthy.len()])
             }
             RoutingStrategy::HealthWeighted => {
                 // Pick the endpoint with the highest health score
-                healthy.into_iter()
-                    .max_by_key(|e| e.health_score())
+                healthy.into_iter().max_by_key(|e| e.health_score())
             }
         }
     }
@@ -161,9 +163,15 @@ mod tests {
         let router = setup_router(RoutingStrategy::LeastLatency);
 
         // Set different latencies
-        router.endpoints[0].avg_latency_ms.store(200, Ordering::Relaxed);
-        router.endpoints[1].avg_latency_ms.store(50, Ordering::Relaxed);
-        router.endpoints[2].avg_latency_ms.store(100, Ordering::Relaxed);
+        router.endpoints[0]
+            .avg_latency_ms
+            .store(200, Ordering::Relaxed);
+        router.endpoints[1]
+            .avg_latency_ms
+            .store(50, Ordering::Relaxed);
+        router.endpoints[2]
+            .avg_latency_ms
+            .store(100, Ordering::Relaxed);
 
         let selected = router.select().unwrap();
         assert_eq!(selected.provider, "anthropic"); // lowest latency

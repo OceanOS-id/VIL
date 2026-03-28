@@ -22,7 +22,9 @@ pub struct DatasourceRegistry {
 
 impl DatasourceRegistry {
     pub fn new() -> Self {
-        Self { bindings: DashMap::new() }
+        Self {
+            bindings: DashMap::new(),
+        }
     }
 
     /// Register a datasource with its provider.
@@ -38,7 +40,10 @@ impl DatasourceRegistry {
         if !actual.contains(required_capabilities) {
             return Err(DbError::CapabilityMissing(format!(
                 "Datasource '{}': provider '{}' has {} but requires {}",
-                name, provider.name(), actual, required_capabilities
+                name,
+                provider.name(),
+                actual,
+                required_capabilities
             )));
         }
 
@@ -47,11 +52,14 @@ impl DatasourceRegistry {
             app_log!(Info, "datasource_registered", { datasource: name.to_string(), provider: provider.name().to_string() });
         }
 
-        self.bindings.insert(name.to_string(), Arc::new(DatasourceBinding {
-            name: name.to_string(),
-            provider,
-            required_capabilities,
-        }));
+        self.bindings.insert(
+            name.to_string(),
+            Arc::new(DatasourceBinding {
+                name: name.to_string(),
+                provider,
+                required_capabilities,
+            }),
+        );
 
         Ok(())
     }
@@ -62,9 +70,9 @@ impl DatasourceRegistry {
         self.bindings
             .get(name)
             .map(|b| b.provider.clone())
-            .ok_or_else(|| DbError::ConnectionFailed(
-                format!("Datasource '{}' not registered", name)
-            ))
+            .ok_or_else(|| {
+                DbError::ConnectionFailed(format!("Datasource '{}' not registered", name))
+            })
     }
 
     /// Get binding details for diagnostics.
@@ -96,5 +104,7 @@ impl DatasourceRegistry {
 }
 
 impl Default for DatasourceRegistry {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }

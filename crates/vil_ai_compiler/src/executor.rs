@@ -79,10 +79,7 @@ pub fn execute(plan: &CompiledPlan, handler: &dyn StepHandler) -> ExecutionRepor
             let step = &plan.steps[step_idx];
 
             // Verify all dependencies completed.
-            let deps_met = step
-                .dependencies
-                .iter()
-                .all(|dep| completed.contains(dep));
+            let deps_met = step.dependencies.iter().all(|dep| completed.contains(dep));
 
             if !deps_met {
                 results.push(StepResult {

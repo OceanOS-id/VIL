@@ -82,10 +82,7 @@ mod tests {
 
     #[test]
     fn test_threshold_zero_keeps_all() {
-        let chunks = vec![
-            "same text".into(),
-            "same text".into(),
-        ];
+        let chunks = vec!["same text".into(), "same text".into()];
         // threshold 0.0 means jaccard must be > 0.0 to dedup — identical is 1.0 > 0.0
         // so it still deduplicates identical text
         let kept = deduplicate(&chunks, 0.0);

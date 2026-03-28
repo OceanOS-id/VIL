@@ -1,4 +1,4 @@
-use crate::strategy::{ChunkMeta, ChunkStrategy, ChunkType, TextChunk, estimate_tokens};
+use crate::strategy::{estimate_tokens, ChunkMeta, ChunkStrategy, ChunkType, TextChunk};
 use regex::Regex;
 
 /// Code-aware chunker that splits on function / class boundaries.
@@ -32,14 +32,12 @@ impl ChunkStrategy for CodeChunker {
             return Vec::new();
         }
 
-        let boundary_re = Regex::new(
-            r"(?m)^[ \t]*(pub(\([^)]*\))?\s+)?(async\s+)?(fn |def |class |function )"
-        ).unwrap();
+        let boundary_re =
+            Regex::new(r"(?m)^[ \t]*(pub(\([^)]*\))?\s+)?(async\s+)?(fn |def |class |function )")
+                .unwrap();
 
-        let boundary_positions: Vec<usize> = boundary_re
-            .find_iter(text)
-            .map(|m| m.start())
-            .collect();
+        let boundary_positions: Vec<usize> =
+            boundary_re.find_iter(text).map(|m| m.start()).collect();
 
         if boundary_positions.is_empty() {
             // Fall back to line-based splitting.

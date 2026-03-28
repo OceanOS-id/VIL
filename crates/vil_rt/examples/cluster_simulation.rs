@@ -1,5 +1,9 @@
 use vil_rt::VastarRuntimeWorld;
-use vil_types::{ProcessSpec, PortSpec, PortDirection, HostId, GenericToken, VSlice, ExecClass, CleanupPolicy, ObservabilitySpec, QueueKind, BackpressurePolicy, TransferMode, BoundaryKind, Priority, DeliveryGuarantee, Descriptor};
+use vil_types::{
+    BackpressurePolicy, BoundaryKind, CleanupPolicy, DeliveryGuarantee, Descriptor, ExecClass,
+    GenericToken, HostId, ObservabilitySpec, PortDirection, PortSpec, Priority, ProcessSpec,
+    QueueKind, TransferMode, VSlice,
+};
 
 static CONS_PORTS: &[PortSpec] = &[PortSpec {
     name: "metrics_in",
@@ -50,25 +54,30 @@ fn main() {
         },
     };
 
-    let cons_handle = runtime.register_process(cons_spec).expect("Failed to register cons");
+    let cons_handle = runtime
+        .register_process(cons_spec)
+        .expect("Failed to register cons");
     let cons_port = cons_handle.port_id("metrics_in").unwrap();
 
     // 4. Create a "Remote Sample" on Host 1
     let remote_sample_id = vil_types::SampleId(1337);
     let remote_host_id = HostId(1);
-    
+
     runtime.shm_registry().unwrap().register_sample(
         remote_sample_id,
-        vil_types::ProcessId(999), 
+        vil_types::ProcessId(999),
         remote_host_id,
-        vil_types::PortId(888),    
-        1,                           
+        vil_types::PortId(888),
+        1,
         vil_types::RegionId(0),
-        0,                           
-        64,                          
-        8,                           
+        0,
+        64,
+        8,
     );
-    runtime.shm_registry().unwrap().mark_published(remote_sample_id);
+    runtime
+        .shm_registry()
+        .unwrap()
+        .mark_published(remote_sample_id);
 
     // SIMULATE DATA ARRIVAL AT HOST 1 and PULL TO HOST 2
     // Use GenericToken consistently
@@ -79,7 +88,10 @@ fn main() {
     };
     runtime.simulate_pull_completion(remote_sample_id, token);
 
-    println!("📡 Simulated remote sample {} created on Host {}", remote_sample_id, remote_host_id);
+    println!(
+        "📡 Simulated remote sample {} created on Host {}",
+        remote_sample_id, remote_host_id
+    );
 
     // 5. MANUALLY INJECT Descriptor from Host 1 into Host 2's Queue
     let descriptor = Descriptor {
@@ -91,15 +103,20 @@ fn main() {
     };
 
     println!("🔌 Injecting remote descriptor into local consumer queue...");
-    runtime.inject_descriptor(cons_port, descriptor).expect("Injection failed");
-    
+    runtime
+        .inject_descriptor(cons_port, descriptor)
+        .expect("Injection failed");
+
     // 6. Receive on Host 2 (Remote Pull Simulation)
     println!("📥 Receiving on Host 2 (Triggering Host-Aware Logical Path)...");
-    
+
     // We'll use the EXACT same GenericToken type re-exported by vil_types
     match runtime.recv::<vil_types::GenericToken>(cons_port) {
         Ok(recv_sample) => {
-             println!("✨ Received session_id: {} from Host {} (via simulated pull)", recv_sample.session_id, remote_host_id);
+            println!(
+                "✨ Received session_id: {} from Host {} (via simulated pull)",
+                recv_sample.session_id, remote_host_id
+            );
         }
         Err(e) => {
             println!("❌ Recv failed: {:?}", e);
@@ -110,15 +127,17 @@ fn main() {
             std::process::exit(1);
         }
     }
-    
+
     // 7. Verify Counters
     let snapshot = runtime.counters_snapshot();
     println!("📊 Host 2 Stats: Net Pulls = {}", snapshot.net_pulls);
-    
+
     if snapshot.net_pulls > 0 {
         println!("🏆 SUCCESS: Cross-host RDMA pull verified!");
     } else {
-        println!("❌ FAILURE: No net pull detected. Host ID 2 should be distinct from Remote ID 1.");
+        println!(
+            "❌ FAILURE: No net pull detected. Host ID 2 should be distinct from Remote ID 1."
+        );
         std::process::exit(1);
     }
 }

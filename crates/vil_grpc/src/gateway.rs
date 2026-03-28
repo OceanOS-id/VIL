@@ -9,9 +9,9 @@
 //       .run()
 //       .await;
 
+use crate::config::GrpcServerConfig;
 use std::net::SocketAddr;
 use tonic::transport::Server;
-use crate::config::GrpcServerConfig;
 
 /// Builder for a gRPC gateway server.
 ///
@@ -23,7 +23,9 @@ pub struct GrpcGatewayBuilder {
 
 impl GrpcGatewayBuilder {
     pub fn new() -> Self {
-        Self { config: GrpcServerConfig::default() }
+        Self {
+            config: GrpcServerConfig::default(),
+        }
     }
 
     /// Set the gRPC listen port (default: 50051).
@@ -72,7 +74,8 @@ impl GrpcGatewayBuilder {
         let mut server = Server::builder();
 
         if self.config.max_concurrent_streams > 0 {
-            server = server.concurrency_limit_per_connection(self.config.max_concurrent_streams as usize);
+            server = server
+                .concurrency_limit_per_connection(self.config.max_concurrent_streams as usize);
         }
 
         server
@@ -80,5 +83,7 @@ impl GrpcGatewayBuilder {
 }
 
 impl Default for GrpcGatewayBuilder {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }

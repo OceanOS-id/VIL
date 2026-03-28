@@ -45,7 +45,8 @@ impl VilPlugin for DocExtractPlugin {
         vec![PluginCapability::Service {
             name: "extract".into(),
             endpoints: vec![
-                EndpointSpec::post("/api/extract/extract").with_description("Extract structured data"),
+                EndpointSpec::post("/api/extract/extract")
+                    .with_description("Extract structured data"),
                 EndpointSpec::get("/api/extract/stats").with_description("Extraction stats"),
             ],
         }]

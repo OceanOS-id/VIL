@@ -86,8 +86,8 @@ impl<T: Row + Serialize> BatchInserter<T> {
     pub async fn push(&mut self, row: T) -> Result<(), ChFault> {
         self.buffer.push(row);
 
-        let should_flush = self.buffer.len() >= self.max_rows
-            || self.last_flush.elapsed() >= self.max_wait;
+        let should_flush =
+            self.buffer.len() >= self.max_rows || self.last_flush.elapsed() >= self.max_wait;
 
         if should_flush {
             self.flush().await?;
@@ -134,30 +134,36 @@ impl<T: Row + Serialize> BatchInserter<T> {
 
         match result {
             Ok(()) => {
-                db_log!(Info, DbPayload {
-                    db_hash: self.client.db_hash,
-                    table_hash: self.table_hash,
-                    query_hash: 0,
-                    duration_us: elapsed_us,
-                    rows_affected: row_count as u32,
-                    op_type: 1, // INSERT
-                    error_code: 0,
-                    ..DbPayload::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.client.db_hash,
+                        table_hash: self.table_hash,
+                        query_hash: 0,
+                        duration_us: elapsed_us,
+                        rows_affected: row_count as u32,
+                        op_type: 1, // INSERT
+                        error_code: 0,
+                        ..DbPayload::default()
+                    }
+                );
                 Ok(row_count)
             }
             Err(e) => {
                 let reason_code = clickhouse_error_code(&e);
-                db_log!(Error, DbPayload {
-                    db_hash: self.client.db_hash,
-                    table_hash: self.table_hash,
-                    query_hash: 0,
-                    duration_us: elapsed_us,
-                    rows_affected: 0,
-                    op_type: 1, // INSERT
-                    error_code: (reason_code & 0xFF) as u8,
-                    ..DbPayload::default()
-                });
+                db_log!(
+                    Error,
+                    DbPayload {
+                        db_hash: self.client.db_hash,
+                        table_hash: self.table_hash,
+                        query_hash: 0,
+                        duration_us: elapsed_us,
+                        rows_affected: 0,
+                        op_type: 1, // INSERT
+                        error_code: (reason_code & 0xFF) as u8,
+                        ..DbPayload::default()
+                    }
+                );
                 Err(ChFault::InsertFailed {
                     table_hash: self.table_hash,
                     rows: row_count,

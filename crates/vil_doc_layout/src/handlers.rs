@@ -1,7 +1,7 @@
 //! HTTP handlers for the doc layout plugin — wired to real LayoutAnalyzer state.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::analyzer::LayoutAnalyzer;
 use crate::element::LayoutRegion;

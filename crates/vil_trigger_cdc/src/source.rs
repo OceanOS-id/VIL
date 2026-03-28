@@ -19,10 +19,10 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use tokio_postgres::{Client, NoTls, SimpleQueryMessage};
 
-use vil_log::{mq_log, types::MqPayload};
 use vil_log::dict::register_str;
+use vil_log::{mq_log, types::MqPayload};
 
-use vil_trigger_core::traits::{TriggerSource, EventCallback};
+use vil_trigger_core::traits::{EventCallback, TriggerSource};
 use vil_trigger_core::types::{TriggerEvent, TriggerFault};
 
 use crate::config::CdcConfig;
@@ -36,9 +36,9 @@ const PG_DELETE: u8 = b'D';
 /// VIL CDC trigger — connects to PostgreSQL logical replication and fires
 /// a `TriggerEvent` on every DML change in the watched publication.
 pub struct CdcTrigger {
-    config:    CdcConfig,
-    paused:    Arc<AtomicBool>,
-    sequence:  Arc<AtomicU64>,
+    config: CdcConfig,
+    paused: Arc<AtomicBool>,
+    sequence: Arc<AtomicU64>,
     /// Cached FxHash of slot name for hot-path logging.
     slot_hash: u32,
     /// Cached FxHash of "cdc" kind string.
@@ -72,12 +72,16 @@ impl CdcTrigger {
         let conn_hash = register_str(&self.config.conn_string);
         // Append replication=database so Postgres accepts replication commands.
         let repl_conn = format!("{} replication=database", self.config.conn_string);
-        let (client, connection) = tokio_postgres::connect(&repl_conn, NoTls)
-            .await
-            .map_err(|e| CdcFault::ConnectionFailed {
-                conn_hash,
-                reason_code: e.as_db_error().map(|d| d.code().code().len() as u32).unwrap_or(0),
-            })?;
+        let (client, connection) =
+            tokio_postgres::connect(&repl_conn, NoTls)
+                .await
+                .map_err(|e| CdcFault::ConnectionFailed {
+                    conn_hash,
+                    reason_code: e
+                        .as_db_error()
+                        .map(|d| d.code().code().len() as u32)
+                        .unwrap_or(0),
+                })?;
 
         // Drive the connection in the background.
         tokio::spawn(async move {
@@ -88,8 +92,12 @@ impl CdcTrigger {
     }
 
     /// Issue START_REPLICATION and consume the logical stream.
-    async fn consume_stream(&self, client: &Client, on_event: &EventCallback) -> Result<(), CdcFault> {
-        let pub_hash  = register_str(&self.config.publication);
+    async fn consume_stream(
+        &self,
+        client: &Client,
+        on_event: &EventCallback,
+    ) -> Result<(), CdcFault> {
+        let pub_hash = register_str(&self.config.publication);
         let slot_hash = self.slot_hash;
         let kind_hash = self.kind_hash;
 
@@ -99,13 +107,12 @@ impl CdcTrigger {
             self.config.slot_name, self.config.publication
         );
 
-        let rows = client
-            .simple_query(&start_sql)
-            .await
-            .map_err(|_| CdcFault::ReplicationStartFailed {
+        let rows = client.simple_query(&start_sql).await.map_err(|_| {
+            CdcFault::ReplicationStartFailed {
                 slot_hash,
                 pg_error_code: 0,
-            })?;
+            }
+        })?;
 
         // Simulate streaming — in production the replication protocol uses
         // CopyBoth framing. Here we parse the SimpleQueryMessage rows as
@@ -118,7 +125,7 @@ impl CdcTrigger {
 
             if let SimpleQueryMessage::Row(row) = msg {
                 let start = std::time::Instant::now();
-                let seq   = self.sequence.fetch_add(1, Ordering::Relaxed);
+                let seq = self.sequence.fetch_add(1, Ordering::Relaxed);
 
                 // Column 0 = raw WAL data; try to extract operation byte.
                 let op_byte: u8 = row
@@ -131,27 +138,30 @@ impl CdcTrigger {
                     PG_INSERT => 0, // publish / insert
                     PG_UPDATE => 1, // consume / update
                     PG_DELETE => 2, // ack    / delete
-                    _         => 0,
+                    _ => 0,
                 };
 
-                let table_str  = row.get(1).unwrap_or("unknown");
+                let table_str = row.get(1).unwrap_or("unknown");
                 let table_hash = register_str(table_str);
-                let elapsed    = start.elapsed();
+                let elapsed = start.elapsed();
 
                 // Emit mq_log! with timing on every CDC fire.
-                mq_log!(Info, MqPayload {
-                    broker_hash:    slot_hash,
-                    topic_hash:     table_hash,
-                    group_hash:     pub_hash,
-                    offset:         seq,
-                    message_bytes:  0,
-                    e2e_latency_us: elapsed.as_micros() as u32,
-                    op_type:        mq_op,
-                    partition:      0,
-                    retries:        0,
-                    compression:    0,
-                    ..MqPayload::default()
-                });
+                mq_log!(
+                    Info,
+                    MqPayload {
+                        broker_hash: slot_hash,
+                        topic_hash: table_hash,
+                        group_hash: pub_hash,
+                        offset: seq,
+                        message_bytes: 0,
+                        e2e_latency_us: elapsed.as_micros() as u32,
+                        op_type: mq_op,
+                        partition: 0,
+                        retries: 0,
+                        compression: 0,
+                        ..MqPayload::default()
+                    }
+                );
 
                 let ts = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)

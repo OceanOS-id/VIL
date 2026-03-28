@@ -132,31 +132,43 @@ mod tests {
     async fn test_extract_email() {
         let ext = KeywordEntityExtractor::new();
         let entities = ext.extract("Contact alice@example.com for info").await;
-        assert!(entities.iter().any(|e| e.entity_type == ExtractedEntityType::Email
-            && e.text == "alice@example.com"));
+        assert!(entities
+            .iter()
+            .any(|e| e.entity_type == ExtractedEntityType::Email && e.text == "alice@example.com"));
     }
 
     #[tokio::test]
     async fn test_extract_url() {
         let ext = KeywordEntityExtractor::new();
-        let entities = ext.extract("Visit https://example.com/page for details").await;
-        assert!(entities.iter().any(|e| e.entity_type == ExtractedEntityType::Url));
+        let entities = ext
+            .extract("Visit https://example.com/page for details")
+            .await;
+        assert!(entities
+            .iter()
+            .any(|e| e.entity_type == ExtractedEntityType::Url));
     }
 
     #[tokio::test]
     async fn test_extract_date() {
         let ext = KeywordEntityExtractor::new();
         let entities = ext.extract("The event is on 2025-03-15 at noon").await;
-        assert!(entities.iter().any(|e| e.entity_type == ExtractedEntityType::Date
-            && e.text == "2025-03-15"));
+        assert!(entities
+            .iter()
+            .any(|e| e.entity_type == ExtractedEntityType::Date && e.text == "2025-03-15"));
     }
 
     #[tokio::test]
     async fn test_extract_names() {
         let ext = KeywordEntityExtractor::new();
-        let entities = ext.extract("John Smith works at Acme Corporation Ltd").await;
-        assert!(entities.iter().any(|e| e.entity_type == ExtractedEntityType::Person
-            && e.text.contains("John Smith")));
+        let entities = ext
+            .extract("John Smith works at Acme Corporation Ltd")
+            .await;
+        assert!(
+            entities
+                .iter()
+                .any(|e| e.entity_type == ExtractedEntityType::Person
+                    && e.text.contains("John Smith"))
+        );
     }
 
     #[tokio::test]
@@ -169,7 +181,9 @@ mod tests {
     #[tokio::test]
     async fn test_extract_no_entities() {
         let ext = KeywordEntityExtractor::new();
-        let entities = ext.extract("this is all lowercase with no special patterns").await;
+        let entities = ext
+            .extract("this is all lowercase with no special patterns")
+            .await;
         assert!(entities.is_empty());
     }
 }

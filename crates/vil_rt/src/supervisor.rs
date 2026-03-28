@@ -101,11 +101,14 @@ impl Supervisor {
     /// 3. Remove from shared store
     /// 4. Drain invalid descriptors from queues
     pub fn shutdown_process(&self, process_id: ProcessId) -> CleanupReport {
-        system_log!(Info, SystemPayload {
-            event_type: 5, // shutdown
-            exit_code: 0,
-            ..SystemPayload::default()
-        });
+        system_log!(
+            Info,
+            SystemPayload {
+                event_type: 5, // shutdown
+                exit_code: 0,
+                ..SystemPayload::default()
+            }
+        );
         self.registry.mark_process_dead(process_id);
         self.cleanup_for_process(process_id)
     }
@@ -115,11 +118,14 @@ impl Supervisor {
     /// Same as shutdown but also advances epoch to mark
     /// the previous generation as invalid.
     pub fn crash_process(&self, process_id: ProcessId) -> CleanupReport {
-        system_log!(Warn, SystemPayload {
-            event_type: 3, // panic / crash
-            exit_code: 1,
-            ..SystemPayload::default()
-        });
+        system_log!(
+            Warn,
+            SystemPayload {
+                event_type: 3, // panic / crash
+                exit_code: 1,
+                ..SystemPayload::default()
+            }
+        );
         self.registry.mark_process_dead(process_id);
         let report = self.cleanup_for_process(process_id);
         self.registry.advance_epoch(process_id);
@@ -220,8 +226,28 @@ mod tests {
         let pid = ProcessId(1);
 
         // Register samples owned by the process
-        supervisor.registry.register_sample(SampleId(1), pid, HostId(0), PortId(1), 1, RegionId(0), 0, 1024, 8);
-        supervisor.registry.register_sample(SampleId(2), pid, HostId(0), PortId(1), 1, RegionId(0), 0, 1024, 8);
+        supervisor.registry.register_sample(
+            SampleId(1),
+            pid,
+            HostId(0),
+            PortId(1),
+            1,
+            RegionId(0),
+            0,
+            1024,
+            8,
+        );
+        supervisor.registry.register_sample(
+            SampleId(2),
+            pid,
+            HostId(0),
+            PortId(1),
+            1,
+            RegionId(0),
+            0,
+            1024,
+            8,
+        );
         supervisor.store.insert_typed(SampleId(1), 42u64);
         supervisor.store.insert_typed(SampleId(2), 99u64);
 
@@ -245,7 +271,10 @@ mod tests {
         let procs_after = supervisor.registry.process_report();
         let epoch_after = procs_after.iter().find(|p| p.id == pid).unwrap().epoch;
 
-        assert!(epoch_after.0 > epoch_before.0, "epoch should advance after crash");
+        assert!(
+            epoch_after.0 > epoch_before.0,
+            "epoch should advance after crash"
+        );
     }
 
     #[test]
@@ -254,9 +283,39 @@ mod tests {
         let pid = ProcessId(1);
 
         // Register 2 samples from pid, 1 from different pid
-        supervisor.registry.register_sample(SampleId(1), pid, HostId(0), PortId(1), 1, RegionId(0), 0, 1024, 8);
-        supervisor.registry.register_sample(SampleId(2), pid, HostId(0), PortId(1), 1, RegionId(0), 0, 1024, 8);
-        supervisor.registry.register_sample(SampleId(3), ProcessId(99), HostId(0), PortId(1), 1, RegionId(0), 0, 1024, 8);
+        supervisor.registry.register_sample(
+            SampleId(1),
+            pid,
+            HostId(0),
+            PortId(1),
+            1,
+            RegionId(0),
+            0,
+            1024,
+            8,
+        );
+        supervisor.registry.register_sample(
+            SampleId(2),
+            pid,
+            HostId(0),
+            PortId(1),
+            1,
+            RegionId(0),
+            0,
+            1024,
+            8,
+        );
+        supervisor.registry.register_sample(
+            SampleId(3),
+            ProcessId(99),
+            HostId(0),
+            PortId(1),
+            1,
+            RegionId(0),
+            0,
+            1024,
+            8,
+        );
         supervisor.store.insert_typed(SampleId(1), 1u64);
         supervisor.store.insert_typed(SampleId(2), 2u64);
         supervisor.store.insert_typed(SampleId(3), 3u64);

@@ -1,7 +1,7 @@
 //! Simple math calculator tool for the agent.
 
-use async_trait::async_trait;
 use crate::tool::{Tool, ToolError, ToolResult};
+use async_trait::async_trait;
 
 /// Tool that evaluates basic mathematical expressions.
 pub struct CalculatorTool;

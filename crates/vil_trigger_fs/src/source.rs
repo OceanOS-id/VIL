@@ -81,7 +81,7 @@ impl FsTrigger {
             EventKind::Create(_) => 0,
             EventKind::Modify(_) => 1,
             EventKind::Remove(_) => 2,
-            _                    => 255,
+            _ => 255,
         }
     }
 }
@@ -97,13 +97,13 @@ impl TriggerSource for FsTrigger {
     }
 
     async fn start(&self, on_event: EventCallback) -> Result<(), TriggerFault> {
-        let trigger_id  = self.config.trigger_id;
-        let watch_path  = self.config.watch_path;
-        let recursive   = self.config.recursive;
+        let trigger_id = self.config.trigger_id;
+        let watch_path = self.config.watch_path;
+        let recursive = self.config.recursive;
         let debounce_ms = self.config.debounce_ms;
-        let sequence    = Arc::clone(&self.sequence);
-        let paused      = Arc::clone(&self.paused);
-        let tx          = self.tx.clone();
+        let sequence = Arc::clone(&self.sequence);
+        let paused = Arc::clone(&self.paused);
+        let tx = self.tx.clone();
 
         let (cancel_tx, cancel_rx) = watch::channel(false);
 
@@ -118,8 +118,7 @@ impl TriggerSource for FsTrigger {
 
         let mut watcher = RecommendedWatcher::new(
             notify_tx,
-            notify::Config::default()
-                .with_poll_interval(Duration::from_millis(debounce_ms)),
+            notify::Config::default().with_poll_interval(Duration::from_millis(debounce_ms)),
         )
         .map_err(|_| TriggerFault::SourceUnavailable {
             kind_hash: register_str("fs"),
@@ -141,7 +140,7 @@ impl TriggerSource for FsTrigger {
 
         // Clone the event-mask config fields for the spawned task.
         let events_mask = self.config.events;
-        let pattern     = self.config.pattern;
+        let pattern = self.config.pattern;
 
         tokio::spawn(fs_loop(
             trigger_id,
@@ -202,8 +201,8 @@ async fn fs_loop(
     // Keep watcher alive — dropping it stops the OS subscription.
     _watcher: RecommendedWatcher,
 ) {
-    let kind_hash   = register_str("fs");
-    let path_hash   = register_str(watch_path);
+    let kind_hash = register_str("fs");
+    let path_hash = register_str(watch_path);
     let broker_hash = register_str("fs");
 
     loop {
@@ -220,7 +219,9 @@ async fn fs_loop(
             let notify_rx_ptr = &notify_rx as *const _ as usize;
             move || {
                 // SAFETY: the Receiver is pinned to this task for its lifetime.
-                let rx = unsafe { &*(notify_rx_ptr as *const std::sync::mpsc::Receiver<notify::Result<Event>>) };
+                let rx = unsafe {
+                    &*(notify_rx_ptr as *const std::sync::mpsc::Receiver<notify::Result<Event>>)
+                };
                 rx.recv_timeout(Duration::from_millis(100))
             }
         })
@@ -230,17 +231,20 @@ async fn fs_loop(
             Ok(Ok(Ok(e))) => e,
             Ok(Ok(Err(_notify_err))) => {
                 // Notify error — log and continue.
-                mq_log!(Info, MqPayload {
-                    broker_hash,
-                    topic_hash:    register_str("trigger.fs.notify_error"),
-                    offset:        trigger_id,
-                    op_type:       3, // nack
-                    ..MqPayload::default()
-                });
+                mq_log!(
+                    Info,
+                    MqPayload {
+                        broker_hash,
+                        topic_hash: register_str("trigger.fs.notify_error"),
+                        offset: trigger_id,
+                        op_type: 3, // nack
+                        ..MqPayload::default()
+                    }
+                );
                 continue;
             }
             Ok(Err(_timeout)) => continue, // Timeout — loop to check cancel.
-            Err(_join_err)    => break,     // Task panicked — exit.
+            Err(_join_err) => break,       // Task panicked — exit.
         };
 
         if paused.load(Ordering::Relaxed) {
@@ -255,11 +259,10 @@ async fn fs_loop(
 
         // Apply optional glob pattern filter.
         if let Some(pat) = pattern {
-            let matches = event.paths.iter().any(|p| {
-                p.to_str()
-                    .map(|s| glob_match(pat, s))
-                    .unwrap_or(false)
-            });
+            let matches = event
+                .paths
+                .iter()
+                .any(|p| p.to_str().map(|s| glob_match(pat, s)).unwrap_or(false));
             if !matches {
                 continue;
             }
@@ -289,14 +292,17 @@ async fn fs_loop(
 
         let elapsed_us = fire_start.elapsed().as_micros() as u32;
 
-        mq_log!(Info, MqPayload {
-            broker_hash,
-            topic_hash:     path_hash,
-            offset:         seq,
-            e2e_latency_us: elapsed_us,
-            op_type:        0, // publish
-            ..MqPayload::default()
-        });
+        mq_log!(
+            Info,
+            MqPayload {
+                broker_hash,
+                topic_hash: path_hash,
+                offset: seq,
+                e2e_latency_us: elapsed_us,
+                op_type: 0, // publish
+                ..MqPayload::default()
+            }
+        );
     }
 }
 
@@ -309,7 +315,7 @@ fn filter_event(kind: &EventKind, mask: crate::config::FsEventMask) -> bool {
         EventKind::Create(_) => mask.on_create,
         EventKind::Modify(_) => mask.on_modify,
         EventKind::Remove(_) => mask.on_delete,
-        _                    => false,
+        _ => false,
     }
 }
 
@@ -324,14 +330,13 @@ fn glob_match(pattern: &str, input: &str) -> bool {
 
 fn glob_inner(pat: &[char], inp: &[char]) -> bool {
     match (pat.first(), inp.first()) {
-        (None, None)          => true,
-        (Some('*'), _)        => {
+        (None, None) => true,
+        (Some('*'), _) => {
             // Star matches zero or more characters.
-            glob_inner(&pat[1..], inp)
-                || (!inp.is_empty() && glob_inner(pat, &inp[1..]))
+            glob_inner(&pat[1..], inp) || (!inp.is_empty() && glob_inner(pat, &inp[1..]))
         }
-        (Some('?'), Some(_))  => glob_inner(&pat[1..], &inp[1..]),
+        (Some('?'), Some(_)) => glob_inner(&pat[1..], &inp[1..]),
         (Some(p), Some(i)) if p == i => glob_inner(&pat[1..], &inp[1..]),
-        _                     => false,
+        _ => false,
     }
 }

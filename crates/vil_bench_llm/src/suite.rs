@@ -82,20 +82,35 @@ mod tests {
 
         // Perfect oracle answer function
         let report = suite.run(|q| {
-            if q.contains("2 + 3") { "5".into() }
-            else if q.contains("10 * 7") { "70".into() }
-            else if q.contains("144 / 12") { "12".into() }
-            else if q.contains("1000 - 357") { "643".into() }
-            else if q.contains("15 + 28") { "43".into() }
-            else if q.contains("Whiskers") { "Yes".into() }
-            else if q.contains("necessarily raining") { "No".into() }
-            else if q.contains("tallest") { "A".into() }
-            else if q.contains("squares") { "True".into() }
-            else if q.contains("capital of France") { "Paris".into() }
-            else if q.contains("closest to the Sun") { "Mercury".into() }
-            else if q.contains("chemical symbol") { "H2O".into() }
-            else if q.contains("Romeo") { "Shakespeare".into() }
-            else { "unknown".into() }
+            if q.contains("2 + 3") {
+                "5".into()
+            } else if q.contains("10 * 7") {
+                "70".into()
+            } else if q.contains("144 / 12") {
+                "12".into()
+            } else if q.contains("1000 - 357") {
+                "643".into()
+            } else if q.contains("15 + 28") {
+                "43".into()
+            } else if q.contains("Whiskers") {
+                "Yes".into()
+            } else if q.contains("necessarily raining") {
+                "No".into()
+            } else if q.contains("tallest") {
+                "A".into()
+            } else if q.contains("squares") {
+                "True".into()
+            } else if q.contains("capital of France") {
+                "Paris".into()
+            } else if q.contains("closest to the Sun") {
+                "Mercury".into()
+            } else if q.contains("chemical symbol") {
+                "H2O".into()
+            } else if q.contains("Romeo") {
+                "Shakespeare".into()
+            } else {
+                "unknown".into()
+            }
         });
 
         assert_eq!(report.benchmark_count(), 3);

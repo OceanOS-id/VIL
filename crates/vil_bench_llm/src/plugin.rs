@@ -1,8 +1,8 @@
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
-use crate::handlers;
 use crate::built_in::{FactBench, LogicBench, MathBench};
+use crate::handlers;
 use crate::suite::BenchSuite;
 use crate::vil_semantic::{BenchEvent, BenchFault, BenchState};
 
@@ -33,24 +33,32 @@ impl BenchPlugin {
 }
 
 impl Default for BenchPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for BenchPlugin {
-    fn id(&self) -> &str { "vil-bench-llm" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "LLM benchmarking suite with pluggable benchmarks" }
+    fn id(&self) -> &str {
+        "vil-bench-llm"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "LLM benchmarking suite with pluggable benchmarks"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "bench".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/bench/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/bench/stats")],
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let suite = Arc::clone(&self.suite);
@@ -64,5 +72,7 @@ impl VilPlugin for BenchPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

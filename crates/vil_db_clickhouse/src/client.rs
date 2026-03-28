@@ -62,7 +62,10 @@ impl ChClient {
             client = client.with_password(pass);
         }
 
-        Self { inner: client, db_hash }
+        Self {
+            inner: client,
+            db_hash,
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -87,31 +90,40 @@ impl ChClient {
 
         match result {
             Ok(rows) => {
-                db_log!(Info, DbPayload {
-                    db_hash: self.db_hash,
-                    table_hash: 0,
-                    query_hash,
-                    duration_us: elapsed_us,
-                    rows_affected: rows.len() as u32,
-                    op_type: 0, // SELECT
-                    error_code: 0,
-                    ..DbPayload::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.db_hash,
+                        table_hash: 0,
+                        query_hash,
+                        duration_us: elapsed_us,
+                        rows_affected: rows.len() as u32,
+                        op_type: 0, // SELECT
+                        error_code: 0,
+                        ..DbPayload::default()
+                    }
+                );
                 Ok(rows)
             }
             Err(e) => {
                 let reason_code = clickhouse_error_code(&e);
-                db_log!(Error, DbPayload {
-                    db_hash: self.db_hash,
-                    table_hash: 0,
+                db_log!(
+                    Error,
+                    DbPayload {
+                        db_hash: self.db_hash,
+                        table_hash: 0,
+                        query_hash,
+                        duration_us: elapsed_us,
+                        rows_affected: 0,
+                        op_type: 0, // SELECT
+                        error_code: (reason_code & 0xFF) as u8,
+                        ..DbPayload::default()
+                    }
+                );
+                Err(ChFault::QueryFailed {
                     query_hash,
-                    duration_us: elapsed_us,
-                    rows_affected: 0,
-                    op_type: 0, // SELECT
-                    error_code: (reason_code & 0xFF) as u8,
-                    ..DbPayload::default()
-                });
-                Err(ChFault::QueryFailed { query_hash, reason_code })
+                    reason_code,
+                })
             }
         }
     }
@@ -133,31 +145,40 @@ impl ChClient {
 
         match result {
             Ok(()) => {
-                db_log!(Info, DbPayload {
-                    db_hash: self.db_hash,
-                    table_hash: 0,
-                    query_hash,
-                    duration_us: elapsed_us,
-                    rows_affected: 0,
-                    op_type: 5, // DDL
-                    error_code: 0,
-                    ..DbPayload::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.db_hash,
+                        table_hash: 0,
+                        query_hash,
+                        duration_us: elapsed_us,
+                        rows_affected: 0,
+                        op_type: 5, // DDL
+                        error_code: 0,
+                        ..DbPayload::default()
+                    }
+                );
                 Ok(())
             }
             Err(e) => {
                 let reason_code = clickhouse_error_code(&e);
-                db_log!(Error, DbPayload {
-                    db_hash: self.db_hash,
-                    table_hash: 0,
+                db_log!(
+                    Error,
+                    DbPayload {
+                        db_hash: self.db_hash,
+                        table_hash: 0,
+                        query_hash,
+                        duration_us: elapsed_us,
+                        rows_affected: 0,
+                        op_type: 5, // DDL
+                        error_code: (reason_code & 0xFF) as u8,
+                        ..DbPayload::default()
+                    }
+                );
+                Err(ChFault::QueryFailed {
                     query_hash,
-                    duration_us: elapsed_us,
-                    rows_affected: 0,
-                    op_type: 5, // DDL
-                    error_code: (reason_code & 0xFF) as u8,
-                    ..DbPayload::default()
-                });
-                Err(ChFault::QueryFailed { query_hash, reason_code })
+                    reason_code,
+                })
             }
         }
     }
@@ -192,31 +213,41 @@ impl ChClient {
 
         match result {
             Ok(()) => {
-                db_log!(Info, DbPayload {
-                    db_hash: self.db_hash,
-                    table_hash,
-                    query_hash: 0,
-                    duration_us: elapsed_us,
-                    rows_affected: row_count as u32,
-                    op_type: 1, // INSERT
-                    error_code: 0,
-                    ..DbPayload::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.db_hash,
+                        table_hash,
+                        query_hash: 0,
+                        duration_us: elapsed_us,
+                        rows_affected: row_count as u32,
+                        op_type: 1, // INSERT
+                        error_code: 0,
+                        ..DbPayload::default()
+                    }
+                );
                 Ok(row_count)
             }
             Err(e) => {
                 let reason_code = clickhouse_error_code(&e);
-                db_log!(Error, DbPayload {
-                    db_hash: self.db_hash,
+                db_log!(
+                    Error,
+                    DbPayload {
+                        db_hash: self.db_hash,
+                        table_hash,
+                        query_hash: 0,
+                        duration_us: elapsed_us,
+                        rows_affected: 0,
+                        op_type: 1, // INSERT
+                        error_code: (reason_code & 0xFF) as u8,
+                        ..DbPayload::default()
+                    }
+                );
+                Err(ChFault::InsertFailed {
                     table_hash,
-                    query_hash: 0,
-                    duration_us: elapsed_us,
-                    rows_affected: 0,
-                    op_type: 1, // INSERT
-                    error_code: (reason_code & 0xFF) as u8,
-                    ..DbPayload::default()
-                });
-                Err(ChFault::InsertFailed { table_hash, rows: row_count, reason_code })
+                    rows: row_count,
+                    reason_code,
+                })
             }
         }
     }

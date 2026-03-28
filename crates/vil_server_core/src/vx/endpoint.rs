@@ -72,11 +72,7 @@ pub struct EndpointDef {
 
 impl EndpointDef {
     /// Create a new endpoint definition.
-    pub fn new(
-        method: Method,
-        path: impl Into<String>,
-        handler_name: impl Into<String>,
-    ) -> Self {
+    pub fn new(method: Method, path: impl Into<String>, handler_name: impl Into<String>) -> Self {
         Self {
             method,
             path: path.into(),

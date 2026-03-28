@@ -122,12 +122,14 @@ pub enum ShmSliceRejection {
 impl IntoResponse for ShmSliceRejection {
     fn into_response(self) -> Response {
         let (status, msg) = match self {
-            ShmSliceRejection::BodyReadFailed(e) => {
-                (StatusCode::BAD_REQUEST, format!("Failed to read body: {}", e))
-            }
-            ShmSliceRejection::ShmWriteFailed(e) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, format!("SHM write failed: {}", e))
-            }
+            ShmSliceRejection::BodyReadFailed(e) => (
+                StatusCode::BAD_REQUEST,
+                format!("Failed to read body: {}", e),
+            ),
+            ShmSliceRejection::ShmWriteFailed(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("SHM write failed: {}", e),
+            ),
         };
         (status, msg).into_response()
     }
@@ -156,7 +158,8 @@ impl FromRequest<AppState> for ShmSlice {
         }
 
         // Write body into pre-allocated SHM pool (single copy, no region creation)
-        let (region_id, offset) = pool.alloc_and_write(&bytes)
+        let (region_id, offset) = pool
+            .alloc_and_write(&bytes)
             .ok_or_else(|| ShmSliceRejection::ShmWriteFailed("Pool allocation failed".into()))?;
 
         Ok(ShmSlice {

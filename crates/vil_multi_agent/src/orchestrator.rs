@@ -1,7 +1,7 @@
 //! Orchestrator — executes the multi-agent graph.
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use tokio::sync::mpsc;
 use vil_log::app_log;
 use vil_macros::VilAiEvent;
@@ -87,7 +87,10 @@ impl Orchestrator {
     /// This runs every agent in topological order, passing outputs downstream.
     /// Agents are invoked via `AgentRunnable::run()`, making it easy to inject
     /// mocks for testing.
-    pub async fn run(&mut self, initial_query: &str) -> Result<OrchestratorResult, OrchestratorError> {
+    pub async fn run(
+        &mut self,
+        initial_query: &str,
+    ) -> Result<OrchestratorResult, OrchestratorError> {
         let start = std::time::Instant::now();
         let topo = self.graph.topological_order();
 
@@ -103,10 +106,9 @@ impl Orchestrator {
         self.channels.clear();
 
         for name in &topo {
-            let node = self
-                .graph
-                .get(name)
-                .ok_or_else(|| OrchestratorError::InvalidGraph(format!("missing node: {}", name)))?;
+            let node = self.graph.get(name).ok_or_else(|| {
+                OrchestratorError::InvalidGraph(format!("missing node: {}", name))
+            })?;
 
             // Build input for this agent.
             let input = if node.is_root() {
@@ -127,14 +129,14 @@ impl Orchestrator {
             app_log!(Debug, "multi_agent_run", { agent: name.clone(), input_len: input.len() });
 
             // Execute the agent.
-            let output = node
-                .agent
-                .run(&input)
-                .await
-                .map_err(|reason| OrchestratorError::AgentFailed {
-                    agent: name.clone(),
-                    reason,
-                })?;
+            let output =
+                node.agent
+                    .run(&input)
+                    .await
+                    .map_err(|reason| OrchestratorError::AgentFailed {
+                        agent: name.clone(),
+                        reason,
+                    })?;
 
             outputs.insert(name.clone(), output);
         }
@@ -167,7 +169,10 @@ impl Orchestrator {
     /// Dry-run: execute the graph with mock passthrough.
     ///
     /// Identical to `run()` but explicitly named for clarity in tests.
-    pub async fn dry_run(&mut self, initial_query: &str) -> Result<OrchestratorResult, OrchestratorError> {
+    pub async fn dry_run(
+        &mut self,
+        initial_query: &str,
+    ) -> Result<OrchestratorResult, OrchestratorError> {
         self.run(initial_query).await
     }
 }
@@ -265,7 +270,11 @@ mod tests {
         let mut orch = Orchestrator::new(graph);
         let result = orch.run("test").await.unwrap();
 
-        let names: Vec<&str> = result.agent_outputs.iter().map(|(n, _)| n.as_str()).collect();
+        let names: Vec<&str> = result
+            .agent_outputs
+            .iter()
+            .map(|(n, _)| n.as_str())
+            .collect();
         assert!(names.contains(&"a"));
         assert!(names.contains(&"b"));
         assert!(names.contains(&"c"));
@@ -273,10 +282,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dry_run() {
-        let graph = AgentGraph::builder()
-            .agent("x", mock("x"))
-            .build()
-            .unwrap();
+        let graph = AgentGraph::builder().agent("x", mock("x")).build().unwrap();
 
         let mut orch = Orchestrator::new(graph);
         let result = orch.dry_run("ping").await.unwrap();

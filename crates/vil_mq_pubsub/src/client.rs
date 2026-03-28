@@ -5,11 +5,11 @@
 use crate::config::PubSubConfig;
 use crate::error::PubSubFault;
 use bytes::Bytes;
+use google_cloud_googleapis::pubsub::v1::PubsubMessage as GcpMessage;
 use google_cloud_pubsub::client::{Client, ClientConfig};
 use google_cloud_pubsub::publisher::Publisher;
 use google_cloud_pubsub::subscription::Subscription;
 use google_cloud_pubsub::topic::Topic;
-use google_cloud_googleapis::pubsub::v1::PubsubMessage as GcpMessage;
 use vil_log::dict::register_str;
 
 /// A received Pub/Sub message.
@@ -43,14 +43,17 @@ impl PubSubMessage {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("pubsub"),
-                topic_hash:     self.topic_hash,
-                message_bytes:  0,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        2, // ack
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("pubsub"),
+                    topic_hash: self.topic_hash,
+                    message_bytes: 0,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 2, // ack
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(())
@@ -109,22 +112,28 @@ impl PubSubClient {
 
         let awaiter = publisher.publish(msg).await;
 
-        awaiter.get().await.map_err(|_| PubSubFault::PublishFailed {
-            topic_hash,
-            status_code: 0,
-        })?;
+        awaiter
+            .get()
+            .await
+            .map_err(|_| PubSubFault::PublishFailed {
+                topic_hash,
+                status_code: 0,
+            })?;
 
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("pubsub"),
-                topic_hash,
-                message_bytes:  data.len() as u32,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        0, // publish
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("pubsub"),
+                    topic_hash,
+                    message_bytes: data.len() as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 0, // publish
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(())
@@ -150,14 +159,17 @@ impl PubSubClient {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("pubsub"),
-                topic_hash,
-                message_bytes:  count,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        1, // consume
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("pubsub"),
+                    topic_hash,
+                    message_bytes: count,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 1, // consume
+                    ..Default::default()
+                }
+            );
         }
 
         let msgs = raw_msgs

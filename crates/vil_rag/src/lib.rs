@@ -17,21 +17,23 @@
 pub mod chunk;
 pub mod config;
 pub mod document;
-pub mod pipeline;
-pub mod retriever;
-pub mod store;
-pub mod semantic;
 pub mod extractors;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod retriever;
+pub mod semantic;
+pub mod store;
 
-pub use chunk::{Chunk, EmbeddedChunk, ChunkerStrategy, FixedChunker, SemanticChunker, MarkdownChunker};
+pub use chunk::{
+    Chunk, ChunkerStrategy, EmbeddedChunk, FixedChunker, MarkdownChunker, SemanticChunker,
+};
 pub use config::{ChunkerType, StoreType};
-pub use document::{DocumentParser, PlainTextParser, MarkdownParser};
-pub use pipeline::{RagPipeline, RagPipelineBuilder, RagError, IngestResult, QueryResult};
-pub use retriever::{Retriever, DenseRetriever, RetrievedChunk};
-pub use store::{VectorStore, InMemoryStore};
-pub use plugin::RagPlugin;
+pub use document::{DocumentParser, MarkdownParser, PlainTextParser};
 pub use extractors::Rag;
-pub use semantic::{RagQueryEvent, RagIngestEvent, RagFault, RagFaultType, RagIndexState};
+pub use pipeline::{IngestResult, QueryResult, RagError, RagPipeline, RagPipelineBuilder};
+pub use plugin::RagPlugin;
+pub use retriever::{DenseRetriever, RetrievedChunk, Retriever};
+pub use semantic::{RagFault, RagFaultType, RagIndexState, RagIngestEvent, RagQueryEvent};
+pub use store::{InMemoryStore, VectorStore};

@@ -137,11 +137,14 @@ impl ResponseCache {
             self.evict_lru();
         }
 
-        self.entries.insert(key, CacheEntry {
-            response: CachedResponse::from(response),
-            inserted_at: now,
-            last_accessed: now,
-        });
+        self.entries.insert(
+            key,
+            CacheEntry {
+                response: CachedResponse::from(response),
+                inserted_at: now,
+                last_accessed: now,
+            },
+        );
     }
 
     /// Evict the least-recently-used entry.

@@ -61,7 +61,8 @@ impl ProxyMetrics {
     /// Record token usage and cost.
     pub fn record_usage(&self, tokens: u64, cost_cents: u64) {
         self.total_tokens.fetch_add(tokens, Ordering::Relaxed);
-        self.total_cost_cents.fetch_add(cost_cents, Ordering::Relaxed);
+        self.total_cost_cents
+            .fetch_add(cost_cents, Ordering::Relaxed);
     }
 
     /// Record a request to a specific model.

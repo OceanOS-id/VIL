@@ -87,9 +87,9 @@ fn configure_dashboard_sink() -> HttpSinkBuilder {
     HttpSinkBuilder::new("IoTDashboardSink")
         .port(DASHBOARD_PORT)
         .path(DASHBOARD_PATH)
-        .out_port("trigger_out")          // "start collecting sensor data"
-        .in_port("sensor_data_in")        // receives sensor readings
-        .ctrl_in_port("batch_ctrl_in")    // receives batch completion signal
+        .out_port("trigger_out") // "start collecting sensor data"
+        .in_port("sensor_data_in") // receives sensor readings
+        .ctrl_in_port("batch_ctrl_in") // receives batch completion signal
 }
 
 /// Configure the SSE source — connects to the IoT gateway's sensor stream.
@@ -105,9 +105,9 @@ fn configure_sensor_source() -> HttpSourceBuilder {
         // Custom done marker: when the IoT gateway sends "[END]", the batch is complete.
         // This is important because sensor batches have a fixed duration (e.g., 1 minute).
         .done_marker("[END]")
-        .in_port("trigger_in")             // triggered by dashboard request
-        .out_port("sensor_data_out")       // streams sensor readings
-        .ctrl_out_port("batch_ctrl_out")   // signals batch completion
+        .in_port("trigger_in") // triggered by dashboard request
+        .out_port("sensor_data_out") // streams sensor readings
+        .ctrl_out_port("batch_ctrl_out") // signals batch completion
 }
 
 // ── Main ────────────────────────────────────────────────────────────────
@@ -115,9 +115,7 @@ fn configure_sensor_source() -> HttpSourceBuilder {
 fn main() {
     // Initialize VIL's shared memory runtime.
     // SHM allows sensor data to flow between pipeline nodes at memory speed.
-    let world = Arc::new(
-        VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"),
-    );
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     let sink = configure_dashboard_sink();
     let source = configure_sensor_source();
@@ -145,7 +143,10 @@ fn main() {
     println!("║  Data:    Sensor readings flow via zero-copy SHM pipeline            ║");
     println!("╚════════════════════════════════════════════════════════════════════════╝");
     println!();
-    println!("  Dashboard:   http://localhost:{}{}", DASHBOARD_PORT, DASHBOARD_PATH);
+    println!(
+        "  Dashboard:   http://localhost:{}{}",
+        DASHBOARD_PORT, DASHBOARD_PATH
+    );
     println!("  IoT Gateway: {}", IOT_GATEWAY_URL);
     println!();
 

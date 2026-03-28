@@ -5,26 +5,26 @@
 // Provides zero-copy inter-service communication via shared memory for
 // co-located services, with automatic TCP fallback for remote services.
 
+pub mod backpressure;
 pub mod channel;
 pub mod discovery;
+pub mod mq_adapter;
 pub mod router;
 pub mod shm_bridge;
+pub mod shm_discovery;
 pub mod tcp_transport;
 pub mod tri_lane;
 pub mod yaml_config;
-pub mod shm_discovery;
-pub mod backpressure;
-pub mod mq_adapter;
 
 // Sprint 14-15: Advanced Patterns
+pub mod dlq;
 pub mod pipeline_dag;
 pub mod scatter_gather;
-pub mod dlq;
 pub mod typed_rpc;
 
 // Sprint 17-18: Events & Operations
-pub mod event_bus;
 pub mod cqrs;
+pub mod event_bus;
 pub mod load_balancer;
 
 use serde::Deserialize;
@@ -84,9 +84,7 @@ pub struct MeshConfig {
 
 impl Default for MeshConfig {
     fn default() -> Self {
-        Self {
-            routes: Vec::new(),
-        }
+        Self { routes: Vec::new() }
     }
 }
 
@@ -97,9 +95,7 @@ pub struct MeshBuilder {
 
 impl MeshBuilder {
     pub fn new() -> Self {
-        Self {
-            routes: Vec::new(),
-        }
+        Self { routes: Vec::new() }
     }
 
     /// Add a route between two services.

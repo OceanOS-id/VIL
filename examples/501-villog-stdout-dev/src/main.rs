@@ -12,18 +12,14 @@
 
 use vil_log::drain::{StdoutDrain, StdoutFormat};
 use vil_log::runtime::init_logging;
-use vil_log::{
-    app_log, access_log, ai_log,
-    AccessPayload, AiPayload,
-    LogConfig, LogLevel,
-};
+use vil_log::{access_log, ai_log, app_log, AccessPayload, AiPayload, LogConfig, LogLevel};
 
 #[tokio::main]
 async fn main() {
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Debug,
-        batch_size:        100,
+        ring_slots: 4096,
+        level: LogLevel::Debug,
+        batch_size: 100,
         flush_interval_ms: 100,
         threads: None,
         dict_path: None,
@@ -41,41 +37,50 @@ async fn main() {
     app_log!(Debug, "cart.item_added", { user_id: 99u64, product_id: 7u32, qty: 2u32 });
 
     // --- HTTP access log ---
-    access_log!(Info, AccessPayload {
-        method:         1, // POST
-        status_code:    201,
-        protocol:       0, // HTTP/1.1
-        duration_us:    2_300,
-        request_bytes:  256,
-        response_bytes: 128,
-        path_hash:      register_str("/api/orders"),
-        route_hash:     register_str("/api/orders"),
-        authenticated:  1,
-        ..AccessPayload::default()
-    });
+    access_log!(
+        Info,
+        AccessPayload {
+            method: 1, // POST
+            status_code: 201,
+            protocol: 0, // HTTP/1.1
+            duration_us: 2_300,
+            request_bytes: 256,
+            response_bytes: 128,
+            path_hash: register_str("/api/orders"),
+            route_hash: register_str("/api/orders"),
+            authenticated: 1,
+            ..AccessPayload::default()
+        }
+    );
 
-    access_log!(Warn, AccessPayload {
-        method:         0, // GET
-        status_code:    404,
-        protocol:       0,
-        duration_us:    450,
-        path_hash:      register_str("/api/products/9999"),
-        route_hash:     register_str("/api/products/:id"),
-        ..AccessPayload::default()
-    });
+    access_log!(
+        Warn,
+        AccessPayload {
+            method: 0, // GET
+            status_code: 404,
+            protocol: 0,
+            duration_us: 450,
+            path_hash: register_str("/api/products/9999"),
+            route_hash: register_str("/api/products/:id"),
+            ..AccessPayload::default()
+        }
+    );
 
     // --- AI/LLM inference log ---
-    ai_log!(Info, AiPayload {
-        provider_hash:   register_str("openai"),
-        model_hash:      register_str("gpt-4o"),
-        input_tokens:    150,
-        output_tokens:   500,
-        latency_us:      1_200_000, // 1.2 seconds
-        cost_micro_usd:  350,
-        op_type:         0, // chat
-        provider_status: 200,
-        ..AiPayload::default()
-    });
+    ai_log!(
+        Info,
+        AiPayload {
+            provider_hash: register_str("openai"),
+            model_hash: register_str("gpt-4o"),
+            input_tokens: 150,
+            output_tokens: 500,
+            latency_us: 1_200_000, // 1.2 seconds
+            cost_micro_usd: 350,
+            op_type: 0, // chat
+            provider_status: 200,
+            ..AiPayload::default()
+        }
+    );
 
     // Give the drain task time to flush before exit
     tokio::time::sleep(std::time::Duration::from_millis(500)).await;

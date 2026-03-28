@@ -39,7 +39,9 @@ pub struct MiddlewareDef {
     pub paths: Vec<String>,
 }
 
-fn default_true() -> bool { true }
+fn default_true() -> bool {
+    true
+}
 
 /// Middleware pipeline definition from YAML.
 #[derive(Debug, Clone, Deserialize)]
@@ -63,20 +65,37 @@ impl MiddlewarePipeline {
     /// Validate that all middleware names are recognized.
     pub fn validate(&self) -> Result<(), Vec<String>> {
         let known = [
-            "timeout", "compression", "security_headers", "cors",
-            "rate_limit", "jwt_auth", "api_key", "csrf",
-            "request_logging", "handler_metrics", "tracing",
-            "ip_filter", "brute_force", "hsts",
+            "timeout",
+            "compression",
+            "security_headers",
+            "cors",
+            "rate_limit",
+            "jwt_auth",
+            "api_key",
+            "csrf",
+            "request_logging",
+            "handler_metrics",
+            "tracing",
+            "ip_filter",
+            "brute_force",
+            "hsts",
         ];
 
         let mut errors = Vec::new();
         for mw in &self.middleware {
             if !known.contains(&mw.name.as_str()) {
-                errors.push(format!("Unknown middleware: '{}'. Known: {:?}", mw.name, known));
+                errors.push(format!(
+                    "Unknown middleware: '{}'. Known: {:?}",
+                    mw.name, known
+                ));
             }
         }
 
-        if errors.is_empty() { Ok(()) } else { Err(errors) }
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 
     /// Get middleware count.

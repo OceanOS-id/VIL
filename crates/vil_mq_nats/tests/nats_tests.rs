@@ -22,8 +22,7 @@ fn test_nats_config() {
 #[test]
 fn test_nats_config_userpass() {
     use vil_mq_nats::NatsConfig;
-    let config = NatsConfig::new("nats://localhost:4222")
-        .with_userpass("admin", "password");
+    let config = NatsConfig::new("nats://localhost:4222").with_userpass("admin", "password");
 
     let creds = config.credentials.unwrap();
     assert_eq!(creds.username, Some("admin".into()));
@@ -35,7 +34,9 @@ fn test_nats_config_userpass() {
 #[tokio::test]
 async fn test_nats_connect() {
     use vil_mq_nats::{NatsClient, NatsConfig};
-    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222")).await.unwrap();
+    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222"))
+        .await
+        .unwrap();
     assert!(client.is_connected());
     assert_eq!(client.published_count(), 0);
 }
@@ -43,7 +44,9 @@ async fn test_nats_connect() {
 #[tokio::test]
 async fn test_nats_publish() {
     use vil_mq_nats::{NatsClient, NatsConfig};
-    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222")).await.unwrap();
+    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222"))
+        .await
+        .unwrap();
 
     client.publish("orders.created", b"order-1").await.unwrap();
     client.publish("orders.updated", b"order-2").await.unwrap();
@@ -53,7 +56,9 @@ async fn test_nats_publish() {
 #[tokio::test]
 async fn test_nats_pub_sub() {
     use vil_mq_nats::{NatsClient, NatsConfig};
-    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222")).await.unwrap();
+    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222"))
+        .await
+        .unwrap();
 
     // Subscribe first
     let mut sub = client.subscribe("test.subject").await.unwrap();
@@ -63,9 +68,10 @@ async fn test_nats_pub_sub() {
     client.publish("test.subject", b"hello nats").await.unwrap();
 
     // Receive
-    let msg = tokio::time::timeout(
-        std::time::Duration::from_millis(100), sub.next()
-    ).await.unwrap().unwrap();
+    let msg = tokio::time::timeout(std::time::Duration::from_millis(100), sub.next())
+        .await
+        .unwrap()
+        .unwrap();
 
     assert_eq!(msg.subject, "test.subject");
     assert_eq!(&msg.payload[..], b"hello nats");
@@ -74,7 +80,9 @@ async fn test_nats_pub_sub() {
 #[tokio::test]
 async fn test_nats_wildcard_subscribe() {
     use vil_mq_nats::{NatsClient, NatsConfig};
-    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222")).await.unwrap();
+    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222"))
+        .await
+        .unwrap();
 
     // Subscribe with > wildcard
     let mut sub = client.subscribe("orders.>").await.unwrap();
@@ -82,9 +90,10 @@ async fn test_nats_wildcard_subscribe() {
     // Publish to matching subjects
     client.publish("orders.created", b"new").await.unwrap();
 
-    let msg = tokio::time::timeout(
-        std::time::Duration::from_millis(100), sub.next()
-    ).await.unwrap().unwrap();
+    let msg = tokio::time::timeout(std::time::Duration::from_millis(100), sub.next())
+        .await
+        .unwrap()
+        .unwrap();
 
     assert_eq!(msg.subject, "orders.created");
 }
@@ -92,7 +101,9 @@ async fn test_nats_wildcard_subscribe() {
 #[tokio::test]
 async fn test_nats_request_reply() {
     use vil_mq_nats::{NatsClient, NatsConfig};
-    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222")).await.unwrap();
+    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222"))
+        .await
+        .unwrap();
 
     let reply = client.request("auth.verify", b"token-123").await.unwrap();
     assert!(!reply.payload.is_empty());
@@ -101,7 +112,9 @@ async fn test_nats_request_reply() {
 #[tokio::test]
 async fn test_nats_disconnect() {
     use vil_mq_nats::{NatsClient, NatsConfig};
-    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222")).await.unwrap();
+    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222"))
+        .await
+        .unwrap();
     assert!(client.is_connected());
 
     client.disconnect().await;
@@ -126,7 +139,9 @@ async fn test_jetstream_create_stream() {
         retention: "limits".into(),
         max_msgs: 1_000_000,
         max_bytes: -1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     assert_eq!(js.stream_count(), 1);
     assert!(js.streams().contains(&"ORDERS".to_string()));
@@ -134,7 +149,7 @@ async fn test_jetstream_create_stream() {
 
 #[tokio::test]
 async fn test_jetstream_publish_consume() {
-    use vil_mq_nats::jetstream::{JetStreamClient, StreamConfig, ConsumerConfig};
+    use vil_mq_nats::jetstream::{ConsumerConfig, JetStreamClient, StreamConfig};
 
     let js = JetStreamClient::new();
 
@@ -144,23 +159,32 @@ async fn test_jetstream_publish_consume() {
         retention: "limits".into(),
         max_msgs: -1,
         max_bytes: -1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
-    let mut consumer = js.create_consumer("EVENTS", ConsumerConfig {
-        durable_name: Some("event-processor".into()),
-        filter_subject: None,
-        ack_policy: "explicit".into(),
-        deliver_policy: "all".into(),
-    }).await.unwrap();
+    let mut consumer = js
+        .create_consumer(
+            "EVENTS",
+            ConsumerConfig {
+                durable_name: Some("event-processor".into()),
+                filter_subject: None,
+                ack_policy: "explicit".into(),
+                deliver_policy: "all".into(),
+            },
+        )
+        .await
+        .unwrap();
 
     // Publish
     let seq = js.publish("events.created", b"event-data").await.unwrap();
     assert!(seq > 0);
 
     // Consume
-    let msg = tokio::time::timeout(
-        std::time::Duration::from_millis(100), consumer.next()
-    ).await.unwrap().unwrap();
+    let msg = tokio::time::timeout(std::time::Duration::from_millis(100), consumer.next())
+        .await
+        .unwrap()
+        .unwrap();
 
     assert_eq!(msg.subject, "events.created");
     assert_eq!(&msg.payload[..], b"event-data");
@@ -224,9 +248,10 @@ async fn test_kv_watch() {
 
     kv.put("key", b"value").await.unwrap();
 
-    let entry = tokio::time::timeout(
-        std::time::Duration::from_millis(100), watcher.recv()
-    ).await.unwrap().unwrap();
+    let entry = tokio::time::timeout(std::time::Duration::from_millis(100), watcher.recv())
+        .await
+        .unwrap()
+        .unwrap();
 
     assert_eq!(entry.key, "key");
     assert_eq!(&entry.value[..], b"value");
@@ -264,10 +289,12 @@ fn test_nats_metrics() {
 
 #[tokio::test]
 async fn test_nats_health() {
-    use vil_mq_nats::{NatsClient, NatsConfig};
     use vil_mq_nats::health::check_health;
+    use vil_mq_nats::{NatsClient, NatsConfig};
 
-    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222")).await.unwrap();
+    let client = NatsClient::connect(NatsConfig::new("nats://localhost:4222"))
+        .await
+        .unwrap();
     let (healthy, msg) = check_health(&client).await;
     assert!(healthy);
     assert_eq!(msg, "connected");

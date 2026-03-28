@@ -28,7 +28,9 @@ impl From<CronFault> for vil_trigger_core::TriggerFault {
     fn from(f: CronFault) -> Self {
         match f {
             CronFault::InvalidSchedule { expr_hash } => {
-                vil_trigger_core::TriggerFault::ConfigInvalid { field_hash: expr_hash }
+                vil_trigger_core::TriggerFault::ConfigInvalid {
+                    field_hash: expr_hash,
+                }
             }
             CronFault::TaskCancelled { .. } | CronFault::ChannelClosed { .. } => {
                 vil_trigger_core::TriggerFault::IoError {

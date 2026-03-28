@@ -75,7 +75,8 @@ impl Parse for WorkflowDef {
                 input.parse::<Token![:]>()?;
                 let content;
                 syn::bracketed!(content in input);
-                let parsed_hosts: Punctuated<HostDef, Token![,]> = content.parse_terminated(HostDef::parse, Token![,])?;
+                let parsed_hosts: Punctuated<HostDef, Token![,]> =
+                    content.parse_terminated(HostDef::parse, Token![,])?;
                 hosts_opt = Some(parsed_hosts.into_iter().collect());
                 if input.peek(Token![,]) {
                     input.parse::<Token![,]>()?;
@@ -85,7 +86,8 @@ impl Parse for WorkflowDef {
                 input.parse::<Token![:]>()?;
                 let content;
                 syn::bracketed!(content in input);
-                let parsed_processes: Punctuated<Ident, Token![,]> = content.parse_terminated(Ident::parse, Token![,])?;
+                let parsed_processes: Punctuated<Ident, Token![,]> =
+                    content.parse_terminated(Ident::parse, Token![,])?;
                 processes_opt = Some(parsed_processes.into_iter().collect());
                 if input.peek(Token![,]) {
                     input.parse::<Token![,]>()?;
@@ -95,7 +97,8 @@ impl Parse for WorkflowDef {
                 input.parse::<Token![:]>()?;
                 let content;
                 syn::bracketed!(content in input);
-                let parsed_instances: Punctuated<InstanceDef, Token![,]> = content.parse_terminated(InstanceDef::parse, Token![,])?;
+                let parsed_instances: Punctuated<InstanceDef, Token![,]> =
+                    content.parse_terminated(InstanceDef::parse, Token![,])?;
                 instances_opt = Some(parsed_instances.into_iter().collect());
                 if input.peek(Token![,]) {
                     input.parse::<Token![,]>()?;
@@ -105,7 +108,8 @@ impl Parse for WorkflowDef {
                 input.parse::<Token![:]>()?;
                 let content;
                 syn::bracketed!(content in input);
-                let parsed_routes: Punctuated<RouteDef, Token![,]> = content.parse_terminated(RouteDef::parse, Token![,])?;
+                let parsed_routes: Punctuated<RouteDef, Token![,]> =
+                    content.parse_terminated(RouteDef::parse, Token![,])?;
                 routes_opt = Some(parsed_routes.into_iter().collect());
                 if input.peek(Token![,]) {
                     input.parse::<Token![,]>()?;
@@ -115,7 +119,8 @@ impl Parse for WorkflowDef {
                 input.parse::<Token![:]>()?;
                 let content;
                 syn::bracketed!(content in input);
-                let parsed_failovers: Punctuated<FailoverDef, Token![,]> = content.parse_terminated(FailoverDef::parse, Token![,])?;
+                let parsed_failovers: Punctuated<FailoverDef, Token![,]> =
+                    content.parse_terminated(FailoverDef::parse, Token![,])?;
                 failovers_opt = Some(parsed_failovers.into_iter().collect());
                 if input.peek(Token![,]) {
                     input.parse::<Token![,]>()?;
@@ -132,7 +137,14 @@ impl Parse for WorkflowDef {
         let routes = routes_opt.unwrap_or_default();
         let failovers = failovers_opt.unwrap_or_default();
 
-        Ok(Self { name, hosts, processes, instances, routes, failovers })
+        Ok(Self {
+            name,
+            hosts,
+            processes,
+            instances,
+            routes,
+            failovers,
+        })
     }
 }
 
@@ -176,7 +188,7 @@ impl Parse for RouteDef {
         let content;
         syn::parenthesized!(content in input);
         let transfer_mode: Ident = content.parse()?;
-        
+
         let mut transport = None;
         if content.peek(Token![,]) {
             content.parse::<Token![,]>()?;
@@ -205,9 +217,9 @@ impl Parse for FailoverDef {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let source: Ident = input.parse()?;
         input.parse::<Token![=>]>()?;
-        
+
         let target: Ident = input.parse()?;
-        
+
         let mut retry_attempts = None;
         let mut retry_backoff = None;
 
@@ -237,20 +249,20 @@ impl Parse for FailoverDef {
 
         let content;
         syn::parenthesized!(content in input);
-        
+
         let on_kw: Ident = content.parse()?;
         if on_kw != "on" {
-             return Err(syn::Error::new(on_kw.span(), "Expected `on`"));
+            return Err(syn::Error::new(on_kw.span(), "Expected `on`"));
         }
         content.parse::<Token![:]>()?;
         let condition: Ident = content.parse()?;
-        
+
         let mut strategy = None;
         if content.peek(Token![,]) {
             content.parse::<Token![,]>()?;
             let strategy_kw: Ident = content.parse()?;
             if strategy_kw != "strategy" {
-                 return Err(syn::Error::new(strategy_kw.span(), "Expected `strategy`"));
+                return Err(syn::Error::new(strategy_kw.span(), "Expected `strategy`"));
             }
             content.parse::<Token![:]>()?;
             strategy = Some(content.parse()?);

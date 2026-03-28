@@ -27,8 +27,8 @@
 //   Each line: {"index":0,"original":"Hello","translated":"Halo","status":"ok"}
 //   Client receives translations progressively as they complete.
 
+use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 use vil_server::prelude::*;
-use vil_llm::semantic::{LlmResponseEvent, LlmFault, LlmUsageState};
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -70,8 +70,8 @@ pub enum TranslatorFault {
 /// Batch translation request — content teams submit multiple texts at once
 #[derive(Debug, Deserialize)]
 struct BatchTranslateRequest {
-    texts: Vec<String>,       // Source texts to translate
-    target_lang: String,      // ISO 639-1 language code (e.g., "id", "ja")
+    texts: Vec<String>,  // Source texts to translate
+    target_lang: String, // ISO 639-1 language code (e.g., "id", "ja")
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -99,7 +99,8 @@ struct BatchTranslateResponse {
 
 /// POST /api/translate/batch — translate a batch of texts to target language
 async fn batch_translate_handler(
-    ctx: ServiceCtx, body: ShmSlice,
+    ctx: ServiceCtx,
+    body: ShmSlice,
 ) -> HandlerResult<VilResponse<BatchTranslateResponse>> {
     let req: BatchTranslateRequest = body.json().expect("invalid JSON body");
     if req.texts.is_empty() {
@@ -195,7 +196,14 @@ async fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     println!("  Listening on http://localhost:3103/api/translate/batch");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!();
@@ -211,7 +219,11 @@ async fn main() {
         .emits::<LlmResponseEvent>()
         .faults::<LlmFault>()
         .manages::<LlmUsageState>()
-        .endpoint(Method::POST, "/translate/batch", post(batch_translate_handler));
+        .endpoint(
+            Method::POST,
+            "/translate/batch",
+            post(batch_translate_handler),
+        );
 
     //     // Run as VilApp — multilingual translation service for content teams
     VilApp::new("llm-streaming-translator")

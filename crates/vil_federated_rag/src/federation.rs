@@ -36,9 +36,9 @@ impl FederatedRetriever {
         for source in &self.sources {
             let source = Arc::clone(source);
             let query = query.to_string();
-            handles.push(tokio::spawn(async move {
-                source.retrieve(&query, top_k).await
-            }));
+            handles.push(tokio::spawn(
+                async move { source.retrieve(&query, top_k).await },
+            ));
         }
 
         let mut result_sets: Vec<Vec<SourceResult>> = Vec::new();

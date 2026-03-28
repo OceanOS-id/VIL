@@ -22,7 +22,12 @@ pub struct PaginatedResult<T: Serialize> {
 }
 
 /// Calculate pagination parameters.
-pub fn calc_pagination(limit: Option<usize>, offset: Option<usize>, default_size: usize, max_size: usize) -> (usize, usize) {
+pub fn calc_pagination(
+    limit: Option<usize>,
+    offset: Option<usize>,
+    default_size: usize,
+    max_size: usize,
+) -> (usize, usize) {
     let size = limit.unwrap_or(default_size).min(max_size);
     let off = offset.unwrap_or(0);
     (size, off)

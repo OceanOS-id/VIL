@@ -75,9 +75,7 @@ mod tests {
 
     #[test]
     fn test_saturating_budget() {
-        let b = TokenBudget::new(100)
-            .system_tokens(80)
-            .response_tokens(80);
+        let b = TokenBudget::new(100).system_tokens(80).response_tokens(80);
         assert_eq!(b.available, 0);
     }
 

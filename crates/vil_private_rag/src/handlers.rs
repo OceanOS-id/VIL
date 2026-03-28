@@ -12,15 +12,20 @@ pub struct PrivateRagStatsBody {
     pub version: String,
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<PrivateRagStatsBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<PrivateRagStatsBody>> {
     let audit_log = ctx.state::<Arc<RwLock<PrivacyAuditLog>>>()?;
-    let log = audit_log.read().map_err(|_| VilError::internal("lock poisoned"))?;
+    let log = audit_log
+        .read()
+        .map_err(|_| VilError::internal("lock poisoned"))?;
     Ok(VilResponse::ok(PrivateRagStatsBody {
         audit_entry_count: log.len(),
         audit_empty: log.is_empty(),
-        pii_patterns: vec!["email".into(), "phone".into(), "ssn".into(), "credit_card".into()],
+        pii_patterns: vec![
+            "email".into(),
+            "phone".into(),
+            "ssn".into(),
+            "credit_card".into(),
+        ],
         operations: vec!["redact".into(), "anonymize".into(), "audit".into()],
         version: env!("CARGO_PKG_VERSION").into(),
     }))

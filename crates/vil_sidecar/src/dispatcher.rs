@@ -169,10 +169,7 @@ pub async fn invoke_with_retry(
     method: &str,
     request_data: &[u8],
 ) -> Result<InvokeResponse, DispatchError> {
-    let max_retries = registry
-        .get(target)
-        .map(|e| e.config.retry)
-        .unwrap_or(0);
+    let max_retries = registry.get(target).map(|e| e.config.retry).unwrap_or(0);
 
     let mut last_err = None;
     for attempt in 0..=max_retries {

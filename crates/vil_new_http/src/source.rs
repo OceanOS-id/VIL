@@ -3,25 +3,24 @@
 // =============================================================================
 // Demonstrates how source nodes are simplified by the new core primitives:
 // 1. PortIR natively defines lane semantics (Trigger, Data, Control).
-// 2. Control signals use standard `vil_types::ControlSignal` instead of 
+// 2. Control signals use standard `vil_types::ControlSignal` instead of
 //    custom adapter-specific markers.
 // 3. Clearer separation between HTTP pulling (physics) and token framing (protocol).
 // =============================================================================
 
-use std::sync::Arc;
-use tokio::runtime::Runtime;
 use futures_util::StreamExt;
 use reqwest::Client;
+use std::sync::Arc;
+use tokio::runtime::Runtime;
 
-
-use vil_types::{
-    BoundaryKind, CleanupPolicy, DeliveryGuarantee, ExecClass, GenericToken,
-    ObservabilitySpec, PortDirection, PortSpec, Priority, ProcessSpec, QueueKind,
-    TransferMode, LaneKind, ReactiveInterfaceKind, ControlSignal
-};
-use vil_rt::VastarRuntimeWorld;
 use vil_ir::builder::WorkflowBuilder;
 use vil_ir::core::{InterfaceIR, PortIR, ProcessIR, QueueIR};
+use vil_rt::VastarRuntimeWorld;
+use vil_types::{
+    BoundaryKind, CleanupPolicy, ControlSignal, DeliveryGuarantee, ExecClass, GenericToken,
+    LaneKind, ObservabilitySpec, PortDirection, PortSpec, Priority, ProcessSpec, QueueKind,
+    ReactiveInterfaceKind, TransferMode,
+};
 
 use crate::HttpFormat;
 
@@ -95,23 +94,51 @@ impl HttpSourceBuilder {
     }
 
     #[doc(alias = "vil_keep")]
-    pub fn url(mut self, url: impl Into<String>) -> Self { self.url = url.into(); self }
+    pub fn url(mut self, url: impl Into<String>) -> Self {
+        self.url = url.into();
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn format(mut self, format: HttpFormat) -> Self { self.format = format; self }
+    pub fn format(mut self, format: HttpFormat) -> Self {
+        self.format = format;
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn post_json(mut self, body: serde_json::Value) -> Self { self.method = "POST".into(); self.json_body = Some(body); self }
+    pub fn post_json(mut self, body: serde_json::Value) -> Self {
+        self.method = "POST".into();
+        self.json_body = Some(body);
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn json_tap(mut self, path: impl Into<String>) -> Self { self.json_tap = Some(path.into()); self }
+    pub fn json_tap(mut self, path: impl Into<String>) -> Self {
+        self.json_tap = Some(path.into());
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn out_port(mut self, name: impl Into<String>) -> Self { self.out_port_name = name.into(); self }
+    pub fn out_port(mut self, name: impl Into<String>) -> Self {
+        self.out_port_name = name.into();
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn ctrl_out_port(mut self, name: impl Into<String>) -> Self { self.ctrl_out_port_name = Some(name.into()); self }
+    pub fn ctrl_out_port(mut self, name: impl Into<String>) -> Self {
+        self.ctrl_out_port_name = Some(name.into());
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn disable_ctrl_out_port(mut self) -> Self { self.ctrl_out_port_name = None; self }
+    pub fn disable_ctrl_out_port(mut self) -> Self {
+        self.ctrl_out_port_name = None;
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn in_port(mut self, name: impl Into<String>) -> Self { self.in_port_name = Some(name.into()); self }
+    pub fn in_port(mut self, name: impl Into<String>) -> Self {
+        self.in_port_name = Some(name.into());
+        self
+    }
     #[doc(alias = "vil_keep")]
-    pub fn queue_capacity(mut self, capacity: usize) -> Self { self.capacity = capacity; self }
+    pub fn queue_capacity(mut self, capacity: usize) -> Self {
+        self.capacity = capacity;
+        self
+    }
 
     /// Apply a dialect preset (sets done_marker, done_event, done_json_field, json_tap).
     #[doc(alias = "vil_keep")]
@@ -119,30 +146,44 @@ impl HttpSourceBuilder {
         match d {
             SseSourceDialect::OpenAi => {
                 self.done_marker = Some("[DONE]".into());
-                if self.json_tap.is_none() { self.json_tap = Some("choices[0].delta.content".into()); }
+                if self.json_tap.is_none() {
+                    self.json_tap = Some("choices[0].delta.content".into());
+                }
             }
             SseSourceDialect::Anthropic => {
                 self.done_event = Some("message_stop".into());
-                if self.json_tap.is_none() { self.json_tap = Some("delta.text".into()); }
+                if self.json_tap.is_none() {
+                    self.json_tap = Some("delta.text".into());
+                }
             }
             SseSourceDialect::Ollama => {
                 self.done_json_field = Some(("done".into(), serde_json::json!(true)));
-                if self.json_tap.is_none() { self.json_tap = Some("message.content".into()); }
+                if self.json_tap.is_none() {
+                    self.json_tap = Some("message.content".into());
+                }
             }
             SseSourceDialect::Cohere => {
                 self.done_marker = Some("[DONE]".into());
                 self.done_event = Some("message-end".into());
-                if self.json_tap.is_none() { self.json_tap = Some("text".into()); }
+                if self.json_tap.is_none() {
+                    self.json_tap = Some("text".into());
+                }
             }
             SseSourceDialect::Gemini => {
-                if self.json_tap.is_none() { self.json_tap = Some("candidates[0].content.parts[0].text".into()); }
+                if self.json_tap.is_none() {
+                    self.json_tap = Some("candidates[0].content.parts[0].text".into());
+                }
             }
             SseSourceDialect::Standard => {
                 self.done_marker = None;
                 self.done_event = None;
                 self.done_json_field = None;
             }
-            SseSourceDialect::Custom { done_marker, done_event, done_json_field } => {
+            SseSourceDialect::Custom {
+                done_marker,
+                done_event,
+                done_json_field,
+            } => {
                 self.done_marker = done_marker;
                 self.done_event = done_event;
                 self.done_json_field = done_json_field;
@@ -153,11 +194,17 @@ impl HttpSourceBuilder {
 
     /// Set data-line done marker (e.g., "[DONE]").
     #[doc(alias = "vil_keep")]
-    pub fn done_marker(mut self, marker: impl Into<String>) -> Self { self.done_marker = Some(marker.into()); self }
+    pub fn done_marker(mut self, marker: impl Into<String>) -> Self {
+        self.done_marker = Some(marker.into());
+        self
+    }
 
     /// Set named event type that signals done (e.g., "message_stop").
     #[doc(alias = "vil_keep")]
-    pub fn done_event(mut self, event: impl Into<String>) -> Self { self.done_event = Some(event.into()); self }
+    pub fn done_event(mut self, event: impl Into<String>) -> Self {
+        self.done_event = Some(event.into());
+        self
+    }
 
     /// Set JSON field + value that signals done (e.g., "done", true).
     #[doc(alias = "vil_keep")]
@@ -392,7 +439,9 @@ impl HttpSource {
 
             rt.block_on(async move {
                 if let Some(in_port_name) = &builder.in_port_name {
-                    let in_port = handle_clone.port_id(in_port_name).expect("Trigger port not found");
+                    let in_port = handle_clone
+                        .port_id(in_port_name)
+                        .expect("Trigger port not found");
                     let mut spins = 0u64;
                     loop {
                         match world_clone.recv::<T>(in_port) {
@@ -411,9 +460,14 @@ impl HttpSource {
                             }
                             Err(vil_rt::RtError::QueueEmpty(_)) => {
                                 spins += 1;
-                                if spins < 512 { std::hint::spin_loop(); }
-                                else if spins < 1024 { tokio::task::yield_now().await; }
-                                else { tokio::time::sleep(std::time::Duration::from_micros(10)).await; spins = 0; }
+                                if spins < 512 {
+                                    std::hint::spin_loop();
+                                } else if spins < 1024 {
+                                    tokio::task::yield_now().await;
+                                } else {
+                                    tokio::time::sleep(std::time::Duration::from_micros(10)).await;
+                                    spins = 0;
+                                }
                             }
                             Err(e) => {
                                 eprintln!("[HttpSource] Trigger error: {:?}", e);
@@ -422,16 +476,15 @@ impl HttpSource {
                         }
                     }
                 } else {
-                    execute_http_request::<T>(&builder, world_clone, &handle_clone, client, 0).await;
+                    execute_http_request::<T>(&builder, world_clone, &handle_clone, client, 0)
+                        .await;
                 }
             });
         })
     }
 }
 
-async fn execute_http_request<
-    T: crate::sink::StreamTokenLike,
->(
+async fn execute_http_request<T: crate::sink::StreamTokenLike>(
     builder: &HttpSourceBuilder,
     world: Arc<VastarRuntimeWorld>,
     runtime_process: &vil_rt::ProcessHandle,
@@ -447,15 +500,22 @@ async fn execute_http_request<
     let done_event = builder.done_event.clone();
     let done_json_field = builder.done_json_field.clone();
     let transform_fn = builder.transform_fn.clone();
-    let out_port = runtime_process.port_id(&builder.out_port_name).expect("data out port not found");
-    let ctrl_out_port = builder.ctrl_out_port_name.as_ref().and_then(|name| runtime_process.port_id(name).ok());
+    let out_port = runtime_process
+        .port_id(&builder.out_port_name)
+        .expect("data out port not found");
+    let ctrl_out_port = builder
+        .ctrl_out_port_name
+        .as_ref()
+        .and_then(|name| runtime_process.port_id(name).ok());
 
     let mut req = match method.as_str() {
         "POST" => client.post(&url),
         _ => client.get(&url),
     };
 
-    if let Some(body) = json_body { req = req.json(&body); }
+    if let Some(body) = json_body {
+        req = req.json(&body);
+    }
 
     // Apply custom headers (auth tokens, content-type, etc.)
     for (key, value) in &builder.headers {
@@ -478,28 +538,42 @@ async fn execute_http_request<
 
                             for line in text.lines() {
                                 // event: field
-                                if let Some(evt) = line.strip_prefix("event: ").or_else(|| line.strip_prefix("event:")) {
+                                if let Some(evt) = line
+                                    .strip_prefix("event: ")
+                                    .or_else(|| line.strip_prefix("event:"))
+                                {
                                     let evt = evt.trim();
                                     if let Some(ref de) = done_event {
-                                        if evt == de.as_str() { break 'sse; }
+                                        if evt == de.as_str() {
+                                            break 'sse;
+                                        }
                                     }
                                     _current_event = Some(evt.to_string());
                                     continue;
                                 }
 
                                 // data: field
-                                if let Some(data_str) = line.strip_prefix("data: ").or_else(|| line.strip_prefix("data:")) {
+                                if let Some(data_str) = line
+                                    .strip_prefix("data: ")
+                                    .or_else(|| line.strip_prefix("data:"))
+                                {
                                     let data_str = data_str.trim();
 
                                     // Check done_marker
                                     if let Some(ref dm) = done_marker {
-                                        if data_str == dm.as_str() { break 'sse; }
+                                        if data_str == dm.as_str() {
+                                            break 'sse;
+                                        }
                                     }
 
                                     // Check done_json_field
                                     if let Some((ref field, ref expected)) = done_json_field {
-                                        if let Ok(json) = vil_json::from_str::<serde_json::Value>(data_str) {
-                                            if &json[field.as_str()] == expected { break 'sse; }
+                                        if let Ok(json) =
+                                            vil_json::from_str::<serde_json::Value>(data_str)
+                                        {
+                                            if &json[field.as_str()] == expected {
+                                                break 'sse;
+                                            }
                                         }
                                     }
 
@@ -508,7 +582,9 @@ async fn execute_http_request<
 
                                     let final_data = if let Some(ref tap) = json_tap {
                                         apply_json_tap(data, tap)
-                                    } else { data };
+                                    } else {
+                                        data
+                                    };
 
                                     if !final_data.is_empty() {
                                         let emit_data = if let Some(ref tf) = transform_fn {
@@ -518,8 +594,13 @@ async fn execute_http_request<
                                         };
 
                                         if let Some(data) = emit_data {
-                                            let msg = T::from_sse_event_shm(data, session_id, &world);
-                                            let _ = world.publish_value(runtime_process.id(), out_port, msg);
+                                            let msg =
+                                                T::from_sse_event_shm(data, session_id, &world);
+                                            let _ = world.publish_value(
+                                                runtime_process.id(),
+                                                out_port,
+                                                msg,
+                                            );
                                         }
                                     }
                                 }
@@ -531,9 +612,16 @@ async fn execute_http_request<
                             }
                         }
                         Err(err) => {
-                            eprintln!("[HttpSource] SSE stream error for session {}: {:?}", session_id, err);
+                            eprintln!(
+                                "[HttpSource] SSE stream error for session {}: {:?}",
+                                session_id, err
+                            );
                             if let Some(ctrl_port) = ctrl_out_port {
-                                let _ = world.publish_value(runtime_process.id(), ctrl_port, ControlSignal::error(session_id, 500, "Stream Error"));
+                                let _ = world.publish_value(
+                                    runtime_process.id(),
+                                    ctrl_port,
+                                    ControlSignal::error(session_id, 500, "Stream Error"),
+                                );
                             }
                             return;
                         }
@@ -552,7 +640,9 @@ async fn execute_http_request<
 
                                 // Check done_json_field (e.g., "done": true for Ollama)
                                 if let Some((ref field, ref expected)) = done_json_field {
-                                    if let Ok(json) = vil_json::from_slice::<serde_json::Value>(&line) {
+                                    if let Ok(json) =
+                                        vil_json::from_slice::<serde_json::Value>(&line)
+                                    {
                                         if &json[field.as_str()] == expected {
                                             break 'ndjson;
                                         }
@@ -561,29 +651,41 @@ async fn execute_http_request<
 
                                 let final_data = if let Some(ref tap) = json_tap {
                                     apply_json_tap(line, tap)
-                                } else { line };
+                                } else {
+                                    line
+                                };
 
                                 if !final_data.is_empty() {
                                     // Apply user transform if set
                                     let emit_data = if let Some(ref tf) = transform_fn {
-                                        tf(&final_data)
-                                            .map(|v| bytes::Bytes::from(v))
+                                        tf(&final_data).map(|v| bytes::Bytes::from(v))
                                     } else {
                                         Some(final_data)
                                     };
 
                                     if let Some(data) = emit_data {
                                         let msg = T::from_ndjson_line_shm(data, session_id, &world);
-                                        let _ = world.publish_value(runtime_process.id(), out_port, msg);
+                                        let _ = world.publish_value(
+                                            runtime_process.id(),
+                                            out_port,
+                                            msg,
+                                        );
                                     }
                                 }
                             }
                         }
                         Err(err) => {
-                            eprintln!("[HttpSource] NDJSON stream error for session {}: {:?}", session_id, err);
+                            eprintln!(
+                                "[HttpSource] NDJSON stream error for session {}: {:?}",
+                                session_id, err
+                            );
                             // CORE PRIMITIVE: emit Error signal immediately on stream error
                             if let Some(ctrl_port) = ctrl_out_port {
-                                let _ = world.publish_value(runtime_process.id(), ctrl_port, ControlSignal::error(session_id, 500, "Stream Error"));
+                                let _ = world.publish_value(
+                                    runtime_process.id(),
+                                    ctrl_port,
+                                    ControlSignal::error(session_id, 500, "Stream Error"),
+                                );
                             }
                             return; // early return
                         }
@@ -593,10 +695,17 @@ async fn execute_http_request<
             HttpFormat::Raw => eprintln!("[HttpSource] Raw decoder not implemented yet"),
         },
         Err(err) => {
-            eprintln!("[HttpSource] Request error for session {}: {:?}", session_id, err);
+            eprintln!(
+                "[HttpSource] Request error for session {}: {:?}",
+                session_id, err
+            );
             // CORE PRIMITIVE: emit Error signal immediately on request error
             if let Some(ctrl_port) = ctrl_out_port {
-                let _ = world.publish_value(runtime_process.id(), ctrl_port, ControlSignal::error(session_id, 503, "Request Failed"));
+                let _ = world.publish_value(
+                    runtime_process.id(),
+                    ctrl_port,
+                    ControlSignal::error(session_id, 503, "Request Failed"),
+                );
             }
             return; // early return
         }
@@ -604,7 +713,11 @@ async fn execute_http_request<
 
     // CORE PRIMITIVE: publish explicit ControlSignal::Done instead of just marker or publish_control_done
     if let Some(ctrl_port) = ctrl_out_port {
-        let _ = world.publish_value(runtime_process.id(), ctrl_port, ControlSignal::done(session_id));
+        let _ = world.publish_value(
+            runtime_process.id(),
+            ctrl_port,
+            ControlSignal::done(session_id),
+        );
     } else {
         // Legacy fallback: keep in-band DONE if control lane is unavailable.
         let msg = T::done_marker(session_id);
@@ -619,10 +732,12 @@ pub trait WorkflowBuilderExt {
 
 impl WorkflowBuilderExt for WorkflowBuilder {
     fn add_http_source(self, builder: crate::source::HttpSourceBuilder) -> Self {
-        self.add_interface(builder.build_interface_ir()).add_process(builder.build_process_ir())
+        self.add_interface(builder.build_interface_ir())
+            .add_process(builder.build_process_ir())
     }
     fn add_http_sink(self, builder: crate::sink::HttpSinkBuilder) -> Self {
-        self.add_interface(builder.build_interface_ir()).add_process(builder.build_process_ir())
+        self.add_interface(builder.build_interface_ir())
+            .add_process(builder.build_process_ir())
     }
 }
 
@@ -634,21 +749,19 @@ pub trait FromStreamData {
     /// Write payload to SHM and return a token with the offset.
     /// Default impl falls back to from_sse_event (no SHM — for GenericToken).
     /// ShmToken overrides this to write data to ExchangeHeap.
-    fn from_sse_event_shm(
-        data: bytes::Bytes,
-        session_id: u64,
-        world: &VastarRuntimeWorld,
-    ) -> Self where Self: Sized {
+    fn from_sse_event_shm(data: bytes::Bytes, session_id: u64, world: &VastarRuntimeWorld) -> Self
+    where
+        Self: Sized,
+    {
         // Default: ignore world, use heap path (GenericToken)
         let _ = world;
         Self::from_sse_event(data, session_id)
     }
 
-    fn from_ndjson_line_shm(
-        data: bytes::Bytes,
-        session_id: u64,
-        world: &VastarRuntimeWorld,
-    ) -> Self where Self: Sized {
+    fn from_ndjson_line_shm(data: bytes::Bytes, session_id: u64, world: &VastarRuntimeWorld) -> Self
+    where
+        Self: Sized,
+    {
         let _ = world;
         Self::from_ndjson_line(data, session_id)
     }
@@ -656,13 +769,25 @@ pub trait FromStreamData {
 
 impl FromStreamData for GenericToken {
     fn from_sse_event(data: bytes::Bytes, session_id: u64) -> Self {
-        Self { session_id, is_done: false, data: vil_types::VSlice::from_bytes(data) }
+        Self {
+            session_id,
+            is_done: false,
+            data: vil_types::VSlice::from_bytes(data),
+        }
     }
     fn from_ndjson_line(data: bytes::Bytes, session_id: u64) -> Self {
-        Self { session_id, is_done: false, data: vil_types::VSlice::from_bytes(data) }
+        Self {
+            session_id,
+            is_done: false,
+            data: vil_types::VSlice::from_bytes(data),
+        }
     }
     fn done_marker(session_id: u64) -> Self {
-        Self { session_id, is_done: true, data: vil_types::VSlice::from_vec(Vec::new()) }
+        Self {
+            session_id,
+            is_done: true,
+            data: vil_types::VSlice::from_vec(Vec::new()),
+        }
     }
 }
 
@@ -680,11 +805,7 @@ impl FromStreamData for vil_types::ShmToken {
 
     /// LOCK-FREE: Write payload to SHM via bump allocator.
     /// Single atomic fetch_add + memcpy — no mutex, no page scan.
-    fn from_sse_event_shm(
-        data: bytes::Bytes,
-        session_id: u64,
-        world: &VastarRuntimeWorld,
-    ) -> Self {
+    fn from_sse_event_shm(data: bytes::Bytes, session_id: u64, world: &VastarRuntimeWorld) -> Self {
         if let Some(heap) = world.exchange_heap() {
             if let Some(region) = world.data_region_id() {
                 // Use bump allocator (lock-free) instead of paged allocator (mutex)
@@ -711,7 +832,9 @@ fn apply_json_tap(data: bytes::Bytes, path: &str) -> bytes::Bytes {
             let start = pos + 11;
             if let Some(end) = data[start..].iter().position(|&b| b == b'\"') {
                 let content_end = start + end;
-                if !data[start..content_end].contains(&b'\\') { return data.slice(start..content_end); }
+                if !data[start..content_end].contains(&b'\\') {
+                    return data.slice(start..content_end);
+                }
             }
         }
     }
@@ -722,24 +845,34 @@ fn apply_json_tap(data: bytes::Bytes, path: &str) -> bytes::Bytes {
                 let key = &part[..idx_start];
                 current = &current[key];
                 if let Some(idx_end) = part.find(']') {
-                    if let Ok(idx) = part[idx_start + 1..idx_end].parse::<usize>() { current = &current[idx]; }
+                    if let Ok(idx) = part[idx_start + 1..idx_end].parse::<usize>() {
+                        current = &current[idx];
+                    }
                 }
-            } else { current = &current[part]; }
+            } else {
+                current = &current[part];
+            }
         }
         match current {
             serde_json::Value::String(s) => {
                 let s_bytes = s.as_bytes();
                 if !s.contains('\\') {
-                    if let Some(pos) = find_subsequence(&data, s_bytes) { return data.slice(pos..pos + s_bytes.len()); }
+                    if let Some(pos) = find_subsequence(&data, s_bytes) {
+                        return data.slice(pos..pos + s_bytes.len());
+                    }
                 }
                 bytes::Bytes::copy_from_slice(s_bytes)
             }
             serde_json::Value::Null => bytes::Bytes::new(),
             _ => bytes::Bytes::copy_from_slice(current.to_string().as_bytes()),
         }
-    } else { bytes::Bytes::new() }
+    } else {
+        bytes::Bytes::new()
+    }
 }
 
 fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
-    haystack.windows(needle.len()).position(|window| window == needle)
+    haystack
+        .windows(needle.len())
+        .position(|window| window == needle)
 }

@@ -20,10 +20,10 @@ pub mod analyzer;
 pub mod config;
 pub mod embedding;
 pub mod format;
-pub mod semantic;
 pub mod handlers;
-pub mod plugin;
 pub mod pipeline_sse;
+pub mod plugin;
+pub mod semantic;
 
 pub use analyzer::{DetectedObject, ImageAnalysis, ImageAnalyzer, NoopAnalyzer, VisionError};
 pub use config::VisionConfig;

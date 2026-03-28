@@ -14,7 +14,12 @@ pub trait VilCache: Send + Sync {
         serde_json::from_slice(&bytes).ok()
     }
 
-    async fn set_json<T: serde::Serialize + Sync>(&self, key: &str, value: &T, ttl: Option<Duration>) {
+    async fn set_json<T: serde::Serialize + Sync>(
+        &self,
+        key: &str,
+        value: &T,
+        ttl: Option<Duration>,
+    ) {
         if let Ok(bytes) = serde_json::to_vec(value) {
             self.set(key, &bytes, ttl).await;
         }

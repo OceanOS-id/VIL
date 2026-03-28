@@ -81,14 +81,17 @@ impl PulsarConsumer {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("pulsar"),
-                topic_hash,
-                message_bytes:  payload_len,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        1, // consume
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("pulsar"),
+                    topic_hash,
+                    message_bytes: payload_len,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 1, // consume
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(PulsarMessage {
@@ -111,14 +114,17 @@ impl PulsarConsumer {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("pulsar"),
-                topic_hash,
-                message_bytes:  0,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        2, // ack
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("pulsar"),
+                    topic_hash,
+                    message_bytes: 0,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 2, // ack
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(())

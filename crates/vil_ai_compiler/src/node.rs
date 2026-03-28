@@ -6,20 +6,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PipelineNode {
     /// Embed text into vector space.
-    Embed {
-        model: String,
-        dimensions: usize,
-    },
+    Embed { model: String, dimensions: usize },
     /// Search a vector store or index.
-    Search {
-        index: String,
-        top_k: usize,
-    },
+    Search { index: String, top_k: usize },
     /// Rerank search results for relevance.
-    Rerank {
-        model: String,
-        top_n: usize,
-    },
+    Rerank { model: String, top_n: usize },
     /// Generate text via LLM.
     Generate {
         model: String,
@@ -27,26 +18,15 @@ pub enum PipelineNode {
         temperature: f64,
     },
     /// Transform data (map, project, reshape).
-    Transform {
-        operation: String,
-    },
+    Transform { operation: String },
     /// Filter data based on a predicate expression.
-    Filter {
-        predicate: String,
-    },
+    Filter { predicate: String },
     /// Branch execution based on a condition.
-    Branch {
-        condition: String,
-    },
+    Branch { condition: String },
     /// Merge multiple upstream branches.
-    Merge {
-        strategy: MergeStrategy,
-    },
+    Merge { strategy: MergeStrategy },
     /// Cache intermediate results.
-    Cache {
-        ttl_secs: u64,
-        key_expr: String,
-    },
+    Cache { ttl_secs: u64, key_expr: String },
 }
 
 /// Strategy used when merging multiple branches.

@@ -14,10 +14,10 @@ pub use formatter::{OutputFormat, TrainingRecord};
 pub use pipeline::{DataPipeline, PipelineResult, PipelineStep};
 
 // VIL integration layer
-pub mod vil_semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod vil_semantic;
 
 pub use plugin::DataPrepPlugin;
 pub use vil_semantic::{DataPrepEvent, DataPrepFault, DataPrepState};

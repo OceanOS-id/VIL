@@ -6,8 +6,8 @@
 
 #[cfg(test)]
 mod cache_tests {
-    use vil_server_core::cache::Cache;
     use std::time::Duration;
+    use vil_server_core::cache::Cache;
 
     #[test]
     fn test_cache_put_get() {
@@ -166,8 +166,8 @@ mod etag_tests {
 
 #[cfg(test)]
 mod retry_tests {
-    use vil_server_core::retry::*;
     use std::time::Duration;
+    use vil_server_core::retry::*;
 
     #[test]
     fn test_fixed_delay() {
@@ -221,15 +221,19 @@ mod retry_tests {
         let policy = RetryPolicy::default();
         let result = vil_server_core::retry::retry_async(&policy, || async {
             Ok::<_, String>("success".to_string())
-        }).await;
+        })
+        .await;
         assert_eq!(result.unwrap(), "success");
     }
 
     #[tokio::test]
     async fn test_retry_async_eventual_success() {
-        let policy = RetryPolicy::new(3, RetryStrategy::Fixed {
-            delay: Duration::from_millis(1),
-        });
+        let policy = RetryPolicy::new(
+            3,
+            RetryStrategy::Fixed {
+                delay: Duration::from_millis(1),
+            },
+        );
         let counter = std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0));
         let counter_clone = counter.clone();
 
@@ -243,7 +247,8 @@ mod retry_tests {
                     Ok("finally".to_string())
                 }
             }
-        }).await;
+        })
+        .await;
 
         assert_eq!(result.unwrap(), "finally");
         assert_eq!(counter.load(std::sync::atomic::Ordering::Relaxed), 3);
@@ -251,13 +256,17 @@ mod retry_tests {
 
     #[tokio::test]
     async fn test_retry_async_all_fail() {
-        let policy = RetryPolicy::new(2, RetryStrategy::Fixed {
-            delay: Duration::from_millis(1),
-        });
+        let policy = RetryPolicy::new(
+            2,
+            RetryStrategy::Fixed {
+                delay: Duration::from_millis(1),
+            },
+        );
 
         let result = vil_server_core::retry::retry_async(&policy, || async {
             Err::<String, _>("always fails".to_string())
-        }).await;
+        })
+        .await;
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), "always fails");
@@ -351,8 +360,8 @@ mod feature_flag_tests {
 
 #[cfg(test)]
 mod timeout_tests {
-    use vil_server_core::timeout::TimeoutLayer;
     use std::time::Duration;
+    use vil_server_core::timeout::TimeoutLayer;
 
     #[test]
     fn test_timeout_layer_creation() {
@@ -365,15 +374,20 @@ mod timeout_tests {
 
 #[cfg(test)]
 mod idempotency_tests {
-    use vil_server_core::idempotency::IdempotencyStore;
     use axum::http::StatusCode;
     use bytes::Bytes;
     use std::time::Duration;
+    use vil_server_core::idempotency::IdempotencyStore;
 
     #[test]
     fn test_store_put_get() {
         let store = IdempotencyStore::new(Duration::from_secs(60), 100);
-        store.put("key1".to_string(), StatusCode::OK, Bytes::from("response"), "application/json".to_string());
+        store.put(
+            "key1".to_string(),
+            StatusCode::OK,
+            Bytes::from("response"),
+            "application/json".to_string(),
+        );
 
         let result = store.get("key1");
         assert!(result.is_some());
@@ -392,7 +406,12 @@ mod idempotency_tests {
     #[test]
     fn test_store_ttl_expiry() {
         let store = IdempotencyStore::new(Duration::from_millis(10), 100);
-        store.put("key1".to_string(), StatusCode::OK, Bytes::new(), "text/plain".to_string());
+        store.put(
+            "key1".to_string(),
+            StatusCode::OK,
+            Bytes::new(),
+            "text/plain".to_string(),
+        );
         std::thread::sleep(Duration::from_millis(20));
         assert!(store.get("key1").is_none());
     }
@@ -400,7 +419,12 @@ mod idempotency_tests {
     #[test]
     fn test_store_contains() {
         let store = IdempotencyStore::new(Duration::from_secs(60), 100);
-        store.put("abc".to_string(), StatusCode::OK, Bytes::new(), "".to_string());
+        store.put(
+            "abc".to_string(),
+            StatusCode::OK,
+            Bytes::new(),
+            "".to_string(),
+        );
         assert!(store.contains("abc"));
         assert!(!store.contains("xyz"));
     }
@@ -409,7 +433,12 @@ mod idempotency_tests {
     fn test_store_clear() {
         let store = IdempotencyStore::new(Duration::from_secs(60), 100);
         for i in 0..5 {
-            store.put(format!("key_{}", i), StatusCode::OK, Bytes::new(), "".to_string());
+            store.put(
+                format!("key_{}", i),
+                StatusCode::OK,
+                Bytes::new(),
+                "".to_string(),
+            );
         }
         assert_eq!(store.len(), 5);
         store.clear();
@@ -462,8 +491,7 @@ mod otel_tests {
     #[test]
     fn test_span_collector() {
         let collector = SpanCollector::new(100);
-        let span = SpanBuilder::new("op", SpanKind::Internal, "svc")
-            .finish(SpanStatus::Ok);
+        let span = SpanBuilder::new("op", SpanKind::Internal, "svc").finish(SpanStatus::Ok);
 
         collector.record(span);
         assert_eq!(collector.buffered(), 1);
@@ -505,7 +533,9 @@ mod otel_tests {
 
     #[test]
     fn test_w3c_trace_context_parse() {
-        let ctx = TraceContext::from_header("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01").unwrap();
+        let ctx =
+            TraceContext::from_header("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01")
+                .unwrap();
         assert!(ctx.sampled);
         assert_eq!(ctx.trace_id.to_hex(), "0af7651916cd43dd8448eb211c80319c");
         assert_eq!(ctx.parent_span_id.to_hex(), "b7ad6b7169203331");
@@ -647,9 +677,9 @@ mod error_tracker_tests {
 
 #[cfg(test)]
 mod alerting_tests {
-    use vil_server_core::alerting::*;
     use std::collections::HashMap;
     use std::time::Duration;
+    use vil_server_core::alerting::*;
 
     #[test]
     fn test_alert_condition_gt() {
@@ -775,8 +805,8 @@ mod api_versioning_tests {
 
 #[cfg(test)]
 mod rolling_restart_tests {
-    use vil_server_core::rolling_restart::*;
     use std::time::Duration;
+    use vil_server_core::rolling_restart::*;
 
     #[test]
     fn test_initial_state() {

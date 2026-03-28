@@ -18,8 +18,8 @@
 // [x] Unit tests
 // =============================================================================
 
-use std::any::Any;
 use dashmap::DashMap;
+use std::any::Any;
 use std::sync::Arc;
 
 use vil_types::SampleId;

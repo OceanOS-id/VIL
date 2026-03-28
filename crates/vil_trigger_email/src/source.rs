@@ -19,14 +19,14 @@
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
+use async_imap::extensions::idle::IdleResponse;
 use async_trait::async_trait;
 use tokio_native_tls::TlsConnector;
-use async_imap::extensions::idle::IdleResponse;
 
-use vil_log::{mq_log, types::MqPayload};
 use vil_log::dict::register_str;
+use vil_log::{mq_log, types::MqPayload};
 
-use vil_trigger_core::traits::{TriggerSource, EventCallback};
+use vil_trigger_core::traits::{EventCallback, TriggerSource};
 use vil_trigger_core::types::{TriggerEvent, TriggerFault};
 
 use crate::config::EmailConfig;
@@ -34,20 +34,20 @@ use crate::error::EmailFault;
 
 /// IMAP IDLE email trigger.
 pub struct EmailTrigger {
-    config:      EmailConfig,
-    paused:      Arc<AtomicBool>,
-    sequence:    Arc<AtomicU64>,
-    host_hash:   u32,
+    config: EmailConfig,
+    paused: Arc<AtomicBool>,
+    sequence: Arc<AtomicU64>,
+    host_hash: u32,
     folder_hash: u32,
-    kind_hash:   u32,
+    kind_hash: u32,
 }
 
 impl EmailTrigger {
     /// Create a new `EmailTrigger` from config.
     pub fn new(config: EmailConfig) -> Self {
-        let host_hash   = register_str(&config.socket_addr());
+        let host_hash = register_str(&config.socket_addr());
         let folder_hash = register_str(&config.folder);
-        let kind_hash   = register_str("email");
+        let kind_hash = register_str("email");
         Self {
             config,
             paused: Arc::new(AtomicBool::new(false)),
@@ -66,13 +66,16 @@ impl EmailTrigger {
     }
 
     async fn idle_loop(&self, on_event: &EventCallback) -> Result<(), EmailFault> {
-        let host_hash   = self.host_hash;
+        let host_hash = self.host_hash;
         let folder_hash = self.folder_hash;
-        let kind_hash   = self.kind_hash;
+        let kind_hash = self.kind_hash;
 
         // Build TLS connector using native-tls + tokio bridge.
-        let native_cx = native_tls::TlsConnector::new()
-            .map_err(|_| EmailFault::TlsConnectFailed { host_hash, reason_code: 1 })?;
+        let native_cx =
+            native_tls::TlsConnector::new().map_err(|_| EmailFault::TlsConnectFailed {
+                host_hash,
+                reason_code: 1,
+            })?;
         let tls = TlsConnector::from(native_cx);
 
         // Establish TCP + TLS.
@@ -86,7 +89,10 @@ impl EmailTrigger {
         let tls_stream = tls
             .connect(&self.config.imap_host, tcp)
             .await
-            .map_err(|_| EmailFault::TlsConnectFailed { host_hash, reason_code: 2 })?;
+            .map_err(|_| EmailFault::TlsConnectFailed {
+                host_hash,
+                reason_code: 2,
+            })?;
 
         // Create async-imap client (tokio feature).
         let client = async_imap::Client::new(tls_stream);
@@ -114,18 +120,19 @@ impl EmailTrigger {
             let mut handle = session.idle();
 
             // Send IDLE command to server.
-            handle
-                .init()
-                .await
-                .map_err(|_| EmailFault::IdleFailed { host_hash, reason_code: 0 })?;
+            handle.init().await.map_err(|_| EmailFault::IdleFailed {
+                host_hash,
+                reason_code: 0,
+            })?;
 
             // Wait up to 29 minutes for a server notification.
-            let (wait_fut, _stop) = handle
-                .wait_with_timeout(std::time::Duration::from_secs(29 * 60));
+            let (wait_fut, _stop) =
+                handle.wait_with_timeout(std::time::Duration::from_secs(29 * 60));
 
-            let response = wait_fut
-                .await
-                .map_err(|_| EmailFault::IdleFailed { host_hash, reason_code: 1 })?;
+            let response = wait_fut.await.map_err(|_| EmailFault::IdleFailed {
+                host_hash,
+                reason_code: 1,
+            })?;
 
             // Recover the session.
             session = handle
@@ -136,21 +143,24 @@ impl EmailTrigger {
             // Only fire on NewData — Timeout is just a keepalive cycle.
             if let IdleResponse::NewData(_) = response {
                 let elapsed = idle_start.elapsed();
-                let seq     = self.sequence.fetch_add(1, Ordering::Relaxed);
+                let seq = self.sequence.fetch_add(1, Ordering::Relaxed);
 
-                mq_log!(Info, MqPayload {
-                    broker_hash:    host_hash,
-                    topic_hash:     folder_hash,
-                    group_hash:     kind_hash,
-                    offset:         seq,
-                    message_bytes:  0,
-                    e2e_latency_us: elapsed.as_micros() as u32,
-                    op_type:        1, // consume
-                    partition:      0,
-                    retries:        0,
-                    compression:    0,
-                    ..MqPayload::default()
-                });
+                mq_log!(
+                    Info,
+                    MqPayload {
+                        broker_hash: host_hash,
+                        topic_hash: folder_hash,
+                        group_hash: kind_hash,
+                        offset: seq,
+                        message_bytes: 0,
+                        e2e_latency_us: elapsed.as_micros() as u32,
+                        op_type: 1, // consume
+                        partition: 0,
+                        retries: 0,
+                        compression: 0,
+                        ..MqPayload::default()
+                    }
+                );
 
                 let ts = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
@@ -159,9 +169,9 @@ impl EmailTrigger {
 
                 on_event(TriggerEvent {
                     kind_hash,
-                    source_hash:   folder_hash,
-                    sequence:      seq,
-                    timestamp_ns:  ts,
+                    source_hash: folder_hash,
+                    sequence: seq,
+                    timestamp_ns: ts,
                     payload_bytes: 0,
                     op: 0,
                     _pad: [0; 3],

@@ -6,15 +6,15 @@
 //!   - Tier 3: WASM (sandboxed, hot-deploy, ~1-5us)
 //!   - Tier 4: Sidecar (any language via UDS, ~12us)
 
-pub mod resource;
 pub mod context;
 pub mod registry;
+pub mod resource;
 pub mod semantic;
 
-pub use resource::ResourceRegistry;
 pub use context::PluginContext;
-pub use registry::{PluginRegistry, PluginError, PluginInfo};
-pub use semantic::{AiSemantic, AiSemanticKind, AiLane, AiSemanticEnvelope};
+pub use registry::{PluginError, PluginInfo, PluginRegistry};
+pub use resource::ResourceRegistry;
+pub use semantic::{AiLane, AiSemantic, AiSemanticEnvelope, AiSemanticKind};
 
 /// Core plugin trait -- all VIL plugins implement this.
 ///
@@ -28,20 +28,28 @@ pub trait VilPlugin: Send + Sync + 'static {
     fn version(&self) -> &str;
 
     /// Human-readable description
-    fn description(&self) -> &str { "" }
+    fn description(&self) -> &str {
+        ""
+    }
 
     /// What this plugin provides
-    fn capabilities(&self) -> Vec<PluginCapability> { vec![] }
+    fn capabilities(&self) -> Vec<PluginCapability> {
+        vec![]
+    }
 
     /// What this plugin requires from other plugins
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     /// Register the plugin -- add services, resources, middleware.
     /// Called in dependency order (dependencies registered first).
     fn register(&self, ctx: &mut PluginContext);
 
     /// Health check (called periodically by observer)
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 
     /// Graceful shutdown hook
     fn shutdown(&self) {}
@@ -56,24 +64,16 @@ pub enum PluginCapability {
         endpoints: Vec<EndpointSpec>,
     },
     /// Adds middleware layer (priority: lower = runs first)
-    Middleware {
-        name: String,
-        priority: u32,
-    },
+    Middleware { name: String, priority: u32 },
     /// Adds CLI subcommand
-    CliCommand {
-        name: String,
-        description: String,
-    },
+    CliCommand { name: String, description: String },
     /// Provides a typed resource other plugins can consume
     Resource {
         type_name: &'static str,
         name: String,
     },
     /// Extends observer dashboard
-    DashboardWidget {
-        name: String,
-    },
+    DashboardWidget { name: String },
 }
 
 /// Endpoint specification for capability declaration
@@ -86,13 +86,25 @@ pub struct EndpointSpec {
 
 impl EndpointSpec {
     pub fn get(path: &str) -> Self {
-        Self { method: "GET".into(), path: path.into(), description: String::new() }
+        Self {
+            method: "GET".into(),
+            path: path.into(),
+            description: String::new(),
+        }
     }
     pub fn post(path: &str) -> Self {
-        Self { method: "POST".into(), path: path.into(), description: String::new() }
+        Self {
+            method: "POST".into(),
+            path: path.into(),
+            description: String::new(),
+        }
     }
     pub fn delete(path: &str) -> Self {
-        Self { method: "DELETE".into(), path: path.into(), description: String::new() }
+        Self {
+            method: "DELETE".into(),
+            path: path.into(),
+            description: String::new(),
+        }
     }
     pub fn with_description(mut self, desc: &str) -> Self {
         self.description = desc.into();
@@ -110,10 +122,18 @@ pub struct PluginDependency {
 
 impl PluginDependency {
     pub fn required(id: &str, version: &str) -> Self {
-        Self { plugin_id: id.into(), version_req: version.into(), optional: false }
+        Self {
+            plugin_id: id.into(),
+            version_req: version.into(),
+            optional: false,
+        }
     }
     pub fn optional(id: &str, version: &str) -> Self {
-        Self { plugin_id: id.into(), version_req: version.into(), optional: true }
+        Self {
+            plugin_id: id.into(),
+            version_req: version.into(),
+            optional: true,
+        }
     }
 }
 

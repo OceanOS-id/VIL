@@ -18,37 +18,54 @@ fn test_kafka_config() {
 
 #[tokio::test]
 async fn test_kafka_producer() {
-    use vil_mq_kafka::{KafkaProducer, KafkaConfig};
-    let producer = KafkaProducer::new(KafkaConfig::new("localhost:9092")).await.unwrap();
+    use vil_mq_kafka::{KafkaConfig, KafkaProducer};
+    let producer = KafkaProducer::new(KafkaConfig::new("localhost:9092"))
+        .await
+        .unwrap();
 
     assert_eq!(producer.messages_sent(), 0);
 
-    producer.publish("test-topic", b"hello kafka").await.unwrap();
+    producer
+        .publish("test-topic", b"hello kafka")
+        .await
+        .unwrap();
     assert_eq!(producer.messages_sent(), 1);
 
-    producer.publish_keyed("test-topic", "key-1", b"keyed msg").await.unwrap();
+    producer
+        .publish_keyed("test-topic", "key-1", b"keyed msg")
+        .await
+        .unwrap();
     assert_eq!(producer.messages_sent(), 2);
 }
 
 #[tokio::test]
 async fn test_kafka_consumer() {
-    use vil_mq_kafka::{KafkaConsumer, KafkaConfig};
-    use vil_mq_kafka::consumer::KafkaMessage;
     use bytes::Bytes;
+    use vil_mq_kafka::consumer::KafkaMessage;
+    use vil_mq_kafka::{KafkaConfig, KafkaConsumer};
 
     let mut consumer = KafkaConsumer::new(
-        KafkaConfig::new("localhost:9092").group("test").topic("orders")
-    ).await.unwrap();
+        KafkaConfig::new("localhost:9092")
+            .group("test")
+            .topic("orders"),
+    )
+    .await
+    .unwrap();
 
     assert!(!consumer.is_running());
     consumer.start();
     assert!(consumer.is_running());
 
     // Inject a test message
-    consumer.inject_message(KafkaMessage {
-        topic: "orders".into(), partition: 0, offset: 1,
-        key: Some("k1".into()), payload: Bytes::from("test payload"),
-    }).await;
+    consumer
+        .inject_message(KafkaMessage {
+            topic: "orders".into(),
+            partition: 0,
+            offset: 1,
+            key: Some("k1".into()),
+            payload: Bytes::from("test payload"),
+        })
+        .await;
 
     assert_eq!(consumer.messages_received(), 1);
 
@@ -58,17 +75,20 @@ async fn test_kafka_consumer() {
 
 #[tokio::test]
 async fn test_kafka_bridge() {
-    use vil_mq_kafka::KafkaBridge;
-    use vil_mq_kafka::consumer::KafkaMessage;
     use bytes::Bytes;
+    use vil_mq_kafka::consumer::KafkaMessage;
+    use vil_mq_kafka::KafkaBridge;
 
     let bridge = KafkaBridge::new("order-service");
     assert_eq!(bridge.bridged_count(), 0);
     assert_eq!(bridge.target_service(), "order-service");
 
     let msg = KafkaMessage {
-        topic: "orders".into(), partition: 0, offset: 1,
-        key: None, payload: Bytes::from("data"),
+        topic: "orders".into(),
+        partition: 0,
+        offset: 1,
+        key: None,
+        payload: Bytes::from("data"),
     };
     bridge.bridge(&msg).await;
     assert_eq!(bridge.bridged_count(), 1);

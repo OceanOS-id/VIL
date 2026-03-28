@@ -147,7 +147,9 @@ impl PluginManager {
 
     /// Enable a plugin.
     pub fn enable(&self, name: &str) -> Result<(), String> {
-        let mut state = self.states.get_mut(name)
+        let mut state = self
+            .states
+            .get_mut(name)
             .ok_or_else(|| format!("Plugin '{}' not found", name))?;
 
         let timestamp = std::time::SystemTime::now()
@@ -170,7 +172,9 @@ impl PluginManager {
 
     /// Disable a plugin.
     pub fn disable(&self, name: &str) -> Result<(), String> {
-        let mut state = self.states.get_mut(name)
+        let mut state = self
+            .states
+            .get_mut(name)
             .ok_or_else(|| format!("Plugin '{}' not found", name))?;
 
         let timestamp = std::time::SystemTime::now()
@@ -191,8 +195,14 @@ impl PluginManager {
     }
 
     /// Update plugin configuration (hot-reload).
-    pub fn update_config(&self, name: &str, new_config: serde_json::Value) -> Result<Vec<String>, String> {
-        let old_config = self.configs.get(name)
+    pub fn update_config(
+        &self,
+        name: &str,
+        new_config: serde_json::Value,
+    ) -> Result<Vec<String>, String> {
+        let old_config = self
+            .configs
+            .get(name)
             .map(|c| c.clone())
             .unwrap_or(serde_json::Value::Null);
 
@@ -265,7 +275,8 @@ impl PluginManager {
 
     /// Check if plugin is enabled.
     pub fn is_enabled(&self, name: &str) -> bool {
-        self.states.get(name)
+        self.states
+            .get(name)
             .map(|s| s.state == PluginState::Enabled)
             .unwrap_or(false)
     }
@@ -273,21 +284,30 @@ impl PluginManager {
     /// List all installed plugins with their state.
     pub fn list_plugins(&self) -> Vec<PluginSummary> {
         let registry = self.registry.read().unwrap();
-        registry.plugins.values().map(|entry| {
-            let state = self.states.get(&entry.name)
-                .map(|s| s.state.clone())
-                .unwrap_or(PluginState::Installed);
-            let manifest = self.manifests.get(&entry.name);
+        registry
+            .plugins
+            .values()
+            .map(|entry| {
+                let state = self
+                    .states
+                    .get(&entry.name)
+                    .map(|s| s.state.clone())
+                    .unwrap_or(PluginState::Installed);
+                let manifest = self.manifests.get(&entry.name);
 
-            PluginSummary {
-                name: entry.name.clone(),
-                version: entry.version.clone(),
-                plugin_type: entry.plugin_type.clone(),
-                tier: entry.tier.clone(),
-                state,
-                description: manifest.as_ref().map(|m| m.description.clone()).unwrap_or_default(),
-            }
-        }).collect()
+                PluginSummary {
+                    name: entry.name.clone(),
+                    version: entry.version.clone(),
+                    plugin_type: entry.plugin_type.clone(),
+                    tier: entry.tier.clone(),
+                    state,
+                    description: manifest
+                        .as_ref()
+                        .map(|m| m.description.clone())
+                        .unwrap_or_default(),
+                }
+            })
+            .collect()
     }
 
     /// Remove a plugin.
@@ -343,7 +363,9 @@ impl PluginManager {
                     if let Some(val) = obj.get(key) {
                         if let Some(s) = val.as_str() {
                             if !s.starts_with("ENC[") && !s.starts_with("${") {
-                                let encrypted = self.secrets.encrypt(s)
+                                let encrypted = self
+                                    .secrets
+                                    .encrypt(s)
                                     .map_err(|e| format!("Encryption failed for {}: {}", key, e))?;
                                 obj.insert(key.clone(), serde_json::json!(encrypted));
                             }

@@ -1,7 +1,7 @@
 use dashmap::DashMap;
-use std::time::Instant;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
+use std::time::Instant;
 use vil_macros::VilAiState;
 
 /// Rolling window size for error rate and latency calculations.
@@ -66,7 +66,12 @@ impl ModelHealthState {
     }
 
     fn avg_latency_ms(&self) -> f64 {
-        let latencies: Vec<u64> = self.window.iter().filter(|(e, _)| !*e).map(|(_, l)| *l).collect();
+        let latencies: Vec<u64> = self
+            .window
+            .iter()
+            .filter(|(e, _)| !*e)
+            .map(|(_, l)| *l)
+            .collect();
         if latencies.is_empty() {
             return 0.0;
         }
@@ -74,7 +79,12 @@ impl ModelHealthState {
     }
 
     fn p99_latency_ms(&self) -> u64 {
-        let mut latencies: Vec<u64> = self.window.iter().filter(|(e, _)| !*e).map(|(_, l)| *l).collect();
+        let mut latencies: Vec<u64> = self
+            .window
+            .iter()
+            .filter(|(e, _)| !*e)
+            .map(|(_, l)| *l)
+            .collect();
         if latencies.is_empty() {
             return 0;
         }
@@ -126,7 +136,10 @@ impl HealthTracker {
 
     /// Record a successful request for the given model.
     pub fn record_success(&self, model: &str, latency_ms: u64) {
-        let mut entry = self.models.entry(model.to_string()).or_insert_with(ModelHealthState::new);
+        let mut entry = self
+            .models
+            .entry(model.to_string())
+            .or_insert_with(ModelHealthState::new);
         let state = entry.value_mut();
         state.total_requests += 1;
         state.last_success = Some(Instant::now());
@@ -138,7 +151,10 @@ impl HealthTracker {
 
     /// Record a failed request for the given model.
     pub fn record_failure(&self, model: &str, _error: &str) {
-        let mut entry = self.models.entry(model.to_string()).or_insert_with(ModelHealthState::new);
+        let mut entry = self
+            .models
+            .entry(model.to_string())
+            .or_insert_with(ModelHealthState::new);
         let state = entry.value_mut();
         state.total_requests += 1;
         state.total_errors += 1;

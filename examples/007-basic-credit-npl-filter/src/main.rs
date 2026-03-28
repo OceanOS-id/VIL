@@ -118,8 +118,7 @@ fn configure_credit_source() -> HttpSourceBuilder {
 
 fn main() {
     // ── Step 1: Init Runtime ─────────────────────────────────────────────────
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // ── Step 2: Configure Nodes (Decomposed Style) ──────────────────────────
     let sink_builder = configure_webhook_sink();

@@ -51,15 +51,15 @@ pub struct MetricsBridge {
     /// OTel meter handle.
     meter: Meter,
     // Instruments
-    publishes:    Counter<u64>,
-    receives:     Counter<u64>,
-    drops:        Counter<u64>,
-    crashes:      Counter<u64>,
-    orphans:      Counter<u64>,
-    descriptors:  Counter<u64>,
-    net_pulls:    Counter<u64>,
-    failover:     Counter<u64>,
-    hops_gauge:   Gauge<u64>,
+    publishes: Counter<u64>,
+    receives: Counter<u64>,
+    drops: Counter<u64>,
+    crashes: Counter<u64>,
+    orphans: Counter<u64>,
+    descriptors: Counter<u64>,
+    net_pulls: Counter<u64>,
+    failover: Counter<u64>,
+    hops_gauge: Gauge<u64>,
 }
 
 impl MetricsBridge {
@@ -76,15 +76,15 @@ impl MetricsBridge {
         vil_log::dict::register_str(METRIC_FAILOVER);
         vil_log::dict::register_str(METRIC_HOPS);
 
-        let publishes   = meter.u64_counter(METRIC_PUBLISHES).build();
-        let receives    = meter.u64_counter(METRIC_RECEIVES).build();
-        let drops       = meter.u64_counter(METRIC_DROPS).build();
-        let crashes     = meter.u64_counter(METRIC_CRASHES).build();
-        let orphans     = meter.u64_counter(METRIC_ORPHANS).build();
+        let publishes = meter.u64_counter(METRIC_PUBLISHES).build();
+        let receives = meter.u64_counter(METRIC_RECEIVES).build();
+        let drops = meter.u64_counter(METRIC_DROPS).build();
+        let crashes = meter.u64_counter(METRIC_CRASHES).build();
+        let orphans = meter.u64_counter(METRIC_ORPHANS).build();
         let descriptors = meter.u64_counter(METRIC_DESCRIPTORS).build();
-        let net_pulls   = meter.u64_counter(METRIC_NET_PULLS).build();
-        let failover    = meter.u64_counter(METRIC_FAILOVER).build();
-        let hops_gauge  = meter.u64_gauge(METRIC_HOPS).build();
+        let net_pulls = meter.u64_counter(METRIC_NET_PULLS).build();
+        let failover = meter.u64_counter(METRIC_FAILOVER).build();
+        let hops_gauge = meter.u64_gauge(METRIC_HOPS).build();
 
         Ok(Self {
             service_name: config.service_name.clone(),

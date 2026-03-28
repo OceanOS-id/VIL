@@ -59,8 +59,18 @@ mod tests {
     #[test]
     fn report_aggregation() {
         let results = vec![
-            BenchResult { benchmark: "math".into(), score: 0.8, cases_passed: 4, cases_total: 5 },
-            BenchResult { benchmark: "logic".into(), score: 0.6, cases_passed: 3, cases_total: 5 },
+            BenchResult {
+                benchmark: "math".into(),
+                score: 0.8,
+                cases_passed: 4,
+                cases_total: 5,
+            },
+            BenchResult {
+                benchmark: "logic".into(),
+                score: 0.6,
+                cases_passed: 3,
+                cases_total: 5,
+            },
         ];
         let report = BenchReport::new(results);
         assert!((report.overall_score - 0.7).abs() < 0.01);

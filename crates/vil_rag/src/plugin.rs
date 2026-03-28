@@ -7,7 +7,6 @@ use vil_server::prelude::*;
 
 use std::sync::Arc;
 
-
 use vil_llm::{EmbeddingProvider, LlmProvider};
 
 use crate::chunk::{ChunkerStrategy, FixedChunker, MarkdownChunker, SemanticChunker};
@@ -118,7 +117,9 @@ impl VilPlugin for RagPlugin {
 
     fn register(&self, ctx: &mut PluginContext) {
         let llm = ctx.require::<Arc<dyn LlmProvider>>("llm").clone();
-        let embedder = ctx.require::<Arc<dyn EmbeddingProvider>>("embedder").clone();
+        let embedder = ctx
+            .require::<Arc<dyn EmbeddingProvider>>("embedder")
+            .clone();
 
         let store = self.build_store();
         let chunker = self.build_chunker();

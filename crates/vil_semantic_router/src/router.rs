@@ -6,8 +6,8 @@
 use crate::classifier::KeywordClassifier;
 use crate::route::Route;
 use serde::{Deserialize, Serialize};
-use vil_macros::VilAiDecision;
 use vil_log::app_log;
+use vil_macros::VilAiDecision;
 
 /// Result of routing a query.
 #[derive(Debug, Clone, Serialize, Deserialize, VilAiDecision)]
@@ -64,7 +64,10 @@ impl SemanticRouter {
     /// Falls back to `default_target` if no route matches or if no route
     /// reaches the minimum confidence threshold.
     pub fn route(&self, query: &str) -> RoutingResult {
-        match self.classifier.classify_with_threshold(query, self.min_confidence) {
+        match self
+            .classifier
+            .classify_with_threshold(query, self.min_confidence)
+        {
             Some(result) => {
                 app_log!(Debug, "semantic_router_match", { route: result.route_name.clone(), target: result.target.clone(), confidence: result.confidence });
                 RoutingResult {

@@ -175,7 +175,9 @@ impl ModelServer {
         }
 
         // Deterministic weighted selection using an atomic counter
-        let tick = self.counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let tick = self
+            .counter
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let point = (tick % 10000) as f32 / 10000.0 * total_weight;
 
         let mut cumulative = 0.0f32;

@@ -46,10 +46,10 @@
 //     -H 'Content-Type: application/json' \
 //     -d '{"amount": 15000, "merchant_category": "gambling", "country": "US"}'
 
-use vil_server::prelude::*;
-use vil_server::axum::extract::Extension;
-use vil_sidecar::{SidecarConfig, SidecarRegistry};
 use std::sync::Arc;
+use vil_server::axum::extract::Extension;
+use vil_server::prelude::*;
+use vil_sidecar::{SidecarConfig, SidecarRegistry};
 
 #[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
 struct ServerInfo {
@@ -72,10 +72,10 @@ struct FraudResult {
     model_version: String,
 }
 
-async fn index(
-    ctx: ServiceCtx,
-) -> VilResponse<ServerInfo> {
-    let registry = ctx.state::<Arc<SidecarRegistry>>().expect("SidecarRegistry");
+async fn index(ctx: ServiceCtx) -> VilResponse<ServerInfo> {
+    let registry = ctx
+        .state::<Arc<SidecarRegistry>>()
+        .expect("SidecarRegistry");
     let sidecars = registry
         .status_list()
         .into_iter()
@@ -92,10 +92,10 @@ async fn index(
     })
 }
 
-async fn fraud_status(
-    ctx: ServiceCtx,
-) -> VilResponse<SidecarStatus> {
-    let registry = ctx.state::<Arc<SidecarRegistry>>().expect("SidecarRegistry");
+async fn fraud_status(ctx: ServiceCtx) -> VilResponse<SidecarStatus> {
+    let registry = ctx
+        .state::<Arc<SidecarRegistry>>()
+        .expect("SidecarRegistry");
     let health = registry
         .get("fraud-checker")
         .map(|e| e.health.to_string())
@@ -112,7 +112,9 @@ async fn fraud_check(
     body: ShmSlice,
 ) -> Result<VilResponse<FraudResult>, VilError> {
     let _body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
-    let registry = ctx.state::<Arc<SidecarRegistry>>().expect("SidecarRegistry");
+    let registry = ctx
+        .state::<Arc<SidecarRegistry>>()
+        .expect("SidecarRegistry");
     // In full integration, this would use:
     //   dispatcher::invoke(&registry, "fraud-checker", "fraud_check", &data).await
     //
@@ -124,10 +126,15 @@ async fn fraud_check(
 
     if health == "healthy" {
         // Would invoke sidecar here
-        Err(VilError::internal("sidecar invoke not yet wired in example"))
+        Err(VilError::internal(
+            "sidecar invoke not yet wired in example",
+        ))
     } else {
         // Return fallback response when sidecar not connected
-        let amount = _body_json.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+        let amount = _body_json
+            .get("amount")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0);
         let score = if amount > 10000.0 { 0.8 } else { 0.2 };
 
         Ok(VilResponse::ok(FraudResult {
@@ -162,9 +169,11 @@ async fn main() {
 
     VilApp::new("sidecar-python-example")
         .port(8080)
-        .sidecar(SidecarConfig::new("fraud-checker")
-            .command("python examples-sdk/sidecar/python/fraud_checker.py")
-            .timeout(30000))
+        .sidecar(
+            SidecarConfig::new("fraud-checker")
+                .command("python examples-sdk/sidecar/python/fraud_checker.py")
+                .timeout(30000),
+        )
         .service(root_svc)
         .service(fraud_svc)
         .run()

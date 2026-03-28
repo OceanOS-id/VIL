@@ -51,9 +51,9 @@ impl WorkflowScheduler {
             let mut handles = Vec::new();
             for task_id in layer {
                 let task = task_map[task_id].clone();
-                handles.push(tokio::spawn(async move {
-                    executor::execute_task(&task).await
-                }));
+                handles.push(tokio::spawn(
+                    async move { executor::execute_task(&task).await },
+                ));
             }
 
             for handle in handles {

@@ -72,10 +72,10 @@ impl Vocabulary {
     }
 
     fn from_json_file(path: &str) -> Result<Self, VocabError> {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| VocabError::LoadFailed(e.to_string()))?;
-        let map: HashMap<String, u32> = serde_json::from_str(&content)
-            .map_err(|e| VocabError::ParseFailed(e.to_string()))?;
+        let content =
+            std::fs::read_to_string(path).map_err(|e| VocabError::LoadFailed(e.to_string()))?;
+        let map: HashMap<String, u32> =
+            serde_json::from_str(&content).map_err(|e| VocabError::ParseFailed(e.to_string()))?;
 
         let mut encoder = HashMap::new();
         let mut decoder = HashMap::new();
@@ -85,12 +85,16 @@ impl Vocabulary {
             decoder.insert(*rank, bytes);
         }
 
-        Ok(Self { size: encoder.len(), encoder, decoder })
+        Ok(Self {
+            size: encoder.len(),
+            encoder,
+            decoder,
+        })
     }
 
     fn from_bytes(data: &[u8]) -> Result<Self, VocabError> {
-        let map: HashMap<String, u32> = serde_json::from_slice(data)
-            .map_err(|e| VocabError::ParseFailed(e.to_string()))?;
+        let map: HashMap<String, u32> =
+            serde_json::from_slice(data).map_err(|e| VocabError::ParseFailed(e.to_string()))?;
 
         let mut encoder = HashMap::new();
         let mut decoder = HashMap::new();
@@ -100,7 +104,11 @@ impl Vocabulary {
             decoder.insert(*rank, bytes);
         }
 
-        Ok(Self { size: encoder.len(), encoder, decoder })
+        Ok(Self {
+            size: encoder.len(),
+            encoder,
+            decoder,
+        })
     }
 
     pub fn encode_token(&self, bytes: &[u8]) -> Option<u32> {
@@ -111,11 +119,14 @@ impl Vocabulary {
         self.decoder.get(&id).map(|v| v.as_slice())
     }
 
-    pub fn size(&self) -> usize { self.size }
+    pub fn size(&self) -> usize {
+        self.size
+    }
 
     /// Get the average chars-per-token ratio (for estimation).
     pub fn chars_per_token_ratio(&self) -> f64 {
-        self.encoder.get(b"__ratio__".as_slice())
+        self.encoder
+            .get(b"__ratio__".as_slice())
             .map(|r| *r as f64 / 100.0)
             .unwrap_or(4.0)
     }

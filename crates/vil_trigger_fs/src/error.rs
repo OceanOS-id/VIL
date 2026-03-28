@@ -40,12 +40,10 @@ impl From<FsFault> for vil_trigger_core::TriggerFault {
                     os_code: 0,
                 }
             }
-            FsFault::TaskCancelled { .. } => {
-                vil_trigger_core::TriggerFault::IoError {
-                    kind_hash: vil_log::dict::register_str("fs"),
-                    os_code: 1,
-                }
-            }
+            FsFault::TaskCancelled { .. } => vil_trigger_core::TriggerFault::IoError {
+                kind_hash: vil_log::dict::register_str("fs"),
+                os_code: 1,
+            },
         }
     }
 }

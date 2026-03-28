@@ -62,11 +62,11 @@ impl OpcUaFault {
     pub fn as_error_code(&self) -> u8 {
         match self {
             OpcUaFault::ConnectionFailed { .. } => 1,
-            OpcUaFault::ReadFailed { .. }       => 2,
-            OpcUaFault::WriteFailed { .. }      => 3,
-            OpcUaFault::SubscribeFailed { .. }  => 4,
-            OpcUaFault::SessionExpired { .. }   => 5,
-            OpcUaFault::Timeout { .. }          => 6,
+            OpcUaFault::ReadFailed { .. } => 2,
+            OpcUaFault::WriteFailed { .. } => 3,
+            OpcUaFault::SubscribeFailed { .. } => 4,
+            OpcUaFault::SessionExpired { .. } => 5,
+            OpcUaFault::Timeout { .. } => 6,
         }
     }
 }

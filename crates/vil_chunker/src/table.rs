@@ -1,4 +1,4 @@
-use crate::strategy::{ChunkMeta, ChunkStrategy, ChunkType, TextChunk, estimate_tokens};
+use crate::strategy::{estimate_tokens, ChunkMeta, ChunkStrategy, ChunkType, TextChunk};
 
 /// Table / CSV row chunker.
 ///

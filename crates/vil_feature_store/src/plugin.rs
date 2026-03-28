@@ -12,7 +12,9 @@ pub struct FeatureStorePlugin {
 
 impl FeatureStorePlugin {
     pub fn new() -> Self {
-        Self { store: Arc::new(FeatureStore::new()) }
+        Self {
+            store: Arc::new(FeatureStore::new()),
+        }
     }
     pub fn with_store(store: Arc<FeatureStore>) -> Self {
         Self { store }
@@ -20,13 +22,21 @@ impl FeatureStorePlugin {
 }
 
 impl Default for FeatureStorePlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for FeatureStorePlugin {
-    fn id(&self) -> &str { "vil-feature-store" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Online/offline feature serving with TTL" }
+    fn id(&self) -> &str {
+        "vil-feature-store"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Online/offline feature serving with TTL"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -50,5 +60,7 @@ impl VilPlugin for FeatureStorePlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

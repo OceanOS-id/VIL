@@ -27,8 +27,8 @@
 //         references -> build structured citations array with title, snippet,
 //         relevance -> return { answer, citations[] }
 
+use vil_rag::semantic::{RagFault, RagIndexState, RagIngestEvent, RagQueryEvent};
 use vil_server::prelude::*;
-use vil_rag::semantic::{RagQueryEvent, RagIngestEvent, RagFault, RagIndexState};
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -190,7 +190,7 @@ fn extract_citations(llm_text: &str) -> Vec<Citation> {
 /// Research query — natural language question about legal/academic content
 #[derive(Debug, Deserialize)]
 struct CitedRagRequest {
-    prompt: String,   // e.g., "What are the termination conditions in this contract?"
+    prompt: String, // e.g., "What are the termination conditions in this contract?"
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, VilModel)]
@@ -212,12 +212,19 @@ struct CitedRagResponse {
 
 /// POST /api/legal — research query with citation extraction from legal corpus
 async fn cited_rag_handler(
-    ctx: ServiceCtx, body: ShmSlice,
+    ctx: ServiceCtx,
+    body: ShmSlice,
 ) -> HandlerResult<VilResponse<CitedRagResponse>> {
     let req: CitedRagRequest = body.json().expect("invalid JSON body");
     // Step 1: Build context from all indexed legal document sections
-    let context: String = LEGAL_DOCS.iter()
-        .map(|d| format!("[{}] Section {} — {}: {}", d.id, d.section, d.title, d.content))
+    let context: String = LEGAL_DOCS
+        .iter()
+        .map(|d| {
+            format!(
+                "[{}] Section {} — {}: {}",
+                d.id, d.section, d.title, d.content
+            )
+        })
         .collect::<Vec<_>>()
         .join("\n\n");
 
@@ -251,7 +258,9 @@ async fn cited_rag_handler(
         collector = collector.bearer_token(&api_key);
     }
 
-    let answer = collector.collect_text().await
+    let answer = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Step 2: POST-PROCESS — extract citations from LLM output
@@ -300,7 +309,14 @@ async fn main() {
     println!("  Legal docs indexed: {} clauses", LEGAL_DOCS.len());
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
     // Display authentication mode (API key vs simulator)
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     // Display the endpoint URL for this service
     println!("  Listening on http://localhost:3113/api/cited-rag");
     // Display the upstream data source URL

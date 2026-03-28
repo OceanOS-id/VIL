@@ -9,9 +9,15 @@ use vil_macros::{VilAiEvent, VilAiFault, VilAiState};
 #[derive(Debug, Clone, Serialize, Deserialize, VilAiEvent)]
 pub enum MultiAgentEvent {
     /// The orchestrator started a run.
-    RunStarted { initial_query: String, agent_count: usize },
+    RunStarted {
+        initial_query: String,
+        agent_count: usize,
+    },
     /// An individual agent completed its task.
-    AgentCompleted { agent_name: String, output_len: usize },
+    AgentCompleted {
+        agent_name: String,
+        output_len: usize,
+    },
     /// A message was passed between agents.
     MessagePassed { from: String, to: String },
     /// The orchestrator completed a full run.

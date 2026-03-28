@@ -2,7 +2,8 @@ use vil_sdk::prelude::*;
 
 pub fn trace_sink(port: u16, path: &str) -> HttpSinkBuilder {
     HttpSinkBuilder::new("TraceSink")
-        .port(port).path(path)
+        .port(port)
+        .path(path)
         .out_port("trigger_out")
         .in_port("response_data_in")
         .ctrl_in_port("response_ctrl_in")

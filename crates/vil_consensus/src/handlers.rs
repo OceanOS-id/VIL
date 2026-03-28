@@ -11,10 +11,10 @@ pub struct StatsResponseBody {
     pub description: String,
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<StatsResponseBody> {
-    let engine = ctx.state::<Arc<ConsensusEngine>>().expect("ConsensusEngine");
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<StatsResponseBody> {
+    let engine = ctx
+        .state::<Arc<ConsensusEngine>>()
+        .expect("ConsensusEngine");
     VilResponse::ok(StatsResponseBody {
         provider_count: engine.provider_count(),
         strategy: engine.strategy_name(),

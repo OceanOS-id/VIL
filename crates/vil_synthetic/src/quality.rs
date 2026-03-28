@@ -33,7 +33,11 @@ impl QualityChecker {
         }
 
         // Length score
-        let length_score = if text.len() >= self.min_length { 1.0 } else { text.len() as f64 / self.min_length as f64 };
+        let length_score = if text.len() >= self.min_length {
+            1.0
+        } else {
+            text.len() as f64 / self.min_length as f64
+        };
 
         // Diversity score — not too similar to any seed
         let diversity_score = if seed_texts.is_empty() {
@@ -51,8 +55,8 @@ impl QualityChecker {
         };
 
         // Coherence heuristic — has words, not just symbols
-        let alnum_ratio = text.chars().filter(|c| c.is_alphanumeric()).count() as f64
-            / text.len() as f64;
+        let alnum_ratio =
+            text.chars().filter(|c| c.is_alphanumeric()).count() as f64 / text.len() as f64;
         let coherence_score = alnum_ratio.min(1.0);
 
         (length_score * 0.3 + diversity_score * 0.4 + coherence_score * 0.3).min(1.0)
@@ -72,7 +76,11 @@ fn jaccard_similarity(a: &str, b: &str) -> f64 {
     }
     let intersection = set_a.intersection(&set_b).count() as f64;
     let union = set_a.union(&set_b).count() as f64;
-    if union == 0.0 { 1.0 } else { intersection / union }
+    if union == 0.0 {
+        1.0
+    } else {
+        intersection / union
+    }
 }
 
 #[cfg(test)]
@@ -82,7 +90,10 @@ mod tests {
     #[test]
     fn quality_score_good_text() {
         let qc = QualityChecker::default();
-        let score = qc.score("This is a well-formed synthetic example with good content.", &[]);
+        let score = qc.score(
+            "This is a well-formed synthetic example with good content.",
+            &[],
+        );
         assert!(score > 0.5);
     }
 

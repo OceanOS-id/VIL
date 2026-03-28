@@ -43,8 +43,8 @@ use vil_server::prelude::*;
 // enable automated alerting when probe responses indicate issues.
 #[vil_fault]
 pub enum ApiFault {
-    InvalidInput,   // Malformed health check payload
-    NotFound,       // Requested probe endpoint doesn't exist
+    InvalidInput, // Malformed health check payload
+    NotFound,     // Requested probe endpoint doesn't exist
 }
 
 // Echo response for deep health checks. Monitoring systems POST a

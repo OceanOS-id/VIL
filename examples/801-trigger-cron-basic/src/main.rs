@@ -13,14 +13,14 @@
 // No external services required.
 // =============================================================================
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 
 use vil_log::drain::{StdoutDrain, StdoutFormat};
 use vil_log::runtime::init_logging;
 use vil_log::{LogConfig, LogLevel};
 use vil_trigger_core::{EventCallback, TriggerEvent, TriggerSource};
-use vil_trigger_cron::{CronConfig, create_cron_trigger};
+use vil_trigger_cron::{create_cron_trigger, CronConfig};
 
 /// Number of cron fires to collect before stopping.
 const FIRE_COUNT: u32 = 3;
@@ -29,11 +29,11 @@ const FIRE_COUNT: u32 = 3;
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let log_config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -50,7 +50,7 @@ async fn main() {
 
     let (trigger, mut rx) = match create_cron_trigger(cron_cfg) {
         Ok(pair) => pair,
-        Err(e)   => {
+        Err(e) => {
             println!("  [ERROR] Invalid cron schedule: {:?}", e);
             return;
         }
@@ -63,10 +63,9 @@ async fn main() {
     // Callback prints each TriggerEvent as it fires
     let on_event: EventCallback = Arc::new(move |event: TriggerEvent| {
         let n = fires_cb.fetch_add(1, Ordering::Relaxed) + 1;
-        println!("  FIRE #{n}  seq={}  ts_ns={}  kind_hash={:#010x}",
-            event.sequence,
-            event.timestamp_ns,
-            event.kind_hash,
+        println!(
+            "  FIRE #{n}  seq={}  ts_ns={}  kind_hash={:#010x}",
+            event.sequence, event.timestamp_ns, event.kind_hash,
         );
     });
 
@@ -80,20 +79,22 @@ async fn main() {
         }
     });
 
-    println!("  Waiting for {} cron fires (every 5 seconds)...", FIRE_COUNT);
+    println!(
+        "  Waiting for {} cron fires (every 5 seconds)...",
+        FIRE_COUNT
+    );
     println!();
 
     // Drain the mpsc receiver channel — TriggerEvents also flow here
     let mut received = 0u32;
     while received < FIRE_COUNT {
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(30),
-            rx.recv(),
-        ).await {
+        match tokio::time::timeout(std::time::Duration::from_secs(30), rx.recv()).await {
             Ok(Some(event)) => {
                 received += 1;
-                println!("  RECV  seq={}  payload_bytes={}  op={}",
-                    event.sequence, event.payload_bytes, event.op);
+                println!(
+                    "  RECV  seq={}  payload_bytes={}  op={}",
+                    event.sequence, event.payload_bytes, event.op
+                );
                 if received >= FIRE_COUNT {
                     break;
                 }
@@ -117,6 +118,9 @@ async fn main() {
     // Allow drain to flush
     tokio::time::sleep(std::time::Duration::from_millis(200)).await;
     println!();
-    println!("  Done. {} fires collected. mq_log! entries emitted above.", received);
+    println!(
+        "  Done. {} fires collected. mq_log! entries emitted above.",
+        received
+    );
     println!();
 }

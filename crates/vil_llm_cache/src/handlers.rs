@@ -1,7 +1,7 @@
 use vil_server::prelude::*;
 
+use crate::{CacheStats, SemanticCache};
 use std::sync::Arc;
-use crate::{SemanticCache, CacheStats};
 
 #[derive(Debug, Serialize)]
 pub struct CacheStatsResponseBody {
@@ -9,9 +9,7 @@ pub struct CacheStatsResponseBody {
     pub version: String,
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<CacheStatsResponseBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<CacheStatsResponseBody>> {
     let cache = ctx.state::<Arc<SemanticCache>>().expect("SemanticCache");
     let stats = cache.stats();
     Ok(VilResponse::ok(CacheStatsResponseBody {

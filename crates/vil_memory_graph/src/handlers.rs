@@ -1,6 +1,6 @@
-use vil_server::prelude::*;
-use std::sync::Arc;
 use crate::graph::MemoryGraph;
+use std::sync::Arc;
+use vil_server::prelude::*;
 
 #[derive(Debug, Deserialize)]
 pub struct QueryRequest {
@@ -32,21 +32,27 @@ pub async fn query_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<QueryResponseBody>> {
     let graph = ctx.state::<Arc<MemoryGraph>>()?;
-    let req: QueryRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: QueryRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     let top_k = req.top_k.unwrap_or(10);
     let results = graph.recall(&req.query, top_k);
-    let hits: Vec<EntityHit> = results.iter().map(|e| EntityHit {
-        id: e.id,
-        name: e.name.clone(),
-        entity_type: format!("{:?}", e.entity_type),
-    }).collect();
+    let hits: Vec<EntityHit> = results
+        .iter()
+        .map(|e| EntityHit {
+            id: e.id,
+            name: e.name.clone(),
+            entity_type: format!("{:?}", e.entity_type),
+        })
+        .collect();
     let count = hits.len();
-    Ok(VilResponse::ok(QueryResponseBody { results: hits, count }))
+    Ok(VilResponse::ok(QueryResponseBody {
+        results: hits,
+        count,
+    }))
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<StatsResponseBody> {
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<StatsResponseBody> {
     let graph = ctx.state::<Arc<MemoryGraph>>().expect("MemoryGraph");
     VilResponse::ok(StatsResponseBody {
         entity_count: graph.entity_count(),

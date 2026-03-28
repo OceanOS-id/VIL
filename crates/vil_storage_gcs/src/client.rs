@@ -30,11 +30,11 @@ use crate::config::GcsConfig;
 use crate::error::GcsFault;
 
 // op_type constants
-const OP_GET: u8 = 0;    // SELECT — download
-const OP_PUT: u8 = 1;    // INSERT — upload
+const OP_GET: u8 = 0; // SELECT — download
+const OP_PUT: u8 = 1; // INSERT — upload
 const OP_DELETE: u8 = 3; // DELETE — delete
-const OP_LIST: u8 = 0;   // SELECT — list
-const OP_HEAD: u8 = 0;   // SELECT — get_metadata
+const OP_LIST: u8 = 0; // SELECT — list
+const OP_HEAD: u8 = 0; // SELECT — get_metadata
 
 // =============================================================================
 // Result types
@@ -84,13 +84,14 @@ impl GcsClient {
     pub async fn new(config: GcsConfig) -> Result<Self, GcsFault> {
         let config_hash = register_str(&config.bucket);
 
-        let gcs_config = ClientConfig::default()
-            .with_auth()
-            .await
-            .map_err(|e| GcsFault::ConnectionFailed {
-                endpoint_hash: register_str(&e.to_string()),
-                reason_code: 0,
-            })?;
+        let gcs_config =
+            ClientConfig::default()
+                .with_auth()
+                .await
+                .map_err(|e| GcsFault::ConnectionFailed {
+                    endpoint_hash: register_str(&e.to_string()),
+                    reason_code: 0,
+                })?;
 
         let inner = Client::new(gcs_config);
 
@@ -128,16 +129,19 @@ impl GcsClient {
 
         match result {
             Ok(obj) => {
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_PUT,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_PUT,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(GcsUploadResult {
                     generation: Some(obj.generation),
@@ -147,16 +151,19 @@ impl GcsClient {
             Err(e) => {
                 let fault = classify_error(&e, name_hash, Some(size));
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_PUT,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_PUT,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -188,32 +195,38 @@ impl GcsClient {
 
         match result {
             Ok(data) => {
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_GET,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_GET,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(Bytes::from(data))
             }
             Err(e) => {
                 let fault = classify_error(&e, name_hash, None);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_GET,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_GET,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -242,32 +255,38 @@ impl GcsClient {
 
         match result {
             Ok(_) => {
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_DELETE,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_DELETE,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(())
             }
             Err(e) => {
                 let fault = classify_error(&e, name_hash, None);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_DELETE,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_DELETE,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -310,32 +329,38 @@ impl GcsClient {
 
                 let count = objects.len() as u32;
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    prefix_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: count,
-                    op_type:       OP_LIST,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: prefix_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: count,
+                        op_type: OP_LIST,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(objects)
             }
             Err(e) => {
                 let fault = classify_error(&e, register_str(&self.bucket), None);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    prefix_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_LIST,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: prefix_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_LIST,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -371,32 +396,38 @@ impl GcsClient {
                     content_type: obj.content_type,
                 };
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_HEAD,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_HEAD,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(meta)
             }
             Err(e) => {
                 let fault = classify_error(&e, name_hash, None);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_HEAD,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_HEAD,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -419,21 +450,19 @@ fn classify_error(
             endpoint_hash: register_str("gcs"),
             reason_code: 0,
         },
-        Error::Response(status) => {
-            match status.code {
-                401 | 403 => GcsFault::AccessDenied { name_hash },
-                404 => GcsFault::NotFound { name_hash },
-                _ => {
-                    if let Some(s) = size {
-                        GcsFault::UploadFailed { name_hash, size: s }
-                    } else {
-                        GcsFault::Unknown {
-                            message_hash: register_str("gcs_response_error"),
-                        }
+        Error::Response(status) => match status.code {
+            401 | 403 => GcsFault::AccessDenied { name_hash },
+            404 => GcsFault::NotFound { name_hash },
+            _ => {
+                if let Some(s) = size {
+                    GcsFault::UploadFailed { name_hash, size: s }
+                } else {
+                    GcsFault::Unknown {
+                        message_hash: register_str("gcs_response_error"),
                     }
                 }
             }
-        }
+        },
         Error::TokenSource(_) => GcsFault::AccessDenied { name_hash },
         _ => GcsFault::Unknown {
             message_hash: register_str("gcs_error"),

@@ -12,18 +12,16 @@
 // =============================================================================
 
 pub mod builder;
-pub mod core;
 pub mod contract;
+pub mod core;
 
-pub use builder::{
-    InterfaceBuilder, MessageBuilder, PortBuilder, ProcessBuilder, WorkflowBuilder,
+pub use builder::{InterfaceBuilder, MessageBuilder, PortBuilder, ProcessBuilder, WorkflowBuilder};
+pub use contract::{
+    ExecutionContract, FailoverEntry, LaneEntry, ObservabilityEntry, ProcessSummary, TrustProfile,
 };
 pub use core::{
-    FieldIR, InterfaceIR, MessageIR, PortIR, ProcessIR, QueueIR, RouteIR, TypeRefIR, WorkflowIR,
-    OwnershipState, TransferExprIR, OwnershipTransitionIR,
-};
-pub use contract::{
-    ExecutionContract, TrustProfile, LaneEntry, FailoverEntry, ObservabilityEntry, ProcessSummary,
+    FieldIR, InterfaceIR, MessageIR, OwnershipState, OwnershipTransitionIR, PortIR, ProcessIR,
+    QueueIR, RouteIR, TransferExprIR, TypeRefIR, WorkflowIR,
 };
 
 #[cfg(test)]

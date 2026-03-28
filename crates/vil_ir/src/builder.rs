@@ -8,8 +8,9 @@
 
 use crate::core::{InterfaceIR, MessageIR, PortIR, ProcessIR, QueueIR, RouteIR, WorkflowIR};
 use vil_types::{
-    BackpressurePolicy, BoundaryKind, CleanupPolicy, DeliveryGuarantee, ExecClass, LatencyClass,
-    LaneKind, LayoutProfile, PortDirection, Priority, QueueKind, ReactiveInterfaceKind, TransferMode,
+    BackpressurePolicy, BoundaryKind, CleanupPolicy, DeliveryGuarantee, ExecClass, LaneKind,
+    LatencyClass, LayoutProfile, PortDirection, Priority, QueueKind, ReactiveInterfaceKind,
+    TransferMode,
 };
 
 /// Primary builder for assembling a complete `WorkflowIR`.
@@ -43,7 +44,13 @@ impl WorkflowBuilder {
     /// Add a host to the topology
     pub fn add_host(mut self, name: impl Into<String>, address: impl Into<String>) -> Self {
         let n: String = name.into();
-        self.ir.hosts.insert(n.clone(), crate::core::HostIR { name: n, address: address.into() });
+        self.ir.hosts.insert(
+            n.clone(),
+            crate::core::HostIR {
+                name: n,
+                address: address.into(),
+            },
+        );
         self
     }
 
@@ -82,7 +89,14 @@ impl WorkflowBuilder {
         to_port: impl Into<String>,
         transfer_mode: TransferMode,
     ) -> Self {
-        self.route_ext(from_process, from_port, to_process, to_port, transfer_mode, None)
+        self.route_ext(
+            from_process,
+            from_port,
+            to_process,
+            to_port,
+            transfer_mode,
+            None,
+        )
     }
 
     pub fn route_ext(
@@ -96,10 +110,13 @@ impl WorkflowBuilder {
     ) -> Self {
         let from_process = from_process.into();
         let to_process = to_process.into();
-        
+
         // Auto-resolve Scope
         let mut scope = crate::core::RouteScope::Local;
-        if let (Some(fp), Some(tp)) = (self.ir.processes.get(&from_process), self.ir.processes.get(&to_process)) {
+        if let (Some(fp), Some(tp)) = (
+            self.ir.processes.get(&from_process),
+            self.ir.processes.get(&to_process),
+        ) {
             match (&fp.host_affinity, &tp.host_affinity) {
                 (Some(fh), Some(th)) if fh != th => {
                     scope = crate::core::RouteScope::Remote;
@@ -133,7 +150,10 @@ impl WorkflowBuilder {
         let mut transfers = Vec::new();
         for (i, route) in self.ir.routes.iter().enumerate() {
             // Find message name from the source port
-            let msg_name = self.ir.interfaces.values()
+            let msg_name = self
+                .ir
+                .interfaces
+                .values()
                 .flat_map(|iface| iface.ports.values())
                 .find(|p| p.name == route.from_port)
                 .map(|p| p.message_name.clone())
@@ -148,9 +168,10 @@ impl WorkflowBuilder {
             ];
 
             transfers.push(crate::core::TransferExprIR {
-                name: format!("transfer_{}_{}_to_{}_{}", 
-                    route.from_process, route.from_port,
-                    route.to_process, route.to_port),
+                name: format!(
+                    "transfer_{}_{}_to_{}_{}",
+                    route.from_process, route.from_port, route.to_process, route.to_port
+                ),
                 from_process: route.from_process.clone(),
                 from_port: route.from_port.clone(),
                 to_process: route.to_process.clone(),

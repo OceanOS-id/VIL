@@ -25,11 +25,11 @@ pub fn generate_messages(ir: &WorkflowIR) -> TokenStream {
         // or let the developer define actual structs via derive macros.
         // Codegen generates MessageContract implementations for structs
         // previously defined by `#[vil::message]`.
-        
+
         // Output a blanket implementation for `MessageContract`
         // wrapping the architecture's meta information.
         let name_str = name.clone();
-        
+
         // The `#[vil::message]` proc-macro in `vil_macros` emits the Rust
         // struct, while this Workflow Codegen injects the Meta Contract
         // according to workflow topology.

@@ -39,10 +39,10 @@ pub use config::ai_platform_routes;
 pub use route::Route;
 pub use router::{RoutingResult, SemanticRouter, SemanticRouterBuilder};
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::SemanticRouterPlugin;
 pub use semantic::{RouteEvent, RouteFault, RouterState};
@@ -112,9 +112,7 @@ mod tests {
     // ---------------------------------------------------------------
     #[test]
     fn test_classify_no_match() {
-        let routes = vec![
-            Route::new("math", "calculator").keywords(&["calculate", "math"]),
-        ];
+        let routes = vec![Route::new("math", "calculator").keywords(&["calculate", "math"])];
         let classifier = KeywordClassifier::new(routes);
 
         let result = classifier.classify("tell me a joke");
@@ -126,9 +124,12 @@ mod tests {
     // ---------------------------------------------------------------
     #[test]
     fn test_confidence_scoring() {
-        let routes = vec![
-            Route::new("math", "calculator").keywords(&["calculate", "math", "sum", "multiply"]),
-        ];
+        let routes = vec![Route::new("math", "calculator").keywords(&[
+            "calculate",
+            "math",
+            "sum",
+            "multiply",
+        ])];
         let classifier = KeywordClassifier::new(routes);
 
         // 1 out of 4 keywords => 0.25
@@ -260,10 +261,13 @@ mod tests {
     #[test]
     fn test_min_confidence_threshold_on_router() {
         let router = SemanticRouter::builder("general-llm")
-            .route(
-                Route::new("math", "calculator")
-                    .keywords(&["calculate", "math", "sum", "multiply", "divide"]),
-            )
+            .route(Route::new("math", "calculator").keywords(&[
+                "calculate",
+                "math",
+                "sum",
+                "multiply",
+                "divide",
+            ]))
             .min_confidence(0.5)
             .build();
 

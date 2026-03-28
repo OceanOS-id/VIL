@@ -1,8 +1,8 @@
+use crate::reranker::{RerankCandidate, RerankError, RerankResult, Reranker};
 use async_trait::async_trait;
 use std::sync::Arc;
-use vil_embedder::EmbedProvider;
 use vil_embedder::similarity::cosine_similarity;
-use crate::reranker::{RerankCandidate, RerankError, RerankResult, Reranker};
+use vil_embedder::EmbedProvider;
 
 /// Simulated cross-encoder reranker.
 ///
@@ -61,7 +61,11 @@ impl Reranker for CrossEncoderReranker {
             })
             .collect();
 
-        scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        scored.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         scored.truncate(top_k);
 
         for (i, r) in scored.iter_mut().enumerate() {
@@ -112,11 +116,22 @@ mod tests {
         let reranker = CrossEncoderReranker::new(embedder);
 
         let candidates = vec![
-            RerankCandidate { id: "a".into(), text: "hello world".into(), initial_score: 0.5 },
-            RerankCandidate { id: "b".into(), text: "goodbye moon".into(), initial_score: 0.5 },
+            RerankCandidate {
+                id: "a".into(),
+                text: "hello world".into(),
+                initial_score: 0.5,
+            },
+            RerankCandidate {
+                id: "b".into(),
+                text: "goodbye moon".into(),
+                initial_score: 0.5,
+            },
         ];
 
-        let results = reranker.rerank("hello world", &candidates, 10).await.unwrap();
+        let results = reranker
+            .rerank("hello world", &candidates, 10)
+            .await
+            .unwrap();
         assert_eq!(results.len(), 2);
         // The candidate with text identical to the query should rank higher.
         assert_eq!(results[0].id, "a");

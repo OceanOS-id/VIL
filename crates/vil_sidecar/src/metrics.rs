@@ -38,7 +38,8 @@ impl SidecarMetrics {
     /// Record a successful invocation with latency.
     pub fn invoke_ok(&self, latency_us: u64) {
         self.in_flight.fetch_sub(1, Ordering::Relaxed);
-        self.total_latency_us.fetch_add(latency_us, Ordering::Relaxed);
+        self.total_latency_us
+            .fetch_add(latency_us, Ordering::Relaxed);
     }
 
     /// Record a failed invocation.
@@ -95,12 +96,18 @@ impl SidecarMetrics {
              vil_sidecar_in_flight{{sidecar=\"{}\"}} {}\n\
              vil_sidecar_avg_latency_us{{sidecar=\"{}\"}} {}\n\
              vil_sidecar_health_failures{{sidecar=\"{}\"}} {}\n",
-            name, s.invocations,
-            name, s.errors,
-            name, s.timeouts,
-            name, s.in_flight,
-            name, s.avg_latency_us,
-            name, s.health_failures,
+            name,
+            s.invocations,
+            name,
+            s.errors,
+            name,
+            s.timeouts,
+            name,
+            s.in_flight,
+            name,
+            s.avg_latency_us,
+            name,
+            s.health_failures,
         )
     }
 }

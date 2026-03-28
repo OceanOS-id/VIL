@@ -50,7 +50,8 @@ impl PromptBuilder {
 
     /// Add a custom named section to the prompt.
     pub fn section(mut self, name: &str, content: &str) -> Self {
-        self.custom_sections.push((name.to_string(), content.to_string()));
+        self.custom_sections
+            .push((name.to_string(), content.to_string()));
         self
     }
 

@@ -282,7 +282,12 @@ mod tests {
     #[test]
     fn ttl_expiry() {
         let cache = SemanticCache::new(make_config(100, 0)); // TTL = 0ms, expires immediately
-        cache.put("hello", Some(vec![1.0, 0.0]), "world".into(), "gpt-4".into());
+        cache.put(
+            "hello",
+            Some(vec![1.0, 0.0]),
+            "world".into(),
+            "gpt-4".into(),
+        );
 
         // Entries should be expired
         std::thread::sleep(std::time::Duration::from_millis(5));
@@ -306,7 +311,7 @@ mod tests {
     fn stats_tracking() {
         let cache = SemanticCache::new(make_config(100, 60_000));
         cache.put("q", None, "a".into(), "m".into());
-        cache.get_exact("q");   // hit
+        cache.get_exact("q"); // hit
         cache.get_exact("missing"); // miss
 
         let s = cache.stats();

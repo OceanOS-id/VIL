@@ -33,8 +33,8 @@
 use std::sync::Arc;
 use vil_sdk::prelude::*;
 
-use vil_llm::semantic::{LlmResponseEvent, LlmFault, LlmUsageState};
 use vil_llm::pipeline;
+use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 
 // ── Semantic Types ────────────────────────────────────────────────────
 
@@ -105,7 +105,10 @@ fn split_into_chunks(text: &str, max_size: usize) -> Vec<String> {
             let end = std::cmp::min(start + max_size, text.len());
             // Find last space before end
             let split_at = if end < text.len() {
-                text[start..end].rfind(' ').map(|p| start + p + 1).unwrap_or(end)
+                text[start..end]
+                    .rfind(' ')
+                    .map(|p| start + p + 1)
+                    .unwrap_or(end)
             } else {
                 end
             };
@@ -124,10 +127,7 @@ fn split_into_chunks(text: &str, max_size: usize) -> Vec<String> {
 // This approach handles documents that exceed LLM context windows.
 
 fn main() {
-    let world = Arc::new(
-        VastarRuntimeWorld::new_shared()
-            .expect("Failed to init VIL SHM Runtime"),
-    );
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // Sink: receives webhook POST with { "text": "...", "max_chunk_size": N }
     let sink_builder = pipeline::chat_sink(WEBHOOK_PORT, WEBHOOK_PATH);
@@ -139,7 +139,8 @@ fn main() {
     let source_summarize = source_summarize.transform(|payload: &[u8]| {
         let req: serde_json::Value = serde_json::from_slice(payload).ok()?;
         let text = req.get("text").and_then(|v| v.as_str()).unwrap_or("");
-        let max_chunk = req.get("max_chunk_size")
+        let max_chunk = req
+            .get("max_chunk_size")
             .and_then(|v| v.as_u64())
             .map(|v| v as usize)
             .unwrap_or(DEFAULT_MAX_CHUNK);
@@ -147,7 +148,9 @@ fn main() {
         let chunks = split_into_chunks(text, max_chunk);
         let chunk_count = chunks.len();
 
-        let chunk_list: String = chunks.iter().enumerate()
+        let chunk_list: String = chunks
+            .iter()
+            .enumerate()
             .map(|(i, c)| format!("--- Chunk {}/{} ---\n{}", i + 1, chunk_count, c))
             .collect::<Vec<_>>()
             .join("\n\n");
@@ -159,22 +162,22 @@ fn main() {
             chunk_count, chunk_list
         );
 
-            // Build OpenAI chat completion request body
-            let body = serde_json::json!({
-                "model": "gpt-4",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are a document summarizer. For each chunk, \
-                                    provide a brief summary. Then provide a final \
-                                    MERGED SUMMARY combining all chunk summaries."
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                "stream": true
-            });
+        // Build OpenAI chat completion request body
+        let body = serde_json::json!({
+            "model": "gpt-4",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a document summarizer. For each chunk, \
+                                provide a brief summary. Then provide a final \
+                                MERGED SUMMARY combining all chunk summaries."
+                },
+                {"role": "user", "content": prompt}
+            ],
+            "stream": true
+        });
 
-            Some(serde_json::to_vec(&body).unwrap_or_default())
+        Some(serde_json::to_vec(&body).unwrap_or_default())
     });
 
     // Build the pipeline

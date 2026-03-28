@@ -5,8 +5,8 @@
 // Client-side load balancing for upstream services.
 // Strategies: round-robin, least-connections, weighted, canary.
 
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use serde::Serialize;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
 /// Load balancing strategy.
 #[derive(Debug, Clone)]
@@ -80,13 +80,15 @@ impl LoadBalancer {
                 let idx = self.counter.fetch_add(1, Ordering::Relaxed) % self.endpoints.len();
                 Some(&self.endpoints[idx])
             }
-            LbStrategy::LeastConnections => {
-                self.endpoints.iter()
-                    .min_by_key(|e| e.active_connections.load(Ordering::Relaxed))
-            }
+            LbStrategy::LeastConnections => self
+                .endpoints
+                .iter()
+                .min_by_key(|e| e.active_connections.load(Ordering::Relaxed)),
             LbStrategy::Weighted(weights) => {
                 let total: u32 = weights.iter().sum();
-                if total == 0 { return self.endpoints.first(); }
+                if total == 0 {
+                    return self.endpoints.first();
+                }
                 let target = (self.counter.fetch_add(1, Ordering::Relaxed) as u32) % total;
                 let mut acc = 0;
                 for (i, w) in weights.iter().enumerate() {
@@ -101,10 +103,16 @@ impl LoadBalancer {
                 let roll = (self.counter.fetch_add(1, Ordering::Relaxed) % 100) as u8;
                 if roll < *canary_weight {
                     // Route to canary
-                    self.endpoints.iter().find(|e| e.is_canary).or(self.endpoints.first())
+                    self.endpoints
+                        .iter()
+                        .find(|e| e.is_canary)
+                        .or(self.endpoints.first())
                 } else {
                     // Route to stable
-                    self.endpoints.iter().find(|e| !e.is_canary).or(self.endpoints.first())
+                    self.endpoints
+                        .iter()
+                        .find(|e| !e.is_canary)
+                        .or(self.endpoints.first())
                 }
             }
         }
@@ -119,13 +127,17 @@ impl LoadBalancer {
     pub fn status(&self) -> LbStatus {
         LbStatus {
             strategy: format!("{:?}", self.strategy),
-            endpoints: self.endpoints.iter().map(|e| EndpointStatus {
-                address: e.address.clone(),
-                active_connections: e.active_connections.load(Ordering::Relaxed),
-                total_requests: e.total_requests.load(Ordering::Relaxed),
-                weight: e.weight,
-                is_canary: e.is_canary,
-            }).collect(),
+            endpoints: self
+                .endpoints
+                .iter()
+                .map(|e| EndpointStatus {
+                    address: e.address.clone(),
+                    active_connections: e.active_connections.load(Ordering::Relaxed),
+                    total_requests: e.total_requests.load(Ordering::Relaxed),
+                    weight: e.weight,
+                    is_canary: e.is_canary,
+                })
+                .collect(),
         }
     }
 }

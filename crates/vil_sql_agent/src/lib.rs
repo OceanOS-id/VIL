@@ -26,16 +26,16 @@
 
 pub mod config;
 pub mod generator;
-pub mod schema;
-pub mod validator;
-pub mod semantic;
 pub mod handlers;
-pub mod plugin;
 pub mod pipeline_sse;
+pub mod plugin;
+pub mod schema;
+pub mod semantic;
+pub mod validator;
 
 pub use config::{PlaceholderStyle, SqlAgentConfig};
 pub use generator::SqlGenerator;
-pub use schema::{Column, SchemaRegistry, TableSchema};
-pub use validator::{validate_sql, SafeQuery, Severity, ValidationResult};
 pub use plugin::SqlAgentPlugin;
+pub use schema::{Column, SchemaRegistry, TableSchema};
 pub use semantic::{SqlAgentEvent, SqlAgentFault, SqlAgentFaultType, SqlAgentState};
+pub use validator::{validate_sql, SafeQuery, Severity, ValidationResult};

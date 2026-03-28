@@ -13,16 +13,16 @@
 
 pub mod config;
 pub mod detector;
+pub mod handlers;
 pub mod patterns;
+pub mod pipeline_sse;
+pub mod plugin;
 pub mod result;
 pub mod scorer;
 pub mod semantic;
-pub mod pipeline_sse;
-pub mod handlers;
-pub mod plugin;
 
 pub use config::ShieldConfig;
 pub use detector::PromptShield;
-pub use result::{RiskLevel, ScanResult, Threat, ThreatCategory};
 pub use plugin::ShieldPlugin;
+pub use result::{RiskLevel, ScanResult, Threat, ThreatCategory};
 pub use semantic::{ShieldEvent, ShieldFault, ShieldFaultType, ShieldState};

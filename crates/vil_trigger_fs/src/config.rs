@@ -21,12 +21,20 @@ pub struct FsEventMask {
 impl FsEventMask {
     /// All event kinds enabled.
     pub fn all() -> Self {
-        Self { on_create: true, on_modify: true, on_delete: true, on_rename: true }
+        Self {
+            on_create: true,
+            on_modify: true,
+            on_delete: true,
+            on_rename: true,
+        }
     }
 
     /// Only creation events.
     pub fn create_only() -> Self {
-        Self { on_create: true, ..Default::default() }
+        Self {
+            on_create: true,
+            ..Default::default()
+        }
     }
 }
 

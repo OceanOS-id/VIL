@@ -36,9 +36,7 @@ mod tests {
     #[test]
     fn find_similar_exact_match() {
         let query = vec![1.0, 0.0, 0.0];
-        let candidates = vec![
-            (vec![1.0, 0.0, 0.0], 0),
-        ];
+        let candidates = vec![(vec![1.0, 0.0, 0.0], 0)];
         let result = find_similar(&query, &candidates, 0.9);
         assert!(result.is_some());
         let (idx, sim) = result.unwrap();

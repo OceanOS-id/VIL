@@ -16,24 +16,24 @@
 //! | POST | /api/llm/embed | Text embedding |
 //! | GET | /api/llm/models | List available models |
 
-pub mod provider;
-pub mod message;
-pub mod openai;
 pub mod anthropic;
+pub mod extractors;
+pub mod handlers;
+pub mod message;
 pub mod ollama;
+pub mod openai;
+pub mod pipeline;
+pub mod plugin;
+pub mod provider;
 pub mod router;
 pub mod semantic;
-pub mod extractors;
-pub mod pipeline;
-pub mod handlers;
-pub mod plugin;
 
-pub use provider::{LlmProvider, EmbeddingProvider};
-pub use message::{ChatMessage, ChatResponse, Role, ToolCall, Usage, LlmError};
-pub use openai::{OpenAiProvider, OpenAiConfig, OpenAiEmbedder};
-pub use anthropic::{AnthropicProvider, AnthropicConfig};
-pub use ollama::{OllamaProvider, OllamaConfig};
-pub use router::{LlmRouter, RouterStrategy};
+pub use anthropic::{AnthropicConfig, AnthropicProvider};
+pub use extractors::{Embedder, Llm};
+pub use message::{ChatMessage, ChatResponse, LlmError, Role, ToolCall, Usage};
+pub use ollama::{OllamaConfig, OllamaProvider};
+pub use openai::{OpenAiConfig, OpenAiEmbedder, OpenAiProvider};
 pub use plugin::LlmPlugin;
-pub use extractors::{Llm, Embedder};
-pub use semantic::{LlmResponseEvent, LlmStreamChunkEvent, LlmFault, LlmFaultType, LlmUsageState};
+pub use provider::{EmbeddingProvider, LlmProvider};
+pub use router::{LlmRouter, RouterStrategy};
+pub use semantic::{LlmFault, LlmFaultType, LlmResponseEvent, LlmStreamChunkEvent, LlmUsageState};

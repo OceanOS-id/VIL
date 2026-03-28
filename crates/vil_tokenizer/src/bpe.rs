@@ -19,12 +19,16 @@ impl BpeTokenizer {
     pub fn encode(&self, text: &str) -> Vec<u32> {
         let bytes = text.as_bytes();
         // Simple byte-level encoding (no merges for built-in)
-        bytes.iter().filter_map(|b| self.vocab.encode_token(&[*b])).collect()
+        bytes
+            .iter()
+            .filter_map(|b| self.vocab.encode_token(&[*b]))
+            .collect()
     }
 
     /// Decode token IDs back to text.
     pub fn decode(&self, tokens: &[u32]) -> String {
-        let bytes: Vec<u8> = tokens.iter()
+        let bytes: Vec<u8> = tokens
+            .iter()
             .filter_map(|id| self.vocab.decode_token(*id))
             .flatten()
             .copied()
@@ -56,7 +60,7 @@ impl BpeTokenizer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::vocab::{VocabSource, BuiltInVocab};
+    use crate::vocab::{BuiltInVocab, VocabSource};
 
     #[test]
     fn test_encode_decode_roundtrip() {
@@ -89,7 +93,7 @@ mod tests {
     fn test_unicode() {
         let vocab = Vocabulary::load(VocabSource::BuiltIn(BuiltInVocab::Cl100kBase)).unwrap();
         let tok = BpeTokenizer::new(vocab);
-        let text = "\u{3053}\u{3093}\u{306b}\u{3061}\u{306f}\u{4e16}\u{754c}";  // Japanese
+        let text = "\u{3053}\u{3093}\u{306b}\u{3061}\u{306f}\u{4e16}\u{754c}"; // Japanese
         let count = tok.count_tokens(text);
         assert!(count > 0);
         let tokens = tok.encode(text);

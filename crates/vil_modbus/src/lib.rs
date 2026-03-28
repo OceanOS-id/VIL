@@ -11,15 +11,15 @@
 // No extra threads spawned beyond the tokio runtime.
 // =============================================================================
 
-pub mod config;
 pub mod client;
+pub mod config;
 pub mod error;
 pub mod events;
 pub mod process;
 pub mod state;
 
-pub use config::ModbusConfig;
 pub use client::ModbusClient;
+pub use config::ModbusConfig;
 pub use error::ModbusFault;
 pub use events::{RegisterRead, RegisterWritten};
 pub use state::ModbusClientState;

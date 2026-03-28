@@ -25,19 +25,41 @@ const HEADER_SIZE: u64 = 64;
 #[derive(Debug)]
 pub enum ShmBridgeError {
     Io(std::io::Error),
-    RegionFull { requested: u32, available: u64 },
-    InvalidOffset { offset: u64, len: u32, region_size: u64 },
+    RegionFull {
+        requested: u32,
+        available: u64,
+    },
+    InvalidOffset {
+        offset: u64,
+        len: u32,
+        region_size: u64,
+    },
 }
 
 impl std::fmt::Display for ShmBridgeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Io(e) => write!(f, "SHM I/O error: {}", e),
-            Self::RegionFull { requested, available } => {
-                write!(f, "SHM region full: requested {} bytes, {} available", requested, available)
+            Self::RegionFull {
+                requested,
+                available,
+            } => {
+                write!(
+                    f,
+                    "SHM region full: requested {} bytes, {} available",
+                    requested, available
+                )
             }
-            Self::InvalidOffset { offset, len, region_size } => {
-                write!(f, "invalid SHM offset: offset={}, len={}, region_size={}", offset, len, region_size)
+            Self::InvalidOffset {
+                offset,
+                len,
+                region_size,
+            } => {
+                write!(
+                    f,
+                    "invalid SHM offset: offset={}, len={}, region_size={}",
+                    offset, len, region_size
+                )
             }
         }
     }
@@ -86,11 +108,14 @@ impl ShmRegion {
         region.write_cursor().store(HEADER_SIZE, Ordering::Release);
         {
             use vil_log::{system_log, types::SystemPayload};
-            system_log!(Info, SystemPayload {
-                event_type: 4,
-                mem_kb: (size / 1024) as u32,
-                ..Default::default()
-            });
+            system_log!(
+                Info,
+                SystemPayload {
+                    event_type: 4,
+                    mem_kb: (size / 1024) as u32,
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(region)
@@ -107,11 +132,14 @@ impl ShmRegion {
 
         {
             use vil_log::{system_log, types::SystemPayload};
-            system_log!(Info, SystemPayload {
-                event_type: 4,
-                mem_kb: (size / 1024) as u32,
-                ..Default::default()
-            });
+            system_log!(
+                Info,
+                SystemPayload {
+                    event_type: 4,
+                    mem_kb: (size / 1024) as u32,
+                    ..Default::default()
+                }
+            );
         }
         Ok(Self { mmap, size, path })
     }

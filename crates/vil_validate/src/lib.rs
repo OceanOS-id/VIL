@@ -7,27 +7,27 @@
 // =============================================================================
 
 pub mod boundary;
+pub mod failover;
 pub mod layout;
+pub mod memory_class_pass;
+pub mod obs_pass;
 pub mod ownership;
 pub mod queue;
-pub mod traits;
 pub mod reactive;
 pub mod semantic_lane;
-pub mod failover;
+pub mod traits;
 pub mod trust_zone;
-pub mod obs_pass;
-pub mod memory_class_pass;
 
 pub use boundary::BoundaryLegalityPass;
+pub use failover::FailoverLegalityPass;
 pub use layout::LayoutLegalityPass;
+pub use memory_class_pass::MemoryClassCompatibilityPass;
+pub use obs_pass::ObsAnnotationPass;
 pub use ownership::OwnershipLegalityPass;
 pub use queue::QueueCapabilityPass;
 pub use reactive::{LaneLegalityPass, ReactiveInterfacePass};
 pub use semantic_lane::SemanticLanePass;
-pub use failover::FailoverLegalityPass;
 pub use trust_zone::TrustZonePass;
-pub use obs_pass::ObsAnnotationPass;
-pub use memory_class_pass::MemoryClassCompatibilityPass;
 
 pub use traits::{Diagnostic, Severity, ValidationPass, ValidationReport};
 
@@ -87,21 +87,37 @@ mod tests {
     #[test]
     fn test_valid_ir() {
         let ir = WorkflowBuilder::new("ValidFlow")
-            .add_message(MessageBuilder::new("Msg").layout(LayoutProfile::Relative).build())
-            .add_interface(
-                InterfaceBuilder::new("Iface")
-                    .out_port("tx", "Msg").queue(QueueKind::Spsc, 10).done()
-                    .in_port("rx", "Msg").queue(QueueKind::Spsc, 10).done()
+            .add_message(
+                MessageBuilder::new("Msg")
+                    .layout(LayoutProfile::Relative)
                     .build(),
             )
-            .add_process(ProcessBuilder::new("A", "Iface").cleanup(CleanupPolicy::ReclaimOrphans).build())
-            .add_process(ProcessBuilder::new("B", "Iface").cleanup(CleanupPolicy::ReclaimOrphans).build())
+            .add_interface(
+                InterfaceBuilder::new("Iface")
+                    .out_port("tx", "Msg")
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .in_port("rx", "Msg")
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .build(),
+            )
+            .add_process(
+                ProcessBuilder::new("A", "Iface")
+                    .cleanup(CleanupPolicy::ReclaimOrphans)
+                    .build(),
+            )
+            .add_process(
+                ProcessBuilder::new("B", "Iface")
+                    .cleanup(CleanupPolicy::ReclaimOrphans)
+                    .build(),
+            )
             .route("A", "tx", "B", "rx", TransferMode::LoanWrite)
             .build();
 
         let validator = Validator::standard();
         let report = validator.validate(&ir);
-        
+
         // Should have no errors/warnings since the spec is clean and valid.
         assert!(!report.has_errors());
         assert_eq!(report.diagnostics.len(), 0);
@@ -111,11 +127,19 @@ mod tests {
     fn test_invalid_layout() {
         // External message layout but trying to use zero-copy
         let ir = WorkflowBuilder::new("BadLayoutFlow")
-            .add_message(MessageBuilder::new("ExternalMsg").layout(LayoutProfile::External).build())
+            .add_message(
+                MessageBuilder::new("ExternalMsg")
+                    .layout(LayoutProfile::External)
+                    .build(),
+            )
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "ExternalMsg").queue(QueueKind::Spsc, 10).done()
-                    .in_port("rx", "ExternalMsg").queue(QueueKind::Spsc, 10).done()
+                    .out_port("tx", "ExternalMsg")
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .in_port("rx", "ExternalMsg")
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
                     .build(),
             )
             .add_process(ProcessBuilder::new("A", "Iface").build())
@@ -125,7 +149,7 @@ mod tests {
 
         let validator = Validator::standard();
         let report = validator.validate(&ir);
-        
+
         assert!(report.has_errors());
         assert!(report.diagnostics.iter().any(|d| d.code == "E-LAYOUT-02"));
     }
@@ -134,11 +158,19 @@ mod tests {
     fn test_invalid_queue() {
         // 1 producer to 2 consumers using the same tx port as SPSC
         let ir = WorkflowBuilder::new("BadQueueFlow")
-            .add_message(MessageBuilder::new("Msg").layout(LayoutProfile::Relative).build())
+            .add_message(
+                MessageBuilder::new("Msg")
+                    .layout(LayoutProfile::Relative)
+                    .build(),
+            )
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "Msg").queue(QueueKind::Spsc, 10).done()
-                    .in_port("rx", "Msg").queue(QueueKind::Spsc, 10).done()
+                    .out_port("tx", "Msg")
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .in_port("rx", "Msg")
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
                     .build(),
             )
             .add_process(ProcessBuilder::new("A", "Iface").build())
@@ -150,7 +182,7 @@ mod tests {
 
         let validator = Validator::standard();
         let report = validator.validate(&ir);
-        
+
         assert!(report.has_errors());
         assert!(report.diagnostics.iter().any(|d| d.code == "E-QUEUE-01"));
     }

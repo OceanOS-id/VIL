@@ -1,5 +1,5 @@
-use async_trait::async_trait;
 use crate::message::{ChatMessage, ChatResponse, LlmError};
+use async_trait::async_trait;
 
 /// Core LLM provider trait — chat completion + streaming.
 #[async_trait]

@@ -20,9 +20,7 @@ impl Redactor {
     pub fn new(patterns: Vec<RedactPattern>) -> Self {
         let compiled: Vec<(RedactPattern, Regex)> = patterns
             .into_iter()
-            .filter_map(|p| {
-                Regex::new(&p.regex).ok().map(|r| (p, r))
-            })
+            .filter_map(|p| Regex::new(&p.regex).ok().map(|r| (p, r)))
             .collect();
         Self { patterns: compiled }
     }
@@ -33,7 +31,10 @@ impl Redactor {
         let mut redactions = Vec::new();
 
         for (pat, re) in &self.patterns {
-            let matches: Vec<String> = re.find_iter(&output).map(|m| m.as_str().to_string()).collect();
+            let matches: Vec<String> = re
+                .find_iter(&output)
+                .map(|m| m.as_str().to_string())
+                .collect();
             if !matches.is_empty() {
                 for m in &matches {
                     redactions.push(Redaction {
@@ -41,11 +42,16 @@ impl Redactor {
                         original_length: m.len(),
                     });
                 }
-                output = re.replace_all(&output, pat.replacement.as_str()).to_string();
+                output = re
+                    .replace_all(&output, pat.replacement.as_str())
+                    .to_string();
             }
         }
 
-        RedactResult { text: output, redactions }
+        RedactResult {
+            text: output,
+            redactions,
+        }
     }
 }
 

@@ -1,9 +1,9 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
 use crate::graph::MemoryGraph;
 use crate::handlers;
 use crate::semantic::{MemoryEvent, MemoryFault, MemoryState};
+use std::sync::Arc;
 
 pub struct MemoryGraphPlugin;
 
@@ -14,9 +14,15 @@ impl MemoryGraphPlugin {
 }
 
 impl VilPlugin for MemoryGraphPlugin {
-    fn id(&self) -> &str { "vil-memory-graph" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Persistent knowledge graph for agent long-term memory" }
+    fn id(&self) -> &str {
+        "vil-memory-graph"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Persistent knowledge graph for agent long-term memory"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -42,5 +48,7 @@ impl VilPlugin for MemoryGraphPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

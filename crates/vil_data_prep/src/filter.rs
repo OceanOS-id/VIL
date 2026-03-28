@@ -107,7 +107,11 @@ mod tests {
     #[test]
     fn filter_batch_works() {
         let f = QualityFilter::new(5, 100, 0.0);
-        let input = vec!["ok text here".into(), "no".into(), "another good one".into()];
+        let input = vec![
+            "ok text here".into(),
+            "no".into(),
+            "another good one".into(),
+        ];
         let result = f.filter_batch(&input);
         assert_eq!(result.len(), 2);
     }

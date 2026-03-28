@@ -54,10 +54,10 @@
 //   curl -X POST http://localhost:8080/fraud -H 'Content-Type: application/json' -d '{"amount":5000,"country":"US"}'
 //   curl -X POST http://localhost:8080/order -H 'Content-Type: application/json' -d '{"item":"laptop","qty":1,"amount":999.99}'
 
+use std::sync::Arc;
+use vil_capsule::{WasmFaaSConfig, WasmFaaSRegistry};
 use vil_server::prelude::*;
 use vil_sidecar::{SidecarConfig, SidecarRegistry};
-use vil_capsule::{WasmFaaSConfig, WasmFaaSRegistry};
-use std::sync::Arc;
 
 // ── Domain Models ────────────────────────────────────────────────────────
 
@@ -161,8 +161,14 @@ async fn validate_order(body: ShmSlice) -> VilResponse<ValidationResult> {
 /// POST /price — WASM FaaS pricing (demo, ExecClass::WasmFaaS)
 async fn calculate_price(body: ShmSlice) -> VilResponse<PriceResult> {
     let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
-    let item = body_json.get("item").and_then(|v| v.as_str()).unwrap_or("unknown");
-    let base = body_json.get("base_price").and_then(|v| v.as_f64()).unwrap_or(0.0);
+    let item = body_json
+        .get("item")
+        .and_then(|v| v.as_str())
+        .unwrap_or("unknown");
+    let base = body_json
+        .get("base_price")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0);
 
     // Demo WASM pricing rules (in production, this calls WasmPool.call())
     let discount = match item {
@@ -183,16 +189,32 @@ async fn calculate_price(body: ShmSlice) -> VilResponse<PriceResult> {
 /// POST /fraud — Sidecar fraud check (demo, ExecClass::SidecarProcess)
 async fn fraud_check(body: ShmSlice) -> VilResponse<FraudResult> {
     let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
-    let amount = body_json.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
-    let country = body_json.get("country").and_then(|v| v.as_str()).unwrap_or("US");
+    let amount = body_json
+        .get("amount")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0);
+    let country = body_json
+        .get("country")
+        .and_then(|v| v.as_str())
+        .unwrap_or("US");
 
     // Demo sidecar response (in production, this calls dispatcher::invoke())
-    let score = if amount > 10000.0 { 0.85 } else if country == "XX" { 0.7 } else { 0.15 };
+    let score = if amount > 10000.0 {
+        0.85
+    } else if country == "XX" {
+        0.7
+    } else {
+        0.15
+    };
 
     VilResponse::ok(FraudResult {
         score,
         is_fraud: score > 0.8,
-        reason: if score > 0.8 { "high_risk".into() } else { "clean".into() },
+        reason: if score > 0.8 {
+            "high_risk".into()
+        } else {
+            "clean".into()
+        },
         exec_class: "SidecarProcess".into(),
     })
 }
@@ -200,8 +222,14 @@ async fn fraud_check(body: ShmSlice) -> VilResponse<FraudResult> {
 /// POST /order — Native orchestrator (calls validate + price + fraud)
 async fn process_order(body: ShmSlice) -> VilResponse<OrderResult> {
     let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
-    let order_id = format!("ORD-{}", std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis() % 100000);
+    let order_id = format!(
+        "ORD-{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis()
+            % 100000
+    );
 
     VilResponse::ok(OrderResult {
         order_id,

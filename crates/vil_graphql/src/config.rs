@@ -26,19 +26,32 @@ pub struct GraphQLConfig {
     pub max_page_size: usize,
 }
 
-fn default_true() -> bool { true }
-fn default_depth() -> usize { 10 }
-fn default_complexity() -> usize { 1000 }
-fn default_page() -> usize { 20 }
-fn default_max_page() -> usize { 100 }
+fn default_true() -> bool {
+    true
+}
+fn default_depth() -> usize {
+    10
+}
+fn default_complexity() -> usize {
+    1000
+}
+fn default_page() -> usize {
+    20
+}
+fn default_max_page() -> usize {
+    100
+}
 
 impl Default for GraphQLConfig {
     fn default() -> Self {
         Self {
-            enabled: true, playground: true,
-            max_depth: 10, max_complexity: 1000,
+            enabled: true,
+            playground: true,
+            max_depth: 10,
+            max_complexity: 1000,
             introspection: true,
-            default_page_size: 20, max_page_size: 100,
+            default_page_size: 20,
+            max_page_size: 100,
         }
     }
 }

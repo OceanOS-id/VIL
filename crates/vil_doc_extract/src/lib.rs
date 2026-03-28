@@ -8,18 +8,18 @@
 
 pub mod extractor;
 pub mod field;
+pub mod handlers;
+pub mod pipeline_sse;
+pub mod plugin;
 pub mod result;
 pub mod rules;
 pub mod semantic;
-pub mod handlers;
-pub mod plugin;
-pub mod pipeline_sse;
 
 pub use extractor::DataExtractor;
 pub use field::{FieldDef, FieldType};
-pub use result::{ExtractedField, ExtractionResult};
-pub use rules::{RuleExtractor, invoice_fields, receipt_fields, resume_fields};
 pub use plugin::DocExtractPlugin;
+pub use result::{ExtractedField, ExtractionResult};
+pub use rules::{invoice_fields, receipt_fields, resume_fields, RuleExtractor};
 pub use semantic::{ExtractEvent, ExtractFault, ExtractFaultType, ExtractState};
 
 #[cfg(test)]
@@ -30,7 +30,8 @@ mod tests {
     fn test_email_extraction() {
         let ext = RuleExtractor::new();
         let fields = vec![FieldDef::new(
-            "email", FieldType::Email,
+            "email",
+            FieldType::Email,
             vec![r"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})".into()],
             true,
         )];
@@ -44,7 +45,8 @@ mod tests {
     fn test_date_extraction() {
         let ext = RuleExtractor::new();
         let fields = vec![FieldDef::new(
-            "date", FieldType::Date,
+            "date",
+            FieldType::Date,
             vec![r"(\d{4}-\d{2}-\d{2})".into()],
             true,
         )];
@@ -57,7 +59,8 @@ mod tests {
     fn test_currency_extraction() {
         let ext = RuleExtractor::new();
         let fields = vec![FieldDef::new(
-            "total", FieldType::Currency,
+            "total",
+            FieldType::Currency,
             vec![r"\$([\d,]+\.\d{2})".into()],
             true,
         )];
@@ -70,7 +73,8 @@ mod tests {
     fn test_phone_extraction() {
         let ext = RuleExtractor::new();
         let fields = vec![FieldDef::new(
-            "phone", FieldType::Phone,
+            "phone",
+            FieldType::Phone,
             vec![r"(\d{3}-\d{3}-\d{4})".into()],
             true,
         )];
@@ -82,7 +86,8 @@ mod tests {
     #[test]
     fn test_invoice_template() {
         let ext = RuleExtractor::new();
-        let text = "Invoice #INV-2025-001\nDate: 2025-03-15\nTotal: $500.00\nEmail: billing@acme.com";
+        let text =
+            "Invoice #INV-2025-001\nDate: 2025-03-15\nTotal: $500.00\nEmail: billing@acme.com";
         let result = ext.extract(text, &invoice_fields());
         assert!(result.is_complete());
         assert!(result.fields.contains_key("invoice_number"));
@@ -113,12 +118,18 @@ mod tests {
     fn test_missing_required_field() {
         let ext = RuleExtractor::new();
         let fields = vec![
-            FieldDef::new("email", FieldType::Email,
+            FieldDef::new(
+                "email",
+                FieldType::Email,
                 vec![r"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})".into()],
-                true),
-            FieldDef::new("phone", FieldType::Phone,
+                true,
+            ),
+            FieldDef::new(
+                "phone",
+                FieldType::Phone,
                 vec![r"(\d{3}-\d{3}-\d{4})".into()],
-                true),
+                true,
+            ),
         ];
         let result = ext.extract("No contact info here.", &fields);
         assert!(!result.is_complete());
@@ -131,7 +142,8 @@ mod tests {
     fn test_number_extraction() {
         let ext = RuleExtractor::new();
         let fields = vec![FieldDef::new(
-            "quantity", FieldType::Number,
+            "quantity",
+            FieldType::Number,
             vec![r"(?i)qty\s*:?\s*(\d+)".into()],
             true,
         )];
@@ -143,11 +155,12 @@ mod tests {
     #[test]
     fn test_overall_confidence() {
         let ext = RuleExtractor::new();
-        let fields = vec![
-            FieldDef::new("email", FieldType::Email,
-                vec![r"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})".into()],
-                false),
-        ];
+        let fields = vec![FieldDef::new(
+            "email",
+            FieldType::Email,
+            vec![r"([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})".into()],
+            false,
+        )];
         let result = ext.extract("test@example.com", &fields);
         assert!(result.confidence > 0.0);
     }

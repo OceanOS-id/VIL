@@ -37,7 +37,9 @@ pub fn resolve_all_calls(
                     continue; // already resolved
                 }
                 match resolve_single_call(base_dir, call_path) {
-                    Ok(r) => { resolved.insert(call_path.clone(), r); }
+                    Ok(r) => {
+                        resolved.insert(call_path.clone(), r);
+                    }
                     Err(e) => errors.push(e),
                 }
             }
@@ -45,10 +47,15 @@ pub fn resolve_all_calls(
 
         // Also check on_complete targets
         if let Some(on_complete) = &wf.on_complete {
-            for path in [&on_complete.success, &on_complete.failure].into_iter().flatten() {
+            for path in [&on_complete.success, &on_complete.failure]
+                .into_iter()
+                .flatten()
+            {
                 if !resolved.contains_key(path) {
                     match resolve_single_call(base_dir, path) {
-                        Ok(r) => { resolved.insert(path.clone(), r); }
+                        Ok(r) => {
+                            resolved.insert(path.clone(), r);
+                        }
                         Err(e) => errors.push(e),
                     }
                 }
@@ -56,7 +63,11 @@ pub fn resolve_all_calls(
         }
     }
 
-    if errors.is_empty() { Ok(resolved) } else { Err(errors) }
+    if errors.is_empty() {
+        Ok(resolved)
+    } else {
+        Err(errors)
+    }
 }
 
 /// Resolve a single call path.
@@ -64,17 +75,27 @@ fn resolve_single_call(base_dir: &Path, call_path: &str) -> Result<ResolvedCall,
     let full_path = base_dir.join(call_path);
 
     if !full_path.exists() {
-        return Err(format!("call: '{}' — file not found at {}", call_path, full_path.display()));
+        return Err(format!(
+            "call: '{}' — file not found at {}",
+            call_path,
+            full_path.display()
+        ));
     }
 
     let manifest = WorkflowManifest::from_file(
-        full_path.to_str().ok_or_else(|| format!("invalid path: {}", full_path.display()))?
+        full_path
+            .to_str()
+            .ok_or_else(|| format!("invalid path: {}", full_path.display()))?,
     )?;
 
     // Find the first (or only) workflow in the called manifest.
     // Convention: a called file should have exactly one workflow, or a default one.
     let workflow = if manifest.workflows.len() == 1 {
-        manifest.workflows.values().next().cloned()
+        manifest
+            .workflows
+            .values()
+            .next()
+            .cloned()
             .unwrap_or_default()
     } else if let Some(wf) = manifest.workflows.get(&manifest.name) {
         wf.clone()

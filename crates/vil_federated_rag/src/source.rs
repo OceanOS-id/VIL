@@ -20,7 +20,11 @@ pub trait RagSource: Send + Sync {
     fn source_id(&self) -> &str;
 
     /// Retrieve top-k results for the given query.
-    async fn retrieve(&self, query: &str, top_k: usize) -> Result<Vec<SourceResult>, RagSourceError>;
+    async fn retrieve(
+        &self,
+        query: &str,
+        top_k: usize,
+    ) -> Result<Vec<SourceResult>, RagSourceError>;
 }
 
 /// Errors from RAG source retrieval.

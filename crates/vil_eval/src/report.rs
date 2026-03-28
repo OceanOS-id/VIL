@@ -40,9 +40,7 @@ impl EvalReport {
 
         for case_result in &self.results {
             for score in &case_result.scores {
-                let entry = totals
-                    .entry(score.name.clone())
-                    .or_insert((0.0, 0));
+                let entry = totals.entry(score.name.clone()).or_insert((0.0, 0));
                 entry.0 += score.score;
                 entry.1 += 1;
             }

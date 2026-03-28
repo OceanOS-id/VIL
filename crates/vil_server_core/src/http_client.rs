@@ -80,8 +80,7 @@ impl HttpClientPool {
 
     /// Get statistics for a host.
     pub fn host_stats(&self, host: &str) -> Option<HostStats> {
-        let count = self.request_counts.get(host)?
-            .load(Ordering::Relaxed);
+        let count = self.request_counts.get(host)?.load(Ordering::Relaxed);
 
         let latencies = self.latencies.get(host)?;
         let avg_latency = if latencies.is_empty() {
@@ -99,7 +98,10 @@ impl HttpClientPool {
 
     /// Get all tracked hosts.
     pub fn hosts(&self) -> Vec<String> {
-        self.request_counts.iter().map(|e| e.key().clone()).collect()
+        self.request_counts
+            .iter()
+            .map(|e| e.key().clone())
+            .collect()
     }
 
     pub fn config(&self) -> &HttpClientConfig {

@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use vil_macros::VilAiEvent;
 
 /// Risk level of detected injection.

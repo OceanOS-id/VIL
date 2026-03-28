@@ -70,7 +70,9 @@ impl CrawlConfig {
         if self.allowed_domains.is_empty() {
             return true;
         }
-        self.allowed_domains.iter().any(|d| host.ends_with(d.as_str()))
+        self.allowed_domains
+            .iter()
+            .any(|d| host.ends_with(d.as_str()))
     }
 }
 
@@ -104,8 +106,7 @@ mod tests {
 
     #[test]
     fn test_domain_allowed_filter() {
-        let cfg = CrawlConfig::new()
-            .allowed_domains(vec!["example.com".into(), "test.org".into()]);
+        let cfg = CrawlConfig::new().allowed_domains(vec!["example.com".into(), "test.org".into()]);
         assert!(cfg.is_domain_allowed("example.com"));
         assert!(cfg.is_domain_allowed("sub.example.com"));
         assert!(cfg.is_domain_allowed("test.org"));

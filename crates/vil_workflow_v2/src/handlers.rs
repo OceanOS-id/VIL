@@ -18,9 +18,7 @@ pub struct WorkflowStatsBody {
 // ── Handlers ────────────────────────────────────────────────────────
 
 /// GET /stats — Workflow service stats.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<WorkflowStatsBody> {
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<WorkflowStatsBody> {
     VilResponse::ok(WorkflowStatsBody {
         scheduler: "WorkflowScheduler".into(),
         dag_resolver: "resolve_layers".into(),

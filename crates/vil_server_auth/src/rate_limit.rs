@@ -79,9 +79,8 @@ impl RateLimit {
     pub fn cleanup_expired(&self) {
         let now = Instant::now();
         let max_age = self.window * 2;
-        self.buckets.retain(|_, bucket| {
-            now.duration_since(bucket.last_refill) < max_age
-        });
+        self.buckets
+            .retain(|_, bucket| now.duration_since(bucket.last_refill) < max_age);
     }
 
     /// Current number of tracked IPs.

@@ -61,12 +61,12 @@ impl SoapFault {
     /// Return a stable numeric error code for log `error_code` fields.
     pub fn as_error_code(&self) -> u8 {
         match self {
-            SoapFault::ConnectionFailed { .. }    => 1,
-            SoapFault::HttpError { .. }           => 2,
-            SoapFault::SoapFaultResponse { .. }   => 3,
+            SoapFault::ConnectionFailed { .. } => 1,
+            SoapFault::HttpError { .. } => 2,
+            SoapFault::SoapFaultResponse { .. } => 3,
             SoapFault::EnvelopeBuildFailed { .. } => 4,
             SoapFault::EnvelopeParseFailed { .. } => 5,
-            SoapFault::Timeout { .. }             => 6,
+            SoapFault::Timeout { .. } => 6,
         }
     }
 }

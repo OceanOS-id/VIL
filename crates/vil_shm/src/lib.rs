@@ -32,19 +32,19 @@
 // [ ] TODO(future): sub-region compaction
 // =============================================================================
 
-pub mod offset;
 pub mod allocator;
 pub mod heap;
-pub mod store;
-pub mod region;
+pub mod offset;
 pub mod paged_allocator;
+pub mod region;
+pub mod store;
 
-pub use offset::{Offset, RelativePtr};
 pub use allocator::BumpAllocator;
-pub use paged_allocator::PagedAllocator;
 pub use heap::{ExchangeHeap, RegionStats};
-pub use store::SharedStore;
+pub use offset::{Offset, RelativePtr};
+pub use paged_allocator::PagedAllocator;
 pub use region::RegionManager;
+pub use store::SharedStore;
 
 /// Minimal metadata for sample defragmentation.
 pub struct DefragSample {

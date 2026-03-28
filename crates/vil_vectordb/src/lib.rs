@@ -22,25 +22,25 @@
 //!     .execute();
 //! ```
 
+pub mod collection;
 pub mod config;
 pub mod distance;
 pub mod hnsw;
-pub mod storage;
-pub mod collection;
 pub mod query;
+pub mod storage;
 
 // Re-exports for convenience
+pub use collection::{Collection, SearchResult};
 pub use config::HnswConfig;
 pub use distance::DistanceMetric;
 pub use hnsw::{HnswIndex, SearchHit, VectorDbError};
-pub use storage::{VectorRecord, VectorStorage};
-pub use collection::{Collection, SearchResult};
 pub use query::QueryBuilder;
+pub use storage::{VectorRecord, VectorStorage};
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::VectorDbPlugin;
-pub use semantic::{SearchEvent, IndexEvent, VectorDbFault, VectorDbState};
+pub use semantic::{IndexEvent, SearchEvent, VectorDbFault, VectorDbState};

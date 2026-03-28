@@ -58,13 +58,12 @@ mod api_key_tests {
 
 #[cfg(test)]
 mod ip_filter_tests {
-    use vil_server_auth::ip_filter::{IpFilter, IpFilterMode};
     use std::net::{IpAddr, Ipv4Addr};
+    use vil_server_auth::ip_filter::{IpFilter, IpFilterMode};
 
     #[test]
     fn test_allowlist_allows_listed() {
-        let filter = IpFilter::allowlist()
-            .add_ip(IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)));
+        let filter = IpFilter::allowlist().add_ip(IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)));
 
         assert!(filter.is_allowed(&IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1))));
         assert!(!filter.is_allowed(&IpAddr::V4(Ipv4Addr::new(10, 0, 0, 2))));
@@ -72,8 +71,7 @@ mod ip_filter_tests {
 
     #[test]
     fn test_blocklist_blocks_listed() {
-        let filter = IpFilter::blocklist()
-            .add_ip(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 100)));
+        let filter = IpFilter::blocklist().add_ip(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 100)));
 
         assert!(!filter.is_allowed(&IpAddr::V4(Ipv4Addr::new(192, 168, 1, 100))));
         assert!(filter.is_allowed(&IpAddr::V4(Ipv4Addr::new(192, 168, 1, 101))));
@@ -81,8 +79,7 @@ mod ip_filter_tests {
 
     #[test]
     fn test_cidr_matching() {
-        let filter = IpFilter::allowlist()
-            .add_cidr("10.0.0.0/8");
+        let filter = IpFilter::allowlist().add_cidr("10.0.0.0/8");
 
         assert!(filter.is_allowed(&IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1))));
         assert!(filter.is_allowed(&IpAddr::V4(Ipv4Addr::new(10, 255, 255, 255))));
@@ -91,8 +88,7 @@ mod ip_filter_tests {
 
     #[test]
     fn test_cidr_24() {
-        let filter = IpFilter::allowlist()
-            .add_cidr("192.168.1.0/24");
+        let filter = IpFilter::allowlist().add_cidr("192.168.1.0/24");
 
         assert!(filter.is_allowed(&IpAddr::V4(Ipv4Addr::new(192, 168, 1, 0))));
         assert!(filter.is_allowed(&IpAddr::V4(Ipv4Addr::new(192, 168, 1, 255))));
@@ -140,7 +136,11 @@ mod rbac_tests {
     fn test_policy_check() {
         let policy = RbacPolicy::new();
         policy.add_role(Role::new("viewer").permission("users:read"));
-        policy.add_role(Role::new("editor").permission("users:read").permission("users:write"));
+        policy.add_role(
+            Role::new("editor")
+                .permission("users:read")
+                .permission("users:write"),
+        );
 
         let viewer_roles = vec!["viewer".to_string()];
         assert!(policy.check_permission(&viewer_roles, "users:read"));
@@ -179,8 +179,8 @@ mod rbac_tests {
 
 #[cfg(test)]
 mod csrf_tests {
-    use vil_server_auth::csrf::{CsrfConfig, CsrfProtection};
     use axum::http::{HeaderMap, HeaderValue, Method};
+    use vil_server_auth::csrf::{CsrfConfig, CsrfProtection};
 
     #[test]
     fn test_generate_token() {
@@ -238,8 +238,8 @@ mod csrf_tests {
 
 #[cfg(test)]
 mod session_tests {
-    use vil_server_auth::session::{SessionConfig, SessionData, SessionManager};
     use std::time::Duration;
+    use vil_server_auth::session::{SessionConfig, SessionData, SessionManager};
 
     #[test]
     fn test_create_session() {
@@ -331,14 +331,19 @@ mod session_tests {
 
 #[cfg(test)]
 mod audit_tests {
-    use vil_server_auth::audit::{AuditLog, AuditEvent, AuditEventType};
+    use vil_server_auth::audit::{AuditEvent, AuditEventType, AuditLog};
 
     #[test]
     fn test_record_and_retrieve() {
         let log = AuditLog::new(100);
-        let event = AuditEvent::new(AuditEventType::AuthSuccess, "user@test.com", "/login", "POST")
-            .ip("10.0.0.1")
-            .request_id("req-123");
+        let event = AuditEvent::new(
+            AuditEventType::AuthSuccess,
+            "user@test.com",
+            "/login",
+            "POST",
+        )
+        .ip("10.0.0.1")
+        .request_id("req-123");
 
         log.record(event);
         assert_eq!(log.count(), 1);
@@ -352,7 +357,12 @@ mod audit_tests {
     fn test_ring_buffer_eviction() {
         let log = AuditLog::new(3);
         for i in 0..5 {
-            log.record(AuditEvent::new(AuditEventType::AuthSuccess, &format!("user_{}", i), "/", "GET"));
+            log.record(AuditEvent::new(
+                AuditEventType::AuthSuccess,
+                &format!("user_{}", i),
+                "/",
+                "GET",
+            ));
         }
         assert_eq!(log.count(), 3); // max size
     }
@@ -360,7 +370,12 @@ mod audit_tests {
     #[test]
     fn test_clear() {
         let log = AuditLog::new(100);
-        log.record(AuditEvent::new(AuditEventType::AuthFailure, "bad_actor", "/login", "POST"));
+        log.record(AuditEvent::new(
+            AuditEventType::AuthFailure,
+            "bad_actor",
+            "/login",
+            "POST",
+        ));
         log.clear();
         assert_eq!(log.count(), 0);
     }
@@ -370,8 +385,8 @@ mod audit_tests {
 
 #[cfg(test)]
 mod circuit_breaker_extended_tests {
-    use vil_server_auth::circuit_breaker::*;
     use std::time::Duration;
+    use vil_server_auth::circuit_breaker::*;
 
     #[test]
     fn test_status_export() {
@@ -385,12 +400,15 @@ mod circuit_breaker_extended_tests {
 
     #[test]
     fn test_half_open_recovery() {
-        let cb = CircuitBreaker::new("svc", CircuitBreakerConfig {
-            failure_threshold: 2,
-            cooldown: Duration::from_millis(10),
-            half_open_max_requests: 1,
-            ..Default::default()
-        });
+        let cb = CircuitBreaker::new(
+            "svc",
+            CircuitBreakerConfig {
+                failure_threshold: 2,
+                cooldown: Duration::from_millis(10),
+                half_open_max_requests: 1,
+                ..Default::default()
+            },
+        );
 
         // Trip the breaker
         cb.record_failure();
@@ -411,12 +429,15 @@ mod circuit_breaker_extended_tests {
 
     #[test]
     fn test_half_open_failure() {
-        let cb = CircuitBreaker::new("svc", CircuitBreakerConfig {
-            failure_threshold: 1,
-            cooldown: Duration::from_millis(10),
-            half_open_max_requests: 1,
-            ..Default::default()
-        });
+        let cb = CircuitBreaker::new(
+            "svc",
+            CircuitBreakerConfig {
+                failure_threshold: 1,
+                cooldown: Duration::from_millis(10),
+                half_open_max_requests: 1,
+                ..Default::default()
+            },
+        );
 
         cb.record_failure();
         assert_eq!(cb.state(), CircuitState::Open);

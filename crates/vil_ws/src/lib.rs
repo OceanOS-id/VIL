@@ -12,16 +12,16 @@
 // =============================================================================
 
 pub mod config;
-pub mod server;
-pub mod room;
 pub mod error;
 pub mod events;
 pub mod process;
+pub mod room;
+pub mod server;
 pub mod state;
 
 pub use config::WsConfig;
-pub use server::WsServer;
-pub use room::RoomManager;
 pub use error::WsFault;
 pub use events::{ClientConnected, ClientDisconnected, MessageReceived, MessageSent};
+pub use room::RoomManager;
+pub use server::WsServer;
 pub use state::WsServerState;

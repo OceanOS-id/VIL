@@ -1,8 +1,8 @@
-use async_trait::async_trait;
-use crate::provider::LlmProvider;
 use crate::message::*;
-use std::sync::Arc;
+use crate::provider::LlmProvider;
+use async_trait::async_trait;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use vil_log::app_log;
 
 #[derive(Debug, Clone, Copy)]
@@ -23,7 +23,11 @@ pub struct LlmRouter {
 
 impl LlmRouter {
     pub fn new(strategy: RouterStrategy) -> Self {
-        Self { providers: Vec::new(), strategy, counter: AtomicUsize::new(0) }
+        Self {
+            providers: Vec::new(),
+            strategy,
+            counter: AtomicUsize::new(0),
+        }
     }
 
     pub fn add_provider(mut self, provider: Arc<dyn LlmProvider>) -> Self {
@@ -41,9 +45,11 @@ impl LlmProvider for LlmRouter {
 
         match self.strategy {
             RouterStrategy::Primary => {
-                self.providers.first()
+                self.providers
+                    .first()
                     .ok_or(LlmError::ModelNotFound("no providers".into()))?
-                    .chat(messages).await
+                    .chat(messages)
+                    .await
             }
             RouterStrategy::RoundRobin => {
                 let idx = self.counter.fetch_add(1, Ordering::Relaxed) % self.providers.len();
@@ -67,8 +73,13 @@ impl LlmProvider for LlmRouter {
     }
 
     fn model(&self) -> &str {
-        self.providers.first().map(|p| p.model()).unwrap_or("router")
+        self.providers
+            .first()
+            .map(|p| p.model())
+            .unwrap_or("router")
     }
 
-    fn provider_name(&self) -> &str { "router" }
+    fn provider_name(&self) -> &str {
+        "router"
+    }
 }

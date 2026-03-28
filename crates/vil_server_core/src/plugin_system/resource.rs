@@ -6,7 +6,7 @@
 //! Other plugins consume them:
 //!   let llm = ctx.require::<Arc<dyn LlmProvider>>("openai");
 
-use std::any::{Any, TypeId, type_name};
+use std::any::{type_name, Any, TypeId};
 use std::collections::HashMap;
 
 /// Type-erased resource registry keyed by (TypeId, name).
@@ -57,7 +57,8 @@ impl ResourceRegistry {
 
     /// List all registered resource keys as (type_name, resource_name).
     pub fn list(&self) -> Vec<(&'static str, &str)> {
-        self.type_names.iter()
+        self.type_names
+            .iter()
             .map(|((_, name), type_name)| (*type_name, name.as_str()))
             .collect()
     }
@@ -69,7 +70,9 @@ impl ResourceRegistry {
 }
 
 impl Default for ResourceRegistry {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -83,12 +86,16 @@ mod tests {
 
     struct ImplA;
     impl MyTrait for ImplA {
-        fn name(&self) -> &str { "A" }
+        fn name(&self) -> &str {
+            "A"
+        }
     }
 
     struct ImplB;
     impl MyTrait for ImplB {
-        fn name(&self) -> &str { "B" }
+        fn name(&self) -> &str {
+            "B"
+        }
     }
 
     #[test]

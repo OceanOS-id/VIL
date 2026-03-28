@@ -32,8 +32,8 @@
 //         search both independently, cross-rank results by
 //         relevance score, combine top hits into unified context
 
+use vil_rag::semantic::{RagFault, RagIndexState, RagIngestEvent, RagQueryEvent};
 use vil_server::prelude::*;
-use vil_rag::semantic::{RagQueryEvent, RagIngestEvent, RagFault, RagIndexState};
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -155,12 +155,16 @@ fn keyword_score(query: &str, keywords: &[&str]) -> f64 {
             matches += 1;
         }
     }
-    if keywords.is_empty() { 0.0 } else { matches as f64 / keywords.len() as f64 }
+    if keywords.is_empty() {
+        0.0
+    } else {
+        matches as f64 / keywords.len() as f64
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
 struct RankedResult {
-    source: String,    // "tech" or "faq"
+    source: String, // "tech" or "faq"
     doc_id: String,
     score: f64,
     content: String,
@@ -190,7 +194,8 @@ struct MultiRagResponse {
 // ── Handler ──────────────────────────────────────────────────────────
 
 async fn multi_rag_handler(
-    ctx: ServiceCtx, body: ShmSlice,
+    ctx: ServiceCtx,
+    body: ShmSlice,
 ) -> HandlerResult<VilResponse<MultiRagResponse>> {
     let req: MultiRagRequest = body.json().expect("invalid JSON body");
     // Step 1: Search BOTH knowledge bases independently.
@@ -227,15 +232,25 @@ async fn multi_rag_handler(
     // Step 2: Cross-rank by score (descending) and take top 3.
     // Cross-ranking merges results from different sources into a single
     // relevance-ordered list — the key innovation of multi-source RAG.
-    all_results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+    all_results.sort_by(|a, b| {
+        b.score
+            .partial_cmp(&a.score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     let top_results: Vec<&RankedResult> = all_results.iter().take(3).collect();
 
     // If no results, include fallback context
     let context = if top_results.is_empty() {
         "No relevant documents found in either knowledge base.".to_string()
     } else {
-        top_results.iter()
-            .map(|r| format!("[{}:{}] (score: {:.2}) {}", r.source, r.doc_id, r.score, r.content))
+        top_results
+            .iter()
+            .map(|r| {
+                format!(
+                    "[{}:{}] (score: {:.2}) {}",
+                    r.source, r.doc_id, r.score, r.content
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n\n")
     };
@@ -268,10 +283,13 @@ async fn multi_rag_handler(
         collector = collector.bearer_token(&api_key);
     }
 
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
-    let results_merged: Vec<SourceResult> = top_results.iter()
+    let results_merged: Vec<SourceResult> = top_results
+        .iter()
         .map(|r| SourceResult {
             source: r.source.clone(),
             doc_id: r.doc_id.clone(),
@@ -311,11 +329,21 @@ async fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     println!("  Knowledge bases:");
-    println!("    tech_docs: {} documents (VIL architecture)", TECH_DOCS.len());
+    println!(
+        "    tech_docs: {} documents (VIL architecture)",
+        TECH_DOCS.len()
+    );
     println!("    faq_docs : {} documents (support Q&A)", FAQ_DOCS.len());
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     println!("  Listening on http://localhost:3111/api/multi-rag");
     println!("  Upstream: {} (stream: true)", UPSTREAM_URL);
     println!();

@@ -40,7 +40,10 @@ pub struct FixedChunker {
 
 impl FixedChunker {
     pub fn new(chunk_size: usize, overlap: usize) -> Self {
-        Self { chunk_size, overlap }
+        Self {
+            chunk_size,
+            overlap,
+        }
     }
 }
 
@@ -95,7 +98,10 @@ pub struct SemanticChunker {
 
 impl SemanticChunker {
     pub fn new(chunk_size: usize, overlap: usize) -> Self {
-        Self { chunk_size, overlap }
+        Self {
+            chunk_size,
+            overlap,
+        }
     }
 
     /// Split text into sentences on `.` / `!` / `?` followed by whitespace or EOF.
@@ -261,7 +267,7 @@ mod tests {
     fn fixed_chunker_with_overlap() {
         let chunker = FixedChunker::new(10, 3);
         let chunks = chunker.chunk("doc1", "abcdefghijklmnopqrst"); // 20 chars
-        // step = 10 - 3 = 7, so starts at 0, 7, 14
+                                                                    // step = 10 - 3 = 7, so starts at 0, 7, 14
         assert_eq!(chunks.len(), 3);
         assert_eq!(chunks[0].content, "abcdefghij");
         assert_eq!(chunks[1].content, "hijklmnopq");
@@ -298,7 +304,11 @@ mod tests {
         let chunks = chunker.chunk("doc1", text);
         assert!(!chunks.is_empty());
         // All sentences should appear across chunks
-        let all: String = chunks.iter().map(|c| c.content.clone()).collect::<Vec<_>>().join(" ");
+        let all: String = chunks
+            .iter()
+            .map(|c| c.content.clone())
+            .collect::<Vec<_>>()
+            .join(" ");
         assert!(all.contains("What is this?"));
         assert!(all.contains("It is great!"));
         assert!(all.contains("Done."));

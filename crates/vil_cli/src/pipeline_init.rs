@@ -32,7 +32,9 @@ pub fn init_pipeline(pipeline_type: &str) -> Result<(), String> {
     }
 
     println!("  Type: {}", pipeline_type);
-    println!("  Add to Cargo.toml: vil_sdk = {{ git = \"https://github.com/OceanOS-id/VIL.git\" }}");
+    println!(
+        "  Add to Cargo.toml: vil_sdk = {{ git = \"https://github.com/OceanOS-id/VIL.git\" }}"
+    );
     Ok(())
 }
 

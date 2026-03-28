@@ -109,9 +109,8 @@ pub fn save_to_file(path: &std::path::Path) -> std::io::Result<()> {
 /// old format (plain string value) for backward compatibility.
 pub fn load_from_file(path: &std::path::Path) -> std::io::Result<usize> {
     let json = std::fs::read_to_string(path)?;
-    let raw: std::collections::BTreeMap<String, serde_json::Value> =
-        serde_json::from_str(&json)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+    let raw: std::collections::BTreeMap<String, serde_json::Value> = serde_json::from_str(&json)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
     let mut guard = DICT.lock().unwrap_or_else(|e| e.into_inner());
     let dict = guard.get_or_insert_with(HashMap::new);

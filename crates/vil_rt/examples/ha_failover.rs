@@ -1,17 +1,20 @@
-use vil_types::{HostId, ProcessSpec, PortSpec, PortDirection, QueueKind, MessageContract, ExecClass, CleanupPolicy, ObservabilitySpec, BoundaryKind, MessageMeta, LayoutProfile, TransferMode};
-use vil_rt::VastarRuntimeWorld;
 use std::time::Duration;
+use vil_rt::VastarRuntimeWorld;
+use vil_types::{
+    BoundaryKind, CleanupPolicy, ExecClass, HostId, LayoutProfile, MessageContract, MessageMeta,
+    ObservabilitySpec, PortDirection, PortSpec, ProcessSpec, QueueKind, TransferMode,
+};
 
 fn main() -> std::io::Result<()> {
     println!("🚀 Starting Phase 12: High-Availability Failover Verification...");
 
     // Setup Shared Registry with HostId 1
     let world = VastarRuntimeWorld::new_shared_with_host(HostId(1))?;
-    
+
     // Register another host (Backup)
     let host_backup = HostId(2);
     world.register_host(host_backup, "192.168.1.20:3080");
-    
+
     println!("✅ Registry initialized with two hosts: Primary(1) and Backup(2)");
 
     // Heartbeat for local host (Primary)

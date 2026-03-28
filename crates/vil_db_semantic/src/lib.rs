@@ -12,23 +12,23 @@
 //
 // Provider dispatch: 1 vtable call (~1ns) per query.
 
-pub mod datasource;
-pub mod tx;
-pub mod capability;
-pub mod portability;
 pub mod cache_policy;
+pub mod capability;
+pub mod datasource;
 pub mod entity;
-pub mod repository;
+pub mod error;
+pub mod portability;
 pub mod provider_trait;
 pub mod provisioning;
-pub mod error;
+pub mod repository;
+pub mod tx;
 
-pub use datasource::DatasourceRef;
-pub use tx::TxScope;
-pub use capability::DbCapability;
-pub use portability::PortabilityTier;
 pub use cache_policy::CachePolicy;
+pub use capability::DbCapability;
+pub use datasource::DatasourceRef;
 pub use entity::VilEntityMeta;
+pub use error::{DbError, DbResult};
+pub use portability::PortabilityTier;
 pub use provider_trait::{DbProvider, DbQueryExecutor, ProviderExecutor, ToSqlValue};
 pub use provisioning::DatasourceRegistry;
-pub use error::{DbError, DbResult};
+pub use tx::TxScope;

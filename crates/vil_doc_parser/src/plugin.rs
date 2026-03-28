@@ -1,22 +1,32 @@
 use vil_server::prelude::*;
 
 use crate::handlers;
-use crate::semantic::{ParseEvent, ParseFault, DocParserState};
+use crate::semantic::{DocParserState, ParseEvent, ParseFault};
 
 pub struct DocParserPlugin;
 
 impl DocParserPlugin {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl Default for DocParserPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for DocParserPlugin {
-    fn id(&self) -> &str { "vil-doc-parser" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Multi-format document parsing for RAG pipelines" }
+    fn id(&self) -> &str {
+        "vil-doc-parser"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Multi-format document parsing for RAG pipelines"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -28,7 +38,9 @@ impl VilPlugin for DocParserPlugin {
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let svc = ServiceProcess::new("doc-parser")
@@ -40,5 +52,7 @@ impl VilPlugin for DocParserPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

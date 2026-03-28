@@ -33,9 +33,9 @@ use std::mem::MaybeUninit;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
-use vil_types::Descriptor;
 use nix::sys::eventfd::{eventfd, EfdFlags};
-use std::os::unix::io::{RawFd, IntoRawFd};
+use std::os::unix::io::{IntoRawFd, RawFd};
+use vil_types::Descriptor;
 
 use crate::traits::QueueBackend;
 
@@ -143,7 +143,9 @@ impl<T> SpscRingBuffer<T> {
         }
 
         // Publish new tail — consumer will see this item
-        self.tail.value.store(tail.wrapping_add(1), Ordering::Release);
+        self.tail
+            .value
+            .store(tail.wrapping_add(1), Ordering::Release);
 
         Ok(())
     }
@@ -184,7 +186,9 @@ impl<T> SpscRingBuffer<T> {
         let item = unsafe { (*self.buffer[idx].get()).assume_init_read() };
 
         // Publish new head — producer will see this slot as available
-        self.head.value.store(head.wrapping_add(1), Ordering::Release);
+        self.head
+            .value
+            .store(head.wrapping_add(1), Ordering::Release);
 
         Some(item)
     }
@@ -322,7 +326,7 @@ impl ShmSpscQueue {
     ) -> Self {
         let layout = base_ptr as *mut ShmSpscLayout<Descriptor>;
         // Buffer starts after the struct (with 128-byte alignment)
-        let buffer = base_ptr.add(std::mem::size_of::<ShmSpscLayout<Descriptor>>()) 
+        let buffer = base_ptr.add(std::mem::size_of::<ShmSpscLayout<Descriptor>>())
             as *mut UnsafeCell<MaybeUninit<Descriptor>>;
 
         Self {
@@ -364,7 +368,9 @@ impl ShmSpscQueue {
             let slot_ptr = self.buffer.add(idx);
             (*(*slot_ptr).get()).write(item);
 
-            (*self.layout).tail.store(tail.wrapping_add(1), Ordering::Release);
+            (*self.layout)
+                .tail
+                .store(tail.wrapping_add(1), Ordering::Release);
             self.signal();
             Ok(())
         }
@@ -385,7 +391,9 @@ impl ShmSpscQueue {
             let slot_ptr = self.buffer.add(idx);
             let item = (*(*slot_ptr).get()).assume_init_read();
 
-            (*self.layout).head.store(head.wrapping_add(1), Ordering::Release);
+            (*self.layout)
+                .head
+                .store(head.wrapping_add(1), Ordering::Release);
             Some(item)
         }
     }
@@ -426,8 +434,8 @@ impl QueueBackend for ShmSpscQueue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use vil_types::{HostId, PortId, SampleId};
     use std::thread;
+    use vil_types::{HostId, PortId, SampleId};
 
     fn make_desc(id: u64) -> Descriptor {
         Descriptor {
@@ -673,8 +681,9 @@ mod tests {
     #[test]
     fn test_shm_spsc_queue_basic() {
         let capacity = 16;
-        let size = std::mem::size_of::<ShmSpscLayout<Descriptor>>() + capacity * std::mem::size_of::<UnsafeCell<MaybeUninit<Descriptor>>>();
-        
+        let size = std::mem::size_of::<ShmSpscLayout<Descriptor>>()
+            + capacity * std::mem::size_of::<UnsafeCell<MaybeUninit<Descriptor>>>();
+
         // Simulate SHM with a manually aligned Vec
         let mut storage = vec![0u8; size + 256];
         let raw_ptr = storage.as_mut_ptr();
@@ -698,11 +707,11 @@ mod tests {
 
             let desc = make_desc(123);
             q1.try_push(desc).unwrap();
-            
+
             assert_eq!(q2.len(), 1);
             let popped = q2.try_pop().unwrap();
             assert_eq!(popped.sample_id, SampleId(123));
-            
+
             // Clean up eventfd
             nix::unistd::close(efd).unwrap();
         }

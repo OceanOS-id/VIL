@@ -53,10 +53,10 @@
 //   curl http://localhost:8080/api/kafka/bridge
 // =============================================================================
 
-use vil_server::prelude::*;
 use vil_server::axum::extract::Extension;
+use vil_server::prelude::*;
 
-use vil_mq_kafka::{KafkaConfig, KafkaProducer, KafkaBridge};
+use vil_mq_kafka::{KafkaBridge, KafkaConfig, KafkaProducer};
 
 use std::sync::Arc;
 
@@ -193,9 +193,7 @@ async fn index() -> &'static str {
 }
 
 /// GET /api/kafka/config — KafkaConfig pattern with broker and auth fields.
-async fn kafka_config(
-    ctx: ServiceCtx,
-) -> VilResponse<KafkaConfigResponse> {
+async fn kafka_config(ctx: ServiceCtx) -> VilResponse<KafkaConfigResponse> {
     let state = ctx.state::<KafkaState>().expect("state type mismatch");
     VilResponse::ok(KafkaConfigResponse {
         broker: BrokerInfo {
@@ -234,7 +232,8 @@ async fn kafka_config(
                 description: "User notification events".into(),
             },
         ],
-        note: "Stub mode — no real Kafka broker connected. Messages are processed in-memory.".into(),
+        note: "Stub mode — no real Kafka broker connected. Messages are processed in-memory."
+            .into(),
     })
 }
 
@@ -262,7 +261,10 @@ async fn kafka_produce(
     // land on the same partition — critical for maintaining event ordering
     // in the financial audit trail.
     let result = if let Some(ref key) = req.key {
-        state.producer.publish_keyed(&req.topic, key, &payload_bytes).await
+        state
+            .producer
+            .publish_keyed(&req.topic, key, &payload_bytes)
+            .await
     } else {
         state.producer.publish(&req.topic, &payload_bytes).await
     };
@@ -275,21 +277,32 @@ async fn kafka_produce(
         key: req.key.clone(),
         payload_size: payload_bytes.len(),
         total_produced: state.producer.messages_sent(),
-        partitioning: if req.key.is_some() { "key-based".into() } else { "round-robin".into() },
+        partitioning: if req.key.is_some() {
+            "key-based".into()
+        } else {
+            "round-robin".into()
+        },
     }))
 }
 
 /// GET /api/kafka/consumer — consumer group configuration and pattern info.
-async fn consumer_info(
-    ctx: ServiceCtx,
-) -> VilResponse<ConsumerInfoResponse> {
+async fn consumer_info(ctx: ServiceCtx) -> VilResponse<ConsumerInfoResponse> {
     let state = ctx.state::<KafkaState>().expect("state type mismatch");
     let mut consumer_api = std::collections::HashMap::new();
-    consumer_api.insert("KafkaConsumer::new(config)".into(), "Create a consumer for a group/topic".into());
+    consumer_api.insert(
+        "KafkaConsumer::new(config)".into(),
+        "Create a consumer for a group/topic".into(),
+    );
     consumer_api.insert("consumer.start()".into(), "Start consuming messages".into());
     consumer_api.insert("consumer.stop()".into(), "Graceful stop".into());
-    consumer_api.insert("consumer.take_receiver()".into(), "Take mpsc receiver for bridge integration".into());
-    consumer_api.insert("consumer.inject_message(msg)".into(), "Inject test message (for testing)".into());
+    consumer_api.insert(
+        "consumer.take_receiver()".into(),
+        "Take mpsc receiver for bridge integration".into(),
+    );
+    consumer_api.insert(
+        "consumer.inject_message(msg)".into(),
+        "Inject test message (for testing)".into(),
+    );
 
     VilResponse::ok(ConsumerInfoResponse {
         consumer_group: ConsumerGroupInfo {
@@ -305,24 +318,30 @@ async fn consumer_info(
                     step: 1,
                     name: "Consume".into(),
                     description: "KafkaConsumer reads from input topic (events.orders)".into(),
-                    code_pattern: "let msg = consumer.take_receiver().unwrap().recv().await;".into(),
+                    code_pattern: "let msg = consumer.take_receiver().unwrap().recv().await;"
+                        .into(),
                 },
                 PipelineStep {
                     step: 2,
                     name: "Process".into(),
-                    description: "Apply business logic, transform, enrich, or filter the message".into(),
+                    description: "Apply business logic, transform, enrich, or filter the message"
+                        .into(),
                     code_pattern: "let enriched = process(msg.payload).await;".into(),
                 },
                 PipelineStep {
                     step: 3,
                     name: "Produce".into(),
-                    description: "Write processed result to output topic (events.notifications)".into(),
-                    code_pattern: "producer.publish_keyed(\"events.notifications\", &key, &enriched).await;".into(),
+                    description: "Write processed result to output topic (events.notifications)"
+                        .into(),
+                    code_pattern:
+                        "producer.publish_keyed(\"events.notifications\", &key, &enriched).await;"
+                            .into(),
                 },
                 PipelineStep {
                     step: 4,
                     name: "Bridge (optional)".into(),
-                    description: "Forward to Tri-Lane SHM for zero-copy inter-service delivery".into(),
+                    description: "Forward to Tri-Lane SHM for zero-copy inter-service delivery"
+                        .into(),
                     code_pattern: "bridge.bridge(&kafka_msg).await;".into(),
                 },
             ],
@@ -332,14 +351,21 @@ async fn consumer_info(
 }
 
 /// GET /api/kafka/bridge — Kafka → Tri-Lane bridge status and info.
-async fn bridge_status(
-    ctx: ServiceCtx,
-) -> VilResponse<BridgeStatusResponse> {
+async fn bridge_status(ctx: ServiceCtx) -> VilResponse<BridgeStatusResponse> {
     let state = ctx.state::<KafkaState>().expect("state type mismatch");
     let mut api = std::collections::HashMap::new();
-    api.insert("KafkaBridge::new(target)".into(), "Create bridge targeting a service".into());
-    api.insert("bridge.bridge(&msg)".into(), "Forward a KafkaMessage to Tri-Lane SHM".into());
-    api.insert("bridge.bridged_count()".into(), "Total messages bridged".into());
+    api.insert(
+        "KafkaBridge::new(target)".into(),
+        "Create bridge targeting a service".into(),
+    );
+    api.insert(
+        "bridge.bridge(&msg)".into(),
+        "Forward a KafkaMessage to Tri-Lane SHM".into(),
+    );
+    api.insert(
+        "bridge.bridged_count()".into(),
+        "Total messages bridged".into(),
+    );
 
     VilResponse::ok(BridgeStatusResponse {
         bridge: KafkaBridgeInfo {
@@ -377,7 +403,8 @@ async fn bridge_status(
 async fn main() {
     // Producer config
     let producer_config = KafkaConfig::new("localhost:9092,localhost:9093,localhost:9094");
-    let producer = KafkaProducer::new(producer_config.clone()).await
+    let producer = KafkaProducer::new(producer_config.clone())
+        .await
         .expect("Kafka producer creation should succeed (implementation mode)");
 
     // Consumer config
@@ -398,17 +425,16 @@ async fn main() {
     // ── Step 2: Define the Kafka service as a Process ────────────────
     let kafka_service = ServiceProcess::new("kafka")
         .prefix("/api")
-        .endpoint(Method::GET,  "/kafka/config",   get(kafka_config))
-        .endpoint(Method::POST, "/kafka/produce",  post(kafka_produce))
-        .endpoint(Method::GET,  "/kafka/consumer", get(consumer_info))
-        .endpoint(Method::GET,  "/kafka/bridge",   get(bridge_status))
+        .endpoint(Method::GET, "/kafka/config", get(kafka_config))
+        .endpoint(Method::POST, "/kafka/produce", post(kafka_produce))
+        .endpoint(Method::GET, "/kafka/consumer", get(consumer_info))
+        .endpoint(Method::GET, "/kafka/bridge", get(bridge_status))
         .state(state);
 
     // ── Step 3: Assemble into VilApp and run ───────────────────────
     VilApp::new("kafka-stream")
         .port(8080)
-        .service(ServiceProcess::new("root")
-            .endpoint(Method::GET, "/", get(index)))
+        .service(ServiceProcess::new("root").endpoint(Method::GET, "/", get(index)))
         .service(kafka_service)
         .run()
         .await;

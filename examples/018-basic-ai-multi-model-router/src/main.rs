@@ -35,8 +35,8 @@
 //     -d '{"prompt": "Analyze the performance characteristics of Rust async"}' \
 //     http://localhost:3085/api/route
 
+use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 use vil_server::prelude::*;
-use vil_llm::semantic::{LlmResponseEvent, LlmFault, LlmUsageState};
 
 // Upstream inference endpoint — in a real cost optimizer, this would
 // be a map of model_name -> endpoint_url, with fallback chains.
@@ -69,9 +69,7 @@ struct RouteResponse {
 // In production, step 2 would use a lightweight classifier model
 // to score prompt complexity and select the cheapest adequate model.
 
-async fn route_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<RouteResponse>> {
+async fn route_handler(body: ShmSlice) -> HandlerResult<VilResponse<RouteResponse>> {
     let req: RouteRequest = body.json().expect("invalid JSON body");
 
     // Build the inference request. The system prompt specializes the
@@ -110,7 +108,9 @@ async fn route_handler(
     // Collect the full streamed response. In the cost optimizer,
     // we also track token usage here to update per-tenant budgets
     // and trigger alerts when spending exceeds thresholds.
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     Ok(VilResponse::ok(RouteResponse { content }))
@@ -136,7 +136,14 @@ async fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode (no auth)" } else { "OPENAI_API_KEY (Bearer)" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode (no auth)"
+        } else {
+            "OPENAI_API_KEY (Bearer)"
+        }
+    );
     println!("  Listening on http://localhost:3085/api/route");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!("  Model: gpt-4 (technical analysis specialist)");
@@ -149,9 +156,9 @@ async fn main() {
     // alerting, and usage dashboards work automatically.
     let svc = ServiceProcess::new("router")
         .prefix("/api")
-        .emits::<LlmResponseEvent>()     // Data lane: model response events
-        .faults::<LlmFault>()            // Fault lane: model timeout/errors
-        .manages::<LlmUsageState>()      // Control lane: token usage tracking
+        .emits::<LlmResponseEvent>() // Data lane: model response events
+        .faults::<LlmFault>() // Fault lane: model timeout/errors
+        .manages::<LlmUsageState>() // Control lane: token usage tracking
         .endpoint(Method::POST, "/route", post(route_handler));
 
     VilApp::new("ai-multi-model-router")

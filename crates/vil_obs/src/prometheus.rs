@@ -75,15 +75,19 @@ impl VilMetrics {
         latency: &crate::LatencySnapshot,
     ) {
         // Map runtime counters to Prometheus metrics
-        self.requests_total.store(counters.publishes, Ordering::Relaxed);
-        self.route_errors_total.store(counters.drops + counters.crashes, Ordering::Relaxed);
+        self.requests_total
+            .store(counters.publishes, Ordering::Relaxed);
+        self.route_errors_total
+            .store(counters.drops + counters.crashes, Ordering::Relaxed);
 
         // Update latency from tracker
         if latency.count > 0 {
             // Convert nanoseconds to milliseconds
             let mean_ms = latency.mean_ns / 1_000_000;
-            self.request_duration_ms_sum.store(mean_ms * latency.count, Ordering::Relaxed);
-            self.request_duration_ms_count.store(latency.count, Ordering::Relaxed);
+            self.request_duration_ms_sum
+                .store(mean_ms * latency.count, Ordering::Relaxed);
+            self.request_duration_ms_count
+                .store(latency.count, Ordering::Relaxed);
         }
     }
 

@@ -3,14 +3,14 @@
 // =============================================================================
 
 use crate::config::KafkaConfig;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::sync::Arc;
-use tokio::sync::mpsc;
 use bytes::Bytes;
+use futures::StreamExt;
 use rdkafka::consumer::{Consumer, StreamConsumer};
 use rdkafka::ClientConfig;
 use rdkafka::Message as RdMessage;
-use futures::StreamExt;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
+use tokio::sync::mpsc;
 
 /// Consumed Kafka message.
 #[derive(Debug, Clone)]
@@ -55,12 +55,14 @@ impl KafkaConsumer {
             client_config.set("sasl.password", password);
         }
 
-        let consumer: StreamConsumer = client_config.create()
+        let consumer: StreamConsumer = client_config
+            .create()
             .map_err(|e| format!("Kafka consumer creation failed: {}", e))?;
 
         // Subscribe to topic if configured
         if let Some(ref topic) = config.topic {
-            consumer.subscribe(&[topic])
+            consumer
+                .subscribe(&[topic])
                 .map_err(|e| format!("Kafka topic subscribe failed: {}", e))?;
         }
 
@@ -71,7 +73,8 @@ impl KafkaConsumer {
             config,
             messages_received: AtomicU64::new(0),
             running: AtomicBool::new(false),
-            tx, rx: Some(rx),
+            tx,
+            rx: Some(rx),
         })
     }
 
@@ -104,35 +107,40 @@ impl KafkaConsumer {
                 match stream.next().await {
                     Some(Ok(borrowed_msg)) => {
                         let topic_str = RdMessage::topic(&borrowed_msg).to_string();
-                        let payload_bytes = RdMessage::payload(&borrowed_msg).map(|p| Bytes::copy_from_slice(p)).unwrap_or_default();
+                        let payload_bytes = RdMessage::payload(&borrowed_msg)
+                            .map(|p| Bytes::copy_from_slice(p))
+                            .unwrap_or_default();
                         let payload_len = payload_bytes.len();
                         let partition = RdMessage::partition(&borrowed_msg);
                         let offset = RdMessage::offset(&borrowed_msg);
                         {
                             use vil_log::{mq_log, types::MqPayload};
-                            mq_log!(Info, MqPayload {
-                                broker_hash: register_str("kafka"),
-                                topic_hash: register_str(&topic_str),
-                                message_bytes: payload_len as u32,
-                                op_type: 1,
-                                partition: partition.clamp(0, 255) as u8,
-                                offset: offset.max(0) as u64,
-                                ..Default::default()
-                            });
+                            mq_log!(
+                                Info,
+                                MqPayload {
+                                    broker_hash: register_str("kafka"),
+                                    topic_hash: register_str(&topic_str),
+                                    message_bytes: payload_len as u32,
+                                    op_type: 1,
+                                    partition: partition.clamp(0, 255) as u8,
+                                    offset: offset.max(0) as u64,
+                                    ..Default::default()
+                                }
+                            );
                         }
                         let kafka_msg = KafkaMessage {
                             topic: topic_str,
                             partition,
                             offset,
-                            key: RdMessage::key(&borrowed_msg).map(|k| String::from_utf8_lossy(k).to_string()),
+                            key: RdMessage::key(&borrowed_msg)
+                                .map(|k| String::from_utf8_lossy(k).to_string()),
                             payload: payload_bytes,
                         };
                         if tx.send(kafka_msg).await.is_err() {
                             break; // receiver dropped
                         }
                     }
-                    Some(Err(_e)) => {
-                    }
+                    Some(Err(_e)) => {}
                     None => break,
                 }
             }
@@ -144,6 +152,10 @@ impl KafkaConsumer {
         self.running.store(false, Ordering::Relaxed);
     }
 
-    pub fn is_running(&self) -> bool { self.running.load(Ordering::Relaxed) }
-    pub fn messages_received(&self) -> u64 { self.messages_received.load(Ordering::Relaxed) }
+    pub fn is_running(&self) -> bool {
+        self.running.load(Ordering::Relaxed)
+    }
+    pub fn messages_received(&self) -> u64 {
+        self.messages_received.load(Ordering::Relaxed)
+    }
 }

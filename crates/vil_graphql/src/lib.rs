@@ -6,14 +6,14 @@
 // CRUD resolvers delegate to DbProvider (1 vtable call).
 // Subscriptions bridge EventBus → WebSocket.
 
-pub mod schema;
-pub mod resolver;
+pub mod axum_handler;
+pub mod config;
 pub mod filter;
 pub mod pagination;
-pub mod subscription;
 pub mod playground;
-pub mod config;
-pub mod axum_handler;
+pub mod resolver;
+pub mod schema;
+pub mod subscription;
 
 pub use config::GraphQLConfig;
 pub use schema::VilSchemaBuilder;

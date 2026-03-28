@@ -1,5 +1,5 @@
 use parking_lot::RwLock;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// A single indexed chunk with its embedding vector.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,7 +33,11 @@ impl IndexWriter {
     pub fn append(&self, text: String, embedding: Vec<f32>) -> usize {
         let mut chunks = self.chunks.write();
         let index = chunks.len();
-        chunks.push(IndexedChunk { text, embedding, index });
+        chunks.push(IndexedChunk {
+            text,
+            embedding,
+            index,
+        });
         index
     }
 
@@ -67,7 +71,11 @@ impl IndexWriter {
             })
             .collect();
 
-        scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        scored.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         scored.truncate(top_k);
         scored
     }

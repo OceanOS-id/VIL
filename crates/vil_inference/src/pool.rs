@@ -23,7 +23,10 @@ impl ModelPool {
     /// # Panics
     /// Panics if `instances` is empty.
     pub fn new(model_name: &str, instances: Vec<Arc<dyn ModelBackend>>) -> Self {
-        assert!(!instances.is_empty(), "ModelPool requires at least one instance");
+        assert!(
+            !instances.is_empty(),
+            "ModelPool requires at least one instance"
+        );
         Self {
             instances,
             counter: AtomicUsize::new(0),

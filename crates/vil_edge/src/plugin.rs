@@ -1,6 +1,6 @@
-use vil_server::prelude::*;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use vil_server::prelude::*;
 
 use crate::config::EdgeConfig;
 use crate::handlers;
@@ -30,24 +30,32 @@ impl EdgePlugin {
 }
 
 impl Default for EdgePlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for EdgePlugin {
-    fn id(&self) -> &str { "vil-edge" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Edge-optimized inference runtime for constrained devices" }
+    fn id(&self) -> &str {
+        "vil-edge"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Edge-optimized inference runtime for constrained devices"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "edge".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/edge/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/edge/stats")],
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let runtime = Arc::clone(&self.runtime);
@@ -61,5 +69,7 @@ impl VilPlugin for EdgePlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

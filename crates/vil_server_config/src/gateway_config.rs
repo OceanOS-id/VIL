@@ -77,39 +77,59 @@ impl Default for GatewayConfig {
 impl Default for GatewaySection {
     fn default() -> Self {
         Self {
-            port: 3080, host: "0.0.0.0".into(), path: "/trigger".into(),
-            upstream: UpstreamSection::default(), post_body: None,
+            port: 3080,
+            host: "0.0.0.0".into(),
+            path: "/trigger".into(),
+            upstream: UpstreamSection::default(),
+            post_body: None,
         }
     }
 }
 
 impl Default for UpstreamSection {
     fn default() -> Self {
-        Self { url: String::new(), timeout_secs: 30, format: "sse".into(), json_tap: "choices[0].delta.content".into() }
+        Self {
+            url: String::new(),
+            timeout_secs: 30,
+            format: "sse".into(),
+            json_tap: "choices[0].delta.content".into(),
+        }
     }
 }
 
 impl Default for RuntimeSection {
     fn default() -> Self {
-        Self { mode: "shared".into(), shm: ShmBasicSection::default() }
+        Self {
+            mode: "shared".into(),
+            shm: ShmBasicSection::default(),
+        }
     }
 }
 
 impl Default for ShmBasicSection {
     fn default() -> Self {
-        Self { enabled: true, pool_size: "16MB".into() }
+        Self {
+            enabled: true,
+            pool_size: "16MB".into(),
+        }
     }
 }
 
 impl Default for LoggingSection {
     fn default() -> Self {
-        Self { level: "info".into(), format: "text".into() }
+        Self {
+            level: "info".into(),
+            format: "text".into(),
+        }
     }
 }
 
 impl Default for GrpcSection {
     fn default() -> Self {
-        Self { enabled: false, port: 50051 }
+        Self {
+            enabled: false,
+            port: 50051,
+        }
     }
 }
 
@@ -117,8 +137,7 @@ impl GatewayConfig {
     pub fn from_file(path: &Path) -> Result<Self, String> {
         let content = std::fs::read_to_string(path)
             .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
-        serde_yaml::from_str(&content)
-            .map_err(|e| format!("Failed to parse vil.yaml: {}", e))
+        serde_yaml::from_str(&content).map_err(|e| format!("Failed to parse vil.yaml: {}", e))
     }
 
     pub fn from_str(yaml: &str) -> Result<Self, String> {

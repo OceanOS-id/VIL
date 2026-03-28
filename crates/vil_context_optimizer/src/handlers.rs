@@ -5,13 +5,13 @@
 //! - Return `HandlerResult<VilResponse<T>>` or `VilResponse<T>`
 //! - Use `VilError` for structured error responses
 
-use vil_server::prelude::*;
 use serde::{Deserialize, Serialize};
+use vil_server::prelude::*;
 
 use crate::budget::TokenBudget;
 use crate::optimizer::ContextOptimizer;
-use crate::strategy::OptimizeStrategy;
 use crate::semantic::{OptimizeEvent, OptimizerState};
+use crate::strategy::OptimizeStrategy;
 
 use std::sync::{Arc, Mutex};
 
@@ -65,7 +65,9 @@ pub async fn optimize_handler(
     ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<OptimizeResponseBody>> {
-    let state = ctx.state::<Arc<Mutex<OptimizerState>>>().expect("OptimizerState");
+    let state = ctx
+        .state::<Arc<Mutex<OptimizerState>>>()
+        .expect("OptimizerState");
     let req: OptimizeRequest = body.json().expect("invalid JSON");
     if req.chunks.is_empty() {
         return Err(VilError::bad_request("chunks must not be empty"));
@@ -73,14 +75,24 @@ pub async fn optimize_handler(
 
     let budget = TokenBudget::new(req.budget);
     let strategy = match req.strategy.as_deref() {
-        Some("dedup") => OptimizeStrategy::DedupAndFit { dedup_threshold: 0.8 },
-        Some("full") => OptimizeStrategy::Full { dedup_threshold: 0.8 },
+        Some("dedup") => OptimizeStrategy::DedupAndFit {
+            dedup_threshold: 0.8,
+        },
+        Some("full") => OptimizeStrategy::Full {
+            dedup_threshold: 0.8,
+        },
         Some("budget") => OptimizeStrategy::BudgetFit,
-        _ => OptimizeStrategy::Full { dedup_threshold: 0.8 },
+        _ => OptimizeStrategy::Full {
+            dedup_threshold: 0.8,
+        },
     };
 
     let optimizer = ContextOptimizer::new(budget).strategy(strategy);
-    let input: Vec<(String, f32)> = req.chunks.iter().map(|c| (c.text.clone(), c.score)).collect();
+    let input: Vec<(String, f32)> = req
+        .chunks
+        .iter()
+        .map(|c| (c.text.clone(), c.score))
+        .collect();
     let result = optimizer.optimize(&input);
 
     let strategy_name = req.strategy.unwrap_or_else(|| "full".into());
@@ -106,10 +118,10 @@ pub async fn optimize_handler(
 }
 
 /// GET /stats — Get optimizer statistics.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<OptimizerStatsBody> {
-    let state = ctx.state::<Arc<Mutex<OptimizerState>>>().expect("OptimizerState");
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<OptimizerStatsBody> {
+    let state = ctx
+        .state::<Arc<Mutex<OptimizerState>>>()
+        .expect("OptimizerState");
     let s = state.lock().unwrap_or_else(|e| e.into_inner());
     VilResponse::ok(OptimizerStatsBody {
         total_optimizations: s.total_optimizations,

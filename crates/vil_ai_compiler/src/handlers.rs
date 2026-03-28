@@ -1,8 +1,8 @@
 //! HTTP handlers for the AI compiler plugin — wired to real PipelineDag state.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use vil_server::prelude::*;
 
 use crate::compiler::{compile, CompiledPlan};
 use crate::dag::PipelineDag;
@@ -47,9 +47,7 @@ pub struct StatsResponseBody {
     pub optimization_passes: Vec<String>,
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<StatsResponseBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<StatsResponseBody>> {
     let state = ctx.state::<Arc<CompilerStats>>().expect("CompilerStats");
     let dag = state.dag.read().await;
     let plan = state.plan.read().await;
@@ -71,9 +69,14 @@ pub async fn stats_handler(
         compiled_steps,
         parallel_tiers,
         supported_nodes: vec![
-            "Embed".into(), "Search".into(), "Rerank".into(),
-            "Generate".into(), "Transform".into(), "Cache".into(),
-            "Filter".into(), "Merge".into(),
+            "Embed".into(),
+            "Search".into(),
+            "Rerank".into(),
+            "Generate".into(),
+            "Transform".into(),
+            "Cache".into(),
+            "Filter".into(),
+            "Merge".into(),
         ],
         optimization_passes: vec![
             "transform_fusion".into(),

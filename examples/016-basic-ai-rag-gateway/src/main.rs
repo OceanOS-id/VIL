@@ -133,10 +133,8 @@ fn configure_source() -> HttpSourceBuilder {
 
 fn main() {
     // Step 1: Initialize the VIL shared-memory runtime
-    let world = Arc::new(
-        VastarRuntimeWorld::new_shared()
-            .expect("Failed to initialize VIL SHM Runtime"),
-    );
+    let world =
+        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to initialize VIL SHM Runtime"));
 
     // Step 2: Build nodes (Decomposed Style)
     let sink_builder = configure_sink();
@@ -160,7 +158,14 @@ fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode (no auth)" } else { "OPENAI_API_KEY (Bearer)" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode (no auth)"
+        } else {
+            "OPENAI_API_KEY (Bearer)"
+        }
+    );
     println!(
         "1. Listening for RAG queries on http://localhost:{}{}",
         WEBHOOK_PORT, WEBHOOK_PATH

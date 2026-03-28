@@ -12,7 +12,10 @@
 use colored::*;
 
 pub fn run_doctor() {
-    println!("{}", "=== VIL Doctor — System Readiness Check ===".green().bold());
+    println!(
+        "{}",
+        "=== VIL Doctor — System Readiness Check ===".green().bold()
+    );
     println!();
 
     let mut all_ok = true;
@@ -39,7 +42,10 @@ pub fn run_doctor() {
     if check_shm() {
         println!("  {} /dev/shm available (shared memory)", "✓".green());
     } else {
-        println!("  {} /dev/shm not available (SHM features disabled)", "⚠".yellow());
+        println!(
+            "  {} /dev/shm not available (SHM features disabled)",
+            "⚠".yellow()
+        );
     }
 
     // 4. SHM size
@@ -48,7 +54,11 @@ pub fn run_doctor() {
             if size_mb >= 256 {
                 println!("  {} SHM size: {}MB", "✓".green(), size_mb);
             } else {
-                println!("  {} SHM size: {}MB (recommend ≥256MB)", "⚠".yellow(), size_mb);
+                println!(
+                    "  {} SHM size: {}MB (recommend ≥256MB)",
+                    "⚠".yellow(),
+                    size_mb
+                );
             }
         }
         None => println!("  {} SHM size: unknown", "⚠".yellow()),
@@ -74,9 +84,19 @@ pub fn run_doctor() {
 
     println!();
     if all_ok {
-        println!("{}", "All checks passed. System is ready for vil-server.".green().bold());
+        println!(
+            "{}",
+            "All checks passed. System is ready for vil-server."
+                .green()
+                .bold()
+        );
     } else {
-        println!("{}", "Some checks failed. Please fix the issues above.".yellow().bold());
+        println!(
+            "{}",
+            "Some checks failed. Please fix the issues above."
+                .yellow()
+                .bold()
+        );
     }
 }
 

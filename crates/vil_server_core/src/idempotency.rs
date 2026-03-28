@@ -59,11 +59,7 @@ impl IdempotencyStore {
     pub fn get(&self, key: &str) -> Option<(StatusCode, Bytes, String)> {
         if let Some(entry) = self.cache.get(key) {
             if entry.cached_at.elapsed() < self.ttl {
-                return Some((
-                    entry.status,
-                    entry.body.clone(),
-                    entry.content_type.clone(),
-                ));
+                return Some((entry.status, entry.body.clone(), entry.content_type.clone()));
             }
             // Expired — remove
             drop(entry);
@@ -79,12 +75,15 @@ impl IdempotencyStore {
             self.evict_expired();
         }
 
-        self.cache.insert(key, CachedResponse {
-            status,
-            body,
-            content_type,
-            cached_at: Instant::now(),
-        });
+        self.cache.insert(
+            key,
+            CachedResponse {
+                status,
+                body,
+                content_type,
+                cached_at: Instant::now(),
+            },
+        );
     }
 
     /// Check if a key exists (without returning the cached data).

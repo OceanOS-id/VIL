@@ -79,11 +79,14 @@ impl ApiKeyAuth {
 
     /// Register an API key (stored as SHA-256 hash).
     pub fn add_key(&self, key: impl Into<String>, name: impl Into<String>) {
-        self.keys.insert(hash_key(&key.into()), ApiKeyInfo {
-            name: name.into(),
-            scopes: Vec::new(),
-            active: true,
-        });
+        self.keys.insert(
+            hash_key(&key.into()),
+            ApiKeyInfo {
+                name: name.into(),
+                scopes: Vec::new(),
+                active: true,
+            },
+        );
     }
 
     /// Register an API key with scopes (stored as SHA-256 hash).
@@ -93,11 +96,14 @@ impl ApiKeyAuth {
         name: impl Into<String>,
         scopes: Vec<String>,
     ) {
-        self.keys.insert(hash_key(&key.into()), ApiKeyInfo {
-            name: name.into(),
-            scopes,
-            active: true,
-        });
+        self.keys.insert(
+            hash_key(&key.into()),
+            ApiKeyInfo {
+                name: name.into(),
+                scopes,
+                active: true,
+            },
+        );
     }
 
     /// Revoke an API key.
@@ -182,10 +188,7 @@ impl Default for ApiKeyAuth {
 ///   .layer(axum::middleware::from_fn(api_key_middleware))
 ///
 /// Note: Requires ApiKeyAuth to be stored in request extensions.
-pub async fn api_key_middleware(
-    request: Request,
-    next: Next,
-) -> Response {
+pub async fn api_key_middleware(request: Request, next: Next) -> Response {
     // Check for API key in extensions
     let auth = request.extensions().get::<ApiKeyAuth>().cloned();
 
@@ -201,7 +204,8 @@ pub async fn api_key_middleware(
                             "error": "Invalid API key",
                             "status": 401,
                         })),
-                    ).into_response();
+                    )
+                        .into_response();
                 }
             }
             None => {
@@ -212,7 +216,8 @@ pub async fn api_key_middleware(
                         "hint": "Provide via X-API-Key header or Authorization: ApiKey <key>",
                         "status": 401,
                     })),
-                ).into_response();
+                )
+                    .into_response();
             }
         }
     }

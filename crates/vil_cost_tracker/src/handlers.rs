@@ -1,7 +1,7 @@
 //! HTTP handlers for the cost tracker plugin — wired to real CostTracker state.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::tracker::{CostTracker, ModelCostEntry};
 
@@ -18,9 +18,7 @@ pub struct CostStatsBody {
 // ── Handlers ────────────────────────────────────────────────────────
 
 /// GET /stats — return real cost data from the tracker.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<CostStatsBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<CostStatsBody>> {
     let tracker = ctx.state::<Arc<CostTracker>>().expect("CostTracker");
     let report = tracker.cost_report();
 

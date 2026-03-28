@@ -140,7 +140,10 @@ impl LogDrain for ClickHouseDrain {
         "clickhouse"
     }
 
-    async fn flush(&mut self, batch: &[LogSlot]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn flush(
+        &mut self,
+        batch: &[LogSlot],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if batch.is_empty() {
             return Ok(());
         }

@@ -7,17 +7,17 @@
 
 pub mod dag;
 pub mod executor;
-pub mod scheduler;
-pub mod task;
-pub mod semantic;
 pub mod handlers;
-pub mod plugin;
 pub mod pipeline_sse;
+pub mod plugin;
+pub mod scheduler;
+pub mod semantic;
+pub mod task;
 
-pub use scheduler::{WorkflowResult, WorkflowScheduler};
-pub use task::{Task, TaskResult, TaskStatus, TaskType};
 pub use plugin::WorkflowPlugin;
+pub use scheduler::{WorkflowResult, WorkflowScheduler};
 pub use semantic::{WorkflowEvent, WorkflowFault, WorkflowFaultType, WorkflowState};
+pub use task::{Task, TaskResult, TaskStatus, TaskType};
 
 #[cfg(test)]
 mod tests {
@@ -74,8 +74,7 @@ mod tests {
             Task::new("t1", "start", TaskType::Transform),
             Task::new("t2", "left", TaskType::Embed).with_deps(vec!["t1".into()]),
             Task::new("t3", "right", TaskType::Search).with_deps(vec!["t1".into()]),
-            Task::new("t4", "merge", TaskType::Generate)
-                .with_deps(vec!["t2".into(), "t3".into()]),
+            Task::new("t4", "merge", TaskType::Generate).with_deps(vec!["t2".into(), "t3".into()]),
         ];
         let result = rt().block_on(sched.submit(tasks)).unwrap();
         assert_eq!(result.results.len(), 4);
@@ -103,7 +102,11 @@ mod tests {
     #[test]
     fn test_custom_task_type() {
         let sched = WorkflowScheduler::new();
-        let tasks = vec![Task::new("t1", "my-task", TaskType::Custom("my_plugin".into()))];
+        let tasks = vec![Task::new(
+            "t1",
+            "my-task",
+            TaskType::Custom("my_plugin".into()),
+        )];
         let result = rt().block_on(sched.submit(tasks)).unwrap();
         assert_eq!(result.results.len(), 1);
         assert_eq!(result.results[0].status, TaskStatus::Success);
@@ -122,9 +125,8 @@ mod tests {
 
     #[test]
     fn test_dag_missing_dep() {
-        let tasks = vec![
-            Task::new("a", "a", TaskType::Embed).with_deps(vec!["nonexistent".into()]),
-        ];
+        let tasks =
+            vec![Task::new("a", "a", TaskType::Embed).with_deps(vec!["nonexistent".into()])];
         let result = dag::resolve_layers(&tasks);
         assert!(result.is_err());
     }

@@ -86,9 +86,7 @@ fn strip_html(html: &str) -> (String, Vec<DocSection>) {
     // Build text sections from paragraphs.
     for para in text.split("\n\n") {
         let trimmed = para.trim();
-        if !trimmed.is_empty()
-            && !sections.iter().any(|s| s.title.as_deref() == Some(trimmed))
-        {
+        if !trimmed.is_empty() && !sections.iter().any(|s| s.title.as_deref() == Some(trimmed)) {
             sections.push(DocSection {
                 title: None,
                 content: trimmed.to_string(),

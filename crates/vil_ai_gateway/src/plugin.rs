@@ -17,9 +17,15 @@ impl AiGatewayPlugin {
 }
 
 impl VilPlugin for AiGatewayPlugin {
-    fn id(&self) -> &str { "vil-ai-gateway" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Unified AI API gateway with circuit breaker and cost tracking" }
+    fn id(&self) -> &str {
+        "vil-ai-gateway"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Unified AI API gateway with circuit breaker and cost tracking"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -43,5 +49,7 @@ impl VilPlugin for AiGatewayPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

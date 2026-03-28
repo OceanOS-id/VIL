@@ -43,10 +43,10 @@ impl IotFault {
     /// Return a stable numeric code for log fields.
     pub fn as_error_code(&self) -> u32 {
         match self {
-            IotFault::ConnectionFailed { .. }  => 1,
-            IotFault::SubscribeFailed { .. }   => 2,
-            IotFault::EventLoopError { .. }    => 3,
-            IotFault::UnexpectedPacket { .. }  => 4,
+            IotFault::ConnectionFailed { .. } => 1,
+            IotFault::SubscribeFailed { .. } => 2,
+            IotFault::EventLoopError { .. } => 3,
+            IotFault::UnexpectedPacket { .. } => 4,
         }
     }
 }

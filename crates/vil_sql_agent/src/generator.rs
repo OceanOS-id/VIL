@@ -24,7 +24,12 @@ impl<'a> SqlGenerator<'a> {
     }
 
     /// Generate a SELECT query with a WHERE clause on a single column.
-    pub fn select_where(&self, table_name: &str, column: &str, placeholder: &str) -> Option<SafeQuery> {
+    pub fn select_where(
+        &self,
+        table_name: &str,
+        column: &str,
+        placeholder: &str,
+    ) -> Option<SafeQuery> {
         let table = self.registry.get(table_name)?;
         if !table.columns.iter().any(|c| c.name == column) {
             return None;

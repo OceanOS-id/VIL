@@ -14,10 +14,10 @@ use axum::http::Method;
 use axum::routing::MethodRouter;
 use axum::Router;
 
+use super::endpoint::{EndpointDef, ExecClass};
+use crate::plugin_system::semantic::{AiLane, AiSemantic, AiSemanticKind};
 use crate::router::Visibility;
 use crate::state::AppState;
-use crate::plugin_system::semantic::{AiSemantic, AiSemanticKind, AiLane};
-use super::endpoint::{EndpointDef, ExecClass};
 
 /// A declared AI semantic type for observability.
 ///
@@ -144,9 +144,10 @@ impl ServiceProcess {
     ///     .extension(store);
     /// ```
     pub fn extension<T: Clone + Send + Sync + 'static>(mut self, value: T) -> Self {
-        self.extensions.push(Box::new(move |router: Router<AppState>| {
-            router.layer(Extension(value))
-        }));
+        self.extensions
+            .push(Box::new(move |router: Router<AppState>| {
+                router.layer(Extension(value))
+            }));
         self
     }
 

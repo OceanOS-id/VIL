@@ -13,9 +13,12 @@ pub struct NatsMetrics {
 impl NatsMetrics {
     pub fn new() -> Self {
         Self {
-            published: AtomicU64::new(0), received: AtomicU64::new(0),
-            js_published: AtomicU64::new(0), js_consumed: AtomicU64::new(0),
-            kv_puts: AtomicU64::new(0), kv_gets: AtomicU64::new(0),
+            published: AtomicU64::new(0),
+            received: AtomicU64::new(0),
+            js_published: AtomicU64::new(0),
+            js_consumed: AtomicU64::new(0),
+            kv_puts: AtomicU64::new(0),
+            kv_gets: AtomicU64::new(0),
             bridged: AtomicU64::new(0),
         }
     }
@@ -31,4 +34,8 @@ impl NatsMetrics {
     }
 }
 
-impl Default for NatsMetrics { fn default() -> Self { Self::new() } }
+impl Default for NatsMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
+}

@@ -1,5 +1,5 @@
 // =============================================================================
-// workflow.rs — Code Generator for RouteIR Topology 
+// workflow.rs — Code Generator for RouteIR Topology
 // =============================================================================
 
 use proc_macro2::TokenStream;

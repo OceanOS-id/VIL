@@ -77,8 +77,7 @@ impl CrawlerState {
         self.pages_crawled += 1;
         self.total_bytes += event.content_length as u64;
         let n = self.pages_crawled as f64;
-        self.avg_latency_ms =
-            self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
+        self.avg_latency_ms = self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
     }
 
     pub fn record_error(&mut self) {

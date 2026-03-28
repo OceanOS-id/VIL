@@ -9,8 +9,6 @@ use vil_server::prelude::*;
 use std::sync::Arc;
 use vil_log::app_log;
 
-
-
 use crate::anthropic::*;
 use crate::extractors::{Embedder, Llm};
 use crate::handlers::{self, LlmServiceState, ModelsResponseBody};
@@ -70,11 +68,7 @@ impl LlmPlugin {
         self
     }
 
-    pub fn embedder_openai(
-        mut self,
-        api_key: impl Into<String>,
-        model: impl Into<String>,
-    ) -> Self {
+    pub fn embedder_openai(mut self, api_key: impl Into<String>, model: impl Into<String>) -> Self {
         self.embedder = Some(Arc::new(OpenAiEmbedder::new(api_key, model)));
         self
     }
@@ -127,8 +121,7 @@ impl VilPlugin for LlmPlugin {
                 endpoints: vec![
                     EndpointSpec::post("/api/llm/chat").with_description("Chat completion"),
                     EndpointSpec::post("/api/llm/embed").with_description("Text embedding"),
-                    EndpointSpec::get("/api/llm/models")
-                        .with_description("List available models"),
+                    EndpointSpec::get("/api/llm/models").with_description("List available models"),
                 ],
             },
         ]
@@ -176,8 +169,7 @@ impl VilPlugin for LlmPlugin {
 
         // Only add /embed if embedder is configured
         if self.embedder.is_some() {
-            svc = svc
-                .endpoint(Method::POST, "/embed", post(handlers::embed_handler));
+            svc = svc.endpoint(Method::POST, "/embed", post(handlers::embed_handler));
         }
 
         ctx.add_service(svc);

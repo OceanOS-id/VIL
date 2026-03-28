@@ -33,7 +33,11 @@ impl ResultMerger {
     pub fn merge(&self, result_sets: Vec<Vec<SourceResult>>) -> Vec<SourceResult> {
         // Flatten and sort by score descending.
         let mut all: Vec<SourceResult> = result_sets.into_iter().flatten().collect();
-        all.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        all.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Deduplicate similar results.
         let mut deduped: Vec<SourceResult> = Vec::new();

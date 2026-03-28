@@ -74,7 +74,10 @@ fn test_resource_generation_deployment() {
         replicas: 2,
         port: 3000,
         metrics_port: 9090,
-        shm: vil_operator::crd::ShmSpec { enabled: true, size_limit: "128Mi".into() },
+        shm: vil_operator::crd::ShmSpec {
+            enabled: true,
+            size_limit: "128Mi".into(),
+        },
         services: Vec::new(),
         mesh: Default::default(),
         resources: None,
@@ -88,13 +91,19 @@ fn test_resource_generation_deployment() {
     assert_eq!(deployment["spec"]["replicas"], 2);
 
     // Check SHM volume exists
-    let volumes = deployment["spec"]["template"]["spec"]["volumes"].as_array().unwrap();
+    let volumes = deployment["spec"]["template"]["spec"]["volumes"]
+        .as_array()
+        .unwrap();
     assert!(volumes.iter().any(|v| v["name"] == "shm"));
 
     // Check container port
     let container = &deployment["spec"]["template"]["spec"]["containers"][0];
     assert_eq!(container["image"], "test:latest");
-    assert!(container["ports"].as_array().unwrap().iter().any(|p| p["containerPort"] == 3000));
+    assert!(container["ports"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|p| p["containerPort"] == 3000));
 }
 
 #[test]
@@ -131,7 +140,10 @@ fn test_deployment_no_shm() {
         replicas: 1,
         port: 8080,
         metrics_port: 9090,
-        shm: ShmSpec { enabled: false, size_limit: "256Mi".into() },
+        shm: ShmSpec {
+            enabled: false,
+            size_limit: "256Mi".into(),
+        },
         services: Vec::new(),
         mesh: Default::default(),
         resources: None,
@@ -139,7 +151,9 @@ fn test_deployment_no_shm() {
     };
 
     let deployment = generate_deployment("my-app", "default", &spec);
-    let volumes = deployment["spec"]["template"]["spec"]["volumes"].as_array().unwrap();
+    let volumes = deployment["spec"]["template"]["spec"]["volumes"]
+        .as_array()
+        .unwrap();
     assert!(volumes.is_empty()); // No SHM volume when disabled
 }
 
@@ -162,8 +176,8 @@ fn test_status_helpers() {
 
 #[test]
 fn test_controller_action_create() {
-    use vil_operator::crd::*;
     use vil_operator::controller::*;
+    use vil_operator::crd::*;
 
     let yaml = r#"
 apiVersion: vil.dev/v1alpha1

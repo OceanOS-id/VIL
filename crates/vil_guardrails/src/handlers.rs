@@ -1,7 +1,7 @@
 use vil_server::prelude::*;
 
+use crate::{GuardrailResult, GuardrailsEngine};
 use std::sync::Arc;
-use crate::{GuardrailsEngine, GuardrailResult};
 
 #[derive(Debug, Deserialize)]
 pub struct ValidateRequest {
@@ -23,7 +23,9 @@ pub async fn validate_handler(
     ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<ValidateResponseBody>> {
-    let engine = ctx.state::<Arc<GuardrailsEngine>>().expect("GuardrailsEngine");
+    let engine = ctx
+        .state::<Arc<GuardrailsEngine>>()
+        .expect("GuardrailsEngine");
     let req: ValidateRequest = body.json().expect("invalid JSON");
     if req.text.is_empty() {
         return Err(VilError::bad_request("text must not be empty"));

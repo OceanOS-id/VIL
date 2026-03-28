@@ -31,8 +31,8 @@
 //         -H 'Content-Type: application/json' \
 //         -d '{"question":"How do I reset my password?"}'
 
+use vil_rag::semantic::{RagFault, RagIndexState, RagQueryEvent};
 use vil_server::prelude::*;
-use vil_rag::semantic::{RagQueryEvent, RagFault, RagIndexState};
 
 // ── Tier B AI Events ────────────────────────────────────────────────────
 // #[derive(VilAiEvent)] generates an AiSemantic envelope around each event.
@@ -120,17 +120,20 @@ struct SupportResponse {
 /// AI observability pipeline. No manual logging, no Kafka producer,
 /// no custom metrics code — just derive the trait and construct the event.
 async fn answer_question(body: ShmSlice) -> Result<VilResponse<SupportResponse>, VilError> {
-    let req: SupportQuestion = body.json()
+    let req: SupportQuestion = body
+        .json()
         .map_err(|_| VilError::bad_request("Invalid JSON — expected {\"question\":\"...\"}}"))?;
 
     let query_lower = req.question.to_lowercase();
 
     // ── STEP 1: Search Knowledge Base ───────────────────────────────
     // Find articles that match the customer's question.
-    let results: Vec<ArticleResult> = KNOWLEDGE_BASE.iter()
+    let results: Vec<ArticleResult> = KNOWLEDGE_BASE
+        .iter()
         .filter(|(_, text, _)| {
             let text_lower = text.to_lowercase();
-            query_lower.split_whitespace()
+            query_lower
+                .split_whitespace()
                 .any(|word| text_lower.contains(word))
         })
         .map(|(id, text, score)| ArticleResult {
@@ -168,7 +171,10 @@ async fn answer_question(body: ShmSlice) -> Result<VilResponse<SupportResponse>,
 
     // Build the answer from the most relevant article
     let answer = if let Some(top) = results.first() {
-        format!("Based on our knowledge base ({}): {}", top.article_id, top.snippet)
+        format!(
+            "Based on our knowledge base ({}): {}",
+            top.article_id, top.snippet
+        )
     } else {
         "I couldn't find a relevant article. Please contact support@company.com for help.".into()
     };
@@ -181,7 +187,8 @@ async fn answer_question(body: ShmSlice) -> Result<VilResponse<SupportResponse>,
             "SupportRankEvent — relevance scores after re-ranking",
             "SupportAnswerEvent — model used + token counts",
         ],
-        quality_note: "All 3 VilAiEvents are routed to AI observability pipeline for quality monitoring",
+        quality_note:
+            "All 3 VilAiEvents are routed to AI observability pipeline for quality monitoring",
     }))
 }
 

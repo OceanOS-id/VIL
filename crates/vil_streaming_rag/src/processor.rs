@@ -58,7 +58,11 @@ impl StreamProcessor {
                     byte_advance = idx;
                     break;
                 }
-                byte_advance = idx + self.buffer[idx..].chars().next().map_or(0, |c| c.len_utf8());
+                byte_advance = idx
+                    + self.buffer[idx..]
+                        .chars()
+                        .next()
+                        .map_or(0, |c| c.len_utf8());
             }
             self.buffer = self.buffer[byte_advance..].to_string();
         }

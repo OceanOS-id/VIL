@@ -1,10 +1,10 @@
 use std::sync::Arc;
+use vil_llm::message::LlmError;
 use vil_llm::{ChatMessage, LlmProvider};
 use vil_log::app_log;
-use vil_llm::message::LlmError;
 
 use crate::config::SpeculativeConfig;
-use crate::draft::{DraftProvider, DraftError};
+use crate::draft::{DraftError, DraftProvider};
 use crate::verifier::verify_draft;
 
 /// Result of a full speculative decode run.
@@ -71,7 +71,11 @@ impl SpeculativeDecoder {
         target: Arc<dyn LlmProvider>,
         config: SpeculativeConfig,
     ) -> Self {
-        Self { draft, target, config }
+        Self {
+            draft,
+            target,
+            config,
+        }
     }
 
     /// Run speculative decoding on the given messages.

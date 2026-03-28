@@ -3,7 +3,7 @@
 // =============================================================================
 
 use async_trait::async_trait;
-use sea_orm::{Database, DatabaseConnection, ConnectOptions, DbErr};
+use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -34,27 +34,41 @@ impl SeaOrmPool {
         let conn = Database::connect(opt).await?;
 
         Ok(Self {
-            conn, config,
+            conn,
+            config,
             metrics: Arc::new(OrmMetrics::new()),
             pool_name: name.to_string(),
         })
     }
 
     /// Get the underlying DatabaseConnection.
-    pub fn conn(&self) -> &DatabaseConnection { &self.conn }
+    pub fn conn(&self) -> &DatabaseConnection {
+        &self.conn
+    }
 
-    pub fn name(&self) -> &str { &self.pool_name }
-    pub fn config(&self) -> &SeaOrmConfig { &self.config }
-    pub fn metrics(&self) -> &Arc<OrmMetrics> { &self.metrics }
+    pub fn name(&self) -> &str {
+        &self.pool_name
+    }
+    pub fn config(&self) -> &SeaOrmConfig {
+        &self.config
+    }
+    pub fn metrics(&self) -> &Arc<OrmMetrics> {
+        &self.metrics
+    }
 
     /// Execute raw SQL.
     pub async fn execute_raw(&self, sql: &str) -> Result<u64, DbErr> {
         use sea_orm::{ConnectionTrait, Statement};
         let start = std::time::Instant::now();
-        let result = self.conn.execute(Statement::from_string(
-            self.conn.get_database_backend(), sql.to_string()
-        )).await?;
-        self.metrics.record_query(start.elapsed().as_micros() as u64, false);
+        let result = self
+            .conn
+            .execute(Statement::from_string(
+                self.conn.get_database_backend(),
+                sql.to_string(),
+            ))
+            .await?;
+        self.metrics
+            .record_query(start.elapsed().as_micros() as u64, false);
         Ok(result.rows_affected())
     }
 

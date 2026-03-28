@@ -1,7 +1,7 @@
-use vil_server::prelude::*;
+use crate::registry::ModelRegistry;
 use serde::Serialize;
 use std::sync::Arc;
-use crate::registry::ModelRegistry;
+use vil_server::prelude::*;
 
 #[derive(Debug, Serialize)]
 pub struct ModelsResponse {
@@ -9,9 +9,7 @@ pub struct ModelsResponse {
     pub count: usize,
 }
 
-pub async fn list_models_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<ModelsResponse> {
+pub async fn list_models_handler(ctx: ServiceCtx) -> VilResponse<ModelsResponse> {
     let registry = ctx.state::<Arc<ModelRegistry>>().expect("ModelRegistry");
     let models = registry.list();
     let count = models.len();

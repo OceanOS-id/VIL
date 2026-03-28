@@ -26,11 +26,11 @@ use vil_storage_s3::{S3Client, S3Config};
 async fn main() {
     // ── Init vil_log with resolved (human-readable) drain ──
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -43,15 +43,18 @@ async fn main() {
     println!();
 
     let s3_cfg = S3Config {
-        endpoint:   Some("http://localhost:9000".into()),
-        region:     "us-east-1".into(),
+        endpoint: Some("http://localhost:9000".into()),
+        region: "us-east-1".into(),
         access_key: Some("minioadmin".into()),
         secret_key: Some("minioadmin".into()),
-        bucket:     "vil-demo".into(),
+        bucket: "vil-demo".into(),
         path_style: true,
     };
 
-    println!("  Connecting to S3 endpoint: {}", s3_cfg.endpoint.as_deref().unwrap_or("AWS"));
+    println!(
+        "  Connecting to S3 endpoint: {}",
+        s3_cfg.endpoint.as_deref().unwrap_or("AWS")
+    );
     println!("  Bucket: {}", s3_cfg.bucket);
     println!();
     println!("  NOTE: Requires MinIO or S3-compatible endpoint.");
@@ -75,13 +78,13 @@ async fn main() {
     let payload = Bytes::from("Hello from VIL example-601!");
     match client.put_object("demo/hello.txt", payload).await {
         Ok(res) => println!("  PUT  demo/hello.txt  etag={:?}", res.e_tag),
-        Err(e)  => println!("  PUT  error: {:?}", e),
+        Err(e) => println!("  PUT  error: {:?}", e),
     }
 
     // ── GET ──
     match client.get_object("demo/hello.txt").await {
         Ok(data) => println!("  GET  demo/hello.txt  bytes={}", data.len()),
-        Err(e)   => println!("  GET  error: {:?}", e),
+        Err(e) => println!("  GET  error: {:?}", e),
     }
 
     // ── LIST ──

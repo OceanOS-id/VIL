@@ -12,7 +12,7 @@ pub struct VilUsage {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UsageKind {
-    SemanticMacro(String),  // vil_state, vil_event, vil_fault, vil_decision
+    SemanticMacro(String), // vil_state, vil_event, vil_fault, vil_decision
     VilApp,
     ServiceProcess,
     ExecClass(String),
@@ -23,37 +23,28 @@ pub enum UsageKind {
     EndpointDef,
 }
 
-static RE_SEMANTIC: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"#\[(vil_state|vil_event|vil_fault|vil_decision)\]").unwrap()
-});
+static RE_SEMANTIC: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"#\[(vil_state|vil_event|vil_fault|vil_decision)\]").unwrap());
 
-static RE_VIL_APP: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"VilApp::new\(\s*"([^"]*)"\s*\)"#).unwrap()
-});
+static RE_VIL_APP: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"VilApp::new\(\s*"([^"]*)"\s*\)"#).unwrap());
 
-static RE_SERVICE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"ServiceProcess::new\(\s*"([^"]*)"\s*\)"#).unwrap()
-});
+static RE_SERVICE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"ServiceProcess::new\(\s*"([^"]*)"\s*\)"#).unwrap());
 
-static RE_EXEC_CLASS: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"ExecClass::(\w+)").unwrap()
-});
+static RE_EXEC_CLASS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"ExecClass::(\w+)").unwrap());
 
-static RE_DERIVE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"#\[derive\([^)]*\b(VilModel|VilError)\b[^)]*\)\]").unwrap()
-});
+static RE_DERIVE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"#\[derive\([^)]*\b(VilModel|VilError)\b[^)]*\)\]").unwrap());
 
-static RE_ENDPOINT: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"\.endpoint\(\s*Method::(\w+)\s*,\s*"([^"]*)"\s*,"#).unwrap()
-});
+static RE_ENDPOINT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"\.endpoint\(\s*Method::(\w+)\s*,\s*"([^"]*)"\s*,"#).unwrap());
 
-static RE_SIDECAR: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"SidecarConfig::new\(\s*"([^"]*)"\s*\)"#).unwrap()
-});
+static RE_SIDECAR: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"SidecarConfig::new\(\s*"([^"]*)"\s*\)"#).unwrap());
 
-static RE_WASM: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"WasmFaaSConfig::new\(\s*"([^"]*)"\s*,"#).unwrap()
-});
+static RE_WASM: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"WasmFaaSConfig::new\(\s*"([^"]*)"\s*,"#).unwrap());
 
 /// Parse a source file and return all detected VIL usages.
 pub fn parse_vil_usages(source: &str) -> Vec<VilUsage> {
@@ -80,7 +71,10 @@ pub fn parse_vil_usages(source: &str) -> Vec<VilUsage> {
                 line: line_num,
                 col: cap.get(0).map(|m| m.start() as u32).unwrap_or(0),
                 kind: UsageKind::VilApp,
-                text: cap.get(1).map(|m| m.as_str().to_string()).unwrap_or_default(),
+                text: cap
+                    .get(1)
+                    .map(|m| m.as_str().to_string())
+                    .unwrap_or_default(),
             });
         }
 
@@ -90,7 +84,10 @@ pub fn parse_vil_usages(source: &str) -> Vec<VilUsage> {
                 line: line_num,
                 col: cap.get(0).map(|m| m.start() as u32).unwrap_or(0),
                 kind: UsageKind::ServiceProcess,
-                text: cap.get(1).map(|m| m.as_str().to_string()).unwrap_or_default(),
+                text: cap
+                    .get(1)
+                    .map(|m| m.as_str().to_string())
+                    .unwrap_or_default(),
             });
         }
 
@@ -129,9 +126,11 @@ pub fn parse_vil_usages(source: &str) -> Vec<VilUsage> {
                 line: line_num,
                 col: cap.get(0).map(|m| m.start() as u32).unwrap_or(0),
                 kind: UsageKind::EndpointDef,
-                text: format!("{} {}",
+                text: format!(
+                    "{} {}",
                     cap.get(1).map(|m| m.as_str()).unwrap_or("?"),
-                    cap.get(2).map(|m| m.as_str()).unwrap_or("?")),
+                    cap.get(2).map(|m| m.as_str()).unwrap_or("?")
+                ),
             });
         }
 
@@ -141,7 +140,10 @@ pub fn parse_vil_usages(source: &str) -> Vec<VilUsage> {
                 line: line_num,
                 col: cap.get(0).map(|m| m.start() as u32).unwrap_or(0),
                 kind: UsageKind::SidecarConfig,
-                text: cap.get(1).map(|m| m.as_str().to_string()).unwrap_or_default(),
+                text: cap
+                    .get(1)
+                    .map(|m| m.as_str().to_string())
+                    .unwrap_or_default(),
             });
         }
 
@@ -151,7 +153,10 @@ pub fn parse_vil_usages(source: &str) -> Vec<VilUsage> {
                 line: line_num,
                 col: cap.get(0).map(|m| m.start() as u32).unwrap_or(0),
                 kind: UsageKind::WasmFaaSConfig,
-                text: cap.get(1).map(|m| m.as_str().to_string()).unwrap_or_default(),
+                text: cap
+                    .get(1)
+                    .map(|m| m.as_str().to_string())
+                    .unwrap_or_default(),
             });
         }
     }
@@ -173,7 +178,8 @@ struct AppState { count: u32 }
 struct OrderPlaced { id: u64 }
 "#;
         let usages = parse_vil_usages(src);
-        let semantics: Vec<_> = usages.iter()
+        let semantics: Vec<_> = usages
+            .iter()
             .filter(|u| matches!(&u.kind, UsageKind::SemanticMacro(_)))
             .collect();
         assert_eq!(semantics.len(), 2);
@@ -185,20 +191,26 @@ struct OrderPlaced { id: u64 }
     fn test_detect_vil_app() {
         let src = r#"VilApp::new("my-service").port(8080).run().await;"#;
         let usages = parse_vil_usages(src);
-        assert!(usages.iter().any(|u| u.kind == UsageKind::VilApp && u.text == "my-service"));
+        assert!(usages
+            .iter()
+            .any(|u| u.kind == UsageKind::VilApp && u.text == "my-service"));
     }
 
     #[test]
     fn test_detect_endpoints() {
         let src = r#".endpoint(Method::GET, "/api/users", get(list_users))"#;
         let usages = parse_vil_usages(src);
-        assert!(usages.iter().any(|u| u.kind == UsageKind::EndpointDef && u.text == "GET /api/users"));
+        assert!(usages
+            .iter()
+            .any(|u| u.kind == UsageKind::EndpointDef && u.text == "GET /api/users"));
     }
 
     #[test]
     fn test_detect_exec_class() {
         let src = r#"ExecClass::WasmFaaS"#;
         let usages = parse_vil_usages(src);
-        assert!(usages.iter().any(|u| matches!(&u.kind, UsageKind::ExecClass(s) if s == "WasmFaaS")));
+        assert!(usages
+            .iter()
+            .any(|u| matches!(&u.kind, UsageKind::ExecClass(s) if s == "WasmFaaS")));
     }
 }

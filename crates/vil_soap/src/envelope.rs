@@ -7,8 +7,8 @@
 // =============================================================================
 
 use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
-use quick_xml::Writer;
 use quick_xml::Reader;
+use quick_xml::Writer;
 use std::io::Cursor;
 
 use crate::error::SoapFault;
@@ -145,7 +145,15 @@ pub fn parse_envelope(xml: &str, action: &str) -> Result<ParsedResponse, SoapFau
     Ok(ParsedResponse {
         body_xml: body_buf,
         is_fault,
-        faultcode_hash: if is_fault { register_str(&faultcode) } else { 0 },
-        faultstring_hash: if is_fault { register_str(&faultstring) } else { 0 },
+        faultcode_hash: if is_fault {
+            register_str(&faultcode)
+        } else {
+            0
+        },
+        faultstring_hash: if is_fault {
+            register_str(&faultstring)
+        } else {
+            0
+        },
     })
 }

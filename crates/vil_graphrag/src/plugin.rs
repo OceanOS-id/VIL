@@ -45,16 +45,15 @@ impl VilPlugin for GraphRagPlugin {
         vec![PluginCapability::Service {
             name: "graphrag".into(),
             endpoints: vec![
-                EndpointSpec::post("/api/graphrag/query").with_description("Graph-enhanced RAG query"),
+                EndpointSpec::post("/api/graphrag/query")
+                    .with_description("Graph-enhanced RAG query"),
                 EndpointSpec::get("/api/graphrag/stats").with_description("GraphRAG stats"),
             ],
         }]
     }
 
     fn dependencies(&self) -> Vec<PluginDependency> {
-        vec![
-            PluginDependency::required("vil-llm", "0.1"),
-        ]
+        vec![PluginDependency::required("vil-llm", "0.1")]
     }
 
     fn register(&self, ctx: &mut PluginContext) {

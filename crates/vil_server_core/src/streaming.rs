@@ -110,7 +110,9 @@ impl StreamingBody {
 }
 
 impl Default for StreamingBody {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // =============================================================================
@@ -153,10 +155,7 @@ impl WsHub {
     /// after the receiver is dropped.
     pub fn subscribe(&self, topic: &str) -> tokio::sync::mpsc::UnboundedReceiver<String> {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
-        self.channels
-            .entry(topic.to_string())
-            .or_default()
-            .push(tx);
+        self.channels.entry(topic.to_string()).or_default().push(tx);
         rx
     }
 

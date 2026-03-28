@@ -75,10 +75,8 @@ impl AudioState {
         self.total_transcriptions += 1;
         self.total_duration_ms += event.duration_ms;
         let n = self.total_transcriptions as f64;
-        self.avg_confidence =
-            self.avg_confidence * (n - 1.0) / n + event.confidence as f64 / n;
-        self.avg_latency_ms =
-            self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
+        self.avg_confidence = self.avg_confidence * (n - 1.0) / n + event.confidence as f64 / n;
+        self.avg_latency_ms = self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
     }
 
     pub fn record_error(&mut self) {

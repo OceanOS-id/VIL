@@ -40,7 +40,7 @@ impl VilPlugin for WorkflowPlugin {
         vec![PluginCapability::Service {
             name: "workflow".into(),
             endpoints: vec![
-                EndpointSpec::get("/api/workflow/stats").with_description("Workflow stats"),
+                EndpointSpec::get("/api/workflow/stats").with_description("Workflow stats")
             ],
         }]
     }

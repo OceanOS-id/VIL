@@ -10,8 +10,8 @@
 // (producing the response). In Phase 2 this will be replaced by direct SHM
 // descriptor dispatch at the TCP layer.
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 
 use axum::body::Bytes;
 use axum::http::StatusCode;
@@ -42,8 +42,8 @@ impl Default for HttpIngressConfig {
             metrics_port: None,
             cors: true,
             max_body_size: 2 * 1024 * 1024, // 2MB
-            read_timeout_ms: 30_000,         // 30s
-            write_timeout_ms: 30_000,        // 30s
+            read_timeout_ms: 30_000,        // 30s
+            write_timeout_ms: 30_000,       // 30s
         }
     }
 }

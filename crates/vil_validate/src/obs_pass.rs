@@ -7,8 +7,8 @@
 //   OBS02: trace_hop=true process with no routes is a no-op (warning)
 // =============================================================================
 
-use vil_ir::core::WorkflowIR;
 use crate::traits::{Diagnostic, ValidationPass, ValidationReport};
+use vil_ir::core::WorkflowIR;
 
 pub struct ObsAnnotationPass;
 
@@ -21,7 +21,9 @@ impl ValidationPass for ObsAnnotationPass {
         let mut report = ValidationReport::new();
 
         // Collect all process names that appear in at least one route
-        let routed: std::collections::HashSet<&str> = ir.routes.iter()
+        let routed: std::collections::HashSet<&str> = ir
+            .routes
+            .iter()
             .flat_map(|r| [r.from_process.as_str(), r.to_process.as_str()])
             .collect();
 
@@ -64,8 +66,8 @@ impl ValidationPass for ObsAnnotationPass {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use vil_ir::core::{WorkflowIR, ProcessIR, ObsIR};
-    use vil_types::{ExecClass, CleanupPolicy, Priority};
+    use vil_ir::core::{ObsIR, ProcessIR, WorkflowIR};
+    use vil_types::{CleanupPolicy, ExecClass, Priority};
 
     fn make_process(name: &str, obs: ObsIR) -> ProcessIR {
         ProcessIR {
@@ -96,24 +98,41 @@ mod tests {
     #[test]
     fn test_valid_annotations() {
         let mut ir = WorkflowIR::new("TestWf");
-        ir.processes.insert("Inference".into(), make_process("Inference", ObsIR {
-            trace_hop: true,
-            latency_label: Some("inference".into()),
-        }));
-        ir.processes.insert("Next".into(), make_process("Next", ObsIR::default()));
+        ir.processes.insert(
+            "Inference".into(),
+            make_process(
+                "Inference",
+                ObsIR {
+                    trace_hop: true,
+                    latency_label: Some("inference".into()),
+                },
+            ),
+        );
+        ir.processes
+            .insert("Next".into(), make_process("Next", ObsIR::default()));
         add_route(&mut ir, "Inference", "Next");
 
         let report = ObsAnnotationPass.run(&ir);
-        assert!(!report.has_errors(), "Should have no errors: {:?}", report.diagnostics);
+        assert!(
+            !report.has_errors(),
+            "Should have no errors: {:?}",
+            report.diagnostics
+        );
     }
 
     #[test]
     fn test_empty_label_error() {
         let mut ir = WorkflowIR::new("TestWf");
-        ir.processes.insert("Node".into(), make_process("Node", ObsIR {
-            trace_hop: false,
-            latency_label: Some("".into()), // empty!
-        }));
+        ir.processes.insert(
+            "Node".into(),
+            make_process(
+                "Node",
+                ObsIR {
+                    trace_hop: false,
+                    latency_label: Some("".into()), // empty!
+                },
+            ),
+        );
 
         let report = ObsAnnotationPass.run(&ir);
         assert!(report.has_errors());
@@ -123,10 +142,16 @@ mod tests {
     #[test]
     fn test_isolated_trace_hop_warning() {
         let mut ir = WorkflowIR::new("TestWf");
-        ir.processes.insert("Orphan".into(), make_process("Orphan", ObsIR {
-            trace_hop: true,
-            latency_label: None,
-        }));
+        ir.processes.insert(
+            "Orphan".into(),
+            make_process(
+                "Orphan",
+                ObsIR {
+                    trace_hop: true,
+                    latency_label: None,
+                },
+            ),
+        );
         // No routes — Orphan is isolated
 
         let report = ObsAnnotationPass.run(&ir);

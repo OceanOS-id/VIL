@@ -103,10 +103,7 @@ impl ConfigDiscovery {
 
     /// Register a service endpoint from config.
     pub fn add_service(&mut self, name: impl Into<String>, endpoint: Endpoint) {
-        self.services
-            .entry(name.into())
-            .or_default()
-            .push(endpoint);
+        self.services.entry(name.into()).or_default().push(endpoint);
     }
 }
 

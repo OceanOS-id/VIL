@@ -1,5 +1,5 @@
-use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::cmp::Ordering as CmpOrdering;
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use parking_lot::RwLock;
 
@@ -52,7 +52,10 @@ impl Eq for Candidate {}
 /// Min-heap candidate (closest first when popped).
 impl Ord for Candidate {
     fn cmp(&self, other: &Self) -> CmpOrdering {
-        other.dist.partial_cmp(&self.dist).unwrap_or(CmpOrdering::Equal)
+        other
+            .dist
+            .partial_cmp(&self.dist)
+            .unwrap_or(CmpOrdering::Equal)
     }
 }
 impl PartialOrd for Candidate {
@@ -77,7 +80,9 @@ impl Eq for FarCandidate {}
 
 impl Ord for FarCandidate {
     fn cmp(&self, other: &Self) -> CmpOrdering {
-        self.dist.partial_cmp(&other.dist).unwrap_or(CmpOrdering::Equal)
+        self.dist
+            .partial_cmp(&other.dist)
+            .unwrap_or(CmpOrdering::Equal)
     }
 }
 impl PartialOrd for FarCandidate {
@@ -225,7 +230,11 @@ impl HnswIndex {
                     if level < nodes[neighbor_idx].connections.len() {
                         nodes[neighbor_idx].connections[level].push(new_idx);
                         // Prune if too many connections
-                        let max_conn = if level == 0 { self.config.m * 2 } else { self.config.m };
+                        let max_conn = if level == 0 {
+                            self.config.m * 2
+                        } else {
+                            self.config.m
+                        };
                         if nodes[neighbor_idx].connections[level].len() > max_conn {
                             self.prune_connections(&mut nodes, neighbor_idx, level, max_conn);
                         }
@@ -502,7 +511,8 @@ impl HnswIndex {
             .collect();
         neighbor_dists.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(CmpOrdering::Equal));
         neighbor_dists.truncate(max_conn);
-        nodes[node_idx].connections[level] = neighbor_dists.into_iter().map(|(idx, _)| idx).collect();
+        nodes[node_idx].connections[level] =
+            neighbor_dists.into_iter().map(|(idx, _)| idx).collect();
     }
 
     fn dist(&self, a: &[f32], b: &[f32]) -> f32 {

@@ -88,8 +88,9 @@ pub fn score_chunks(
             total_distance / (n - 1) as f32
         };
 
-        let combined =
-            weights.relevance * relevance + weights.recency * recency + weights.uniqueness * uniqueness;
+        let combined = weights.relevance * relevance
+            + weights.recency * recency
+            + weights.uniqueness * uniqueness;
 
         let tokens = count_tokens(text);
 
@@ -159,10 +160,7 @@ mod tests {
 
     #[test]
     fn test_recency_ordering() {
-        let chunks = vec![
-            ("old chunk".into(), 0.5),
-            ("new chunk".into(), 0.5),
-        ];
+        let chunks = vec![("old chunk".into(), 0.5), ("new chunk".into(), 0.5)];
         let weights = ScoringWeights {
             relevance: 0.0,
             recency: 1.0,

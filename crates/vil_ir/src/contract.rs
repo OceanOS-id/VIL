@@ -17,7 +17,7 @@
 //   - Monitoring Dashboard — pipeline topology auto-discovery
 // =============================================================================
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Top-level Execution Contract for a VIL workflow.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

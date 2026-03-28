@@ -42,8 +42,8 @@ use vil_server::prelude::*;
 // pattern of declaring all possible failures at compile time.
 #[vil_fault]
 pub enum DemoFault {
-    InvalidInput,    // Malformed request (e.g., missing "value" field)
-    ComputeFailed,   // Computation error (e.g., overflow)
+    InvalidInput,  // Malformed request (e.g., missing "value" field)
+    ComputeFailed, // Computation error (e.g., overflow)
 }
 
 // ── Response types for each handler style ─────────────────────
@@ -118,7 +118,9 @@ async fn endpoint_handler(body: ShmSlice) -> Result<VilResponse<ComputeOutput>, 
     // Zero-copy JSON parsing from ExchangeHeap — the developer
     // playground demonstrates this as the recommended pattern for
     // all POST/PUT endpoints in VIL applications.
-    let input: ComputeInput = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+    let input: ComputeInput = body
+        .json()
+        .map_err(|_| VilError::bad_request("invalid JSON"))?;
     let result = input.value * input.value; // compute square
     Ok(VilResponse::ok(ComputeOutput {
         input: input.value,

@@ -175,21 +175,35 @@ fn is_private_url(url: &str) -> bool {
     let host = match url.find("://") {
         Some(idx) => {
             let rest = &url[idx + 3..];
-            rest.split('/').next().unwrap_or("")
-                .split(':').next().unwrap_or("")
+            rest.split('/')
+                .next()
+                .unwrap_or("")
+                .split(':')
+                .next()
+                .unwrap_or("")
         }
         None => return true,
     };
-    if matches!(host, "localhost" | "0.0.0.0" | "[::]" | "[::1]"
-        | "metadata.google.internal" | "metadata.internal") {
+    if matches!(
+        host,
+        "localhost"
+            | "0.0.0.0"
+            | "[::]"
+            | "[::1]"
+            | "metadata.google.internal"
+            | "metadata.internal"
+    ) {
         return true;
     }
     if let Ok(ip) = host.parse::<std::net::IpAddr>() {
         return match ip {
             std::net::IpAddr::V4(v4) => {
-                v4.is_loopback() || v4.is_private() || v4.is_link_local()
-                || v4.is_broadcast() || v4.is_unspecified()
-                || v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64
+                v4.is_loopback()
+                    || v4.is_private()
+                    || v4.is_link_local()
+                    || v4.is_broadcast()
+                    || v4.is_unspecified()
+                    || v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64
             }
             std::net::IpAddr::V6(v6) => v6.is_loopback() || v6.is_unspecified(),
         };
@@ -286,9 +300,6 @@ mod tests {
             extract_path("https://example.com/api/v1"),
             Some("/api/v1".to_string())
         );
-        assert_eq!(
-            extract_path("https://example.com"),
-            Some("/".to_string())
-        );
+        assert_eq!(extract_path("https://example.com"), Some("/".to_string()));
     }
 }

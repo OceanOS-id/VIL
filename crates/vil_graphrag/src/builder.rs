@@ -1,5 +1,5 @@
-use vil_memory_graph::prelude::*;
 use vil_memory_graph::entity::EntityType;
+use vil_memory_graph::prelude::*;
 use vil_memory_graph::relation::RelationType;
 
 use crate::extractor::{EntityExtractor, ExtractedEntityType};
@@ -65,19 +65,16 @@ impl GraphRagBuilder {
             };
 
             // Link entity to document
-            self.graph.add_relation(eid, doc_node, RelationType::MentionedIn, ent.confidence);
+            self.graph
+                .add_relation(eid, doc_node, RelationType::MentionedIn, ent.confidence);
             entity_ids.push(eid);
         }
 
         // Connect co-occurring entities
         for i in 0..entity_ids.len() {
             for j in (i + 1)..entity_ids.len() {
-                self.graph.add_relation(
-                    entity_ids[i],
-                    entity_ids[j],
-                    RelationType::RelatedTo,
-                    0.5,
-                );
+                self.graph
+                    .add_relation(entity_ids[i], entity_ids[j], RelationType::RelatedTo, 0.5);
             }
         }
 

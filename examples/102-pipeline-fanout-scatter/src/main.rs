@@ -161,8 +161,7 @@ fn configure_healthy_source() -> HttpSourceBuilder {
 
 fn main() {
     // Shared ExchangeHeap — both pipelines use the SAME world
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // ── Pipeline A: NPL ─────────────────────────────────────────────────
     let npl_sink = configure_npl_sink();
@@ -211,12 +210,18 @@ fn main() {
     println!("    cargo run -p fintec01-simulators");
     println!();
     println!("  Test NPL stream (kolektabilitas >= 3):");
-    println!("  curl -N -X POST http://localhost:{}{} \\", NPL_SINK_PORT, NPL_SINK_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        NPL_SINK_PORT, NPL_SINK_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"request\":\"npl\"}}'");
     println!();
     println!("  Test Healthy stream (kolektabilitas < 3):");
-    println!("  curl -N -X POST http://localhost:{}{} \\", HEALTHY_SINK_PORT, HEALTHY_SINK_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        HEALTHY_SINK_PORT, HEALTHY_SINK_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"request\":\"healthy\"}}'");
     println!();

@@ -88,7 +88,10 @@ fn sse_event_data_contains_json() {
 fn sse_event_empty_struct_works() {
     let event = EmptyEvent {};
     let result = event.to_sse_event();
-    assert!(result.is_ok(), "Empty struct should produce a valid SSE event");
+    assert!(
+        result.is_ok(),
+        "Empty struct should produce a valid SSE event"
+    );
 }
 
 #[test]
@@ -112,8 +115,8 @@ fn sse_event_broadcast_does_not_panic() {
 // we test that the generated functions have the expected signatures.
 
 mod handler_compilation {
-    use vil_server_macros::vil_handler;
     use vil_server_core::VilError;
+    use vil_server_macros::vil_handler;
 
     /// A handler returning Result — the macro should wrap it with
     /// Ok path -> VilResponse::ok and Err path -> VilError mapping.
@@ -424,10 +427,7 @@ mod endpoint_auto_extraction {
 
     // Test 2: Mixed params — body gets wrapped, Path extractor stays as-is.
     #[vil_endpoint]
-    async fn update_order(
-        path_param: axum::extract::Path<u64>,
-        body: CreateOrder,
-    ) -> String {
+    async fn update_order(path_param: axum::extract::Path<u64>, body: CreateOrder) -> String {
         let id = path_param.0;
         format!("update order {} with {}", id, body.item)
     }

@@ -54,10 +54,10 @@
 //   curl http://localhost:8080/api/mqtt/topics
 // =============================================================================
 
-use vil_server::prelude::*;
 use vil_server::axum::extract::Extension;
+use vil_server::prelude::*;
 
-use vil_mq_mqtt::{MqttConfig, MqttClient, QoS, MqttBridge};
+use vil_mq_mqtt::{MqttBridge, MqttClient, MqttConfig, QoS};
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -230,7 +230,10 @@ async fn receive_sensor_data(
         .map_err(|e| VilError::internal(format!("Serialization failed: {}", e)))?;
 
     // Publish to MQTT (implementation mode)
-    state.client.publish(&mqtt_topic, &payload, QoS::AtLeastOnce).await
+    state
+        .client
+        .publish(&mqtt_topic, &payload, QoS::AtLeastOnce)
+        .await
         .map_err(|e| VilError::internal(format!("MQTT publish failed: {}", e)))?;
 
     // Bridge to Tri-Lane SHM
@@ -239,15 +242,17 @@ async fn receive_sensor_data(
     // Update sensor registry
     {
         let mut sensors = state.sensors.write().await;
-        let entry = sensors.entry(reading.sensor_id.clone()).or_insert_with(|| SensorInfo {
-            sensor_id: reading.sensor_id.clone(),
-            sensor_type: reading.sensor_type.clone(),
-            location: "unknown".into(),
-            mqtt_topic: mqtt_topic.clone(),
-            last_value: None,
-            last_unit: None,
-            readings_count: 0,
-        });
+        let entry = sensors
+            .entry(reading.sensor_id.clone())
+            .or_insert_with(|| SensorInfo {
+                sensor_id: reading.sensor_id.clone(),
+                sensor_type: reading.sensor_type.clone(),
+                location: "unknown".into(),
+                mqtt_topic: mqtt_topic.clone(),
+                last_value: None,
+                last_unit: None,
+                readings_count: 0,
+            });
         entry.last_value = Some(reading.value);
         entry.last_unit = Some(reading.unit.clone());
         entry.readings_count += 1;
@@ -264,9 +269,7 @@ async fn receive_sensor_data(
 }
 
 /// GET /api/sensors — list registered sensors with seed and live data.
-async fn list_sensors(
-    ctx: ServiceCtx,
-) -> VilResponse<SensorListResponse> {
+async fn list_sensors(ctx: ServiceCtx) -> VilResponse<SensorListResponse> {
     let state = ctx.state::<MqttState>().expect("state type mismatch");
     let sensors = state.sensors.read().await;
     let live_sensors: Vec<SensorInfo> = sensors.values().cloned().collect();
@@ -324,9 +327,7 @@ async fn list_sensors(
 }
 
 /// GET /api/mqtt/config — MqttConfig with QoS levels and connection fields.
-async fn mqtt_config(
-    ctx: ServiceCtx,
-) -> VilResponse<MqttConfigResponse> {
+async fn mqtt_config(ctx: ServiceCtx) -> VilResponse<MqttConfigResponse> {
     let state = ctx.state::<MqttState>().expect("state type mismatch");
     VilResponse::ok(MqttConfigResponse {
         connection: MqttConnectionInfo {
@@ -357,9 +358,7 @@ async fn mqtt_config(
 }
 
 /// GET /api/mqtt/topics — list subscribed MQTT topics.
-async fn mqtt_topics(
-    ctx: ServiceCtx,
-) -> VilResponse<MqttTopicsResponse> {
+async fn mqtt_topics(ctx: ServiceCtx) -> VilResponse<MqttTopicsResponse> {
     let state = ctx.state::<MqttState>().expect("state type mismatch");
     VilResponse::ok(MqttTopicsResponse {
         subscribed_topics: (*state.subscribed_topics).clone(),
@@ -398,7 +397,8 @@ async fn mqtt_topics(
         gateway_pattern: GatewayPattern {
             description: "IoT Gateway: REST ↔ MQTT bidirectional bridge".into(),
             inbound: "REST POST /api/sensors/data → MQTT publish to sensors/{type}/{id}".into(),
-            outbound: "MQTT subscribe sensors/+/+ → internal processing → REST GET /api/sensors".into(),
+            outbound: "MQTT subscribe sensors/+/+ → internal processing → REST GET /api/sensors"
+                .into(),
             bridge: "MQTT → MqttBridge → Tri-Lane SHM → analytics-service".into(),
         },
     })
@@ -416,7 +416,8 @@ async fn main() {
         .qos(QoS::AtLeastOnce);
 
     // Create MQTT client (implementation mode)
-    let client = MqttClient::new(mqtt_cfg.clone()).await
+    let client = MqttClient::new(mqtt_cfg.clone())
+        .await
         .expect("MQTT client creation should succeed (implementation mode)");
 
     // Subscribe to sensor topics using MQTT wildcards:
@@ -450,16 +451,15 @@ async fn main() {
     let mqtt_service = ServiceProcess::new("mqtt-iot")
         .prefix("/api")
         .endpoint(Method::POST, "/sensors/data", post(receive_sensor_data))
-        .endpoint(Method::GET,  "/sensors",      get(list_sensors))
-        .endpoint(Method::GET,  "/mqtt/config",  get(mqtt_config))
-        .endpoint(Method::GET,  "/mqtt/topics",  get(mqtt_topics))
+        .endpoint(Method::GET, "/sensors", get(list_sensors))
+        .endpoint(Method::GET, "/mqtt/config", get(mqtt_config))
+        .endpoint(Method::GET, "/mqtt/topics", get(mqtt_topics))
         .state(state);
 
     // ── Step 3: Assemble into VilApp and run ───────────────────────
     VilApp::new("mqtt-iot-gateway")
         .port(8080)
-        .service(ServiceProcess::new("root")
-            .endpoint(Method::GET, "/", get(index)))
+        .service(ServiceProcess::new("root").endpoint(Method::GET, "/", get(index)))
         .service(mqtt_service)
         .run()
         .await;

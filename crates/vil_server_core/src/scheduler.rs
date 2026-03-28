@@ -63,13 +63,16 @@ impl Scheduler {
         let jobs = self.jobs.clone();
         let job_name = name.to_string();
 
-        jobs.insert(job_name.clone(), JobInfo {
-            name: job_name.clone(),
-            schedule: format!("every {}s", interval.as_secs()),
-            status: JobStatus::Scheduled,
-            run_count: 0,
-            last_run_duration_ms: None,
-        });
+        jobs.insert(
+            job_name.clone(),
+            JobInfo {
+                name: job_name.clone(),
+                schedule: format!("every {}s", interval.as_secs()),
+                status: JobStatus::Scheduled,
+                run_count: 0,
+                last_run_duration_ms: None,
+            },
+        );
 
         let handle = tokio::spawn(async move {
             loop {
@@ -107,13 +110,16 @@ impl Scheduler {
         let jobs = self.jobs.clone();
         let job_name = name.to_string();
 
-        jobs.insert(job_name.clone(), JobInfo {
-            name: job_name.clone(),
-            schedule: format!("once after {}s", delay.as_secs()),
-            status: JobStatus::Scheduled,
-            run_count: 0,
-            last_run_duration_ms: None,
-        });
+        jobs.insert(
+            job_name.clone(),
+            JobInfo {
+                name: job_name.clone(),
+                schedule: format!("once after {}s", delay.as_secs()),
+                status: JobStatus::Scheduled,
+                run_count: 0,
+                last_run_duration_ms: None,
+            },
+        );
 
         let handle = tokio::spawn(async move {
             tokio::time::sleep(delay).await;

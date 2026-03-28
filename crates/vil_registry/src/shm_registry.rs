@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
-use vil_types::{CleanupPolicy, Epoch, PortId, ProcessId, RegionId, SampleId};
 use vil_shm::ExchangeHeap;
+use vil_types::{CleanupPolicy, Epoch, PortId, ProcessId, RegionId, SampleId};
 
 /// Maximum entities in the shared registry.
 pub const MAX_PROCESSES: usize = 64;
@@ -72,7 +72,7 @@ pub struct SharedRegistryLayout {
     pub sample_table: [SharedSampleRecord; MAX_SAMPLES],
     pub host_table: [SharedHostRecord; MAX_HOSTS],
     pub route_table: [SharedRouteRecord; MAX_ROUTES],
-    
+
     /// Global performance counters
     pub global_counters: vil_obs::counters::RuntimeCounters,
     /// Global latency tracking
@@ -144,7 +144,11 @@ impl ShmRegistry {
 
     /// Create or attach to a shared registry with a custom name.
     #[doc(alias = "vil_keep")]
-    pub fn new_or_attach_with_name(heap: ExchangeHeap, name: &str, host_id: vil_types::HostId) -> std::io::Result<Self> {
+    pub fn new_or_attach_with_name(
+        heap: ExchangeHeap,
+        name: &str,
+        host_id: vil_types::HostId,
+    ) -> std::io::Result<Self> {
         let size = std::mem::size_of::<SharedRegistryLayout>();
         // Region must be at least PAGE_SIZE so the PagedAllocator has >= 1 page.
         let region_size = size.max(vil_shm::paged_allocator::PAGE_SIZE);
@@ -169,15 +173,18 @@ impl ShmRegistry {
                     }
                     id
                 }
-            },
+            }
             Err(_) => {
                 // If attach fails (does not exist), create new
                 let id = heap.create_named_region(name, region_size)?;
                 // Initialize layout
                 let ptr = heap.alloc_bytes(id, size, 8).ok_or_else(|| {
-                    std::io::Error::new(std::io::ErrorKind::Other, "Failed to alloc registry layout")
+                    std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Failed to alloc registry layout",
+                    )
                 })?;
-                
+
                 // Write magic & initial metadata
                 let layout = SharedRegistryLayout {
                     magic: SharedRegistryLayout::MAGIC,
@@ -203,14 +210,20 @@ impl ShmRegistry {
         };
 
         let layout_ptr = heap.get_region_ptr(region_id).unwrap() as *mut SharedRegistryLayout;
-        Ok(Self { _heap: heap, _region_id: region_id, layout_ptr, _local_host_id: host_id })
+        Ok(Self {
+            _heap: heap,
+            _region_id: region_id,
+            layout_ptr,
+            _local_host_id: host_id,
+        })
     }
 
     // --- Internal Helpers ---
 
     #[doc(alias = "vil_keep")]
-    fn get_layout<F, R>(&self, f: F) -> R 
-    where F: FnOnce(&SharedRegistryLayout) -> R 
+    fn get_layout<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&SharedRegistryLayout) -> R,
     {
         // SAFETY: layout_ptr is valid, allocated during new(). Exclusive access for &mut is ensured by caller.
         let layout = unsafe { &*self.layout_ptr };
@@ -219,7 +232,8 @@ impl ShmRegistry {
 
     #[doc(alias = "vil_keep")]
     fn get_layout_mut<F, R>(&self, f: F) -> R
-    where F: FnOnce(&mut SharedRegistryLayout) -> R
+    where
+        F: FnOnce(&mut SharedRegistryLayout) -> R,
     {
         // SAFETY: layout_ptr is valid, allocated during new(). Exclusive access for &mut is ensured by caller.
         let layout = unsafe { &mut *self.layout_ptr };
@@ -237,11 +251,11 @@ impl ShmRegistry {
                     slot.cleanup = cleanup;
                     slot.epoch.store(1, Ordering::Release);
                     slot.alive.store(true, Ordering::Release);
-                    
+
                     let name_bytes = name.as_bytes();
                     let len = name_bytes.len().min(32);
                     slot.name[..len].copy_from_slice(&name_bytes[..len]);
-                    
+
                     slot.active.store(true, Ordering::Release);
                     return true;
                 }
@@ -283,32 +297,34 @@ impl ShmRegistry {
 
     #[doc(alias = "vil_keep")]
     pub fn next_port_id(&self) -> PortId {
-        self.get_layout_mut(|layout| {
-            PortId(layout.next_port_id.fetch_add(1, Ordering::SeqCst))
-        })
+        self.get_layout_mut(|layout| PortId(layout.next_port_id.fetch_add(1, Ordering::SeqCst)))
     }
 
     pub fn next_sample_id(&self) -> SampleId {
-        self.get_layout_mut(|layout| {
-            SampleId(layout.next_sample_id.fetch_add(1, Ordering::SeqCst))
-        })
+        self.get_layout_mut(|layout| SampleId(layout.next_sample_id.fetch_add(1, Ordering::SeqCst)))
     }
 
     // --- Port operations ---
 
     #[doc(alias = "vil_keep")]
-    pub fn register_port(&self, port_id: PortId, process_id: ProcessId, direction: vil_types::PortDirection, name: &str) -> bool {
+    pub fn register_port(
+        &self,
+        port_id: PortId,
+        process_id: ProcessId,
+        direction: vil_types::PortDirection,
+        name: &str,
+    ) -> bool {
         self.get_layout_mut(|layout| {
             for slot in &mut layout.port_table {
                 if !slot.active.load(Ordering::Acquire) {
                     slot.id = port_id;
                     slot.process_id = process_id;
                     slot.direction = direction;
-                    
+
                     let name_bytes = name.as_bytes();
                     let len = name_bytes.len().min(32);
                     slot.name[..len].copy_from_slice(&name_bytes[..len]);
-                    
+
                     slot.active.store(true, Ordering::Release);
                     return true;
                 }
@@ -345,7 +361,7 @@ impl ShmRegistry {
                     slot.region_id = region_id;
                     slot.size = size;
                     slot.align = align;
-                    
+
                     slot.active.store(true, Ordering::Release);
                     return true;
                 }
@@ -436,7 +452,9 @@ impl ShmRegistry {
 
     pub fn sample_count(&self) -> usize {
         self.get_layout_mut(|layout| {
-            layout.sample_table.iter()
+            layout
+                .sample_table
+                .iter()
                 .filter(|s| s.active.load(Ordering::Acquire))
                 .count()
         })
@@ -444,11 +462,15 @@ impl ShmRegistry {
 
     pub fn snapshot_processes(&self) -> Vec<ProcessSnapshot> {
         self.get_layout_mut(|layout| {
-            layout.process_table.iter()
+            layout
+                .process_table
+                .iter()
                 .filter(|s| s.active.load(Ordering::Acquire))
                 .map(|p| ProcessSnapshot {
                     id: p.id,
-                    name: String::from_utf8_lossy(&p.name).trim_matches('\0').to_string(),
+                    name: String::from_utf8_lossy(&p.name)
+                        .trim_matches('\0')
+                        .to_string(),
                     alive: p.alive.load(Ordering::Relaxed),
                     epoch: Epoch(p.epoch.load(Ordering::Relaxed)),
                 })
@@ -457,13 +479,17 @@ impl ShmRegistry {
     }
     pub fn snapshot_ports(&self) -> Vec<PortSnapshot> {
         self.get_layout_mut(|layout| {
-            layout.port_table.iter()
+            layout
+                .port_table
+                .iter()
                 .filter(|s| s.active.load(Ordering::Acquire))
                 .map(|p| PortSnapshot {
                     id: p.id,
                     process_id: p.process_id,
                     direction: p.direction,
-                    name: String::from_utf8_lossy(&p.name).trim_matches('\0').to_string(),
+                    name: String::from_utf8_lossy(&p.name)
+                        .trim_matches('\0')
+                        .to_string(),
                 })
                 .collect()
         })
@@ -579,7 +605,9 @@ impl ShmRegistry {
 
     pub fn get_routes(&self, from: PortId) -> Vec<PortId> {
         self.get_layout(|layout| {
-            layout.route_table.iter()
+            layout
+                .route_table
+                .iter()
                 .filter(|s| s.active.load(Ordering::Acquire) && s.from == from)
                 .map(|s| s.to)
                 .collect()
@@ -590,7 +618,9 @@ impl ShmRegistry {
         self.get_layout(|layout| {
             for slot in &layout.host_table {
                 if slot.active.load(Ordering::Acquire) && slot.id == host_id {
-                    let addr = String::from_utf8_lossy(&slot.addr).trim_matches('\0').to_string();
+                    let addr = String::from_utf8_lossy(&slot.addr)
+                        .trim_matches('\0')
+                        .to_string();
                     return Some(addr);
                 }
             }
@@ -600,7 +630,8 @@ impl ShmRegistry {
 
     pub fn snapshot_samples(&self) -> Vec<SampleSnapshot> {
         self.get_layout(|l| {
-            l.sample_table.iter()
+            l.sample_table
+                .iter()
                 .filter(|s| s.active.load(Ordering::Relaxed))
                 .map(|s| SampleSnapshot {
                     id: s.id,
@@ -608,7 +639,10 @@ impl ShmRegistry {
                     origin_host: s.origin_host,
                     active: s.active.load(Ordering::Relaxed),
                     published: s.published.load(Ordering::Relaxed),
-                    reads: (s.completed_reads.load(Ordering::Relaxed), s.expected_reads.load(Ordering::Relaxed)),
+                    reads: (
+                        s.completed_reads.load(Ordering::Relaxed),
+                        s.expected_reads.load(Ordering::Relaxed),
+                    ),
                     offset: s.offset.load(Ordering::Relaxed),
                     region_id: s.region_id,
                     size: s.size,
@@ -681,15 +715,17 @@ mod tests {
     fn test_shm_registry_cross_instance() {
         let heap = ExchangeHeap::new();
         let host_id = HostId(1);
-        let reg1 = ShmRegistry::new_or_attach_with_name(heap.clone(), "test_registry", host_id).unwrap();
+        let reg1 =
+            ShmRegistry::new_or_attach_with_name(heap.clone(), "test_registry", host_id).unwrap();
 
         // Register process in instance 1
         let pid = ProcessId(101);
         reg1.register_process(pid, "test_proc", CleanupPolicy::ReclaimOrphans);
 
         // Instance 2: Attach to same SHM
-        let reg2 = ShmRegistry::new_or_attach_with_name(heap.clone(), "test_registry", host_id).unwrap();
-        
+        let reg2 =
+            ShmRegistry::new_or_attach_with_name(heap.clone(), "test_registry", host_id).unwrap();
+
         // Verify process visibility in instance 2
         assert!(reg2.is_process_alive(pid));
 
@@ -705,7 +741,7 @@ mod tests {
         // Instance 2: Mark read and reclaim
         assert!(reg2.mark_release_read(sid)); // 1/1 reads
         reg2.reclaim_sample(sid);
-        
+
         // Final verify
         assert_eq!(reg1.sample_count(), 0);
     }

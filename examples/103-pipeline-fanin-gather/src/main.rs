@@ -80,10 +80,8 @@ const CREDIT_SINK_PATH: &str = "/gather";
 const INVENTORY_SINK_PORT: u16 = 3094;
 const INVENTORY_SINK_PATH: &str = "/inventory";
 
-const CREDIT_NDJSON_URL: &str =
-    "http://localhost:18081/api/v1/credits/ndjson?count=100";
-const INVENTORY_REST_URL: &str =
-    "http://localhost:18092/api/v1/products";
+const CREDIT_NDJSON_URL: &str = "http://localhost:18081/api/v1/credits/ndjson?count=100";
+const INVENTORY_REST_URL: &str = "http://localhost:18092/api/v1/products";
 
 // ── Pipeline A: Credit Records (NDJSON) ─────────────────────────────────
 
@@ -134,7 +132,10 @@ fn configure_inventory_source() -> HttpSourceBuilder {
             // REST returns a single JSON array or object — tag with source
             let mut record: serde_json::Value = serde_json::from_slice(body).ok()?;
             if let Some(obj) = record.as_object_mut() {
-                obj.insert("_source".to_string(), serde_json::json!("INVENTORY_SERVICE"));
+                obj.insert(
+                    "_source".to_string(),
+                    serde_json::json!("INVENTORY_SERVICE"),
+                );
                 obj.insert("_format".to_string(), serde_json::json!("REST"));
             }
             Some(serde_json::to_vec(&record).unwrap_or_else(|_| body.to_vec()))
@@ -148,8 +149,7 @@ fn configure_inventory_source() -> HttpSourceBuilder {
 
 fn main() {
     // Shared ExchangeHeap — both pipelines on same SHM pool
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // ── Pipeline A: Credit NDJSON ───────────────────────────────────────
     let credit_sink = configure_credit_sink();
@@ -198,12 +198,18 @@ fn main() {
     println!("    cargo run -p fintec01-simulators");
     println!();
     println!("  Test Credit Gather:");
-    println!("  curl -N -X POST http://localhost:{}{} \\", CREDIT_SINK_PORT, CREDIT_SINK_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        CREDIT_SINK_PORT, CREDIT_SINK_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"request\":\"credits\"}}'");
     println!();
     println!("  Test Inventory Gather:");
-    println!("  curl -N -X POST http://localhost:{}{} \\", INVENTORY_SINK_PORT, INVENTORY_SINK_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        INVENTORY_SINK_PORT, INVENTORY_SINK_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"request\":\"inventory\"}}'");
     println!();

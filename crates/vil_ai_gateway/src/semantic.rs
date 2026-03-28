@@ -24,10 +24,7 @@ pub enum GatewayEvent {
     /// A circuit breaker state changed.
     CircuitBreakerTripped { model: String },
     /// Health status of a model changed.
-    HealthChanged {
-        model: String,
-        new_status: String,
-    },
+    HealthChanged { model: String, new_status: String },
 }
 
 /// Faults that can occur in the AI Gateway subsystem.

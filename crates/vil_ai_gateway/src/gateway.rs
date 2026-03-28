@@ -1,10 +1,10 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 
 use dashmap::DashMap;
 use serde::Serialize;
-use vil_llm::{LlmProvider, ChatMessage};
+use vil_llm::{ChatMessage, LlmProvider};
 use vil_macros::{VilAiEvent, VilAiFault};
 
 use crate::circuit_breaker::CircuitBreaker;
@@ -18,9 +18,7 @@ use vil_log::app_log;
 #[derive(Debug, Serialize, VilAiFault)]
 pub enum GatewayError {
     /// All providers failed.
-    AllProvidersFailed {
-        attempts: Vec<(String, String)>,
-    },
+    AllProvidersFailed { attempts: Vec<(String, String)> },
     /// No healthy providers available.
     NoHealthyProviders,
     /// Budget exceeded.
@@ -105,7 +103,8 @@ impl AiGatewayBuilder {
 
     /// Set model pricing.
     pub fn pricing(self, model: &str, input_per_1k: f64, output_per_1k: f64) -> Self {
-        self.cost.set_model_pricing(model, input_per_1k, output_per_1k);
+        self.cost
+            .set_model_pricing(model, input_per_1k, output_per_1k);
         self
     }
 
@@ -194,11 +193,8 @@ impl AiGateway {
 
                     // Track cost
                     let cost_usd = if let Some(usage) = &response.usage {
-                        self.cost.record_usage(
-                            name,
-                            usage.prompt_tokens,
-                            usage.completion_tokens,
-                        )
+                        self.cost
+                            .record_usage(name, usage.prompt_tokens, usage.completion_tokens)
                     } else {
                         0.0
                     };
@@ -268,9 +264,19 @@ impl AiGateway {
             RoutingPolicy::CostOptimized => {
                 let mut ordered = self.providers.clone();
                 ordered.sort_by(|a, b| {
-                    let cost_a = self.cost.get_cost(&a.0).map(|c| c.cost_per_1k_input + c.cost_per_1k_output).unwrap_or(f64::MAX);
-                    let cost_b = self.cost.get_cost(&b.0).map(|c| c.cost_per_1k_input + c.cost_per_1k_output).unwrap_or(f64::MAX);
-                    cost_a.partial_cmp(&cost_b).unwrap_or(std::cmp::Ordering::Equal)
+                    let cost_a = self
+                        .cost
+                        .get_cost(&a.0)
+                        .map(|c| c.cost_per_1k_input + c.cost_per_1k_output)
+                        .unwrap_or(f64::MAX);
+                    let cost_b = self
+                        .cost
+                        .get_cost(&b.0)
+                        .map(|c| c.cost_per_1k_input + c.cost_per_1k_output)
+                        .unwrap_or(f64::MAX);
+                    cost_a
+                        .partial_cmp(&cost_b)
+                        .unwrap_or(std::cmp::Ordering::Equal)
                 });
                 ordered
             }
@@ -279,7 +285,9 @@ impl AiGateway {
                 ordered.sort_by(|a, b| {
                     let lat_a = self.health.get_health(&a.0).avg_latency_ms;
                     let lat_b = self.health.get_health(&b.0).avg_latency_ms;
-                    lat_a.partial_cmp(&lat_b).unwrap_or(std::cmp::Ordering::Equal)
+                    lat_a
+                        .partial_cmp(&lat_b)
+                        .unwrap_or(std::cmp::Ordering::Equal)
                 });
                 ordered
             }
@@ -304,8 +312,8 @@ impl AiGateway {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use vil_llm::{ChatResponse, Usage};
     use vil_llm::message::LlmError;
+    use vil_llm::{ChatResponse, Usage};
 
     /// Mock provider that returns fixed content.
     struct MockProvider {
@@ -364,7 +372,10 @@ mod tests {
     async fn test_primary_with_failover_success() {
         let gw = AiGateway::builder()
             .provider("primary", MockProvider::ok("primary", "hello from primary"))
-            .provider("fallback", MockProvider::ok("fallback", "hello from fallback"))
+            .provider(
+                "fallback",
+                MockProvider::ok("fallback", "hello from fallback"),
+            )
             .build();
 
         let msgs = vec![ChatMessage::user("hi")];
@@ -378,7 +389,10 @@ mod tests {
     async fn test_failover_on_primary_failure() {
         let gw = AiGateway::builder()
             .provider("primary", MockProvider::err("primary", "down"))
-            .provider("fallback", MockProvider::ok("fallback", "hello from fallback"))
+            .provider(
+                "fallback",
+                MockProvider::ok("fallback", "hello from fallback"),
+            )
             .build();
 
         let msgs = vec![ChatMessage::user("hi")];

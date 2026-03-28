@@ -2,8 +2,8 @@ use tower_lsp::{LspService, Server};
 use tracing_subscriber::EnvFilter;
 
 mod backend;
-mod diagnostics;
 mod completions;
+mod diagnostics;
 mod hover;
 mod parser;
 

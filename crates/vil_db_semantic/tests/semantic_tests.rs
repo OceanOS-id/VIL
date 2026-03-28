@@ -47,7 +47,13 @@ fn test_tx_scope_default() {
 #[test]
 fn test_tx_scope_variants() {
     use vil_db_semantic::TxScope;
-    let scopes = [TxScope::ReadOnly, TxScope::ReadWrite, TxScope::RequiresNew, TxScope::JoinIfPresent, TxScope::None];
+    let scopes = [
+        TxScope::ReadOnly,
+        TxScope::ReadWrite,
+        TxScope::RequiresNew,
+        TxScope::JoinIfPresent,
+        TxScope::None,
+    ];
     assert_eq!(scopes.len(), 5);
 }
 
@@ -141,8 +147,8 @@ fn test_cache_policy_default() {
 
 #[test]
 fn test_entity_meta_manual_impl() {
-    use vil_db_semantic::VilEntityMeta;
     use vil_db_semantic::PortabilityTier;
+    use vil_db_semantic::VilEntityMeta;
 
     struct Order;
     impl VilEntityMeta for Order {
@@ -230,5 +236,9 @@ fn test_zero_cost_proof() {
         + std::mem::size_of::<CachePolicy>();
 
     // All semantic context fits in 30 bytes — less than a cache line (64 bytes)
-    assert!(total <= 64, "Semantic context must fit in one cache line, got {} bytes", total);
+    assert!(
+        total <= 64,
+        "Semantic context must fit in one cache line, got {} bytes",
+        total
+    );
 }

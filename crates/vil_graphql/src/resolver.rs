@@ -6,7 +6,7 @@
 // Each resolver = 1 vtable call to the database provider.
 
 use std::sync::Arc;
-use vil_db_semantic::{DbProvider, ToSqlValue, DbResult};
+use vil_db_semantic::{DbProvider, DbResult, ToSqlValue};
 
 /// Generic CRUD resolver that works with any entity.
 pub struct CrudResolver {
@@ -33,14 +33,14 @@ impl CrudResolver {
 
     /// Query: find by ID.
     pub async fn find_by_id(&self, id: i64) -> DbResult<Option<serde_json::Value>> {
-        let data = self.provider.find_one(
-            &self.table, &self.primary_key, &ToSqlValue::Int(id)
-        ).await?;
+        let data = self
+            .provider
+            .find_one(&self.table, &self.primary_key, &ToSqlValue::Int(id))
+            .await?;
 
         match data {
             Some(bytes) => {
-                let value = serde_json::from_slice(&bytes)
-                    .unwrap_or(serde_json::Value::Null);
+                let value = serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null);
                 Ok(Some(value))
             }
             None => Ok(None),
@@ -49,7 +49,11 @@ impl CrudResolver {
 
     /// Query: find many with optional filter.
     pub async fn find_many(
-        &self, filter: &str, params: &[ToSqlValue], limit: usize, offset: usize,
+        &self,
+        filter: &str,
+        params: &[ToSqlValue],
+        limit: usize,
+        offset: usize,
     ) -> DbResult<Vec<serde_json::Value>> {
         let full_filter = if filter.is_empty() {
             format!("1=1 LIMIT {} OFFSET {}", limit, offset)
@@ -57,11 +61,15 @@ impl CrudResolver {
             format!("{} LIMIT {} OFFSET {}", filter, limit, offset)
         };
 
-        let rows = self.provider.find_many(&self.table, &full_filter, params).await?;
+        let rows = self
+            .provider
+            .find_many(&self.table, &full_filter, params)
+            .await?;
 
-        Ok(rows.iter().filter_map(|bytes| {
-            serde_json::from_slice(bytes).ok()
-        }).collect())
+        Ok(rows
+            .iter()
+            .filter_map(|bytes| serde_json::from_slice(bytes).ok())
+            .collect())
     }
 
     /// Query: count.
@@ -73,22 +81,31 @@ impl CrudResolver {
     pub async fn create(&self, input: &serde_json::Value) -> DbResult<i64> {
         let (fields, values) = json_to_fields_values(input, &self.fields);
         let field_refs: Vec<&str> = fields.iter().map(|s| s.as_str()).collect();
-        self.provider.insert(&self.table, &field_refs, &values).await
+        self.provider
+            .insert(&self.table, &field_refs, &values)
+            .await
     }
 
     /// Mutation: update by ID.
     pub async fn update(&self, id: i64, input: &serde_json::Value) -> DbResult<u64> {
         let (fields, values) = json_to_fields_values(input, &self.fields);
         let field_refs: Vec<&str> = fields.iter().map(|s| s.as_str()).collect();
-        self.provider.update(
-            &self.table, &self.primary_key, &ToSqlValue::Int(id),
-            &field_refs, &values,
-        ).await
+        self.provider
+            .update(
+                &self.table,
+                &self.primary_key,
+                &ToSqlValue::Int(id),
+                &field_refs,
+                &values,
+            )
+            .await
     }
 
     /// Mutation: delete by ID.
     pub async fn delete(&self, id: i64) -> DbResult<bool> {
-        self.provider.delete(&self.table, &self.primary_key, &ToSqlValue::Int(id)).await
+        self.provider
+            .delete(&self.table, &self.primary_key, &ToSqlValue::Int(id))
+            .await
     }
 }
 
@@ -117,9 +134,13 @@ fn json_to_sql_value(val: &serde_json::Value) -> ToSqlValue {
         serde_json::Value::Null => ToSqlValue::Null,
         serde_json::Value::Bool(b) => ToSqlValue::Bool(*b),
         serde_json::Value::Number(n) => {
-            if let Some(i) = n.as_i64() { ToSqlValue::Int(i) }
-            else if let Some(f) = n.as_f64() { ToSqlValue::Float(f) }
-            else { ToSqlValue::Null }
+            if let Some(i) = n.as_i64() {
+                ToSqlValue::Int(i)
+            } else if let Some(f) = n.as_f64() {
+                ToSqlValue::Float(f)
+            } else {
+                ToSqlValue::Null
+            }
         }
         serde_json::Value::String(s) => ToSqlValue::Text(s.clone()),
         _ => ToSqlValue::Text(val.to_string()),

@@ -113,18 +113,19 @@ impl RateLimiter {
     pub fn check(&self, key: &str, tokens_requested: f64) -> Result<(), RateLimitExceeded> {
         let refill_rate = self.config.tokens_per_minute / 60.0; // per second
 
-        let mut bucket = self.buckets
+        let mut bucket = self
+            .buckets
             .entry(key.to_string())
             .or_insert_with(|| TokenBucket::new(self.config.max_tokens, refill_rate));
 
-        bucket.try_consume(tokens_requested).map_err(|(available, retry_after_ms)| {
-            RateLimitExceeded {
+        bucket
+            .try_consume(tokens_requested)
+            .map_err(|(available, retry_after_ms)| RateLimitExceeded {
                 key: key.to_string(),
                 requested: tokens_requested,
                 available,
                 retry_after_ms,
-            }
-        })
+            })
     }
 
     /// Number of tracked keys.

@@ -16,11 +16,7 @@ use std::path::PathBuf;
 
 use vil_log::drain::{FileDrain, RotationStrategy};
 use vil_log::runtime::init_logging;
-use vil_log::{
-    app_log, access_log, db_log,
-    AccessPayload, DbPayload,
-    LogConfig, LogLevel,
-};
+use vil_log::{access_log, app_log, db_log, AccessPayload, DbPayload, LogConfig, LogLevel};
 
 #[tokio::main]
 async fn main() {
@@ -36,9 +32,9 @@ async fn main() {
     .expect("failed to create log dir");
 
     let config = LogConfig {
-        ring_slots:        8192,
-        level:             LogLevel::Debug,
-        batch_size:        256,
+        ring_slots: 8192,
+        level: LogLevel::Debug,
+        batch_size: 256,
         flush_interval_ms: 50,
         threads: None,
         dict_path: None,
@@ -48,7 +44,10 @@ async fn main() {
 
     let _task = init_logging(config, drain);
 
-    println!("Writing 100 log events to {}/app.log ...", log_dir.display());
+    println!(
+        "Writing 100 log events to {}/app.log ...",
+        log_dir.display()
+    );
 
     // Emit 100 application events
     for i in 0u32..50 {
@@ -66,34 +65,40 @@ async fn main() {
     // Emit access logs
     for i in 0u32..25 {
         let status: u16 = if i % 10 == 0 { 500 } else { 200 };
-        access_log!(Info, AccessPayload {
-            method:         0, // GET
-            status_code:    status,
-            protocol:       0,
-            duration_us:    100 + i * 10,
-            request_bytes:  64,
-            response_bytes: 512 + i * 8,
-            route_hash:     register_str("/api/orders"),
-            path_hash:      register_str("/api/orders"),
-            authenticated:  1,
-            ..AccessPayload::default()
-        });
+        access_log!(
+            Info,
+            AccessPayload {
+                method: 0, // GET
+                status_code: status,
+                protocol: 0,
+                duration_us: 100 + i * 10,
+                request_bytes: 64,
+                response_bytes: 512 + i * 8,
+                route_hash: register_str("/api/orders"),
+                path_hash: register_str("/api/orders"),
+                authenticated: 1,
+                ..AccessPayload::default()
+            }
+        );
     }
 
     // Emit database logs
     for i in 0u32..25 {
-        db_log!(Info, DbPayload {
-            db_hash:      register_str("postgres"),
-            table_hash:   register_str("orders"),
-            query_hash:   register_str("SELECT * FROM orders WHERE id = $1"),
-            duration_us:  500 + i * 20,
-            rows_affected: 1,
-            op_type:      0, // SELECT
-            prepared:     1,
-            tx_state:     0, // none
-            error_code:   0,
-            ..DbPayload::default()
-        });
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: register_str("postgres"),
+                table_hash: register_str("orders"),
+                query_hash: register_str("SELECT * FROM orders WHERE id = $1"),
+                duration_us: 500 + i * 20,
+                rows_affected: 1,
+                op_type: 0, // SELECT
+                prepared: 1,
+                tx_state: 0, // none
+                error_code: 0,
+                ..DbPayload::default()
+            }
+        );
     }
 
     // Flush and wait

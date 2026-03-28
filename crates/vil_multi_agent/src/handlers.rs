@@ -40,7 +40,9 @@ pub async fn handle_run(
     ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<RunResponse>> {
-    let orchestrator = ctx.state::<Arc<Mutex<Orchestrator>>>().expect("Orchestrator");
+    let orchestrator = ctx
+        .state::<Arc<Mutex<Orchestrator>>>()
+        .expect("Orchestrator");
     let req: RunRequest = body.json().expect("invalid JSON");
     let mut orch = orchestrator.lock().await;
     match orch.run(&req.query).await {
@@ -58,10 +60,10 @@ pub async fn handle_run(
 }
 
 /// GET /api/multi-agent/stats — return orchestrator statistics.
-pub async fn handle_stats(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<MultiAgentStatsResponse>> {
-    let orchestrator = ctx.state::<Arc<Mutex<Orchestrator>>>().expect("Orchestrator");
+pub async fn handle_stats(ctx: ServiceCtx) -> HandlerResult<VilResponse<MultiAgentStatsResponse>> {
+    let orchestrator = ctx
+        .state::<Arc<Mutex<Orchestrator>>>()
+        .expect("Orchestrator");
     let orch = orchestrator.lock().await;
     let resp = MultiAgentStatsResponse {
         agent_count: orch.graph.agent_count(),

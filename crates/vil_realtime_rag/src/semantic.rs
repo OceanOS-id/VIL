@@ -38,15 +38,24 @@ pub struct RealtimeRagFault {
 
 impl RealtimeRagFault {
     pub fn index_empty(msg: impl Into<String>) -> Self {
-        Self { error_type: RealtimeRagFaultType::IndexEmpty, message: msg.into() }
+        Self {
+            error_type: RealtimeRagFaultType::IndexEmpty,
+            message: msg.into(),
+        }
     }
 
     pub fn dimension_mismatch(msg: impl Into<String>) -> Self {
-        Self { error_type: RealtimeRagFaultType::DimensionMismatch, message: msg.into() }
+        Self {
+            error_type: RealtimeRagFaultType::DimensionMismatch,
+            message: msg.into(),
+        }
     }
 
     pub fn cache_full(msg: impl Into<String>) -> Self {
-        Self { error_type: RealtimeRagFaultType::CacheFull, message: msg.into() }
+        Self {
+            error_type: RealtimeRagFaultType::CacheFull,
+            message: msg.into(),
+        }
     }
 }
 

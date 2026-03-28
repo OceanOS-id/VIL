@@ -24,7 +24,17 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// Supported source languages for `--from`.
-const SUPPORTED_LANGS: &[&str] = &["yaml", "python", "typescript", "go", "java", "csharp", "kotlin", "swift", "zig"];
+const SUPPORTED_LANGS: &[&str] = &[
+    "yaml",
+    "python",
+    "typescript",
+    "go",
+    "java",
+    "csharp",
+    "kotlin",
+    "swift",
+    "zig",
+];
 
 /// Configuration for the compile command.
 pub struct CompileConfig {
@@ -67,7 +77,10 @@ pub fn run_compile(config: CompileConfig) -> Result<(), String> {
     println!("  {} Validating manifest...", "[3/7]".dimmed());
     let mode = manifest.manifest_mode();
     if let Err(errors) = manifest.validate() {
-        return Err(format!("Manifest validation failed:\n  - {}", errors.join("\n  - ")));
+        return Err(format!(
+            "Manifest validation failed:\n  - {}",
+            errors.join("\n  - ")
+        ));
     }
 
     match mode {
@@ -126,14 +139,14 @@ pub fn run_compile(config: CompileConfig) -> Result<(), String> {
         prefix
     };
     let (rust_source, cargo_toml) = match mode {
-        "workflow" => {
-            (codegen::generate_workflow_rust(&manifest),
-             codegen::generate_workflow_cargo_toml(&manifest, &crate_prefix))
-        }
-        _ => {
-            (codegen::generate_rust(&manifest),
-             codegen::generate_cargo_toml(&manifest, &crate_prefix))
-        }
+        "workflow" => (
+            codegen::generate_workflow_rust(&manifest),
+            codegen::generate_workflow_cargo_toml(&manifest, &crate_prefix),
+        ),
+        _ => (
+            codegen::generate_rust(&manifest),
+            codegen::generate_cargo_toml(&manifest, &crate_prefix),
+        ),
     };
 
     // Step 5: Write to /tmp/vil-compile-<name>/
@@ -150,29 +163,35 @@ pub fn run_compile(config: CompileConfig) -> Result<(), String> {
     let output_name = config.output.unwrap_or_else(|| manifest.name.clone());
     let binary = copy_binary(&build_dir, &manifest.name, &output_name, config.release)?;
 
-    println!(
-        "\n{} Compiled: {}",
-        "OK".green().bold(),
-        binary.display()
-    );
+    println!("\n{} Compiled: {}", "OK".green().bold(), binary.display());
 
     // Show usage hints
     if manifest.is_workflow() {
         // Find first sink port for curl example
-        let sink_port = manifest.nodes.values()
+        let sink_port = manifest
+            .nodes
+            .values()
             .find(|n| n.node_type == "http-sink")
             .and_then(|n| n.port)
             .unwrap_or(manifest.port);
-        let sink_path = manifest.nodes.values()
+        let sink_path = manifest
+            .nodes
+            .values()
             .find(|n| n.node_type == "http-sink")
             .and_then(|n| n.path.as_deref())
             .unwrap_or("/trigger");
-        let has_sse = manifest.nodes.values().any(|n| n.format.as_deref() == Some("sse"));
+        let has_sse = manifest
+            .nodes
+            .values()
+            .any(|n| n.format.as_deref() == Some("sse"));
 
         println!();
         println!("  {}", "Test:".cyan());
         if has_sse {
-            println!("    curl -N -X POST http://localhost:{}{} \\", sink_port, sink_path);
+            println!(
+                "    curl -N -X POST http://localhost:{}{} \\",
+                sink_port, sink_path
+            );
             println!("      -H \"Content-Type: application/json\" \\");
             println!("      -d '{{\"model\":\"gpt-4\",\"messages\":[{{\"role\":\"user\",\"content\":\"hello\"}}],\"stream\":true}}'");
             println!();
@@ -181,7 +200,10 @@ pub fn run_compile(config: CompileConfig) -> Result<(), String> {
             println!("      -d '{{\"prompt\":\"bench\"}}' -c 200 -n 2000 \\");
             println!("      http://localhost:{}{}", sink_port, sink_path);
         } else {
-            println!("    curl -X POST http://localhost:{}{} \\", sink_port, sink_path);
+            println!(
+                "    curl -X POST http://localhost:{}{} \\",
+                sink_port, sink_path
+            );
             println!("      -H \"Content-Type: application/json\" \\");
             println!("      -d '{{\"data\":\"test\"}}'");
         }
@@ -192,24 +214,25 @@ pub fn run_compile(config: CompileConfig) -> Result<(), String> {
         let first_ep = &manifest.endpoints[0];
         println!();
         println!("  {}", "Test:".cyan());
-        println!("    curl -X {} http://localhost:{}{} \\",
-            first_ep.method, manifest.port, first_ep.path);
+        println!(
+            "    curl -X {} http://localhost:{}{} \\",
+            first_ep.method, manifest.port, first_ep.path
+        );
         println!("      -H \"Content-Type: application/json\" \\");
         println!("      -d '{{\"data\":\"test\"}}'");
         println!();
         println!("  {}", "Benchmark:".cyan());
-        println!("    oha -n 10000 -c 50 http://localhost:{}{}", manifest.port, first_ep.path);
+        println!(
+            "    oha -n 10000 -c 50 http://localhost:{}{}",
+            manifest.port, first_ep.path
+        );
     }
 
     // Step 8 (optional): Generate .vlb artifact
     if config.target_vlb {
         println!("  {} Generating VLB artifact...", "[8/8]".dimmed());
         let vlb_path = generate_vlb_from_manifest(&manifest, &binary)?;
-        println!(
-            "\n{} VLB artifact: {}",
-            "OK".green().bold(),
-            vlb_path
-        );
+        println!("\n{} VLB artifact: {}", "OK".green().bold(), vlb_path);
     }
 
     Ok(())
@@ -338,8 +361,7 @@ fn write_build_dir(name: &str, rust_src: &str, cargo_toml: &str) -> Result<PathB
     }
 
     let src_dir = base.join("src");
-    std::fs::create_dir_all(&src_dir)
-        .map_err(|e| format!("Failed to create build dir: {}", e))?;
+    std::fs::create_dir_all(&src_dir).map_err(|e| format!("Failed to create build dir: {}", e))?;
 
     // Write Cargo.toml
     std::fs::write(base.join("Cargo.toml"), cargo_toml)
@@ -366,7 +388,9 @@ fn cargo_build(build_dir: &Path, release: bool) -> Result<(), String> {
     // Suppress all warnings for clean user output
     cmd.env("RUSTFLAGS", "-Awarnings");
 
-    let status = cmd.status().map_err(|e| format!("Failed to run cargo build: {}", e))?;
+    let status = cmd
+        .status()
+        .map_err(|e| format!("Failed to run cargo build: {}", e))?;
     if !status.success() {
         return Err(format!("cargo build failed (exit code: {})", status));
     }
@@ -386,10 +410,7 @@ fn copy_binary(
     let profile = if release { "release" } else { "debug" };
     // Cargo binary name: hyphens in crate name become underscores
     let bin_name = crate_name.replace('-', "_");
-    let src_binary = build_dir
-        .join("target")
-        .join(profile)
-        .join(&bin_name);
+    let src_binary = build_dir.join("target").join(profile).join(&bin_name);
 
     if !src_binary.exists() {
         // Try with original name (some cargo versions keep hyphens)
@@ -402,14 +423,12 @@ fn copy_binary(
             ));
         }
         let dest = PathBuf::from(output_name);
-        std::fs::copy(&alt, &dest)
-            .map_err(|e| format!("Failed to copy binary: {}", e))?;
+        std::fs::copy(&alt, &dest).map_err(|e| format!("Failed to copy binary: {}", e))?;
         return Ok(dest);
     }
 
     let dest = PathBuf::from(output_name);
-    std::fs::copy(&src_binary, &dest)
-        .map_err(|e| format!("Failed to copy binary: {}", e))?;
+    std::fs::copy(&src_binary, &dest).map_err(|e| format!("Failed to copy binary: {}", e))?;
 
     // Make executable on Unix
     #[cfg(unix)]
@@ -500,9 +519,13 @@ fn generate_vlb_from_manifest(
 
     let magic = b"VLNG";
     let version: u16 = 1;
-    let arch: u16 = if cfg!(target_arch = "x86_64") { 1 }
-        else if cfg!(target_arch = "aarch64") { 2 }
-        else { 1 };
+    let arch: u16 = if cfg!(target_arch = "x86_64") {
+        1
+    } else if cfg!(target_arch = "aarch64") {
+        2
+    } else {
+        1
+    };
     let section_count: u16 = 4;
     let flags: u16 = 0;
 
@@ -519,7 +542,8 @@ fn generate_vlb_from_manifest(
     let s4_off = s3_off + s3_len as u32;
     let s4_len = resources_bytes.len().min(65535) as u16;
 
-    let checksum: u32 = manifest_bytes.iter()
+    let checksum: u32 = manifest_bytes
+        .iter()
         .chain(schemas_bytes.iter())
         .chain(native_code.iter())
         .chain(resources_bytes.iter())
@@ -551,8 +575,7 @@ fn generate_vlb_from_manifest(
 
     // Write .vlb file next to the binary
     let vlb_path = format!("{}.vlb", binary_path.display());
-    std::fs::write(&vlb_path, &buf)
-        .map_err(|e| format!("Failed to write VLB artifact: {}", e))?;
+    std::fs::write(&vlb_path, &buf).map_err(|e| format!("Failed to write VLB artifact: {}", e))?;
 
     Ok(vlb_path)
 }

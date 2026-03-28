@@ -28,7 +28,10 @@ pub fn trace_live(config: TraceConfig) -> Result<(), String> {
     match config.mode.as_str() {
         "live" => trace_live_mode(&config),
         "snapshot" => trace_snapshot_mode(&config),
-        _ => Err(format!("Unknown trace mode: {}. Use 'live' or 'snapshot'", config.mode)),
+        _ => Err(format!(
+            "Unknown trace mode: {}. Use 'live' or 'snapshot'",
+            config.mode
+        )),
     }
 }
 
@@ -70,10 +73,22 @@ fn trace_snapshot_mode(config: &TraceConfig) -> Result<(), String> {
 
     // In Phase 1, just show what endpoints are available
     println!("  Available trace endpoints:");
-    println!("    GET  {}/health                → Server health", config.host);
-    println!("    GET  {}/metrics               → Prometheus metrics", config.host);
-    println!("    GET  {}/internal/services     → Service registry (vflow-server)", config.host);
-    println!("    GET  {}/internal/contract     → Topology contract JSON (vflow-server)", config.host);
+    println!(
+        "    GET  {}/health                → Server health",
+        config.host
+    );
+    println!(
+        "    GET  {}/metrics               → Prometheus metrics",
+        config.host
+    );
+    println!(
+        "    GET  {}/internal/services     → Service registry (vflow-server)",
+        config.host
+    );
+    println!(
+        "    GET  {}/internal/contract     → Topology contract JSON (vflow-server)",
+        config.host
+    );
     println!();
     println!("  Kernel metrics (from VxKernel):");
     println!("    total_received, total_completed, total_failed");

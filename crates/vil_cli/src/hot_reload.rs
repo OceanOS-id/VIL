@@ -48,7 +48,11 @@ impl FileWatcher {
     pub fn watch(&mut self, path: impl Into<PathBuf>, kind: WatchKind) {
         let path = path.into();
         let last_modified = file_mtime(&path).unwrap_or(0);
-        self.entries.push(WatchEntry { path, kind, last_modified });
+        self.entries.push(WatchEntry {
+            path,
+            kind,
+            last_modified,
+        });
     }
 
     /// Start watching in a background thread.
@@ -94,7 +98,9 @@ impl FileWatcher {
 }
 
 /// Collect all hot-reloadable script paths from a manifest.
-pub fn collect_hot_reload_paths(manifest: &crate::manifest::WorkflowManifest) -> Vec<(PathBuf, String, String)> {
+pub fn collect_hot_reload_paths(
+    manifest: &crate::manifest::WorkflowManifest,
+) -> Vec<(PathBuf, String, String)> {
     let mut paths = Vec::new(); // (path, runtime, node/task name)
 
     // Check nodes
@@ -128,7 +134,8 @@ pub fn collect_hot_reload_paths(manifest: &crate::manifest::WorkflowManifest) ->
 }
 
 fn file_mtime(path: &Path) -> Option<u64> {
-    std::fs::metadata(path).ok()
+    std::fs::metadata(path)
+        .ok()
         .and_then(|m| m.modified().ok())
         .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
         .map(|d| d.as_secs())

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use tokio::task::JoinSet;
 use serde::Serialize;
+use tokio::task::JoinSet;
 use vil_llm::{ChatMessage, LlmProvider};
 use vil_log::app_log;
 use vil_macros::VilAiEvent;

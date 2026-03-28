@@ -1,9 +1,9 @@
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::analyzer::LayoutAnalyzer;
 use crate::handlers;
-use crate::semantic::{LayoutAnalyzeEvent, LayoutFault, DocLayoutState};
+use crate::semantic::{DocLayoutState, LayoutAnalyzeEvent, LayoutFault};
 
 pub struct DocLayoutPlugin {
     analyzer: Arc<LayoutAnalyzer>,
@@ -28,24 +28,32 @@ impl DocLayoutPlugin {
 }
 
 impl Default for DocLayoutPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for DocLayoutPlugin {
-    fn id(&self) -> &str { "vil-doc-layout" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Rule-based document layout analysis" }
+    fn id(&self) -> &str {
+        "vil-doc-layout"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Rule-based document layout analysis"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "doc-layout".into(),
-            endpoints: vec![
-                EndpointSpec::post("/api/layout/analyze"),
-            ],
+            endpoints: vec![EndpointSpec::post("/api/layout/analyze")],
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let analyzer = Arc::clone(&self.analyzer);
@@ -59,5 +67,7 @@ impl VilPlugin for DocLayoutPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

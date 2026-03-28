@@ -27,7 +27,10 @@ impl ValidationPass for FailoverLegalityPass {
                 None => {
                     report.push(Diagnostic::error(
                         "FA01",
-                        format!("Failover source process '{}' does not exist in workflow.", failover.source),
+                        format!(
+                            "Failover source process '{}' does not exist in workflow.",
+                            failover.source
+                        ),
                         failover.source.clone(),
                     ));
                     continue;
@@ -45,7 +48,10 @@ impl ValidationPass for FailoverLegalityPass {
                 None => {
                     report.push(Diagnostic::error(
                         "FA02",
-                        format!("Failover target process '{}' does not exist in workflow.", failover.target),
+                        format!(
+                            "Failover target process '{}' does not exist in workflow.",
+                            failover.target
+                        ),
                         failover.target.clone(),
                     ));
                     continue;
@@ -69,7 +75,7 @@ impl ValidationPass for FailoverLegalityPass {
                             && target_port.direction == src_port.direction
                             && target_port.message_name == src_port.message_name
                     });
-                    
+
                     if !has_port {
                         all_ports_found = false;
                         break;

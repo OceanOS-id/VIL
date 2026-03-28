@@ -17,7 +17,9 @@ pub struct AnalyzeRequest {
     pub ocr_enabled: bool,
 }
 
-fn default_ocr() -> bool { true }
+fn default_ocr() -> bool {
+    true
+}
 
 #[derive(Debug, Serialize)]
 pub struct AnalyzeResponseBody {
@@ -89,9 +91,7 @@ pub async fn analyze_handler(
 }
 
 /// GET /stats — Vision service stats.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<VisionStatsBody> {
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<VisionStatsBody> {
     let analyzer = &ctx.state::<VisionAnalyzer>().expect("VisionAnalyzer").0;
     let config = ctx.state::<Arc<VisionConfig>>().expect("VisionConfig");
     VilResponse::ok(VisionStatsBody {

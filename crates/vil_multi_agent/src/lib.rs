@@ -38,11 +38,11 @@ pub mod agent_node;
 pub mod channel;
 pub mod config;
 pub mod graph;
-pub mod orchestrator;
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod orchestrator;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use agent_node::{AgentNode, AgentRunnable};
 pub use channel::{AgentChannel, AgentMessage};

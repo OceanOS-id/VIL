@@ -8,25 +8,25 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum LogCategory {
-    Access   = 0,
-    App      = 1,
-    System   = 2,
+    Access = 0,
+    App = 1,
+    System = 2,
     Security = 3,
-    Ai       = 4,
-    Db       = 5,
-    Mq       = 6,
+    Ai = 4,
+    Db = 5,
+    Mq = 6,
 }
 
 impl fmt::Display for LogCategory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            LogCategory::Access   => "ACCESS",
-            LogCategory::App      => "APP",
-            LogCategory::System   => "SYSTEM",
+            LogCategory::Access => "ACCESS",
+            LogCategory::App => "APP",
+            LogCategory::System => "SYSTEM",
             LogCategory::Security => "SECURITY",
-            LogCategory::Ai       => "AI",
-            LogCategory::Db       => "DB",
-            LogCategory::Mq       => "MQ",
+            LogCategory::Ai => "AI",
+            LogCategory::Db => "DB",
+            LogCategory::Mq => "MQ",
         };
         f.write_str(s)
     }

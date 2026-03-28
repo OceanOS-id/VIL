@@ -16,8 +16,14 @@ impl std::fmt::Display for FusionError {
             FusionError::DimensionMismatch { expected, got } => {
                 write!(f, "dimension mismatch: expected {expected}, got {got}")
             }
-            FusionError::WeightCountMismatch { embeddings, weights } => {
-                write!(f, "weight count mismatch: {embeddings} embeddings vs {weights} weights")
+            FusionError::WeightCountMismatch {
+                embeddings,
+                weights,
+            } => {
+                write!(
+                    f,
+                    "weight count mismatch: {embeddings} embeddings vs {weights} weights"
+                )
             }
         }
     }
@@ -102,15 +108,15 @@ impl FusionEngine {
     }
 
     /// Fuse using weighted average with default weights.
-    pub fn fuse_weighted(&self, embeddings: &[MultimodalEmbedding]) -> Result<Vec<f32>, FusionError> {
+    pub fn fuse_weighted(
+        &self,
+        embeddings: &[MultimodalEmbedding],
+    ) -> Result<Vec<f32>, FusionError> {
         let weights = if self.default_weights.len() == embeddings.len() {
             &self.default_weights
         } else {
             // Equal weights fallback
-            return weighted_average(
-                embeddings,
-                &vec![1.0; embeddings.len()],
-            );
+            return weighted_average(embeddings, &vec![1.0; embeddings.len()]);
         };
         weighted_average(embeddings, weights)
     }
@@ -168,7 +174,13 @@ mod tests {
             make_emb(Modality::Image, vec![1.0, 2.0, 3.0]),
         ];
         let err = weighted_average(&embs, &[0.5, 0.5]).unwrap_err();
-        assert_eq!(err, FusionError::DimensionMismatch { expected: 2, got: 3 });
+        assert_eq!(
+            err,
+            FusionError::DimensionMismatch {
+                expected: 2,
+                got: 3
+            }
+        );
     }
 
     #[test]
@@ -187,9 +199,6 @@ mod tests {
             weighted_average(&[], &[]).unwrap_err(),
             FusionError::EmptyInput,
         );
-        assert_eq!(
-            concatenate(&[]).unwrap_err(),
-            FusionError::EmptyInput,
-        );
+        assert_eq!(concatenate(&[]).unwrap_err(), FusionError::EmptyInput,);
     }
 }

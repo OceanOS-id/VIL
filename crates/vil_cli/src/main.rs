@@ -15,7 +15,7 @@ enum Commands {
     New {
         /// Project name
         name: String,
-        
+
         /// Template to use (ai-inference, webhook-forwarder, event-fanout, stream-filter, load-balancer)
         #[arg(short, long, default_value = "ai-inference")]
         template: String,
@@ -26,11 +26,11 @@ enum Commands {
         /// Path to pipeline file (YAML or default to examples/)
         #[arg(short, long)]
         file: Option<String>,
-        
+
         /// Port to listen on
         #[arg(short, long, default_value = "3080")]
         port: u16,
-        
+
         /// Use built-in mock backend (no external dependencies)
         #[arg(short, long)]
         mock: bool,
@@ -41,7 +41,7 @@ enum Commands {
         /// Number of requests
         #[arg(short, long, default_value = "1000")]
         requests: usize,
-        
+
         /// Concurrent connections
         #[arg(short, long, default_value = "10")]
         concurrency: usize,
@@ -59,7 +59,7 @@ enum Commands {
         /// Show active processes
         #[arg(short, long)]
         processes: bool,
-        
+
         /// Show active ports
         #[arg(short = 'P', long)]
         ports: bool,
@@ -68,7 +68,7 @@ enum Commands {
         #[arg(short, long)]
         samples: bool,
     },
-    
+
     /// Inspect shared memory regions
     Shm {
         /// List all regions
@@ -577,57 +577,62 @@ enum SidecarAction {
     },
 }
 
-mod templates;
-mod mock_server;
-mod runner;
-mod errors;
-mod dev_mode;
-mod error_catalog;
-mod yaml_pipeline;
-mod server_scaffold;
-mod server_dev;
-mod doctor;
-mod pipeline_init;
-mod vlb_builder;
-mod vlb_inspector;
-mod tracer;
-mod yaml_tools;
-mod provision;
-mod manifest;
+mod call_resolver;
+mod checker;
 mod codegen;
 mod compiler;
-mod viz_bridge;
+mod dev_mode;
+mod doctor;
+mod error_catalog;
+mod errors;
 mod gen_scaffold;
-mod call_resolver;
-mod wasm_builder;
-mod node_types;
 mod hot_reload;
-mod transform_builder;
-mod test_runner;
-mod checker;
-mod sdk_manager;
+mod manifest;
+mod mock_server;
+mod node_types;
+mod pipeline_init;
 mod project_init;
+mod provision;
+mod runner;
+mod sdk_manager;
+mod server_dev;
+mod server_scaffold;
+mod templates;
+mod test_runner;
+mod tracer;
+mod transform_builder;
+mod viz_bridge;
+mod vlb_builder;
+mod vlb_inspector;
+mod wasm_builder;
+mod yaml_pipeline;
+mod yaml_tools;
 
 fn main() {
     let cli = Cli::parse();
-    
+
     match &cli.command {
         Commands::New { name, template } => {
             if let Err(e) = templates::create_project(name, template) {
                 eprintln!("{} {}", "Error:".red().bold(), e);
                 std::process::exit(1);
             }
-            println!("{} Created new VIL project '{}' from template '{}'", 
-                "✓".green().bold(), name, template);
+            println!(
+                "{} Created new VIL project '{}' from template '{}'",
+                "✓".green().bold(),
+                name,
+                template
+            );
             println!("\nTo get started:");
             println!("  cd {}", name);
             println!("  vil run");
         }
-        
+
         Commands::Run { file, port, mock } => {
             // Check if file is a YAML pipeline
             if let Some(path) = file {
-                if path.ends_with(".yaml") || path.ends_with(".yml") || path.ends_with(".vil.yaml") {
+                if path.ends_with(".yaml") || path.ends_with(".yml") || path.ends_with(".vil.yaml")
+                {
                     println!("{} Running YAML pipeline: {}", "✓".green().bold(), path);
                     if let Err(e) = yaml_pipeline::run_yaml_pipeline(path, Some(*port)) {
                         eprintln!("{} {}", "Error:".red().bold(), e);
@@ -673,27 +678,45 @@ fn main() {
                 }
             }
         }
-        
-        Commands::Bench { requests, concurrency } => {
-            println!("{} Running benchmark ({} requests, {} concurrent)", 
-                "✓".green().bold(), requests, concurrency);
+
+        Commands::Bench {
+            requests,
+            concurrency,
+        } => {
+            println!(
+                "{} Running benchmark ({} requests, {} concurrent)",
+                "✓".green().bold(),
+                requests,
+                concurrency
+            );
             if let Err(e) = runner::run_benchmark(*requests, *concurrency) {
                 eprintln!("{} {}", "Error:".red().bold(), e);
                 std::process::exit(1);
             }
         }
-        
+
         Commands::InitLegacy { name } => {
             let project_name = name.clone().unwrap_or_else(|| "my-vil-project".to_string());
             if let Err(e) = templates::init_project(&project_name) {
                 eprintln!("{} {}", "Error:".red().bold(), e);
                 std::process::exit(1);
             }
-            println!("{} Initialized VIL project '{}'",
-                "✓".green().bold(), project_name);
+            println!(
+                "{} Initialized VIL project '{}'",
+                "✓".green().bold(),
+                project_name
+            );
         }
 
-        Commands::Init { name, template, lang, token, port, upstream, wizard } => {
+        Commands::Init {
+            name,
+            template,
+            lang,
+            token,
+            port,
+            upstream,
+            wizard,
+        } => {
             if let Err(e) = project_init::run_init(project_init::InitArgs {
                 name: name.clone(),
                 template: template.clone(),
@@ -707,22 +730,30 @@ fn main() {
                 std::process::exit(1);
             }
         }
-        
-        Commands::Registry { processes, ports, samples } => {
+
+        Commands::Registry {
+            processes,
+            ports,
+            samples,
+        } => {
             run_registry(*processes, *ports, *samples);
         }
-        
+
         Commands::Shm { list } => {
             if *list {
                 run_shm_list();
             }
         }
-        
+
         Commands::Metrics => {
             run_metrics();
         }
-        
-        Commands::Dev { port, package, interval } => {
+
+        Commands::Dev {
+            port,
+            package,
+            interval,
+        } => {
             dev_mode::run_dev(dev_mode::DevConfig {
                 port: *port,
                 package: package.clone(),
@@ -732,8 +763,7 @@ fn main() {
         }
 
         Commands::Explain { code } => {
-            error_catalog::explain(code)
-                .unwrap_or_else(|e| eprintln!("Explain error: {}", e));
+            error_catalog::explain(code).unwrap_or_else(|e| eprintln!("Explain error: {}", e));
         }
 
         Commands::Validate { file } => {
@@ -744,9 +774,24 @@ fn main() {
         }
 
         Commands::Viz {
-            input, format, output, show_lanes, show_topology,
-            show_ports, show_messages, show_workflows, show_all, level, open,
-            call_graph, expand_calls, watch, theme, show_failover, show_transport, node,
+            input,
+            format,
+            output,
+            show_lanes,
+            show_topology,
+            show_ports,
+            show_messages,
+            show_workflows,
+            show_all,
+            level,
+            open,
+            call_graph,
+            expand_calls,
+            watch,
+            theme,
+            show_failover,
+            show_transport,
+            node,
         } => {
             let viz_args = viz_bridge::VizArgs {
                 input: input.clone(),
@@ -765,7 +810,11 @@ fn main() {
 
             if *watch {
                 // Watch mode: re-render on YAML change
-                eprintln!("{} Watching {} for changes (Ctrl+C to stop)", "WATCH".cyan().bold(), input);
+                eprintln!(
+                    "{} Watching {} for changes (Ctrl+C to stop)",
+                    "WATCH".cyan().bold(),
+                    input
+                );
                 let mut watcher = hot_reload::FileWatcher::new(1000);
                 watcher.watch(input.as_str(), hot_reload::WatchKind::Yaml);
                 let input_clone = input.clone();
@@ -777,16 +826,24 @@ fn main() {
                 }
                 // Watch loop
                 let handle = watcher.start(move |entry| {
-                    eprintln!("{} {} changed, re-rendering...", "RELOAD".yellow().bold(),
-                        entry.path.display());
+                    eprintln!(
+                        "{} {} changed, re-rendering...",
+                        "RELOAD".yellow().bold(),
+                        entry.path.display()
+                    );
                     let args = viz_bridge::VizArgs {
                         input: input_clone.clone(),
                         format: args_format.clone(),
                         output: args_output.clone(),
-                        show_lanes: false, show_topology: false, show_ports: false,
-                        show_messages: false, show_workflows: false,
-                        level: "topology".into(), open: false,
-                        call_graph: None, expand_calls: false,
+                        show_lanes: false,
+                        show_topology: false,
+                        show_ports: false,
+                        show_messages: false,
+                        show_workflows: false,
+                        level: "topology".into(),
+                        open: false,
+                        call_graph: None,
+                        expand_calls: false,
                     };
                     if let Err(e) = viz_bridge::run_viz(args) {
                         eprintln!("{} {}", "Error:".red().bold(), e);
@@ -802,13 +859,24 @@ fn main() {
         }
 
         Commands::Dashboard => {
-            println!("{} Starting dashboard on http://localhost:8081",
-                "✓".green().bold());
+            println!(
+                "{} Starting dashboard on http://localhost:8081",
+                "✓".green().bold()
+            );
             // Dashboard functionality requires runtime to be running
-            println!("{}", "Note: Dashboard requires a running pipeline.".yellow());
+            println!(
+                "{}",
+                "Note: Dashboard requires a running pipeline.".yellow()
+            );
         }
 
-        Commands::Build { target, release, output, name, version } => {
+        Commands::Build {
+            target,
+            release,
+            output,
+            name,
+            version,
+        } => {
             if target == "vlb" {
                 match vlb_builder::build_vlb(vlb_builder::VlbBuildConfig {
                     target: target.clone(),
@@ -827,7 +895,9 @@ fn main() {
                 // Standard cargo build
                 let mut cmd = std::process::Command::new("cargo");
                 cmd.arg("build");
-                if *release { cmd.arg("--release"); }
+                if *release {
+                    cmd.arg("--release");
+                }
                 let status = cmd.status().expect("Failed to run cargo build");
                 if !status.success() {
                     std::process::exit(1);
@@ -842,21 +912,36 @@ fn main() {
             doctor::run_doctor();
         }
 
-        Commands::Inspect { file, contract, routes, processes, schemas } => {
+        Commands::Inspect {
+            file,
+            contract,
+            routes,
+            processes,
+            schemas,
+        } => {
             if let Some(path) = file {
-                if let Err(e) = vlb_inspector::inspect_vlb(path, *contract, *routes, *processes, *schemas) {
+                if let Err(e) =
+                    vlb_inspector::inspect_vlb(path, *contract, *routes, *processes, *schemas)
+                {
                     eprintln!("{}", e);
                     std::process::exit(1);
                 }
             } else {
-                if let Err(e) = vlb_inspector::inspect_project(*contract, *routes, *processes, *schemas) {
+                if let Err(e) =
+                    vlb_inspector::inspect_project(*contract, *routes, *processes, *schemas)
+                {
                     eprintln!("{}", e);
                     std::process::exit(1);
                 }
             }
         }
 
-        Commands::Trace { mode, host, service, max_events } => {
+        Commands::Trace {
+            mode,
+            host,
+            service,
+            max_events,
+        } => {
             if let Err(e) = tracer::trace_live(tracer::TraceConfig {
                 mode: mode.clone(),
                 host: host.clone(),
@@ -887,21 +972,46 @@ fn main() {
             }
         }
 
-        Commands::Compile { from, input, output, release, target, save_manifest, docker } => {
+        Commands::Compile {
+            from,
+            input,
+            output,
+            release,
+            target,
+            save_manifest,
+            docker,
+        } => {
             if *docker {
                 // Docker-based compilation
-                println!("{} Compiling inside Docker container...", "DOCKER".cyan().bold());
+                println!(
+                    "{} Compiling inside Docker container...",
+                    "DOCKER".cyan().bold()
+                );
                 let status = std::process::Command::new("docker")
-                    .args(["run", "--rm",
-                        "-v", &format!("{}:/workspace", std::env::current_dir().unwrap().display()),
-                        "-w", "/workspace",
+                    .args([
+                        "run",
+                        "--rm",
+                        "-v",
+                        &format!("{}:/workspace", std::env::current_dir().unwrap().display()),
+                        "-w",
+                        "/workspace",
                         "vil/compiler:latest",
-                        "--from", from, "--input", input])
+                        "--from",
+                        from,
+                        "--input",
+                        input,
+                    ])
                     .status();
                 match status {
-                    Ok(s) if s.success() => { return; }
+                    Ok(s) if s.success() => {
+                        return;
+                    }
                     Ok(s) => {
-                        eprintln!("{} Docker compile failed (exit {})", "Error:".red().bold(), s.code().unwrap_or(-1));
+                        eprintln!(
+                            "{} Docker compile failed (exit {})",
+                            "Error:".red().bold(),
+                            s.code().unwrap_or(-1)
+                        );
                         std::process::exit(1);
                     }
                     Err(e) => {
@@ -926,21 +1036,23 @@ fn main() {
 
         Commands::Provision { action } => {
             let paction = match action {
-                ProvisionAction::Push { host, artifact } => {
-                    provision::Action::Push { host: host.clone(), artifact: artifact.clone() }
-                }
-                ProvisionAction::Activate { host, service } => {
-                    provision::Action::Activate { host: host.clone(), service: service.clone() }
-                }
-                ProvisionAction::Drain { host, service } => {
-                    provision::Action::Drain { host: host.clone(), service: service.clone() }
-                }
-                ProvisionAction::Deactivate { host, service } => {
-                    provision::Action::Deactivate { host: host.clone(), service: service.clone() }
-                }
-                ProvisionAction::List { host } => {
-                    provision::Action::List { host: host.clone() }
-                }
+                ProvisionAction::Push { host, artifact } => provision::Action::Push {
+                    host: host.clone(),
+                    artifact: artifact.clone(),
+                },
+                ProvisionAction::Activate { host, service } => provision::Action::Activate {
+                    host: host.clone(),
+                    service: service.clone(),
+                },
+                ProvisionAction::Drain { host, service } => provision::Action::Drain {
+                    host: host.clone(),
+                    service: service.clone(),
+                },
+                ProvisionAction::Deactivate { host, service } => provision::Action::Deactivate {
+                    host: host.clone(),
+                    service: service.clone(),
+                },
+                ProvisionAction::List { host } => provision::Action::List { host: host.clone() },
                 ProvisionAction::Contract { host } => {
                     provision::Action::Contract { host: host.clone() }
                 }
@@ -960,13 +1072,20 @@ fn main() {
                     eprintln!("{} {}", "Error:".red().bold(), e);
                     std::process::exit(1);
                 }
-                println!("{} Created vil-server project '{}'", "✓".green().bold(), name);
+                println!(
+                    "{} Created vil-server project '{}'",
+                    "✓".green().bold(),
+                    name
+                );
                 println!("\nTo get started:");
                 println!("  cd {}", name);
                 println!("  cargo run");
             }
             ServerAction::Init { template } => {
-                println!("{} Initializing vil-server in current directory", "✓".green().bold());
+                println!(
+                    "{} Initializing vil-server in current directory",
+                    "✓".green().bold()
+                );
                 if let Err(e) = server_scaffold::init_server_in_current_dir(template) {
                     eprintln!("{} {}", "Error:".red().bold(), e);
                     std::process::exit(1);
@@ -981,123 +1100,139 @@ fn main() {
             }
         },
 
-        Commands::Sidecar { action } => {
-            match action {
-                SidecarAction::List { host } => {
-                    println!("{}", "=== VIL SIDECARS ===".green().bold());
-                    println!("  Querying {} ...", host);
-                    match reqwest::blocking::get(format!("{}/admin/sidecars", host)) {
-                        Ok(resp) => {
-                            if let Ok(text) = resp.text() {
-                                println!("{}", text);
-                            } else {
-                                println!("  {}", "(no response body)".yellow());
-                            }
+        Commands::Sidecar { action } => match action {
+            SidecarAction::List { host } => {
+                println!("{}", "=== VIL SIDECARS ===".green().bold());
+                println!("  Querying {} ...", host);
+                match reqwest::blocking::get(format!("{}/admin/sidecars", host)) {
+                    Ok(resp) => {
+                        if let Ok(text) = resp.text() {
+                            println!("{}", text);
+                        } else {
+                            println!("  {}", "(no response body)".yellow());
                         }
-                        Err(e) => {
-                            eprintln!("  {} Could not reach host: {}", "✗".red(), e);
-                            eprintln!("  Make sure VilApp is running with sidecars registered.");
-                        }
+                    }
+                    Err(e) => {
+                        eprintln!("  {} Could not reach host: {}", "✗".red(), e);
+                        eprintln!("  Make sure VilApp is running with sidecars registered.");
                     }
                 }
-                SidecarAction::Health { name, host } => {
-                    println!("{} Checking sidecar '{}' health...", "●".cyan(), name);
-                    match reqwest::blocking::get(format!("{}/admin/sidecars/{}", host, name)) {
-                        Ok(resp) => {
-                            if let Ok(text) = resp.text() {
-                                println!("{}", text);
-                            }
+            }
+            SidecarAction::Health { name, host } => {
+                println!("{} Checking sidecar '{}' health...", "●".cyan(), name);
+                match reqwest::blocking::get(format!("{}/admin/sidecars/{}", host, name)) {
+                    Ok(resp) => {
+                        if let Ok(text) = resp.text() {
+                            println!("{}", text);
                         }
-                        Err(e) => {
-                            eprintln!("  {} {}", "✗".red(), e);
-                        }
+                    }
+                    Err(e) => {
+                        eprintln!("  {} {}", "✗".red(), e);
                     }
                 }
-                SidecarAction::Attach { name, socket, host } => {
-                    println!("{} Attaching sidecar '{}' via {} ...", "●".cyan(), name, socket);
-                    let client = reqwest::blocking::Client::new();
-                    let body = serde_json::json!({
-                        "name": name,
-                        "socket": socket,
-                    });
-                    match client.post(format!("{}/admin/sidecars/{}/attach", host, name))
-                        .json(&body)
-                        .send()
-                    {
-                        Ok(resp) => {
-                            if resp.status().is_success() {
-                                println!("  {} Sidecar '{}' attached successfully", "✓".green().bold(), name);
-                            } else {
-                                eprintln!("  {} Attach failed: {}", "✗".red(), resp.status());
-                            }
+            }
+            SidecarAction::Attach { name, socket, host } => {
+                println!(
+                    "{} Attaching sidecar '{}' via {} ...",
+                    "●".cyan(),
+                    name,
+                    socket
+                );
+                let client = reqwest::blocking::Client::new();
+                let body = serde_json::json!({
+                    "name": name,
+                    "socket": socket,
+                });
+                match client
+                    .post(format!("{}/admin/sidecars/{}/attach", host, name))
+                    .json(&body)
+                    .send()
+                {
+                    Ok(resp) => {
+                        if resp.status().is_success() {
+                            println!(
+                                "  {} Sidecar '{}' attached successfully",
+                                "✓".green().bold(),
+                                name
+                            );
+                        } else {
+                            eprintln!("  {} Attach failed: {}", "✗".red(), resp.status());
                         }
-                        Err(e) => eprintln!("  {} {}", "✗".red(), e),
                     }
+                    Err(e) => eprintln!("  {} {}", "✗".red(), e),
                 }
-                SidecarAction::Drain { name, host } => {
-                    println!("{} Draining sidecar '{}' ...", "●".cyan(), name);
-                    let client = reqwest::blocking::Client::new();
-                    match client.post(format!("{}/admin/sidecars/{}/drain", host, name)).send() {
-                        Ok(resp) => {
-                            if resp.status().is_success() {
-                                println!("  {} Sidecar '{}' drained", "✓".green().bold(), name);
-                            } else {
-                                eprintln!("  {} Drain failed: {}", "✗".red(), resp.status());
-                            }
+            }
+            SidecarAction::Drain { name, host } => {
+                println!("{} Draining sidecar '{}' ...", "●".cyan(), name);
+                let client = reqwest::blocking::Client::new();
+                match client
+                    .post(format!("{}/admin/sidecars/{}/drain", host, name))
+                    .send()
+                {
+                    Ok(resp) => {
+                        if resp.status().is_success() {
+                            println!("  {} Sidecar '{}' drained", "✓".green().bold(), name);
+                        } else {
+                            eprintln!("  {} Drain failed: {}", "✗".red(), resp.status());
                         }
-                        Err(e) => eprintln!("  {} {}", "✗".red(), e),
                     }
+                    Err(e) => eprintln!("  {} {}", "✗".red(), e),
                 }
-                SidecarAction::Metrics { host } => {
-                    println!("{}", "=== SIDECAR METRICS ===".green().bold());
-                    match reqwest::blocking::get(format!("{}/admin/sidecars/metrics", host)) {
-                        Ok(resp) => {
-                            if let Ok(text) = resp.text() {
-                                println!("{}", text);
-                            }
+            }
+            SidecarAction::Metrics { host } => {
+                println!("{}", "=== SIDECAR METRICS ===".green().bold());
+                match reqwest::blocking::get(format!("{}/admin/sidecars/metrics", host)) {
+                    Ok(resp) => {
+                        if let Ok(text) = resp.text() {
+                            println!("{}", text);
                         }
-                        Err(e) => eprintln!("  {} {}", "✗".red(), e),
                     }
+                    Err(e) => eprintln!("  {} {}", "✗".red(), e),
                 }
             }
         },
 
-        Commands::Generate { action } => {
-            match action {
-                GenerateAction::Handler { name, from, output } => {
-                    if let Err(e) = gen_scaffold::generate_handler(name, from, output) {
-                        eprintln!("{} {}", "Error:".red().bold(), e);
-                        std::process::exit(1);
-                    }
+        Commands::Generate { action } => match action {
+            GenerateAction::Handler { name, from, output } => {
+                if let Err(e) = gen_scaffold::generate_handler(name, from, output) {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
                 }
-                GenerateAction::Script { name, runtime, from, output } => {
-                    if let Err(e) = gen_scaffold::generate_script(name, runtime, from, output) {
-                        eprintln!("{} {}", "Error:".red().bold(), e);
-                        std::process::exit(1);
-                    }
+            }
+            GenerateAction::Script {
+                name,
+                runtime,
+                from,
+                output,
+            } => {
+                if let Err(e) = gen_scaffold::generate_script(name, runtime, from, output) {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
                 }
             }
         },
 
-        Commands::Wasm { action } => {
-            match action {
-                WasmAction::Scaffold { name, language, output } => {
-                    if let Err(e) = wasm_builder::scaffold_module(name, language, output) {
-                        eprintln!("{} {}", "Error:".red().bold(), e);
-                        std::process::exit(1);
-                    }
+        Commands::Wasm { action } => match action {
+            WasmAction::Scaffold {
+                name,
+                language,
+                output,
+            } => {
+                if let Err(e) = wasm_builder::scaffold_module(name, language, output) {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
                 }
-                WasmAction::Build { manifest, module } => {
-                    if let Err(e) = wasm_builder::build_modules(manifest, module.as_deref()) {
-                        eprintln!("{} {}", "Error:".red().bold(), e);
-                        std::process::exit(1);
-                    }
+            }
+            WasmAction::Build { manifest, module } => {
+                if let Err(e) = wasm_builder::build_modules(manifest, module.as_deref()) {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
                 }
-                WasmAction::List { manifest } => {
-                    if let Err(e) = wasm_builder::list_modules(manifest) {
-                        eprintln!("{} {}", "Error:".red().bold(), e);
-                        std::process::exit(1);
-                    }
+            }
+            WasmAction::List { manifest } => {
+                if let Err(e) = wasm_builder::list_modules(manifest) {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
                 }
             }
         },
@@ -1105,15 +1240,23 @@ fn main() {
         Commands::NodeCmd { category, ports } => {
             let types = node_types::list_node_types(category.as_deref());
             if types.is_empty() {
-                println!("No node types found for category '{}'", category.as_deref().unwrap_or("*"));
+                println!(
+                    "No node types found for category '{}'",
+                    category.as_deref().unwrap_or("*")
+                );
             } else {
                 let mut current_cat = "";
                 for entry in &types {
                     if entry.category != current_cat {
                         current_cat = entry.category;
-                        println!("\n{} {}:", "CATEGORY".cyan().bold(), current_cat.to_uppercase());
+                        println!(
+                            "\n{} {}:",
+                            "CATEGORY".cyan().bold(),
+                            current_cat.to_uppercase()
+                        );
                     }
-                    println!("  {} {:20} {} ({})",
+                    println!(
+                        "  {} {:20} {} ({})",
                         "type:".dimmed(),
                         entry.type_name.green(),
                         entry.description,
@@ -1128,46 +1271,48 @@ fn main() {
                 }
                 println!("\n{} types total", types.len());
             }
-        },
+        }
 
-        Commands::Test { manifest, input, workflow } => {
+        Commands::Test {
+            manifest,
+            input,
+            workflow,
+        } => {
             if let Err(e) = test_runner::run_test(manifest, input, workflow.as_deref()) {
                 eprintln!("{} {}", "Error:".red().bold(), e);
                 std::process::exit(1);
             }
-        },
+        }
 
         Commands::Check { manifest } => {
             if let Err(e) = checker::run_check(manifest) {
                 std::process::exit(1);
             }
-        },
+        }
 
-        Commands::Sdk { action } => {
-            match action {
-                SdkAction::Install { version } => {
-                    if let Err(e) = sdk_manager::install_sdk(version) {
-                        eprintln!("{} {}", "Error:".red().bold(), e);
-                        std::process::exit(1);
-                    }
+        Commands::Sdk { action } => match action {
+            SdkAction::Install { version } => {
+                if let Err(e) = sdk_manager::install_sdk(version) {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
                 }
-                SdkAction::Info => {
-                    if let Err(e) = sdk_manager::show_info() {
-                        eprintln!("{} {}", "Error:".red().bold(), e);
-                        std::process::exit(1);
-                    }
+            }
+            SdkAction::Info => {
+                if let Err(e) = sdk_manager::show_info() {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
                 }
-                SdkAction::Path => {
-                    if let Err(e) = sdk_manager::show_path() {
-                        eprintln!("{} {}", "Error:".red().bold(), e);
-                        std::process::exit(1);
-                    }
+            }
+            SdkAction::Path => {
+                if let Err(e) = sdk_manager::show_path() {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
                 }
-                SdkAction::List => {
-                    if let Err(e) = sdk_manager::list_versions() {
-                        eprintln!("{} {}", "Error:".red().bold(), e);
-                        std::process::exit(1);
-                    }
+            }
+            SdkAction::List => {
+                if let Err(e) = sdk_manager::list_versions() {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
                 }
             }
         },
@@ -1185,7 +1330,10 @@ fn run_registry(processes: bool, ports: bool, samples: bool) {
     let world = match vil_rt::VastarRuntimeWorld::new_shared() {
         Ok(w) => w,
         Err(_) => {
-            println!("{}", "No active VIL SHM runtime found. Start a pipeline first.".yellow());
+            println!(
+                "{}",
+                "No active VIL SHM runtime found. Start a pipeline first.".yellow()
+            );
             return;
         }
     };
@@ -1197,7 +1345,11 @@ fn run_registry(processes: bool, ports: bool, samples: bool) {
             println!("  (none)");
         } else {
             for p in &procs {
-                let status = if p.alive { "alive".green() } else { "dead".red() };
+                let status = if p.alive {
+                    "alive".green()
+                } else {
+                    "dead".red()
+                };
                 println!("  {:>4}  {:<24} [{}]", p.id.0, p.name, status);
             }
         }
@@ -1210,7 +1362,10 @@ fn run_registry(processes: bool, ports: bool, samples: bool) {
             println!("  (none)");
         } else {
             for p in &pts {
-                println!("  {:>4}  proc={:<4} {:?}  {}", p.id.0, p.process_id.0, p.direction, p.name);
+                println!(
+                    "  {:>4}  proc={:<4} {:?}  {}",
+                    p.id.0, p.process_id.0, p.direction, p.name
+                );
             }
         }
     }
@@ -1223,7 +1378,10 @@ fn run_registry(processes: bool, ports: bool, samples: bool) {
         } else {
             println!("  {} active samples", samps.len());
             for s in samps.iter().take(20) {
-                println!("  {:>6}  owner={:<4} host={:<4} published={}", s.id.0, s.owner.0, s.origin_host.0, s.published);
+                println!(
+                    "  {:>6}  owner={:<4} host={:<4} published={}",
+                    s.id.0, s.owner.0, s.origin_host.0, s.published
+                );
             }
             if samps.len() > 20 {
                 println!("  ... and {} more", samps.len() - 20);
@@ -1238,7 +1396,10 @@ fn run_shm_list() {
     let world = match vil_rt::VastarRuntimeWorld::new_shared() {
         Ok(w) => w,
         Err(_) => {
-            println!("{}", "No active VIL SHM runtime found. Start a pipeline first.".yellow());
+            println!(
+                "{}",
+                "No active VIL SHM runtime found. Start a pipeline first.".yellow()
+            );
             return;
         }
     };
@@ -1247,13 +1408,18 @@ fn run_shm_list() {
     if stats.is_empty() {
         println!("  (no regions)");
     } else {
-        println!("  {:>6}  {:>12}  {:>12}  {:>12}", "Region", "Capacity", "Used", "Free");
+        println!(
+            "  {:>6}  {:>12}  {:>12}  {:>12}",
+            "Region", "Capacity", "Used", "Free"
+        );
         for s in &stats {
-            println!("  {:>6}  {:>12}  {:>12}  {:>12}",
+            println!(
+                "  {:>6}  {:>12}  {:>12}  {:>12}",
                 s.region_id.0,
                 format_bytes(s.capacity),
                 format_bytes(s.used),
-                format_bytes(s.remaining));
+                format_bytes(s.remaining)
+            );
         }
     }
 }
@@ -1264,7 +1430,10 @@ fn run_metrics() {
     let world = match vil_rt::VastarRuntimeWorld::new_shared() {
         Ok(w) => w,
         Err(_) => {
-            println!("{}", "No active VIL SHM runtime found. Start a pipeline first.".yellow());
+            println!(
+                "{}",
+                "No active VIL SHM runtime found. Start a pipeline first.".yellow()
+            );
             return;
         }
     };

@@ -1,6 +1,6 @@
-use axum::{Router, Json, routing::get};
-use axum::extract::Extension;
 use crate::metrics::MetricsCollector;
+use axum::extract::Extension;
+use axum::{routing::get, Json, Router};
 use serde::Serialize;
 use std::sync::Arc;
 use vil_log::{system_log, types::SystemPayload};
@@ -88,27 +88,32 @@ async fn topology(
     let mut services_map: std::collections::HashMap<String, Vec<EndpointInfo>> =
         std::collections::HashMap::new();
     for snap in &snapshots {
-        let service_name = snap.path.split('/').nth(1)
-            .unwrap_or("default")
-            .to_string();
-        services_map.entry(service_name).or_default().push(EndpointInfo {
-            method: snap.method.clone(),
-            path: snap.path.clone(),
-            requests: snap.requests,
-            error_rate: snap.error_rate,
-            avg_latency_us: snap.avg_latency_us,
-        });
+        let service_name = snap.path.split('/').nth(1).unwrap_or("default").to_string();
+        services_map
+            .entry(service_name)
+            .or_default()
+            .push(EndpointInfo {
+                method: snap.method.clone(),
+                path: snap.path.clone(),
+                requests: snap.requests,
+                error_rate: snap.error_rate,
+                avg_latency_us: snap.avg_latency_us,
+            });
     }
 
-    let services: Vec<ServiceInfo> = services_map.into_iter()
+    let services: Vec<ServiceInfo> = services_map
+        .into_iter()
         .map(|(name, endpoints)| ServiceInfo { name, endpoints })
         .collect();
 
     let _elapsed = start.elapsed();
-    system_log!(Info, SystemPayload {
-        event_type: 10, // observer metrics snapshot
-        ..Default::default()
-    });
+    system_log!(
+        Info,
+        SystemPayload {
+            event_type: 10, // observer metrics snapshot
+            ..Default::default()
+        }
+    );
 
     Json(TopologyResponse {
         app_name: "vil-app".into(),
@@ -139,35 +144,36 @@ async fn health() -> Json<serde_json::Value> {
 // ── New handlers ───────────────────────────────────────────────────────────
 
 /// `/_vil/api/routes` — all registered routes with details.
-async fn routes(
-    Extension(collector): Extension<Arc<MetricsCollector>>,
-) -> Json<Vec<RouteInfo>> {
+async fn routes(Extension(collector): Extension<Arc<MetricsCollector>>) -> Json<Vec<RouteInfo>> {
     let snapshots = collector.all_snapshots();
-    let route_infos: Vec<RouteInfo> = snapshots.iter().map(|snap| {
-        // Classify exec_class heuristically from avg latency
-        let exec_class = if snap.avg_latency_us == 0 {
-            "unknown"
-        } else if snap.avg_latency_us < 1_000 {
-            "fast"      // < 1 ms
-        } else if snap.avg_latency_us < 10_000 {
-            "normal"    // < 10 ms
-        } else if snap.avg_latency_us < 100_000 {
-            "slow"      // < 100 ms
-        } else {
-            "very_slow"
-        };
-        RouteInfo {
-            method: snap.method.clone(),
-            path: snap.path.clone(),
-            exec_class: exec_class.into(),
-            request_count: snap.requests,
-            avg_latency_us: snap.avg_latency_us,
-            p95_us: snap.p95_us,
-            p99_us: snap.p99_us,
-            p999_us: snap.p999_us,
-            error_rate: snap.error_rate,
-        }
-    }).collect();
+    let route_infos: Vec<RouteInfo> = snapshots
+        .iter()
+        .map(|snap| {
+            // Classify exec_class heuristically from avg latency
+            let exec_class = if snap.avg_latency_us == 0 {
+                "unknown"
+            } else if snap.avg_latency_us < 1_000 {
+                "fast" // < 1 ms
+            } else if snap.avg_latency_us < 10_000 {
+                "normal" // < 10 ms
+            } else if snap.avg_latency_us < 100_000 {
+                "slow" // < 100 ms
+            } else {
+                "very_slow"
+            };
+            RouteInfo {
+                method: snap.method.clone(),
+                path: snap.path.clone(),
+                exec_class: exec_class.into(),
+                request_count: snap.requests,
+                avg_latency_us: snap.avg_latency_us,
+                p95_us: snap.p95_us,
+                p99_us: snap.p99_us,
+                p999_us: snap.p999_us,
+                error_rate: snap.error_rate,
+            }
+        })
+        .collect();
     Json(route_infos)
 }
 
@@ -192,9 +198,7 @@ async fn recent_logs() -> Json<Vec<LogEntry>> {
 }
 
 /// `/_vil/api/system` — OS-level metrics.
-async fn system_info(
-    Extension(collector): Extension<Arc<MetricsCollector>>,
-) -> Json<SystemInfo> {
+async fn system_info(Extension(collector): Extension<Arc<MetricsCollector>>) -> Json<SystemInfo> {
     let start = std::time::Instant::now();
     let info = SystemInfo {
         pid: std::process::id(),
@@ -211,10 +215,13 @@ async fn system_info(
         thread_count: read_thread_count().unwrap_or(0),
     };
     let _elapsed = start.elapsed();
-    system_log!(Info, SystemPayload {
-        event_type: 11, // observer system info query
-        ..Default::default()
-    });
+    system_log!(
+        Info,
+        SystemPayload {
+            event_type: 11, // observer system info query
+            ..Default::default()
+        }
+    );
     Json(info)
 }
 
@@ -230,7 +237,8 @@ async fn running_config() -> Json<serde_json::Value> {
 // ── /proc helpers (Linux) ──────────────────────────────────────────────────
 
 fn read_proc_rss() -> Option<u64> {
-    std::fs::read_to_string("/proc/self/status").ok()
+    std::fs::read_to_string("/proc/self/status")
+        .ok()
         .and_then(|s| {
             s.lines()
                 .find(|l| l.starts_with("VmRSS:"))
@@ -240,12 +248,14 @@ fn read_proc_rss() -> Option<u64> {
 }
 
 fn read_fd_count() -> Option<u64> {
-    std::fs::read_dir("/proc/self/fd").ok()
+    std::fs::read_dir("/proc/self/fd")
+        .ok()
         .map(|d| d.count() as u64)
 }
 
 fn read_thread_count() -> Option<u64> {
-    std::fs::read_to_string("/proc/self/status").ok()
+    std::fs::read_to_string("/proc/self/status")
+        .ok()
         .and_then(|s| {
             s.lines()
                 .find(|l| l.starts_with("Threads:"))
@@ -271,9 +281,7 @@ fn chrono_lite_now() -> String {
 pub struct UpstreamData(pub Arc<std::sync::Mutex<Vec<serde_json::Value>>>);
 
 /// `/_vil/api/upstreams` — outbound HTTP call metrics.
-async fn upstreams(
-    Extension(data): Extension<UpstreamData>,
-) -> Json<Vec<serde_json::Value>> {
+async fn upstreams(Extension(data): Extension<UpstreamData>) -> Json<Vec<serde_json::Value>> {
     let snapshots = data.0.lock().unwrap().clone();
     Json(snapshots)
 }
@@ -282,13 +290,13 @@ async fn upstreams(
 
 pub fn api_routes() -> Router {
     Router::new()
-        .route("/_vil/api/topology",     get(topology))
-        .route("/_vil/api/metrics",      get(metrics))
-        .route("/_vil/api/health",       get(health))
-        .route("/_vil/api/routes",       get(routes))
-        .route("/_vil/api/upstreams",    get(upstreams))
-        .route("/_vil/api/shm",          get(shm_stats))
-        .route("/_vil/api/logs/recent",  get(recent_logs))
-        .route("/_vil/api/system",       get(system_info))
-        .route("/_vil/api/config",       get(running_config))
+        .route("/_vil/api/topology", get(topology))
+        .route("/_vil/api/metrics", get(metrics))
+        .route("/_vil/api/health", get(health))
+        .route("/_vil/api/routes", get(routes))
+        .route("/_vil/api/upstreams", get(upstreams))
+        .route("/_vil/api/shm", get(shm_stats))
+        .route("/_vil/api/logs/recent", get(recent_logs))
+        .route("/_vil/api/system", get(system_info))
+        .route("/_vil/api/config", get(running_config))
 }

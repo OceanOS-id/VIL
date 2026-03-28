@@ -44,7 +44,8 @@ impl VilPlugin for ModelRegistryPlugin {
         vec![PluginCapability::Service {
             name: "registry".into(),
             endpoints: vec![
-                EndpointSpec::get("/api/registry/models").with_description("List registered models"),
+                EndpointSpec::get("/api/registry/models")
+                    .with_description("List registered models"),
                 EndpointSpec::get("/api/registry/stats").with_description("Registry stats"),
             ],
         }]

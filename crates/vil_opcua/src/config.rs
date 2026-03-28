@@ -23,10 +23,14 @@ impl SecurityPolicy {
     /// Return the OPC-UA security policy URI string.
     pub fn as_uri(&self) -> &'static str {
         match self {
-            SecurityPolicy::None           => "http://opcfoundation.org/UA/SecurityPolicy#None",
-            SecurityPolicy::Basic128Rsa15  => "http://opcfoundation.org/UA/SecurityPolicy#Basic128Rsa15",
-            SecurityPolicy::Basic256       => "http://opcfoundation.org/UA/SecurityPolicy#Basic256",
-            SecurityPolicy::Basic256Sha256 => "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
+            SecurityPolicy::None => "http://opcfoundation.org/UA/SecurityPolicy#None",
+            SecurityPolicy::Basic128Rsa15 => {
+                "http://opcfoundation.org/UA/SecurityPolicy#Basic128Rsa15"
+            }
+            SecurityPolicy::Basic256 => "http://opcfoundation.org/UA/SecurityPolicy#Basic256",
+            SecurityPolicy::Basic256Sha256 => {
+                "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256"
+            }
         }
     }
 }

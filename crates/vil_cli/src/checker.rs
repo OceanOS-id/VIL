@@ -64,10 +64,14 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
                     if let Some(handler) = &code.handler {
                         let handler_path = base_dir.join(format!("src/handlers/{}.rs", handler));
                         if !handler_path.exists() {
-                            check_warn(&mut warnings, &format!(
-                                "Handler file missing: {} (task '{}')",
-                                handler_path.display(), task.id
-                            ));
+                            check_warn(
+                                &mut warnings,
+                                &format!(
+                                    "Handler file missing: {} (task '{}')",
+                                    handler_path.display(),
+                                    task.id
+                                ),
+                            );
                             handler_ok = false;
                         }
                     }
@@ -75,7 +79,9 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
             }
         }
     }
-    if handler_ok { check_pass(&mut passed, "Handler file existence"); }
+    if handler_ok {
+        check_pass(&mut passed, "Handler file existence");
+    }
 
     // 4. Script file existence
     let mut script_ok = true;
@@ -85,17 +91,23 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
                 if let Some(src) = &code.source {
                     let script_path = base_dir.join(src);
                     if !script_path.exists() {
-                        check_warn(&mut warnings, &format!(
-                            "Script file missing: {} (node '{}')",
-                            script_path.display(), name
-                        ));
+                        check_warn(
+                            &mut warnings,
+                            &format!(
+                                "Script file missing: {} (node '{}')",
+                                script_path.display(),
+                                name
+                            ),
+                        );
                         script_ok = false;
                     }
                 }
             }
         }
     }
-    if script_ok { check_pass(&mut passed, "Script file existence"); }
+    if script_ok {
+        check_pass(&mut passed, "Script file existence");
+    }
 
     // 5. WASM module existence
     let mut wasm_ok = true;
@@ -103,10 +115,14 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
         if let Some(wasm_path) = &module.wasm_path {
             let full_path = base_dir.join(wasm_path);
             if !full_path.exists() {
-                check_warn(&mut warnings, &format!(
-                    "WASM file missing: {} (module '{}')",
-                    full_path.display(), module.name
-                ));
+                check_warn(
+                    &mut warnings,
+                    &format!(
+                        "WASM file missing: {} (module '{}')",
+                        full_path.display(),
+                        module.name
+                    ),
+                );
                 wasm_ok = false;
             }
         } else if let Some(source_dir) = &module.source_dir {
@@ -120,17 +136,21 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
             }
         }
     }
-    if wasm_ok { check_pass(&mut passed, "WASM module existence"); }
+    if wasm_ok {
+        check_pass(&mut passed, "WASM module existence");
+    }
 
     // 6. Route DAG acyclicity
     // Note: bidirectional edges (A→B + B→A) are NORMAL in pipelines (request-response).
     // Only flag true cycles of length 3+ (A→B→C→A).
     {
-        let mut adj: std::collections::HashMap<String, std::collections::HashSet<String>> = std::collections::HashMap::new();
+        let mut adj: std::collections::HashMap<String, std::collections::HashSet<String>> =
+            std::collections::HashMap::new();
         for route in &manifest.workflow_routes {
             let from = route.from.split('.').next().unwrap_or("").to_string();
             let to = route.to.split('.').next().unwrap_or("").to_string();
-            if from != to { // skip self-loops
+            if from != to {
+                // skip self-loops
                 adj.entry(from).or_default().insert(to);
             }
         }
@@ -163,7 +183,9 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
             if let Some(neighbors) = adj.get(node) {
                 for next in neighbors {
                     if !visited.contains(next) {
-                        if dfs_cycle(next, adj, visited, in_stack) { return true; }
+                        if dfs_cycle(next, adj, visited, in_stack) {
+                            return true;
+                        }
                     } else if in_stack.contains(next) {
                         return true;
                     }
@@ -183,7 +205,11 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
         }
 
         if has_cycle {
-            check_fail(&mut failed, "Route DAG acyclicity", "Cycle detected in topology routes (length 3+)");
+            check_fail(
+                &mut failed,
+                "Route DAG acyclicity",
+                "Cycle detected in topology routes (length 3+)",
+            );
         } else {
             check_pass(&mut passed, "Route DAG acyclicity");
         }
@@ -193,20 +219,28 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
     {
         let mut wf_ok = true;
         for (wf_name, wf) in &manifest.workflows {
-            let mut adj: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+            let mut adj: std::collections::HashMap<String, Vec<String>> =
+                std::collections::HashMap::new();
             for task in &wf.tasks {
                 for dep in &task.deps {
-                    adj.entry(dep.task_id().to_string()).or_default().push(task.id.clone());
+                    adj.entry(dep.task_id().to_string())
+                        .or_default()
+                        .push(task.id.clone());
                 }
             }
             for branch in &wf.branches {
                 for dep in &branch.deps {
-                    adj.entry(dep.task_id().to_string()).or_default().push(branch.id.clone());
+                    adj.entry(dep.task_id().to_string())
+                        .or_default()
+                        .push(branch.id.clone());
                 }
             }
 
             // Simple cycle check
-            let all_ids: Vec<String> = wf.tasks.iter().map(|t| t.id.clone())
+            let all_ids: Vec<String> = wf
+                .tasks
+                .iter()
+                .map(|t| t.id.clone())
                 .chain(wf.branches.iter().map(|b| b.id.clone()))
                 .collect();
             let mut visited = std::collections::HashSet::new();
@@ -223,7 +257,9 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
                 if let Some(neighbors) = adj.get(node) {
                     for next in neighbors {
                         if !visited.contains(next) {
-                            if dfs_wf(next, adj, visited, in_stack) { return true; }
+                            if dfs_wf(next, adj, visited, in_stack) {
+                                return true;
+                            }
                         } else if in_stack.contains(next) {
                             return true;
                         }
@@ -236,15 +272,20 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
             for id in &all_ids {
                 if !visited.contains(id) {
                     if dfs_wf(id, &adj, &mut visited, &mut in_stack) {
-                        check_fail(&mut failed, &format!("Workflow '{}' DAG acyclicity", wf_name),
-                            "Cycle detected in task dependencies");
+                        check_fail(
+                            &mut failed,
+                            &format!("Workflow '{}' DAG acyclicity", wf_name),
+                            "Cycle detected in task dependencies",
+                        );
                         wf_ok = false;
                         break;
                     }
                 }
             }
         }
-        if wf_ok { check_pass(&mut passed, "Workflow DAG acyclicity"); }
+        if wf_ok {
+            check_pass(&mut passed, "Workflow DAG acyclicity");
+        }
     }
 
     // 8. Node type validity
@@ -255,16 +296,21 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
                 "http-sink" | "http-source" | "transform" => {}
                 other => {
                     if crate::node_types::find_node_type(other).is_none() {
-                        check_warn(&mut warnings, &format!(
-                            "Unknown node type '{}' on node '{}' (not in registry)",
-                            other, name
-                        ));
+                        check_warn(
+                            &mut warnings,
+                            &format!(
+                                "Unknown node type '{}' on node '{}' (not in registry)",
+                                other, name
+                            ),
+                        );
                         all_valid = false;
                     }
                 }
             }
         }
-        if all_valid { check_pass(&mut passed, "Node type validity"); }
+        if all_valid {
+            check_pass(&mut passed, "Node type validity");
+        }
     }
 
     // 9. Call target existence
@@ -275,27 +321,37 @@ pub fn run_check(manifest_path: &str) -> Result<(), String> {
                 if let Some(call_path) = &task.call {
                     let full_path = base_dir.join(call_path);
                     if !full_path.exists() {
-                        check_warn(&mut warnings, &format!(
-                            "Call target missing: {} (task '{}')",
-                            full_path.display(), task.id
-                        ));
+                        check_warn(
+                            &mut warnings,
+                            &format!(
+                                "Call target missing: {} (task '{}')",
+                                full_path.display(),
+                                task.id
+                            ),
+                        );
                         calls_ok = false;
                     }
                 }
             }
             if let Some(on_complete) = &wf.on_complete {
-                for path in [&on_complete.success, &on_complete.failure].into_iter().flatten() {
+                for path in [&on_complete.success, &on_complete.failure]
+                    .into_iter()
+                    .flatten()
+                {
                     let full_path = base_dir.join(path);
                     if !full_path.exists() {
-                        check_warn(&mut warnings, &format!(
-                            "on_complete target missing: {}", full_path.display()
-                        ));
+                        check_warn(
+                            &mut warnings,
+                            &format!("on_complete target missing: {}", full_path.display()),
+                        );
                         calls_ok = false;
                     }
                 }
             }
         }
-        if calls_ok { check_pass(&mut passed, "Call target existence"); }
+        if calls_ok {
+            check_pass(&mut passed, "Call target existence");
+        }
     }
 
     report(passed, failed, warnings)
@@ -317,9 +373,16 @@ fn check_warn(count: &mut u32, detail: &str) {
 }
 
 fn report(passed: u32, failed: u32, warnings: u32) -> Result<(), String> {
-    println!("\n{} {} passed, {} failed, {} warnings",
-        if failed == 0 { "RESULT".green().bold() } else { "RESULT".red().bold() },
-        passed, failed, warnings
+    println!(
+        "\n{} {} passed, {} failed, {} warnings",
+        if failed == 0 {
+            "RESULT".green().bold()
+        } else {
+            "RESULT".red().bold()
+        },
+        passed,
+        failed,
+        warnings
     );
     if failed > 0 {
         Err(format!("{} check(s) failed", failed))

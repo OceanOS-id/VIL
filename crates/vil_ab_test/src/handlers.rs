@@ -1,10 +1,10 @@
 //! HTTP handlers for the A/B test plugin — wired to real ExperimentRegistry state.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use vil_server::prelude::*;
 
-use crate::experiment::{Experiment, ExpStatus};
+use crate::experiment::{ExpStatus, Experiment};
 
 /// Shared experiment registry holding all active experiments.
 pub struct ExperimentRegistry {
@@ -63,10 +63,10 @@ pub struct AbTestStatsBody {
 // ── Handlers ────────────────────────────────────────────────────────
 
 /// GET /stats — return real experiment data from the registry.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<AbTestStatsBody>> {
-    let registry = ctx.state::<Arc<ExperimentRegistry>>().expect("ExperimentRegistry");
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<AbTestStatsBody>> {
+    let registry = ctx
+        .state::<Arc<ExperimentRegistry>>()
+        .expect("ExperimentRegistry");
     let experiments = registry.list().await;
     let summaries: Vec<ExperimentSummary> = experiments
         .iter()

@@ -1,5 +1,5 @@
-use std::time::Duration;
 use crate::cache_trait::VilCache;
+use std::time::Duration;
 
 /// SHM-backed cache using vil_server_core::ShmQueryCache.
 /// Zero-copy for co-located services.

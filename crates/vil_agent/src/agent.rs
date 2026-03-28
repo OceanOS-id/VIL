@@ -1,9 +1,9 @@
 //! ReAct agent with tool-calling loop.
 
-use std::sync::Arc;
 use serde::Serialize;
-use vil_llm::{ChatMessage, LlmProvider};
+use std::sync::Arc;
 use vil_llm::message::LlmError;
+use vil_llm::{ChatMessage, LlmProvider};
 use vil_log::app_log;
 
 use crate::memory::ConversationMemory;
@@ -133,10 +133,7 @@ impl Agent {
                     for call in calls {
                         app_log!(Info, "agent_tool_call", { tool: call.name.clone(), id: call.id.clone() });
 
-                        let result = self
-                            .tools
-                            .execute(&call.name, call.arguments.clone())
-                            .await;
+                        let result = self.tools.execute(&call.name, call.arguments.clone()).await;
 
                         let output = match result {
                             Ok(r) => r.output,
@@ -256,8 +253,8 @@ mod tests {
     use super::*;
     use crate::tool::{Tool, ToolResult};
     use async_trait::async_trait;
-    use vil_llm::ChatResponse;
     use vil_llm::message::LlmError;
+    use vil_llm::ChatResponse;
 
     /// A no-op LLM that returns a fixed response with no tool calls.
     struct MockLlm;
@@ -322,9 +319,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_agent_run_no_tools() {
-        let agent = Agent::builder()
-            .llm(Arc::new(MockLlm))
-            .build();
+        let agent = Agent::builder().llm(Arc::new(MockLlm)).build();
 
         let response = agent.run("hello").await.unwrap();
         assert_eq!(response.answer, "I am a no-op LLM response.");

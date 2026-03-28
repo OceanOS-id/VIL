@@ -77,8 +77,7 @@ fn route_request(
         // Default: gateway response
         metrics.request_start();
         let req_start = Instant::now();
-        let body =
-            r#"{"status":"ok","message":"VIL gateway running (no upstream)"}"#.to_string();
+        let body = r#"{"status":"ok","message":"VIL gateway running (no upstream)"}"#.to_string();
         metrics.request_end(req_start.elapsed().as_millis() as u64);
         ("200 OK", "application/json", body)
     }

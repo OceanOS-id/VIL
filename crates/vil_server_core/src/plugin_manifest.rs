@@ -93,13 +93,24 @@ pub struct HealthCheckConfig {
     pub query: String,
 }
 
-fn default_true() -> bool { true }
-fn default_30() -> u64 { 30 }
-fn default_5() -> u64 { 5 }
+fn default_true() -> bool {
+    true
+}
+fn default_30() -> u64 {
+    30
+}
+fn default_5() -> u64 {
+    5
+}
 
 impl Default for HealthCheckConfig {
     fn default() -> Self {
-        Self { enabled: true, interval_secs: 30, timeout_secs: 5, query: "SELECT 1".into() }
+        Self {
+            enabled: true,
+            interval_secs: 30,
+            timeout_secs: 5,
+            query: "SELECT 1".into(),
+        }
     }
 }
 
@@ -171,7 +182,9 @@ pub struct PluginManifest {
     pub requires: Vec<String>,
 }
 
-fn default_community() -> PluginTier { PluginTier::Community }
+fn default_community() -> PluginTier {
+    PluginTier::Community
+}
 
 /// Plugin runtime state — persisted to state.json.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -229,8 +242,7 @@ impl PluginsRegistry {
     pub fn save(&self, path: &Path) -> Result<(), String> {
         let json = serde_json::to_string_pretty(self)
             .map_err(|e| format!("Failed to serialize registry: {}", e))?;
-        std::fs::write(path, json)
-            .map_err(|e| format!("Failed to write registry: {}", e))
+        std::fs::write(path, json).map_err(|e| format!("Failed to write registry: {}", e))
     }
 
     pub fn register(&mut self, entry: PluginRegistryEntry) {

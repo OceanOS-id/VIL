@@ -68,12 +68,15 @@ mod tests {
         type H = Hmac<Sha256>;
 
         let secret = b"test-secret";
-        let body   = b"hello world";
+        let body = b"hello world";
 
         let mut mac = H::new_from_slice(secret).unwrap();
         mac.update(body);
-        let result  = mac.finalize().into_bytes();
-        let hex_sig = result.iter().map(|b| format!("{:02x}", b)).collect::<String>();
+        let result = mac.finalize().into_bytes();
+        let hex_sig = result
+            .iter()
+            .map(|b| format!("{:02x}", b))
+            .collect::<String>();
         let prefixed = format!("sha256={}", hex_sig);
 
         assert!(verify_hmac(secret, body, &prefixed));

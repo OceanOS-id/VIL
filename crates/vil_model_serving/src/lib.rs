@@ -23,29 +23,29 @@
 //! // server.apply_policy();
 //! ```
 
-pub mod variant;
-pub mod metrics;
-pub mod policy;
-pub mod serving;
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod metrics;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod policy;
+pub mod semantic;
+pub mod serving;
+pub mod variant;
 
-pub use variant::ModelVariant;
 pub use metrics::VariantMetrics;
-pub use policy::PromotionPolicy;
-pub use serving::{ModelServer, ServeResult, ServeError};
 pub use plugin::ModelServingPlugin;
+pub use policy::PromotionPolicy;
 pub use semantic::{ServingEvent, ServingFault, ServingState};
+pub use serving::{ModelServer, ServeError, ServeResult};
+pub use variant::ModelVariant;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
     use async_trait::async_trait;
-    use vil_llm::{ChatMessage, ChatResponse, LlmProvider};
+    use std::sync::Arc;
     use vil_llm::message::LlmError;
+    use vil_llm::{ChatMessage, ChatResponse, LlmProvider};
 
     /// Mock provider that returns a fixed response.
     struct MockProvider {
@@ -116,7 +116,10 @@ mod tests {
             }
         }
         // model-a has 80% weight, model-b has 20%
-        assert!(a_count > b_count, "model-a ({a_count}) should be selected more than model-b ({b_count})");
+        assert!(
+            a_count > b_count,
+            "model-a ({a_count}) should be selected more than model-b ({b_count})"
+        );
     }
 
     #[tokio::test]
@@ -153,7 +156,10 @@ mod tests {
         server.record_quality(&r.variant_name, 0.9);
 
         let metrics = server.get_metrics();
-        let served = metrics.iter().find(|(name, _)| name == &r.variant_name).unwrap();
+        let served = metrics
+            .iter()
+            .find(|(name, _)| name == &r.variant_name)
+            .unwrap();
         assert_eq!(served.1.requests, 1);
         assert!(served.1.avg_quality_score > 0.0);
     }
@@ -208,12 +214,7 @@ mod tests {
     #[tokio::test]
     async fn test_variant_with_zero_weight_never_selected() {
         let variants = vec![
-            ModelVariant::new(
-                "active",
-                Arc::new(MockProvider::new("active", "a")),
-                1.0,
-                1,
-            ),
+            ModelVariant::new("active", Arc::new(MockProvider::new("active", "a")), 1.0, 1),
             ModelVariant::new(
                 "inactive",
                 Arc::new(MockProvider::new("inactive", "b")),

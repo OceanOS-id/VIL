@@ -86,10 +86,26 @@ mod tests {
 
     fn setup_collection() -> Collection {
         let col = Collection::new("qtest", 3, HnswConfig::default());
-        col.add(vec![1.0, 0.0, 0.0], serde_json::json!({"category": "A"}), Some("alpha".into()));
-        col.add(vec![0.9, 0.1, 0.0], serde_json::json!({"category": "B"}), Some("beta".into()));
-        col.add(vec![0.0, 1.0, 0.0], serde_json::json!({"category": "A"}), Some("gamma".into()));
-        col.add(vec![0.0, 0.0, 1.0], serde_json::json!({"category": "C"}), Some("delta".into()));
+        col.add(
+            vec![1.0, 0.0, 0.0],
+            serde_json::json!({"category": "A"}),
+            Some("alpha".into()),
+        );
+        col.add(
+            vec![0.9, 0.1, 0.0],
+            serde_json::json!({"category": "B"}),
+            Some("beta".into()),
+        );
+        col.add(
+            vec![0.0, 1.0, 0.0],
+            serde_json::json!({"category": "A"}),
+            Some("gamma".into()),
+        );
+        col.add(
+            vec![0.0, 0.0, 1.0],
+            serde_json::json!({"category": "C"}),
+            Some("delta".into()),
+        );
         col
     }
 

@@ -16,7 +16,9 @@ pub struct MultiPoolManager {
 
 impl MultiPoolManager {
     pub fn new() -> Self {
-        Self { pools: DashMap::new() }
+        Self {
+            pools: DashMap::new(),
+        }
     }
 
     /// Create and register a pool.
@@ -90,5 +92,7 @@ impl MultiPoolManager {
 }
 
 impl Default for MultiPoolManager {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }

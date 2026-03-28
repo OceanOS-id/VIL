@@ -1,7 +1,7 @@
 //! HTTP fetch tool — allows the agent to retrieve web content.
 
-use async_trait::async_trait;
 use crate::tool::{Tool, ToolError, ToolResult};
+use async_trait::async_trait;
 
 /// Tool that fetches content from a URL.
 pub struct HttpFetchTool {
@@ -29,17 +29,25 @@ fn is_private_url(url: &str) -> bool {
     let host = match url.find("://") {
         Some(idx) => {
             let rest = &url[idx + 3..];
-            rest.split('/').next().unwrap_or("")
-                .split(':').next().unwrap_or("")
+            rest.split('/')
+                .next()
+                .unwrap_or("")
+                .split(':')
+                .next()
+                .unwrap_or("")
         }
         None => return true, // no scheme — reject
     };
 
     // Block known private/internal hostnames
-    if matches!(host,
-        "localhost" | "0.0.0.0" | "[::]" | "[::1]"
-        | "metadata.google.internal"
-        | "metadata.internal"
+    if matches!(
+        host,
+        "localhost"
+            | "0.0.0.0"
+            | "[::]"
+            | "[::1]"
+            | "metadata.google.internal"
+            | "metadata.internal"
     ) {
         return true;
     }
@@ -53,11 +61,11 @@ fn is_private_url(url: &str) -> bool {
                 || v4.is_link_local()      // 169.254.0.0/16 (AWS/GCP metadata)
                 || v4.is_broadcast()       // 255.255.255.255
                 || v4.is_unspecified()     // 0.0.0.0
-                || v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64  // 100.64.0.0/10 (CGN)
+                || v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64 // 100.64.0.0/10 (CGN)
             }
             std::net::IpAddr::V6(v6) => {
                 v6.is_loopback()           // ::1
-                || v6.is_unspecified()     // ::
+                || v6.is_unspecified() // ::
             }
         };
     }

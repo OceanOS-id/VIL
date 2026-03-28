@@ -34,16 +34,16 @@
 //! assert!(report.all_ok());
 //! ```
 
-pub mod config;
 pub mod compiler;
+pub mod config;
 pub mod dag;
 pub mod executor;
 pub mod node;
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use handlers::CompilerStats;
 pub use plugin::AiCompilerPlugin;

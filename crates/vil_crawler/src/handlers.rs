@@ -1,7 +1,7 @@
 //! HTTP handlers for the crawler plugin — wired to real CrawlConfig state.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::config::CrawlConfig;
 use crate::crawler::Crawler;
@@ -17,8 +17,12 @@ pub struct CrawlRequest {
     pub max_depth: usize,
 }
 
-fn default_max_pages() -> usize { 10 }
-fn default_max_depth() -> usize { 2 }
+fn default_max_pages() -> usize {
+    10
+}
+fn default_max_depth() -> usize {
+    2
+}
 
 #[derive(Debug, Serialize)]
 pub struct CrawlResponseBody {
@@ -54,7 +58,9 @@ pub async fn crawl_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<CrawlResponseBody>> {
     let config = ctx.state::<Arc<CrawlConfig>>()?;
-    let req: CrawlRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: CrawlRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     if req.url.trim().is_empty() {
         return Err(VilError::bad_request("url must not be empty"));
     }
@@ -90,9 +96,7 @@ pub async fn crawl_handler(
 }
 
 /// GET /stats — return real crawler configuration.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<CrawlerStatsBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<CrawlerStatsBody>> {
     let config = ctx.state::<Arc<CrawlConfig>>()?;
     Ok(VilResponse::ok(CrawlerStatsBody {
         max_pages: config.max_pages,

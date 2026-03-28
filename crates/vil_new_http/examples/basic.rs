@@ -18,5 +18,8 @@ fn main() {
         .add_http_sink(sink_builder)
         .build();
 
-    println!("vil_new_http Workflow built successfully with {} interfaces.", workflow.interfaces.len());
+    println!(
+        "vil_new_http Workflow built successfully with {} interfaces.",
+        workflow.interfaces.len()
+    );
 }

@@ -44,11 +44,11 @@ impl WebhookFault {
     /// Return a stable numeric code for log fields.
     pub fn as_error_code(&self) -> u32 {
         match self {
-            WebhookFault::BindFailed { .. }              => 1,
-            WebhookFault::SignatureInvalid { .. }        => 2,
-            WebhookFault::MissingSignatureHeader { .. }  => 3,
-            WebhookFault::BodyReadFailed { .. }          => 4,
-            WebhookFault::ServerShutdown { .. }          => 5,
+            WebhookFault::BindFailed { .. } => 1,
+            WebhookFault::SignatureInvalid { .. } => 2,
+            WebhookFault::MissingSignatureHeader { .. } => 3,
+            WebhookFault::BodyReadFailed { .. } => 4,
+            WebhookFault::ServerShutdown { .. } => 5,
         }
     }
 }

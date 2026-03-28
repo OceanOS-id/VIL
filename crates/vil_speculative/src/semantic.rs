@@ -39,15 +39,24 @@ pub struct SpeculativeFault {
 
 impl SpeculativeFault {
     pub fn draft_failed(msg: impl Into<String>) -> Self {
-        Self { error_type: SpeculativeFaultType::DraftFailed, message: msg.into() }
+        Self {
+            error_type: SpeculativeFaultType::DraftFailed,
+            message: msg.into(),
+        }
     }
 
     pub fn verification_failed(msg: impl Into<String>) -> Self {
-        Self { error_type: SpeculativeFaultType::VerificationFailed, message: msg.into() }
+        Self {
+            error_type: SpeculativeFaultType::VerificationFailed,
+            message: msg.into(),
+        }
     }
 
     pub fn max_iterations_exceeded(msg: impl Into<String>) -> Self {
-        Self { error_type: SpeculativeFaultType::MaxIterationsExceeded, message: msg.into() }
+        Self {
+            error_type: SpeculativeFaultType::MaxIterationsExceeded,
+            message: msg.into(),
+        }
     }
 }
 

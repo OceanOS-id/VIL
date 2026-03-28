@@ -24,16 +24,16 @@
 
 pub mod config;
 pub mod crawler;
+pub mod handlers;
+pub mod pipeline_sse;
+pub mod plugin;
 pub mod result;
 pub mod robots;
 pub mod semantic;
-pub mod handlers;
-pub mod plugin;
-pub mod pipeline_sse;
 
 pub use config::CrawlConfig;
-pub use crawler::{Crawler, CrawlError};
+pub use crawler::{CrawlError, Crawler};
+pub use plugin::CrawlerPlugin;
 pub use result::CrawlResult;
 pub use robots::RobotsChecker;
-pub use plugin::CrawlerPlugin;
 pub use semantic::{CrawlEvent, CrawlFault, CrawlFaultType, CrawlerState};

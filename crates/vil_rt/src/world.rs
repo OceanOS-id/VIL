@@ -12,20 +12,20 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
-use vil_queue::{DescriptorQueue, QueueBackend, SpscQueue};
-use vil_registry::{Registry, ShmRegistry, ProcessSnapshot, PortSnapshot, SampleSnapshot};
-use vil_shm::{SharedStore, ExchangeHeap};
-use vil_obs::ObservabilityHub;
-use vil_types::{
-    Descriptor, Loaned, LoanedRead, PortId, ProcessId, ProcessSpec, Published,
-    QueueKind, RegionId, SampleId, VSlice, GenericToken, MessageContract, ControlSignal,
-};
 use vil_net::{VerbsContext, VerbsDriver};
+use vil_obs::ObservabilityHub;
+use vil_queue::{DescriptorQueue, QueueBackend, SpscQueue};
+use vil_registry::{PortSnapshot, ProcessSnapshot, Registry, SampleSnapshot, ShmRegistry};
+use vil_shm::{ExchangeHeap, SharedStore};
+use vil_types::{
+    ControlSignal, Descriptor, GenericToken, Loaned, LoanedRead, MessageContract, PortId,
+    ProcessId, ProcessSpec, Published, QueueKind, RegionId, SampleId, VSlice,
+};
 
 use crate::error::RtError;
 use crate::handle::{ProcessHandle, RegisteredPort};
 use crate::metrics::RuntimeMetrics;
-use crate::supervisor::{Supervisor, CleanupReport};
+use crate::supervisor::{CleanupReport, Supervisor};
 
 /// Type alias for the queue map (concurrent via DashMap).
 type QueueMap = Arc<DashMap<PortId, Box<dyn QueueBackend>>>;
@@ -50,7 +50,7 @@ enum InternalState {
         data_region_id: RegionId,
         host_id: vil_types::HostId,
         verbs: Option<Arc<dyn VerbsDriver>>,
-    }
+    },
 }
 
 /// Internal state of VastarRuntimeWorld (wrapped in Arc for sharing).
@@ -96,7 +96,7 @@ impl VastarRuntimeWorld {
     #[doc(alias = "vil_keep")]
     pub fn new_shared_with_host(host_id: vil_types::HostId) -> std::io::Result<Self> {
         let heap = ExchangeHeap::new();
-        
+
         // Ensure default data region exists
         let data_region_name = "default_data";
         let data_region_id = match heap.attach_region(data_region_name) {
@@ -106,7 +106,7 @@ impl VastarRuntimeWorld {
 
         let registry = ShmRegistry::new_or_attach(heap.clone(), host_id)?;
         registry.register_host(host_id, "local");
-        
+
         Ok(Self {
             inner: Arc::new(RuntimeState {
                 backend: InternalState::Shared {
@@ -126,7 +126,11 @@ impl VastarRuntimeWorld {
     #[doc(alias = "vil_keep")]
     pub fn register_process(&self, spec: ProcessSpec) -> Result<ProcessHandle, RtError> {
         let process_id = match &self.inner.backend {
-            InternalState::Local { next_process_id, registry, .. } => {
+            InternalState::Local {
+                next_process_id,
+                registry,
+                ..
+            } => {
                 let id = ProcessId(next_process_id.fetch_add(1, Ordering::Relaxed));
                 registry.register_process(id, spec.name, spec.cleanup);
                 id
@@ -142,10 +146,15 @@ impl VastarRuntimeWorld {
 
         for port in spec.ports.iter() {
             let port_id = match &self.inner.backend {
-                InternalState::Local { next_port_id, registry, queues, .. } => {
+                InternalState::Local {
+                    next_port_id,
+                    registry,
+                    queues,
+                    ..
+                } => {
                     let id = PortId(next_port_id.fetch_add(1, Ordering::Relaxed));
                     registry.register_port(id, process_id, port.direction, port.name);
-                    
+
                     let queue: Box<dyn QueueBackend> = match port.queue {
                         QueueKind::Spsc => Box::new(SpscQueue::new(port.capacity.max(2))),
                         QueueKind::Mpmc => Box::new(DescriptorQueue::with_capacity(port.capacity)),
@@ -153,10 +162,12 @@ impl VastarRuntimeWorld {
                     queues.insert(id, queue);
                     id
                 }
-                InternalState::Shared { registry, queues, .. } => {
+                InternalState::Shared {
+                    registry, queues, ..
+                } => {
                     let id = registry.next_port_id();
                     registry.register_port(id, process_id, port.direction, port.name);
-                    
+
                     // TODO: Proper SHM Queue allocation
                     let queue: Box<dyn QueueBackend> = match port.queue {
                         QueueKind::Spsc => Box::new(SpscQueue::new(port.capacity.max(2))),
@@ -177,11 +188,14 @@ impl VastarRuntimeWorld {
         }
 
         {
-            use vil_log::{system_log, types::SystemPayload, dict::register_str};
-            system_log!(Info, SystemPayload {
-                event_type: 4, // startup / registration
-                ..SystemPayload::default()
-            });
+            use vil_log::{dict::register_str, system_log, types::SystemPayload};
+            system_log!(
+                Info,
+                SystemPayload {
+                    event_type: 4, // startup / registration
+                    ..SystemPayload::default()
+                }
+            );
             let _ = register_str(spec.name);
         }
 
@@ -225,7 +239,11 @@ impl VastarRuntimeWorld {
 
     /// MANUALLY INJECT a descriptor into a port queue.
     /// Used for simulation of network arrival.
-    pub fn inject_descriptor(&self, target_port: PortId, descriptor: Descriptor) -> Result<(), RtError> {
+    pub fn inject_descriptor(
+        &self,
+        target_port: PortId,
+        descriptor: Descriptor,
+    ) -> Result<(), RtError> {
         let queues = match &self.inner.backend {
             InternalState::Local { queues, .. } => queues,
             InternalState::Shared { queues, .. } => queues,
@@ -239,9 +257,13 @@ impl VastarRuntimeWorld {
         }
     }
 
-    /// Simulated RDMA Pull completion. 
+    /// Simulated RDMA Pull completion.
     /// Manually populates the local store for a remote sample ID.
-    pub fn simulate_pull_completion<T: MessageContract + Send + Sync + 'static>(&self, sample_id: SampleId, value: T) {
+    pub fn simulate_pull_completion<T: MessageContract + Send + Sync + 'static>(
+        &self,
+        sample_id: SampleId,
+        value: T,
+    ) {
         let store = match &self.inner.backend {
             InternalState::Local { store, .. } => store,
             InternalState::Shared { store, .. } => store,
@@ -254,9 +276,7 @@ impl VastarRuntimeWorld {
             InternalState::Local { next_sample_id, .. } => {
                 SampleId(next_sample_id.fetch_add(1, Ordering::Relaxed))
             }
-            InternalState::Shared { registry, .. } => {
-                registry.next_sample_id()
-            }
+            InternalState::Shared { registry, .. } => registry.next_sample_id(),
         };
         Ok(Loaned::new(sample_id, origin_port))
     }
@@ -282,11 +302,15 @@ impl VastarRuntimeWorld {
         origin_port: PortId,
         session_id: u64,
     ) -> Result<Published<GenericToken>, RtError> {
-        self.publish_value(owner, origin_port, GenericToken {
-            session_id,
-            is_done: true,
-            data: VSlice::from_vec(Vec::<u8>::new()),
-        })
+        self.publish_value(
+            owner,
+            origin_port,
+            GenericToken {
+                session_id,
+                is_done: true,
+                data: VSlice::from_vec(Vec::<u8>::new()),
+            },
+        )
     }
     pub fn shm_registry(&self) -> Option<ShmRegistry> {
         match &self.inner.backend {
@@ -340,20 +364,38 @@ impl VastarRuntimeWorld {
         let sample_id = loan.sample_id();
 
         match &self.inner.backend {
-            InternalState::Local { registry, store, queues, host_id, .. } => {
+            InternalState::Local {
+                registry,
+                store,
+                queues,
+                host_id,
+                ..
+            } => {
                 let targets = registry.get_routes(origin_port);
                 let expected_reads = targets.len() as u32;
                 if expected_reads == 0 {
                     return Err(RtError::PortHasNoRoute(origin_port));
                 }
 
-                registry.register_sample(sample_id, owner, *host_id, origin_port, expected_reads, RegionId(0), 0, std::mem::size_of::<T>() as u32, std::mem::align_of::<T>() as u32);
+                registry.register_sample(
+                    sample_id,
+                    owner,
+                    *host_id,
+                    origin_port,
+                    expected_reads,
+                    RegionId(0),
+                    0,
+                    std::mem::size_of::<T>() as u32,
+                    std::mem::align_of::<T>() as u32,
+                );
                 store.insert_typed(sample_id, value);
                 registry.mark_published(sample_id);
 
                 match &self.inner.backend {
                     InternalState::Local { .. } => self.inner.obs.counters.inc_publishes(),
-                    InternalState::Shared { registry, .. } => registry.global_counters().inc_publishes(),
+                    InternalState::Shared { registry, .. } => {
+                        registry.global_counters().inc_publishes()
+                    }
                 }
 
                 let descriptor = Descriptor {
@@ -370,7 +412,14 @@ impl VastarRuntimeWorld {
                     }
                 }
             }
-            InternalState::Shared { registry, store, queues, heap: _, host_id, .. } => {
+            InternalState::Shared {
+                registry,
+                store,
+                queues,
+                heap: _,
+                host_id,
+                ..
+            } => {
                 let targets = registry.get_routes(origin_port);
                 let expected_reads = targets.len() as u32;
                 if expected_reads == 0 {
@@ -393,9 +442,21 @@ impl VastarRuntimeWorld {
                     let bytes = unsafe { std::slice::from_raw_parts(src, size) };
 
                     // Pack T's bytes into descriptor fields (up to 24 bytes = 3 × u64)
-                    let f0 = if size >= 8 { u64::from_ne_bytes(bytes[0..8].try_into().unwrap()) } else { 0 };
-                    let f1 = if size >= 16 { u64::from_ne_bytes(bytes[8..16].try_into().unwrap()) } else { 0 };
-                    let f2 = if size >= 24 { u64::from_ne_bytes(bytes[16..24].try_into().unwrap()) } else { 0 };
+                    let f0 = if size >= 8 {
+                        u64::from_ne_bytes(bytes[0..8].try_into().unwrap())
+                    } else {
+                        0
+                    };
+                    let f1 = if size >= 16 {
+                        u64::from_ne_bytes(bytes[8..16].try_into().unwrap())
+                    } else {
+                        0
+                    };
+                    let f2 = if size >= 24 {
+                        u64::from_ne_bytes(bytes[16..24].try_into().unwrap())
+                    } else {
+                        0
+                    };
 
                     registry.global_counters().inc_publishes();
 
@@ -419,7 +480,17 @@ impl VastarRuntimeWorld {
                 // SLOW PATH: Non-stable types go through HashMap store + sample table
                 store.insert_typed(sample_id, value);
 
-                registry.register_sample(sample_id, owner, *host_id, origin_port, expected_reads, RegionId(0), 0, std::mem::size_of::<T>() as u32, std::mem::align_of::<T>() as u32);
+                registry.register_sample(
+                    sample_id,
+                    owner,
+                    *host_id,
+                    origin_port,
+                    expected_reads,
+                    RegionId(0),
+                    0,
+                    std::mem::size_of::<T>() as u32,
+                    std::mem::align_of::<T>() as u32,
+                );
                 registry.mark_published(sample_id);
 
                 registry.global_counters().inc_publishes();
@@ -457,8 +528,15 @@ impl VastarRuntimeWorld {
         T: MessageContract + Send + Sync + 'static,
     {
         match &self.inner.backend {
-            InternalState::Local { queues, store, host_id, .. } => {
-                let queue = queues.get(&target_port).ok_or(RtError::UnknownPort(target_port))?;
+            InternalState::Local {
+                queues,
+                store,
+                host_id,
+                ..
+            } => {
+                let queue = queues
+                    .get(&target_port)
+                    .ok_or(RtError::UnknownPort(target_port))?;
                 let descriptor = queue.try_pop().ok_or(RtError::QueueEmpty(target_port))?;
 
                 if descriptor.origin_host != *host_id {
@@ -466,15 +544,14 @@ impl VastarRuntimeWorld {
                     self.inner.obs.counters.inc_net_pulls();
                 }
 
-                let value = store.get_typed::<T>(descriptor.sample_id)
-                    .ok_or_else(|| {
-                        if store.contains(descriptor.sample_id) {
-                            RtError::TypeMismatch(std::any::type_name::<T>())
-                        } else {
-                            RtError::LoanWasNeverInitialized(descriptor.sample_id)
-                        }
-                    })?;
-                
+                let value = store.get_typed::<T>(descriptor.sample_id).ok_or_else(|| {
+                    if store.contains(descriptor.sample_id) {
+                        RtError::TypeMismatch(std::any::type_name::<T>())
+                    } else {
+                        RtError::LoanWasNeverInitialized(descriptor.sample_id)
+                    }
+                })?;
+
                 let latency = crate::clock::now_ns().saturating_sub(descriptor.publish_ts);
                 match &self.inner.backend {
                     InternalState::Local { .. } => {
@@ -489,8 +566,17 @@ impl VastarRuntimeWorld {
 
                 Ok(SampleGuard::new(self.clone(), descriptor.sample_id, value))
             }
-            InternalState::Shared { queues, store, registry, heap, host_id, .. } => {
-                let queue = queues.get(&target_port).ok_or(RtError::UnknownPort(target_port))?;
+            InternalState::Shared {
+                queues,
+                store,
+                registry,
+                heap,
+                host_id,
+                ..
+            } => {
+                let queue = queues
+                    .get(&target_port)
+                    .ok_or(RtError::UnknownPort(target_port))?;
                 let descriptor = queue.try_pop().ok_or(RtError::QueueEmpty(target_port))?;
 
                 let value = if T::META.is_stable {
@@ -498,14 +584,24 @@ impl VastarRuntimeWorld {
                     // No SHM read, no sample table, no HashMap — pure register ops.
                     let size = std::mem::size_of::<T>();
                     let mut buf = [0u8; 32]; // max stable type size
-                    if size >= 8 { buf[0..8].copy_from_slice(&descriptor.sample_id.0.to_ne_bytes()); }
-                    if size >= 16 { buf[8..16].copy_from_slice(&descriptor.lineage_id.to_ne_bytes()); }
-                    if size >= 24 { buf[16..24].copy_from_slice(&descriptor.publish_ts.to_ne_bytes()); }
+                    if size >= 8 {
+                        buf[0..8].copy_from_slice(&descriptor.sample_id.0.to_ne_bytes());
+                    }
+                    if size >= 16 {
+                        buf[8..16].copy_from_slice(&descriptor.lineage_id.to_ne_bytes());
+                    }
+                    if size >= 24 {
+                        buf[16..24].copy_from_slice(&descriptor.publish_ts.to_ne_bytes());
+                    }
 
                     let mut val = std::mem::MaybeUninit::<T>::uninit();
                     // SAFETY: buf contains valid bytes for the target type, size verified by caller.
                     unsafe {
-                        std::ptr::copy_nonoverlapping(buf.as_ptr(), val.as_mut_ptr() as *mut u8, size);
+                        std::ptr::copy_nonoverlapping(
+                            buf.as_ptr(),
+                            val.as_mut_ptr() as *mut u8,
+                            size,
+                        );
                         Arc::new(val.assume_init())
                     }
                 } else {
@@ -519,20 +615,19 @@ impl VastarRuntimeWorld {
                         }
                     }
 
-                    store.get_typed::<T>(descriptor.sample_id)
-                        .ok_or_else(|| {
-                            if store.contains(descriptor.sample_id) {
-                                RtError::TypeMismatch(std::any::type_name::<T>())
-                            } else {
-                                RtError::LoanWasNeverInitialized(descriptor.sample_id)
-                            }
-                        })?
+                    store.get_typed::<T>(descriptor.sample_id).ok_or_else(|| {
+                        if store.contains(descriptor.sample_id) {
+                            RtError::TypeMismatch(std::any::type_name::<T>())
+                        } else {
+                            RtError::LoanWasNeverInitialized(descriptor.sample_id)
+                        }
+                    })?
                 };
 
                 if !T::META.is_stable {
                     registry.mark_received(descriptor.sample_id);
                 }
-                
+
                 let latency = crate::clock::now_ns().saturating_sub(descriptor.publish_ts);
                 match &self.inner.backend {
                     InternalState::Local { .. } => {
@@ -552,13 +647,17 @@ impl VastarRuntimeWorld {
 
     pub fn release_sample(&self, sample_id: SampleId) {
         match &self.inner.backend {
-            InternalState::Local { registry, store, .. } => {
+            InternalState::Local {
+                registry, store, ..
+            } => {
                 if registry.mark_release_read(sample_id) {
                     registry.reclaim_sample(sample_id);
                     store.remove(sample_id);
                 }
             }
-            InternalState::Shared { registry, store, .. } => {
+            InternalState::Shared {
+                registry, store, ..
+            } => {
                 if registry.mark_release_read(sample_id) {
                     registry.reclaim_sample(sample_id);
                     store.remove(sample_id);
@@ -569,28 +668,49 @@ impl VastarRuntimeWorld {
 
     pub fn metrics_snapshot(&self) -> RuntimeMetrics {
         match &self.inner.backend {
-            InternalState::Local { queues, registry, .. } => {
-                RuntimeMetrics {
-                    queue_depth_total: queues.iter().map(|q: dashmap::mapref::multiple::RefMulti<'_, PortId, Box<dyn QueueBackend>>| q.value().len()).sum::<usize>(),
-                    in_flight_samples: registry.sample_count(),
-                    registered_processes: registry.process_report().len(),
-                }
-            }
-            InternalState::Shared { queues, registry, .. } => {
-                RuntimeMetrics {
-                    queue_depth_total: queues.iter().map(|q: dashmap::mapref::multiple::RefMulti<'_, PortId, Box<dyn QueueBackend>>| q.value().len()).sum::<usize>(),
-                    in_flight_samples: registry.sample_count(),
-                    registered_processes: 0,
-                }
-            }
+            InternalState::Local {
+                queues, registry, ..
+            } => RuntimeMetrics {
+                queue_depth_total: queues
+                    .iter()
+                    .map(
+                        |q: dashmap::mapref::multiple::RefMulti<
+                            '_,
+                            PortId,
+                            Box<dyn QueueBackend>,
+                        >| q.value().len(),
+                    )
+                    .sum::<usize>(),
+                in_flight_samples: registry.sample_count(),
+                registered_processes: registry.process_report().len(),
+            },
+            InternalState::Shared {
+                queues, registry, ..
+            } => RuntimeMetrics {
+                queue_depth_total: queues
+                    .iter()
+                    .map(
+                        |q: dashmap::mapref::multiple::RefMulti<
+                            '_,
+                            PortId,
+                            Box<dyn QueueBackend>,
+                        >| q.value().len(),
+                    )
+                    .sum::<usize>(),
+                in_flight_samples: registry.sample_count(),
+                registered_processes: 0,
+            },
         }
     }
 
     pub fn supervisor(&self) -> Supervisor {
         match &self.inner.backend {
-            InternalState::Local { registry, store, queues, .. } => {
-                Supervisor::new(registry.clone(), store.clone(), queues.clone())
-            }
+            InternalState::Local {
+                registry,
+                store,
+                queues,
+                ..
+            } => Supervisor::new(registry.clone(), store.clone(), queues.clone()),
             InternalState::Shared { store, queues, .. } => {
                 // TODO: ShmSupervisor (Phase 4)
                 Supervisor::new(Registry::new(), store.clone(), queues.clone())
@@ -601,10 +721,13 @@ impl VastarRuntimeWorld {
     pub fn crash_process(&self, process_id: ProcessId) -> CleanupReport {
         {
             use vil_log::{system_log, types::SystemPayload};
-            system_log!(Warn, SystemPayload {
-                event_type: 3, // panic / crash
-                ..SystemPayload::default()
-            });
+            system_log!(
+                Warn,
+                SystemPayload {
+                    event_type: 3, // panic / crash
+                    ..SystemPayload::default()
+                }
+            );
         }
         self.supervisor().crash_process(process_id)
     }
@@ -648,10 +771,15 @@ impl VastarRuntimeWorld {
     /// Triggers compacting specifically for SHARED mode data regions.
     pub fn compact_shm(&self) -> Result<usize, String> {
         match &self.inner.backend {
-            InternalState::Shared { heap, registry, data_region_id, .. } => {
-                heap.compact_region(*data_region_id, registry)
+            InternalState::Shared {
+                heap,
+                registry,
+                data_region_id,
+                ..
+            } => heap.compact_region(*data_region_id, registry),
+            InternalState::Local { .. } => {
+                Err("Compaction not supported in Local mode".to_string())
             }
-            InternalState::Local { .. } => Err("Compaction not supported in Local mode".to_string()),
         }
     }
 
@@ -674,7 +802,9 @@ impl VastarRuntimeWorld {
     pub fn record_latency(&self, latency_ns: u64) {
         match &self.inner.backend {
             InternalState::Local { .. } => self.inner.obs.record_latency(latency_ns),
-            InternalState::Shared { registry, .. } => registry.global_latency().record_ns(latency_ns),
+            InternalState::Shared { registry, .. } => {
+                registry.global_latency().record_ns(latency_ns)
+            }
         }
     }
 
@@ -697,7 +827,10 @@ impl VastarRuntimeWorld {
 
     /// Send heartbeat for the local host.
     pub fn heartbeat(&self) {
-        if let InternalState::Shared { registry, host_id, .. } = &self.inner.backend {
+        if let InternalState::Shared {
+            registry, host_id, ..
+        } = &self.inner.backend
+        {
             registry.heartbeat(*host_id, crate::clock::now_ns());
         }
     }
@@ -707,11 +840,14 @@ impl VastarRuntimeWorld {
         if let InternalState::Shared { registry, .. } = &self.inner.backend {
             let now = crate::clock::now_ns();
             let dead_hosts = registry.check_dead_hosts(now, timeout_ns);
-            
+
             if !dead_hosts.is_empty() {
                 registry.global_counters().inc_failover_events();
                 for host in dead_hosts {
-                    println!("⚠️ HOST FAILURE DETECTED: {:?}. Triggering failover...", host);
+                    println!(
+                        "⚠️ HOST FAILURE DETECTED: {:?}. Triggering failover...",
+                        host
+                    );
                     // In a mature implementation, we would update the routing table
                     // to redirect traffic from ports on this host to alternatives.
                 }
@@ -732,34 +868,51 @@ impl VastarRuntimeWorld {
     }
     pub fn recv_control(&self, target_port: PortId) -> Result<ControlSignal, RtError> {
         match &self.inner.backend {
-            InternalState::Local { queues, store, host_id, .. } => {
-                let queue = queues.get(&target_port).ok_or(RtError::UnknownPort(target_port))?;
+            InternalState::Local {
+                queues,
+                store,
+                host_id,
+                ..
+            } => {
+                let queue = queues
+                    .get(&target_port)
+                    .ok_or(RtError::UnknownPort(target_port))?;
                 let descriptor = queue.try_pop().ok_or(RtError::QueueEmpty(target_port))?;
-                
+
                 if descriptor.origin_host != *host_id {
                     self.inner.obs.counters.inc_net_pulls();
                 }
 
-                let value = store.get_typed::<ControlSignal>(descriptor.sample_id)
+                let value = store
+                    .get_typed::<ControlSignal>(descriptor.sample_id)
                     .ok_or_else(|| RtError::TypeMismatch(std::any::type_name::<ControlSignal>()))?;
-                
+
                 let latency = crate::clock::now_ns().saturating_sub(descriptor.publish_ts);
                 self.inner.obs.counters.inc_receives();
                 self.inner.obs.record_latency(latency);
 
                 Ok((*value).clone())
             }
-            InternalState::Shared { queues, store, registry, host_id, .. } => {
-                let queue = queues.get(&target_port).ok_or(RtError::UnknownPort(target_port))?;
+            InternalState::Shared {
+                queues,
+                store,
+                registry,
+                host_id,
+                ..
+            } => {
+                let queue = queues
+                    .get(&target_port)
+                    .ok_or(RtError::UnknownPort(target_port))?;
                 let descriptor = queue.try_pop().ok_or(RtError::QueueEmpty(target_port))?;
-                
+
                 if descriptor.origin_host != *host_id {
                     registry.global_counters().inc_net_pulls();
                 }
 
-                let value = store.get_typed::<ControlSignal>(descriptor.sample_id)
+                let value = store
+                    .get_typed::<ControlSignal>(descriptor.sample_id)
                     .ok_or_else(|| RtError::TypeMismatch(std::any::type_name::<ControlSignal>()))?;
-                
+
                 let latency = crate::clock::now_ns().saturating_sub(descriptor.publish_ts);
                 registry.global_counters().inc_receives();
                 registry.global_latency().record_ns(latency);
@@ -782,12 +935,16 @@ impl<T: Send + Sync + 'static> SampleGuard<T> {
             loan: LoanedRead::new(sample_id, value),
         }
     }
-    pub fn get(&self) -> &T { self.loan.get() }
+    pub fn get(&self) -> &T {
+        self.loan.get()
+    }
 }
 
 impl<T: Send + Sync + 'static> std::ops::Deref for SampleGuard<T> {
     type Target = T;
-    fn deref(&self) -> &Self::Target { self.get() }
+    fn deref(&self) -> &Self::Target {
+        self.get()
+    }
 }
 
 impl<T: Send + Sync + 'static> Drop for SampleGuard<T> {
@@ -797,5 +954,7 @@ impl<T: Send + Sync + 'static> Drop for SampleGuard<T> {
 }
 
 impl Default for VastarRuntimeWorld {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }

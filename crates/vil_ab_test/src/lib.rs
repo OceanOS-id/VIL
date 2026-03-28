@@ -6,21 +6,21 @@
 //! two-proportion z-test for significance, and experiment reporting.
 
 pub mod experiment;
+pub mod handlers;
+pub mod pipeline_sse;
+pub mod plugin;
 pub mod report;
+pub mod semantic;
 pub mod stats;
 pub mod variant;
-pub mod semantic;
-pub mod handlers;
-pub mod plugin;
-pub mod pipeline_sse;
 
 pub use experiment::{ExpStatus, Experiment};
-pub use report::ExperimentReport;
-pub use stats::{z_test, SignificanceResult};
-pub use variant::Variant;
 pub use handlers::ExperimentRegistry;
 pub use plugin::AbTestPlugin;
+pub use report::ExperimentReport;
 pub use semantic::{AbTestEvent, AbTestFault, AbTestFaultType, AbTestState};
+pub use stats::{z_test, SignificanceResult};
+pub use variant::Variant;
 
 #[cfg(test)]
 mod tests {
@@ -28,10 +28,10 @@ mod tests {
 
     #[test]
     fn test_weighted_assignment_returns_valid_variant() {
-        let exp = Experiment::new("test", vec![
-            Variant::new("control", 0.5),
-            Variant::new("treatment", 0.5),
-        ]);
+        let exp = Experiment::new(
+            "test",
+            vec![Variant::new("control", 0.5), Variant::new("treatment", 0.5)],
+        );
         let assigned = exp.assign();
         assert!(assigned == "control" || assigned == "treatment");
     }
@@ -46,10 +46,10 @@ mod tests {
 
     #[test]
     fn test_conversion_recording() {
-        let mut exp = Experiment::new("test", vec![
-            Variant::new("control", 0.5),
-            Variant::new("treatment", 0.5),
-        ]);
+        let mut exp = Experiment::new(
+            "test",
+            vec![Variant::new("control", 0.5), Variant::new("treatment", 0.5)],
+        );
         exp.record_impression("control");
         exp.record_impression("control");
         exp.record_conversion("control");
@@ -119,10 +119,10 @@ mod tests {
 
     #[test]
     fn test_experiment_report_with_winner() {
-        let mut exp = Experiment::new("pricing", vec![
-            Variant::new("control", 0.5),
-            Variant::new("treatment", 0.5),
-        ]);
+        let mut exp = Experiment::new(
+            "pricing",
+            vec![Variant::new("control", 0.5), Variant::new("treatment", 0.5)],
+        );
         // Simulate data
         exp.variants[0].impressions = 2000;
         exp.variants[0].conversions = 100; // 5%
@@ -137,10 +137,10 @@ mod tests {
 
     #[test]
     fn test_experiment_report_no_data() {
-        let exp = Experiment::new("empty", vec![
-            Variant::new("control", 0.5),
-            Variant::new("treatment", 0.5),
-        ]);
+        let exp = Experiment::new(
+            "empty",
+            vec![Variant::new("control", 0.5), Variant::new("treatment", 0.5)],
+        );
         let report = ExperimentReport::generate(&exp);
         assert!(!report.significant);
         assert!(report.winner.is_none());

@@ -18,16 +18,16 @@
 
 pub mod config;
 pub mod format;
-pub mod result;
-pub mod transcriber;
-pub mod semantic;
 pub mod handlers;
-pub mod plugin;
 pub mod pipeline_sse;
+pub mod plugin;
+pub mod result;
+pub mod semantic;
+pub mod transcriber;
 
 pub use config::TranscriptConfig;
 pub use format::{detect_format, AudioFormat};
-pub use result::{Segment, Transcript};
-pub use transcriber::{NoopTranscriber, TranscribeError, Transcriber};
 pub use plugin::AudioPlugin;
+pub use result::{Segment, Transcript};
 pub use semantic::{AudioEvent, AudioFault, AudioFaultType, AudioState};
+pub use transcriber::{NoopTranscriber, TranscribeError, Transcriber};

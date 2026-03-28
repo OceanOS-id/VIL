@@ -21,16 +21,23 @@ struct TriggerRequest {
     prompt: String,
 }
 
-fn default_prompt() -> String { "benchmark multi-pipeline".to_string() }
+fn default_prompt() -> String {
+    "benchmark multi-pipeline".to_string()
+}
 
 /// Stage 1: Receive trigger
 /// Stage 2: Transform — enrich with pipeline metadata
 /// Stage 3: Call upstream LLM, stream response
 async fn trigger(body: ShmSlice) -> impl IntoResponse {
-    let req: TriggerRequest = body.json().unwrap_or(TriggerRequest { prompt: default_prompt() });
+    let req: TriggerRequest = body.json().unwrap_or(TriggerRequest {
+        prompt: default_prompt(),
+    });
 
     // Stage 2: Transform — add metadata
-    let enriched_prompt = format!("{{\"stage\":\"transform\",\"original\":\"{}\"}}", req.prompt);
+    let enriched_prompt = format!(
+        "{{\"stage\":\"transform\",\"original\":\"{}\"}}",
+        req.prompt
+    );
 
     // Stage 3: Call upstream
     let result = SseCollect::post_to(UPSTREAM_URL)
@@ -65,8 +72,7 @@ async fn main() {
         .map(|v| v == "1" || v == "true")
         .unwrap_or(true);
 
-    let svc = ServiceProcess::new("pipeline")
-        .endpoint(Method::POST, "/trigger", post(trigger));
+    let svc = ServiceProcess::new("pipeline").endpoint(Method::POST, "/trigger", post(trigger));
 
     VilApp::new("multi-pipeline-bench")
         .port(3090)

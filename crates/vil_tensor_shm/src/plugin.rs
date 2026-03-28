@@ -1,9 +1,9 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
-use crate::pool::TensorPool;
 use crate::handlers;
+use crate::pool::TensorPool;
 use crate::semantic::{TensorAllocEvent, TensorFault, TensorPoolState};
+use std::sync::Arc;
 
 pub struct TensorShmPlugin {
     buffer_count: usize,
@@ -12,21 +12,28 @@ pub struct TensorShmPlugin {
 
 impl TensorShmPlugin {
     pub fn new(buffer_count: usize, buffer_capacity: usize) -> Self {
-        Self { buffer_count, buffer_capacity }
+        Self {
+            buffer_count,
+            buffer_capacity,
+        }
     }
 }
 
 impl VilPlugin for TensorShmPlugin {
-    fn id(&self) -> &str { "vil-tensor-shm" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Zero-copy tensor serving via SHM-mapped buffers" }
+    fn id(&self) -> &str {
+        "vil-tensor-shm"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Zero-copy tensor serving via SHM-mapped buffers"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "tensor-shm".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/tensor/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/tensor/stats")],
         }]
     }
 
@@ -43,5 +50,7 @@ impl VilPlugin for TensorShmPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

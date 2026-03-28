@@ -1,5 +1,9 @@
 use vil_rt::VastarRuntimeWorld;
-use vil_types::{ProcessSpec, PortSpec, PortDirection, GenericToken, VSlice, ExecClass, CleanupPolicy, ObservabilitySpec, QueueKind, BackpressurePolicy, TransferMode, BoundaryKind, Priority, DeliveryGuarantee};
+use vil_types::{
+    BackpressurePolicy, BoundaryKind, CleanupPolicy, DeliveryGuarantee, ExecClass, GenericToken,
+    ObservabilitySpec, PortDirection, PortSpec, Priority, ProcessSpec, QueueKind, TransferMode,
+    VSlice,
+};
 
 static PROD_PORTS: &[PortSpec] = &[PortSpec {
     name: "data_out",
@@ -112,16 +116,20 @@ fn main() {
             is_done: false,
             data: VSlice::from_vec(vec![1, 2, 3]),
         };
-        runtime.publish_value(prod_handle.id(), prod_port, token).unwrap();
+        runtime
+            .publish_value(prod_handle.id(), prod_port, token)
+            .unwrap();
     }
     println!("📡 Sent 3 samples to A");
 
     // 7. Verify A received 3, B received 0
     for i in 0..3 {
-        let _ = runtime.recv::<GenericToken>(cons_a_port).expect("A should have samples");
+        let _ = runtime
+            .recv::<GenericToken>(cons_a_port)
+            .expect("A should have samples");
         println!("  📥 A received sample {}", i);
     }
-    
+
     match runtime.recv::<GenericToken>(cons_b_port) {
         Err(vil_rt::error::RtError::QueueEmpty(_)) => println!("  ✅ B is empty as expected"),
         _ => panic!("B should have no samples!"),
@@ -138,13 +146,17 @@ fn main() {
             is_done: false,
             data: VSlice::from_vec(vec![4, 5, 6]),
         };
-        runtime.publish_value(prod_handle.id(), prod_port, token).unwrap();
+        runtime
+            .publish_value(prod_handle.id(), prod_port, token)
+            .unwrap();
     }
     println!("📡 Sent 3 samples after reroute");
 
     // 10. Verify B received 3, A received 0
     for i in 3..6 {
-        let _ = runtime.recv::<GenericToken>(cons_b_port).expect("B should have samples");
+        let _ = runtime
+            .recv::<GenericToken>(cons_b_port)
+            .expect("B should have samples");
         println!("  📥 B received sample {}", i);
     }
 

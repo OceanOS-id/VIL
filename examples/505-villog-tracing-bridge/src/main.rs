@@ -28,7 +28,7 @@ mod third_party_lib {
     pub fn process_request(request_id: u64) {
         tracing::info!(request_id, "processing request");
         tracing::debug!(request_id, step = "validate", "input validated");
-        tracing::debug!(request_id, step = "enrich",   "data enriched");
+        tracing::debug!(request_id, step = "enrich", "data enriched");
         tracing::info!(request_id, "request complete");
     }
 
@@ -49,9 +49,9 @@ mod third_party_lib {
 async fn main() {
     // 1. Set up VIL drain first (ring must exist before tracing subscriber)
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Debug,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Debug,
+        batch_size: 64,
         flush_interval_ms: 50,
         threads: None,
         dict_path: None,

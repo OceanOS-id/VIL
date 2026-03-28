@@ -13,11 +13,7 @@ use std::path::PathBuf;
 
 use vil_log::drain::{FileDrain, MultiDrain, RotationStrategy, StdoutDrain, StdoutFormat};
 use vil_log::runtime::init_logging;
-use vil_log::{
-    app_log, access_log, mq_log,
-    AccessPayload, MqPayload,
-    LogConfig, LogLevel,
-};
+use vil_log::{access_log, app_log, mq_log, AccessPayload, LogConfig, LogLevel, MqPayload};
 
 #[tokio::main]
 async fn main() {
@@ -27,7 +23,9 @@ async fn main() {
     let file_drain = FileDrain::new(
         &log_dir,
         "multi",
-        RotationStrategy::Size { max_bytes: 10 * 1024 * 1024 },
+        RotationStrategy::Size {
+            max_bytes: 10 * 1024 * 1024,
+        },
         5,
     )
     .expect("failed to create log dir");
@@ -38,9 +36,9 @@ async fn main() {
         .add(file_drain);
 
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        128,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 128,
         flush_interval_ms: 50,
         threads: None,
         dict_path: None,
@@ -60,48 +58,60 @@ async fn main() {
 
     // HTTP access events
     for i in 0u32..5 {
-        access_log!(Info, AccessPayload {
-            method:         1, // POST
-            status_code:    200,
-            protocol:       1, // HTTP/2
-            duration_us:    800 + i * 50,
-            request_bytes:  1024,
-            response_bytes: 256,
-            route_hash:     register_str("/api/events"),
-            path_hash:      register_str("/api/events"),
-            authenticated:  1,
-            ..AccessPayload::default()
-        });
+        access_log!(
+            Info,
+            AccessPayload {
+                method: 1, // POST
+                status_code: 200,
+                protocol: 1, // HTTP/2
+                duration_us: 800 + i * 50,
+                request_bytes: 1024,
+                response_bytes: 256,
+                route_hash: register_str("/api/events"),
+                path_hash: register_str("/api/events"),
+                authenticated: 1,
+                ..AccessPayload::default()
+            }
+        );
     }
 
     // Message queue events
-    mq_log!(Info, MqPayload {
-        broker_hash:    register_str("kafka"),
-        topic_hash:     register_str("order.created"),
-        group_hash:     register_str("order-processor"),
-        offset:         1_042_883,
-        message_bytes:  512,
-        e2e_latency_us: 3_200,
-        op_type:        1, // consume
-        partition:      0,
-        retries:        0,
-        ..MqPayload::default()
-    });
+    mq_log!(
+        Info,
+        MqPayload {
+            broker_hash: register_str("kafka"),
+            topic_hash: register_str("order.created"),
+            group_hash: register_str("order-processor"),
+            offset: 1_042_883,
+            message_bytes: 512,
+            e2e_latency_us: 3_200,
+            op_type: 1, // consume
+            partition: 0,
+            retries: 0,
+            ..MqPayload::default()
+        }
+    );
 
-    mq_log!(Warn, MqPayload {
-        broker_hash:    register_str("kafka"),
-        topic_hash:     register_str("payment.failed"),
-        group_hash:     register_str("payment-processor"),
-        offset:         9_875,
-        message_bytes:  256,
-        e2e_latency_us: 12_000,
-        op_type:        4, // dlq
-        partition:      2,
-        retries:        3,
-        ..MqPayload::default()
-    });
+    mq_log!(
+        Warn,
+        MqPayload {
+            broker_hash: register_str("kafka"),
+            topic_hash: register_str("payment.failed"),
+            group_hash: register_str("payment-processor"),
+            offset: 9_875,
+            message_bytes: 256,
+            e2e_latency_us: 12_000,
+            op_type: 4, // dlq
+            partition: 2,
+            retries: 3,
+            ..MqPayload::default()
+        }
+    );
 
     tokio::time::sleep(std::time::Duration::from_millis(500)).await;
 
-    println!("\n=== Fan-out complete. Also check {}/multi.log ===", log_dir.display());
+    println!(
+        "\n=== Fan-out complete. Also check {}/multi.log ===",
+        log_dir.display()
+    );
 }

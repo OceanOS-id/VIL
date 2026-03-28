@@ -1,5 +1,5 @@
 use dashmap::DashMap;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// Cost data for a model.
@@ -148,7 +148,9 @@ impl CostTracker {
             .min_by(|a, b| {
                 let cost_a = a.value().cost_per_1k_input + a.value().cost_per_1k_output;
                 let cost_b = b.value().cost_per_1k_input + b.value().cost_per_1k_output;
-                cost_a.partial_cmp(&cost_b).unwrap_or(std::cmp::Ordering::Equal)
+                cost_a
+                    .partial_cmp(&cost_b)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             })
             .map(|e| e.key().clone())
     }

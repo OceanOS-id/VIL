@@ -1,7 +1,7 @@
-use vil_server::prelude::*;
+use crate::collection::Collection;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use crate::collection::Collection;
+use vil_server::prelude::*;
 
 #[derive(Debug, Deserialize)]
 pub struct SearchRequest {
@@ -44,15 +44,23 @@ pub async fn search_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<SearchResponseBody>> {
     let col = ctx.state::<Arc<Collection>>()?;
-    let req: SearchRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: SearchRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     let top_k = req.top_k.unwrap_or(10);
     let results = col.search(&req.vector, top_k);
-    let hits: Vec<SearchHit> = results.iter().map(|r| SearchHit {
-        score: r.score,
-        metadata: r.metadata.clone(),
-    }).collect();
+    let hits: Vec<SearchHit> = results
+        .iter()
+        .map(|r| SearchHit {
+            score: r.score,
+            metadata: r.metadata.clone(),
+        })
+        .collect();
     let count = hits.len();
-    Ok(VilResponse::ok(SearchResponseBody { results: hits, count }))
+    Ok(VilResponse::ok(SearchResponseBody {
+        results: hits,
+        count,
+    }))
 }
 
 pub async fn index_handler(
@@ -60,14 +68,14 @@ pub async fn index_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<IndexResponseBody>> {
     let col = ctx.state::<Arc<Collection>>()?;
-    let req: IndexRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: IndexRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     col.add(req.vector, req.metadata, req.content);
     Ok(VilResponse::created(IndexResponseBody { indexed: true }))
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<StatsResponseBody> {
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<StatsResponseBody> {
     let col = ctx.state::<Arc<Collection>>().expect("Collection");
     VilResponse::ok(StatsResponseBody {
         total_vectors: col.count(),

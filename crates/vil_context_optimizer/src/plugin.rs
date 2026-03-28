@@ -56,8 +56,7 @@ impl VilPlugin for OptimizerPlugin {
             endpoints: vec![
                 EndpointSpec::post("/api/optimizer/optimize")
                     .with_description("Optimize context chunks to fit token budget"),
-                EndpointSpec::get("/api/optimizer/stats")
-                    .with_description("Optimizer statistics"),
+                EndpointSpec::get("/api/optimizer/stats").with_description("Optimizer statistics"),
             ],
         }]
     }

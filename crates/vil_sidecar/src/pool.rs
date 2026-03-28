@@ -6,10 +6,10 @@
 // tracking. When max_in_flight is exceeded, checkout returns an error to
 // apply backpressure upstream.
 
-use crate::transport::{SidecarConnection, TransportError};
 use crate::protocol::Message;
+use crate::transport::{SidecarConnection, TransportError};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, AtomicU64, Ordering};
 use tokio::sync::Mutex;
 
 /// Configuration for a connection pool.
@@ -23,7 +23,10 @@ pub struct PoolConfig {
 
 impl Default for PoolConfig {
     fn default() -> Self {
-        Self { pool_size: 4, max_in_flight: 1000 }
+        Self {
+            pool_size: 4,
+            max_in_flight: 1000,
+        }
     }
 }
 
@@ -38,7 +41,10 @@ pub struct ConnectionPool {
 impl ConnectionPool {
     /// Create a new pool from a vec of established connections.
     pub fn new(connections: Vec<SidecarConnection>, config: PoolConfig) -> Self {
-        let connections = connections.into_iter().map(|c| Arc::new(Mutex::new(c))).collect();
+        let connections = connections
+            .into_iter()
+            .map(|c| Arc::new(Mutex::new(c)))
+            .collect();
         Self {
             connections,
             counter: AtomicUsize::new(0),
@@ -135,8 +141,11 @@ pub enum PoolError {
 impl std::fmt::Display for PoolError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::BackpressureExceeded { in_flight, max } =>
-                write!(f, "backpressure: {} in-flight exceeds max {}", in_flight, max),
+            Self::BackpressureExceeded { in_flight, max } => write!(
+                f,
+                "backpressure: {} in-flight exceeds max {}",
+                in_flight, max
+            ),
             Self::Empty => write!(f, "connection pool is empty"),
         }
     }
@@ -180,14 +189,21 @@ mod tests {
             for i in 0..2 {
                 let sock = dir.path().join(format!("pool{}.sock", i));
                 let sock_str = sock.to_str().unwrap().to_string();
-                let listener = crate::transport::SidecarListener::bind(&sock_str).await.unwrap();
-                let client = crate::transport::SidecarConnection::connect(&sock_str).await.unwrap();
+                let listener = crate::transport::SidecarListener::bind(&sock_str)
+                    .await
+                    .unwrap();
+                let client = crate::transport::SidecarConnection::connect(&sock_str)
+                    .await
+                    .unwrap();
                 // Accept the server side (we only use the client side)
                 let _server = listener.accept().await.unwrap();
                 conns.push(client);
             }
 
-            let config = PoolConfig { pool_size: 2, max_in_flight: 2 };
+            let config = PoolConfig {
+                pool_size: 2,
+                max_in_flight: 2,
+            };
             let pool = ConnectionPool::new(conns, config);
             assert_eq!(pool.size(), 2);
             assert_eq!(pool.in_flight(), 0);
@@ -230,11 +246,18 @@ mod tests {
             let dir = tempfile::tempdir().unwrap();
             let sock = dir.path().join("unlimited.sock");
             let sock_str = sock.to_str().unwrap().to_string();
-            let listener = crate::transport::SidecarListener::bind(&sock_str).await.unwrap();
-            let client = crate::transport::SidecarConnection::connect(&sock_str).await.unwrap();
+            let listener = crate::transport::SidecarListener::bind(&sock_str)
+                .await
+                .unwrap();
+            let client = crate::transport::SidecarConnection::connect(&sock_str)
+                .await
+                .unwrap();
             let _server = listener.accept().await.unwrap();
 
-            let config = PoolConfig { pool_size: 1, max_in_flight: 0 };
+            let config = PoolConfig {
+                pool_size: 1,
+                max_in_flight: 0,
+            };
             let pool = ConnectionPool::new(vec![client], config);
 
             // With max_in_flight=0 (unlimited), many checkouts should succeed
@@ -264,14 +287,21 @@ mod tests {
             for i in 0..3 {
                 let sock = dir.path().join(format!("rr{}.sock", i));
                 let sock_str = sock.to_str().unwrap().to_string();
-                let listener = crate::transport::SidecarListener::bind(&sock_str).await.unwrap();
-                let client = crate::transport::SidecarConnection::connect(&sock_str).await.unwrap();
+                let listener = crate::transport::SidecarListener::bind(&sock_str)
+                    .await
+                    .unwrap();
+                let client = crate::transport::SidecarConnection::connect(&sock_str)
+                    .await
+                    .unwrap();
                 let server = listener.accept().await.unwrap();
                 conns.push(client);
                 _servers.push(server);
             }
 
-            let config = PoolConfig { pool_size: 3, max_in_flight: 0 };
+            let config = PoolConfig {
+                pool_size: 3,
+                max_in_flight: 0,
+            };
             let pool = ConnectionPool::new(conns, config);
 
             // Checkout 6 times — should cycle through 0,1,2,0,1,2

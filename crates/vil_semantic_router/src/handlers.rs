@@ -1,6 +1,6 @@
-use vil_server::prelude::*;
-use std::sync::Arc;
 use crate::router::SemanticRouter;
+use std::sync::Arc;
+use vil_server::prelude::*;
 
 #[derive(Debug, Serialize)]
 pub struct RouteInfo {
@@ -17,16 +17,19 @@ pub struct RoutesResponseBody {
     pub route_count: usize,
 }
 
-pub async fn routes_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<RoutesResponseBody> {
+pub async fn routes_handler(ctx: ServiceCtx) -> VilResponse<RoutesResponseBody> {
     let router = ctx.state::<Arc<SemanticRouter>>().expect("SemanticRouter");
-    let routes: Vec<RouteInfo> = router.classifier().routes().iter().map(|r| RouteInfo {
-        name: r.name.clone(),
-        target: r.target.clone(),
-        keywords: r.keywords.clone(),
-        priority: r.priority,
-    }).collect();
+    let routes: Vec<RouteInfo> = router
+        .classifier()
+        .routes()
+        .iter()
+        .map(|r| RouteInfo {
+            name: r.name.clone(),
+            target: r.target.clone(),
+            keywords: r.keywords.clone(),
+            priority: r.priority,
+        })
+        .collect();
     let count = routes.len();
     VilResponse::ok(RoutesResponseBody {
         routes,

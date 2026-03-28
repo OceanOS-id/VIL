@@ -21,9 +21,9 @@ use core::fmt;
 use core::marker::PhantomData;
 use std::sync::Arc;
 
+use crate::enums::*;
 use crate::ids::*;
 use crate::markers::*;
-use crate::enums::*;
 use crate::specs::MessageMeta;
 
 /// Slice wrapper safe for VIL boundaries.
@@ -44,20 +44,30 @@ impl<T: 'static> VSlice<T> {
 
         // Fast path for u8
         if std::any::TypeId::of::<T>() == std::any::TypeId::of::<u8>() {
-             // SAFETY: Vec<T> and Vec<u8> have identical layout. T is constrained to types where all bit patterns are valid (PodLike).
-             let bytes = bytes::Bytes::from(unsafe { std::mem::transmute::<Vec<T>, Vec<u8>>(value) });
-             return Self { data: bytes, _marker: PhantomData };
+            // SAFETY: Vec<T> and Vec<u8> have identical layout. T is constrained to types where all bit patterns are valid (PodLike).
+            let bytes =
+                bytes::Bytes::from(unsafe { std::mem::transmute::<Vec<T>, Vec<u8>>(value) });
+            return Self {
+                data: bytes,
+                _marker: PhantomData,
+            };
         }
 
         // Fallback: Copy for non-u8 types (rare on hot-path network I/O)
         let slice = unsafe { std::slice::from_raw_parts(value.as_ptr() as *const u8, len) };
         let bytes = bytes::Bytes::copy_from_slice(slice);
-        Self { data: bytes, _marker: PhantomData }
+        Self {
+            data: bytes,
+            _marker: PhantomData,
+        }
     }
 
     /// Create a VSlice from bytes::Bytes (true zero-copy).
     pub fn from_bytes(bytes: bytes::Bytes) -> Self {
-        Self { data: bytes, _marker: PhantomData }
+        Self {
+            data: bytes,
+            _marker: PhantomData,
+        }
     }
 
     /// Access data as a regular slice.
@@ -102,7 +112,6 @@ where
         f.debug_list().entries(self.as_slice().iter()).finish()
     }
 }
-
 
 // SAFETY: VSlice<T> is backed by bytes::Bytes with no absolute pointers. T: Vasi/PodLike ensures inner type is safe.
 unsafe impl<T: Vasi> Vasi for VSlice<T> {}
@@ -312,35 +321,63 @@ impl ShmToken {
 
     /// Create a data token pointing to SHM payload.
     pub fn data(session_id: u64, offset: u64, len: u32) -> Self {
-        Self { session_id, data_offset: offset, data_len: len, status: 0, _pad: [0; 3] }
+        Self {
+            session_id,
+            data_offset: offset,
+            data_len: len,
+            status: 0,
+            _pad: [0; 3],
+        }
     }
 
     /// Create a done marker token.
     pub fn done(session_id: u64) -> Self {
-        Self { session_id, data_offset: 0, data_len: 0, status: 1, _pad: [0; 3] }
+        Self {
+            session_id,
+            data_offset: 0,
+            data_len: 0,
+            status: 1,
+            _pad: [0; 3],
+        }
     }
 
     /// Create an error marker token.
     pub fn error(session_id: u64) -> Self {
-        Self { session_id, data_offset: 0, data_len: 0, status: 2, _pad: [0; 3] }
+        Self {
+            session_id,
+            data_offset: 0,
+            data_len: 0,
+            status: 2,
+            _pad: [0; 3],
+        }
     }
 
     /// Is this a data token (status=0)?
-    pub fn is_data(&self) -> bool { self.status == 0 }
+    pub fn is_data(&self) -> bool {
+        self.status == 0
+    }
 
     /// Is this a done marker (status=1)?
-    pub fn is_done(&self) -> bool { self.status == 1 }
+    pub fn is_done(&self) -> bool {
+        self.status == 1
+    }
 
     /// Is this an error marker (status=2)?
-    pub fn is_error(&self) -> bool { self.status == 2 }
+    pub fn is_error(&self) -> bool {
+        self.status == 2
+    }
 }
 
 impl MessageContract for ShmToken {
     const META: MessageMeta = MessageMeta {
         name: "ShmToken",
-        layout: LayoutProfile::Flat,           // POD, no pointers
-        transfer_caps: &[TransferMode::LoanWrite, TransferMode::LoanRead, TransferMode::Copy],
-        is_stable: true,                        // → direct SHM write/read, no HashMap
+        layout: LayoutProfile::Flat, // POD, no pointers
+        transfer_caps: &[
+            TransferMode::LoanWrite,
+            TransferMode::LoanRead,
+            TransferMode::Copy,
+        ],
+        is_stable: true, // → direct SHM write/read, no HashMap
         semantic_kind: SemanticKind::Message,
         memory_class: MemoryClass::PagedExchange,
     };

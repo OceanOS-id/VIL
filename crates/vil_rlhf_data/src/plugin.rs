@@ -1,35 +1,45 @@
 use vil_server::prelude::*;
 
-use crate::handlers;
 use crate::dataset::PreferenceDataset;
+use crate::handlers;
 use crate::vil_semantic::{RlhfEvent, RlhfFault, RlhfState};
 use std::sync::{Arc, RwLock};
 
 pub struct RlhfPlugin;
 
 impl RlhfPlugin {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl Default for RlhfPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for RlhfPlugin {
-    fn id(&self) -> &str { "vil-rlhf" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Human feedback collection pipeline for RLHF/DPO training" }
+    fn id(&self) -> &str {
+        "vil-rlhf"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Human feedback collection pipeline for RLHF/DPO training"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "rlhf".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/rlhf/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/rlhf/stats")],
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let dataset = Arc::new(RwLock::new(PreferenceDataset::new()));
@@ -43,5 +53,7 @@ impl VilPlugin for RlhfPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

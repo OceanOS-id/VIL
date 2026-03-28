@@ -31,7 +31,11 @@ impl ValidationPass for LayoutLegalityPass {
                 }
             };
 
-            let port = match ir.interfaces.get(iface_name).and_then(|i| i.ports.get(&route.from_port)) {
+            let port = match ir
+                .interfaces
+                .get(iface_name)
+                .and_then(|i| i.ports.get(&route.from_port))
+            {
                 Some(p) => p,
                 None => continue,
             };

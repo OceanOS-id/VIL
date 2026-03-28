@@ -16,7 +16,7 @@
 //   - Failed alloc → immediate reset + retry (no request drop)
 //   - All thresholds configurable via ShmPoolConfig + env vars
 
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
 use vil_shm::ExchangeHeap;
@@ -46,12 +46,20 @@ impl Default for ShmPoolConfig {
 impl ShmPoolConfig {
     /// Small pool for development/testing
     pub fn dev() -> Self {
-        Self { capacity: 8 * 1024 * 1024, reset_threshold_pct: 70, check_interval: 64 }
+        Self {
+            capacity: 8 * 1024 * 1024,
+            reset_threshold_pct: 70,
+            check_interval: 64,
+        }
     }
 
     /// Large pool for high-throughput production
     pub fn production() -> Self {
-        Self { capacity: 256 * 1024 * 1024, reset_threshold_pct: 90, check_interval: 1024 }
+        Self {
+            capacity: 256 * 1024 * 1024,
+            reset_threshold_pct: 90,
+            check_interval: 1024,
+        }
     }
 
     /// From environment variables:
@@ -61,13 +69,19 @@ impl ShmPoolConfig {
     pub fn from_env() -> Self {
         let mut config = Self::default();
         if let Ok(mb) = std::env::var("VIL_SHM_CAPACITY_MB") {
-            if let Ok(v) = mb.parse::<usize>() { config.capacity = v * 1024 * 1024; }
+            if let Ok(v) = mb.parse::<usize>() {
+                config.capacity = v * 1024 * 1024;
+            }
         }
         if let Ok(pct) = std::env::var("VIL_SHM_RESET_PCT") {
-            if let Ok(v) = pct.parse::<usize>() { config.reset_threshold_pct = v.min(99); }
+            if let Ok(v) = pct.parse::<usize>() {
+                config.reset_threshold_pct = v.min(99);
+            }
         }
         if let Ok(interval) = std::env::var("VIL_SHM_CHECK_INTERVAL") {
-            if let Ok(v) = interval.parse::<u64>() { config.check_interval = v.max(1); }
+            if let Ok(v) = interval.parse::<u64>() {
+                config.check_interval = v.max(1);
+            }
         }
         config
     }
@@ -87,19 +101,28 @@ pub struct ShmPool {
 impl ShmPool {
     /// Create a new SHM pool with configuration.
     pub fn new(heap: Arc<ExchangeHeap>, capacity: usize, reset_threshold: usize) -> Self {
-        let config = ShmPoolConfig { capacity, reset_threshold_pct: reset_threshold, ..Default::default() };
+        let config = ShmPoolConfig {
+            capacity,
+            reset_threshold_pct: reset_threshold,
+            ..Default::default()
+        };
         let region_id = heap.create_region("vil_http_pool", config.capacity);
         {
             use vil_log::system_log;
             use vil_log::types::SystemPayload;
-            system_log!(Info, SystemPayload {
-                event_type: 4, // startup
-                mem_kb: (config.capacity / 1024) as u32,
-                ..Default::default()
-            });
+            system_log!(
+                Info,
+                SystemPayload {
+                    event_type: 4, // startup
+                    mem_kb: (config.capacity / 1024) as u32,
+                    ..Default::default()
+                }
+            );
         }
         Self {
-            heap, region_id, config,
+            heap,
+            region_id,
+            config,
             alloc_count: AtomicU64::new(0),
             reset_count: AtomicU64::new(0),
             retry_count: AtomicU64::new(0),
@@ -141,7 +164,11 @@ impl ShmPool {
 
     fn maybe_reset(&self) {
         if let Some(stats) = self.heap.region_stats(self.region_id) {
-            let utilization = if stats.capacity > 0 { stats.used * 100 / stats.capacity } else { 0 };
+            let utilization = if stats.capacity > 0 {
+                stats.used * 100 / stats.capacity
+            } else {
+                0
+            };
             if utilization >= self.config.reset_threshold_pct {
                 self.do_reset(utilization);
             }
@@ -157,7 +184,11 @@ impl ShmPool {
     }
 
     fn do_reset(&self, utilization: usize) {
-        if self.resetting.compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed).is_ok() {
+        if self
+            .resetting
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_ok()
+        {
             self.heap.reset_region(self.region_id);
             self.reset_count.fetch_add(1, Ordering::Relaxed);
             self.resetting.store(false, Ordering::Release);
@@ -171,11 +202,20 @@ impl ShmPool {
     }
 
     pub fn stats(&self) -> PoolStats {
-        let (used, remaining) = self.heap.region_stats(self.region_id)
-            .map(|s| (s.used, s.remaining)).unwrap_or((0, 0));
+        let (used, remaining) = self
+            .heap
+            .region_stats(self.region_id)
+            .map(|s| (s.used, s.remaining))
+            .unwrap_or((0, 0));
         PoolStats {
-            capacity: self.config.capacity, used, remaining,
-            utilization_pct: if self.config.capacity > 0 { used * 100 / self.config.capacity } else { 0 },
+            capacity: self.config.capacity,
+            used,
+            remaining,
+            utilization_pct: if self.config.capacity > 0 {
+                used * 100 / self.config.capacity
+            } else {
+                0
+            },
             total_allocs: self.alloc_count.load(Ordering::Relaxed),
             total_resets: self.reset_count.load(Ordering::Relaxed),
             total_retries: self.retry_count.load(Ordering::Relaxed),
@@ -184,9 +224,15 @@ impl ShmPool {
         }
     }
 
-    pub fn config(&self) -> &ShmPoolConfig { &self.config }
-    pub fn region_id(&self) -> RegionId { self.region_id }
-    pub fn heap(&self) -> &Arc<ExchangeHeap> { &self.heap }
+    pub fn config(&self) -> &ShmPoolConfig {
+        &self.config
+    }
+    pub fn region_id(&self) -> RegionId {
+        self.region_id
+    }
+    pub fn heap(&self) -> &Arc<ExchangeHeap> {
+        &self.heap
+    }
 }
 
 /// Pool statistics.

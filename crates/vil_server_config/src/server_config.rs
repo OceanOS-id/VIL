@@ -37,7 +37,9 @@ pub struct FullServerConfig {
     pub admin: AdminSection,
 }
 
-fn default_profile() -> String { "dev".into() }
+fn default_profile() -> String {
+    "dev".into()
+}
 
 // ==================== Server ====================
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,9 +58,14 @@ pub struct ServerSection {
 impl Default for ServerSection {
     fn default() -> Self {
         Self {
-            name: "vil-server".into(), port: 8080, host: "0.0.0.0".into(),
-            metrics_port: None, workers: 0, request_timeout_secs: 30,
-            max_body_size: "1MB".into(), graceful_shutdown_timeout_secs: 30,
+            name: "vil-server".into(),
+            port: 8080,
+            host: "0.0.0.0".into(),
+            metrics_port: None,
+            workers: 0,
+            request_timeout_secs: 30,
+            max_body_size: "1MB".into(),
+            graceful_shutdown_timeout_secs: 30,
         }
     }
 }
@@ -75,7 +82,11 @@ pub struct LogSection {
 
 impl Default for LogSection {
     fn default() -> Self {
-        Self { level: "info".into(), format: "text".into(), modules: HashMap::new() }
+        Self {
+            level: "info".into(),
+            format: "text".into(),
+            modules: HashMap::new(),
+        }
     }
 }
 
@@ -103,7 +114,9 @@ pub struct QueryCacheSection {
 impl Default for ShmSection {
     fn default() -> Self {
         Self {
-            enabled: true, pool_size: "64MB".into(), reset_threshold_pct: 85,
+            enabled: true,
+            pool_size: "64MB".into(),
+            reset_threshold_pct: 85,
             check_interval: 256,
             query_cache: QueryCacheSection::default(),
         }
@@ -112,7 +125,12 @@ impl Default for ShmSection {
 
 impl Default for QueryCacheSection {
     fn default() -> Self {
-        Self { enabled: true, region_size: "32MB".into(), default_ttl_secs: 60, max_entries: 10000 }
+        Self {
+            enabled: true,
+            region_size: "32MB".into(),
+            default_ttl_secs: 60,
+            max_entries: 10000,
+        }
     }
 }
 
@@ -156,13 +174,17 @@ pub struct RouteSection {
     pub lane: String,
 }
 
-fn default_lane() -> String { "data".into() }
+fn default_lane() -> String {
+    "data".into()
+}
 
 impl Default for MeshSection {
     fn default() -> Self {
         Self {
-            mode: "unified".into(), channels: ChannelsSection::default(),
-            discovery: DiscoverySection::default(), routes: Vec::new(),
+            mode: "unified".into(),
+            channels: ChannelsSection::default(),
+            discovery: DiscoverySection::default(),
+            routes: Vec::new(),
         }
     }
 }
@@ -170,16 +192,28 @@ impl Default for MeshSection {
 impl Default for ChannelsSection {
     fn default() -> Self {
         Self {
-            trigger: ChannelConfig { buffer_size: 1024, shm_region_size: "4MB".into() },
-            data: ChannelConfig { buffer_size: 1024, shm_region_size: "16MB".into() },
-            control: ChannelConfig { buffer_size: 256, shm_region_size: "1MB".into() },
+            trigger: ChannelConfig {
+                buffer_size: 1024,
+                shm_region_size: "4MB".into(),
+            },
+            data: ChannelConfig {
+                buffer_size: 1024,
+                shm_region_size: "16MB".into(),
+            },
+            control: ChannelConfig {
+                buffer_size: 256,
+                shm_region_size: "1MB".into(),
+            },
         }
     }
 }
 
 impl Default for ChannelConfig {
     fn default() -> Self {
-        Self { buffer_size: 1024, shm_region_size: "4MB".into() }
+        Self {
+            buffer_size: 1024,
+            shm_region_size: "4MB".into(),
+        }
     }
 }
 
@@ -199,7 +233,9 @@ pub struct ServiceSection {
     pub prefix: Option<String>,
 }
 
-fn default_public() -> String { "public".into() }
+fn default_public() -> String {
+    "public".into()
+}
 
 // ==================== Middleware ====================
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -217,38 +253,108 @@ pub struct MiddlewareSection {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct ToggleConfig { pub enabled: bool }
-impl Default for ToggleConfig { fn default() -> Self { Self { enabled: true } } }
+pub struct ToggleConfig {
+    pub enabled: bool,
+}
+impl Default for ToggleConfig {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct SampledConfig { pub enabled: bool, pub sample_rate: u64 }
-impl Default for SampledConfig { fn default() -> Self { Self { enabled: true, sample_rate: 1 } } }
+pub struct SampledConfig {
+    pub enabled: bool,
+    pub sample_rate: u64,
+}
+impl Default for SampledConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            sample_rate: 1,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct TracingConfig { pub enabled: bool, pub sample_rate: u64, pub propagation: String }
-impl Default for TracingConfig { fn default() -> Self { Self { enabled: true, sample_rate: 1, propagation: "w3c".into() } } }
+pub struct TracingConfig {
+    pub enabled: bool,
+    pub sample_rate: u64,
+    pub propagation: String,
+}
+impl Default for TracingConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            sample_rate: 1,
+            propagation: "w3c".into(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct CorsConfig { pub enabled: bool, pub mode: String }
-impl Default for CorsConfig { fn default() -> Self { Self { enabled: true, mode: "permissive".into() } } }
+pub struct CorsConfig {
+    pub enabled: bool,
+    pub mode: String,
+}
+impl Default for CorsConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            mode: "permissive".into(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct CompressionConfig { pub enabled: bool, pub min_body_size: usize }
-impl Default for CompressionConfig { fn default() -> Self { Self { enabled: false, min_body_size: 256 } } }
+pub struct CompressionConfig {
+    pub enabled: bool,
+    pub min_body_size: usize,
+}
+impl Default for CompressionConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            min_body_size: 256,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct TimeoutConfig { pub enabled: bool, pub duration_secs: u64 }
-impl Default for TimeoutConfig { fn default() -> Self { Self { enabled: true, duration_secs: 30 } } }
+pub struct TimeoutConfig {
+    pub enabled: bool,
+    pub duration_secs: u64,
+}
+impl Default for TimeoutConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            duration_secs: 30,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct HstsConfig { pub enabled: bool, pub max_age_secs: u64, pub include_subdomains: bool }
-impl Default for HstsConfig { fn default() -> Self { Self { enabled: false, max_age_secs: 31536000, include_subdomains: true } } }
+pub struct HstsConfig {
+    pub enabled: bool,
+    pub max_age_secs: u64,
+    pub include_subdomains: bool,
+}
+impl Default for HstsConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            max_age_secs: 31536000,
+            include_subdomains: true,
+        }
+    }
+}
 
 impl Default for MiddlewareSection {
     fn default() -> Self {
@@ -277,27 +383,85 @@ pub struct SecuritySection {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct JwtConfig { pub enabled: bool, pub secret: String, pub algorithm: String, pub optional: bool }
-impl Default for JwtConfig { fn default() -> Self { Self { enabled: false, secret: String::new(), algorithm: "HS256".into(), optional: false } } }
+pub struct JwtConfig {
+    pub enabled: bool,
+    pub secret: String,
+    pub algorithm: String,
+    pub optional: bool,
+}
+impl Default for JwtConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            secret: String::new(),
+            algorithm: "HS256".into(),
+            optional: false,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct RateLimitConfig { pub enabled: bool, pub max_requests: u64, pub window_secs: u64, pub per: String }
-impl Default for RateLimitConfig { fn default() -> Self { Self { enabled: false, max_requests: 1000, window_secs: 60, per: "ip".into() } } }
+pub struct RateLimitConfig {
+    pub enabled: bool,
+    pub max_requests: u64,
+    pub window_secs: u64,
+    pub per: String,
+}
+impl Default for RateLimitConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            max_requests: 1000,
+            window_secs: 60,
+            per: "ip".into(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct CsrfConfig { pub enabled: bool, pub cookie_name: String, #[serde(default)] pub exempt_paths: Vec<String> }
-impl Default for CsrfConfig { fn default() -> Self { Self { enabled: false, cookie_name: "vil-csrf-token".into(), exempt_paths: Vec::new() } } }
+pub struct CsrfConfig {
+    pub enabled: bool,
+    pub cookie_name: String,
+    #[serde(default)]
+    pub exempt_paths: Vec<String>,
+}
+impl Default for CsrfConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            cookie_name: "vil-csrf-token".into(),
+            exempt_paths: Vec::new(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct BruteForceConfig { pub enabled: bool, pub max_attempts: u64, pub block_duration_secs: u64 }
-impl Default for BruteForceConfig { fn default() -> Self { Self { enabled: false, max_attempts: 5, block_duration_secs: 300 } } }
+pub struct BruteForceConfig {
+    pub enabled: bool,
+    pub max_attempts: u64,
+    pub block_duration_secs: u64,
+}
+impl Default for BruteForceConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            max_attempts: 5,
+            block_duration_secs: 300,
+        }
+    }
+}
 
 impl Default for SecuritySection {
     fn default() -> Self {
-        Self { jwt: JwtConfig::default(), rate_limit: RateLimitConfig::default(), csrf: CsrfConfig::default(), brute_force: BruteForceConfig::default() }
+        Self {
+            jwt: JwtConfig::default(),
+            rate_limit: RateLimitConfig::default(),
+            csrf: CsrfConfig::default(),
+            brute_force: BruteForceConfig::default(),
+        }
     }
 }
 
@@ -305,13 +469,24 @@ impl Default for SecuritySection {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct SessionSection {
-    pub enabled: bool, pub cookie_name: String, pub ttl_secs: u64,
-    pub http_only: bool, pub secure: bool, pub same_site: String,
+    pub enabled: bool,
+    pub cookie_name: String,
+    pub ttl_secs: u64,
+    pub http_only: bool,
+    pub secure: bool,
+    pub same_site: String,
 }
 
 impl Default for SessionSection {
     fn default() -> Self {
-        Self { enabled: false, cookie_name: "vil-session".into(), ttl_secs: 1800, http_only: true, secure: false, same_site: "Lax".into() }
+        Self {
+            enabled: false,
+            cookie_name: "vil-session".into(),
+            ttl_secs: 1800,
+            http_only: true,
+            secure: false,
+            same_site: "Lax".into(),
+        }
     }
 }
 
@@ -326,17 +501,37 @@ pub struct ObservabilitySection {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct ErrorTrackerConfig { pub enabled: bool, pub max_recent: usize }
-impl Default for ErrorTrackerConfig { fn default() -> Self { Self { enabled: true, max_recent: 1000 } } }
+pub struct ErrorTrackerConfig {
+    pub enabled: bool,
+    pub max_recent: usize,
+}
+impl Default for ErrorTrackerConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            max_recent: 1000,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct SpanCollectorConfig { pub max_spans: usize }
-impl Default for SpanCollectorConfig { fn default() -> Self { Self { max_spans: 10000 } } }
+pub struct SpanCollectorConfig {
+    pub max_spans: usize,
+}
+impl Default for SpanCollectorConfig {
+    fn default() -> Self {
+        Self { max_spans: 10000 }
+    }
+}
 
 impl Default for ObservabilitySection {
     fn default() -> Self {
-        Self { error_tracker: ErrorTrackerConfig::default(), span_collector: SpanCollectorConfig::default(), profiler: ToggleConfig { enabled: true } }
+        Self {
+            error_tracker: ErrorTrackerConfig::default(),
+            span_collector: SpanCollectorConfig::default(),
+            profiler: ToggleConfig { enabled: true },
+        }
     }
 }
 
@@ -351,12 +546,28 @@ pub struct PerformanceSection {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct IdempotencyConfig { pub enabled: bool, pub ttl_secs: u64, pub max_entries: usize }
-impl Default for IdempotencyConfig { fn default() -> Self { Self { enabled: false, ttl_secs: 86400, max_entries: 10000 } } }
+pub struct IdempotencyConfig {
+    pub enabled: bool,
+    pub ttl_secs: u64,
+    pub max_entries: usize,
+}
+impl Default for IdempotencyConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            ttl_secs: 86400,
+            max_entries: 10000,
+        }
+    }
+}
 
 impl Default for PerformanceSection {
     fn default() -> Self {
-        Self { metrics_sample_rate: 1, trace_sample_rate: 1, idempotency: IdempotencyConfig::default() }
+        Self {
+            metrics_sample_rate: 1,
+            trace_sample_rate: 1,
+            idempotency: IdempotencyConfig::default(),
+        }
     }
 }
 
@@ -364,13 +575,24 @@ impl Default for PerformanceSection {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GrpcServerSection {
-    pub enabled: bool, pub port: u16, pub max_message_size: String,
-    pub health_check: bool, pub reflection: bool, pub max_concurrent_streams: u32,
+    pub enabled: bool,
+    pub port: u16,
+    pub max_message_size: String,
+    pub health_check: bool,
+    pub reflection: bool,
+    pub max_concurrent_streams: u32,
 }
 
 impl Default for GrpcServerSection {
     fn default() -> Self {
-        Self { enabled: false, port: 50051, max_message_size: "4MB".into(), health_check: true, reflection: true, max_concurrent_streams: 200 }
+        Self {
+            enabled: false,
+            port: 50051,
+            max_message_size: "4MB".into(),
+            health_check: true,
+            reflection: true,
+            max_concurrent_streams: 200,
+        }
     }
 }
 
@@ -378,14 +600,26 @@ impl Default for GrpcServerSection {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GraphqlSection {
-    pub enabled: bool, pub playground: bool, pub max_depth: usize,
-    pub max_complexity: usize, pub introspection: bool,
-    pub default_page_size: usize, pub max_page_size: usize,
+    pub enabled: bool,
+    pub playground: bool,
+    pub max_depth: usize,
+    pub max_complexity: usize,
+    pub introspection: bool,
+    pub default_page_size: usize,
+    pub max_page_size: usize,
 }
 
 impl Default for GraphqlSection {
     fn default() -> Self {
-        Self { enabled: false, playground: true, max_depth: 10, max_complexity: 1000, introspection: true, default_page_size: 20, max_page_size: 100 }
+        Self {
+            enabled: false,
+            playground: true,
+            max_depth: 10,
+            max_complexity: 1000,
+            introspection: true,
+            default_page_size: 20,
+            max_page_size: 100,
+        }
     }
 }
 
@@ -400,7 +634,12 @@ pub struct FeatureFlagsSection {
 }
 
 impl Default for FeatureFlagsSection {
-    fn default() -> Self { Self { flags: HashMap::new(), file: None } }
+    fn default() -> Self {
+        Self {
+            flags: HashMap::new(),
+            file: None,
+        }
+    }
 }
 
 // ==================== Scheduler ====================
@@ -418,7 +657,9 @@ pub struct JobConfig {
 }
 
 impl Default for SchedulerSection {
-    fn default() -> Self { Self { jobs: Vec::new() } }
+    fn default() -> Self {
+        Self { jobs: Vec::new() }
+    }
 }
 
 // ==================== Plugins ====================
@@ -456,7 +697,11 @@ pub struct RollingRestartSection {
 }
 
 impl Default for RollingRestartSection {
-    fn default() -> Self { Self { drain_timeout_secs: 30 } }
+    fn default() -> Self {
+        Self {
+            drain_timeout_secs: 30,
+        }
+    }
 }
 
 // ==================== Admin ====================
@@ -471,7 +716,12 @@ pub struct AdminSection {
 
 impl Default for AdminSection {
     fn default() -> Self {
-        Self { playground: true, diagnostics: true, hot_reload: true, plugin_gui: true }
+        Self {
+            playground: true,
+            diagnostics: true,
+            hot_reload: true,
+            plugin_gui: true,
+        }
     }
 }
 
@@ -489,7 +739,11 @@ pub struct PipelineSection {
 
 impl Default for PipelineSection {
     fn default() -> Self {
-        Self { queue_capacity: 1024, session_timeout_secs: 300, max_concurrent: 64 }
+        Self {
+            queue_capacity: 1024,
+            session_timeout_secs: 300,
+            max_concurrent: 64,
+        }
     }
 }
 
@@ -534,13 +788,19 @@ pub struct RedisConfig {
 
 impl Default for RedisConfig {
     fn default() -> Self {
-        Self { url: "redis://localhost:6380".into(), pool_size: 4 }
+        Self {
+            url: "redis://localhost:6380".into(),
+            pool_size: 4,
+        }
     }
 }
 
 impl Default for DatabaseSection {
     fn default() -> Self {
-        Self { postgres: PostgresConfig::default(), redis: RedisConfig::default() }
+        Self {
+            postgres: PostgresConfig::default(),
+            redis: RedisConfig::default(),
+        }
     }
 }
 
@@ -562,7 +822,10 @@ pub struct NatsConfig {
 
 impl Default for NatsConfig {
     fn default() -> Self {
-        Self { url: "nats://localhost:4222".into(), max_reconnects: Some(60) }
+        Self {
+            url: "nats://localhost:4222".into(),
+            max_reconnects: Some(60),
+        }
     }
 }
 
@@ -575,7 +838,10 @@ pub struct KafkaConfig {
 
 impl Default for KafkaConfig {
     fn default() -> Self {
-        Self { brokers: "localhost:9092".into(), group_id: "vil-default".into() }
+        Self {
+            brokers: "localhost:9092".into(),
+            group_id: "vil-default".into(),
+        }
     }
 }
 
@@ -590,13 +856,22 @@ pub struct MqttConfig {
 
 impl Default for MqttConfig {
     fn default() -> Self {
-        Self { host: "localhost".into(), port: 1883, client_id: "vil-client".into(), keep_alive_secs: 30 }
+        Self {
+            host: "localhost".into(),
+            port: 1883,
+            client_id: "vil-client".into(),
+            keep_alive_secs: 30,
+        }
     }
 }
 
 impl Default for MqSection {
     fn default() -> Self {
-        Self { nats: NatsConfig::default(), kafka: KafkaConfig::default(), mqtt: MqttConfig::default() }
+        Self {
+            nats: NatsConfig::default(),
+            kafka: KafkaConfig::default(),
+            mqtt: MqttConfig::default(),
+        }
     }
 }
 
@@ -653,46 +928,84 @@ impl FullServerConfig {
     /// Apply VIL_* environment variable overrides.
     pub fn apply_env_overrides(&mut self) {
         if let Ok(v) = std::env::var("VIL_SERVER_PORT") {
-            if let Ok(p) = v.parse() { self.server.port = p; }
+            if let Ok(p) = v.parse() {
+                self.server.port = p;
+            }
         }
-        if let Ok(v) = std::env::var("VIL_SERVER_HOST") { self.server.host = v; }
+        if let Ok(v) = std::env::var("VIL_SERVER_HOST") {
+            self.server.host = v;
+        }
         if let Ok(v) = std::env::var("VIL_METRICS_PORT") {
-            if let Ok(p) = v.parse() { self.server.metrics_port = Some(p); }
+            if let Ok(p) = v.parse() {
+                self.server.metrics_port = Some(p);
+            }
         }
-        if let Ok(v) = std::env::var("VIL_LOG_LEVEL") { self.logging.level = v; }
-        if let Ok(v) = std::env::var("VIL_LOG_FORMAT") { self.logging.format = v; }
+        if let Ok(v) = std::env::var("VIL_LOG_LEVEL") {
+            self.logging.level = v;
+        }
+        if let Ok(v) = std::env::var("VIL_LOG_FORMAT") {
+            self.logging.format = v;
+        }
         if let Ok(v) = std::env::var("VIL_WORKERS") {
-            if let Ok(w) = v.parse() { self.server.workers = w; }
+            if let Ok(w) = v.parse() {
+                self.server.workers = w;
+            }
         }
         if let Ok(v) = std::env::var("VIL_REQUEST_TIMEOUT") {
-            if let Ok(t) = v.parse() { self.server.request_timeout_secs = t; }
+            if let Ok(t) = v.parse() {
+                self.server.request_timeout_secs = t;
+            }
         }
-        if let Ok(v) = std::env::var("VIL_SHM_POOL_SIZE") { self.shm.pool_size = v; }
+        if let Ok(v) = std::env::var("VIL_SHM_POOL_SIZE") {
+            self.shm.pool_size = v;
+        }
         if let Ok(v) = std::env::var("VIL_SHM_RESET_PCT") {
-            if let Ok(p) = v.parse() { self.shm.reset_threshold_pct = p; }
+            if let Ok(p) = v.parse() {
+                self.shm.reset_threshold_pct = p;
+            }
         }
         if let Ok(v) = std::env::var("VIL_SHM_CHECK_INTERVAL") {
-            if let Ok(i) = v.parse() { self.shm.check_interval = i; }
+            if let Ok(i) = v.parse() {
+                self.shm.check_interval = i;
+            }
         }
         // Database
-        if let Ok(v) = std::env::var("VIL_DATABASE_URL") { self.database.postgres.url = v; }
-        if let Ok(v) = std::env::var("VIL_DATABASE_MAX_CONNECTIONS") {
-            if let Ok(c) = v.parse() { self.database.postgres.max_connections = c; }
+        if let Ok(v) = std::env::var("VIL_DATABASE_URL") {
+            self.database.postgres.url = v;
         }
-        if let Ok(v) = std::env::var("VIL_REDIS_URL") { self.database.redis.url = v; }
+        if let Ok(v) = std::env::var("VIL_DATABASE_MAX_CONNECTIONS") {
+            if let Ok(c) = v.parse() {
+                self.database.postgres.max_connections = c;
+            }
+        }
+        if let Ok(v) = std::env::var("VIL_REDIS_URL") {
+            self.database.redis.url = v;
+        }
         // Message Queues
-        if let Ok(v) = std::env::var("VIL_NATS_URL") { self.mq.nats.url = v; }
-        if let Ok(v) = std::env::var("VIL_KAFKA_BROKERS") { self.mq.kafka.brokers = v; }
-        if let Ok(v) = std::env::var("VIL_MQTT_HOST") { self.mq.mqtt.host = v; }
+        if let Ok(v) = std::env::var("VIL_NATS_URL") {
+            self.mq.nats.url = v;
+        }
+        if let Ok(v) = std::env::var("VIL_KAFKA_BROKERS") {
+            self.mq.kafka.brokers = v;
+        }
+        if let Ok(v) = std::env::var("VIL_MQTT_HOST") {
+            self.mq.mqtt.host = v;
+        }
         if let Ok(v) = std::env::var("VIL_MQTT_PORT") {
-            if let Ok(p) = v.parse() { self.mq.mqtt.port = p; }
+            if let Ok(p) = v.parse() {
+                self.mq.mqtt.port = p;
+            }
         }
         // Pipeline
         if let Ok(v) = std::env::var("VIL_PIPELINE_QUEUE_CAPACITY") {
-            if let Ok(c) = v.parse() { self.pipeline.queue_capacity = c; }
+            if let Ok(c) = v.parse() {
+                self.pipeline.queue_capacity = c;
+            }
         }
         if let Ok(v) = std::env::var("VIL_PIPELINE_SESSION_TIMEOUT") {
-            if let Ok(t) = v.parse() { self.pipeline.session_timeout_secs = t; }
+            if let Ok(t) = v.parse() {
+                self.pipeline.session_timeout_secs = t;
+            }
         }
         // Profile
         if let Ok(v) = std::env::var("VIL_PROFILE") {

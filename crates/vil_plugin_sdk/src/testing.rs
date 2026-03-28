@@ -18,7 +18,7 @@
 //       assert_eq!(harness.route_count(), 0);
 //   }
 
-use crate::{VilPlugin, PluginContext, ResourceRegistry, ServiceProcess};
+use crate::{PluginContext, ResourceRegistry, ServiceProcess, VilPlugin};
 
 /// Test harness for unit testing VilPlugin implementations.
 ///
@@ -102,20 +102,28 @@ impl PluginTestHarness {
 }
 
 impl Default for PluginTestHarness {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PluginCapability, EndpointSpec, PluginHealth};
+    use crate::{EndpointSpec, PluginCapability, PluginHealth};
 
     struct TestPlugin;
 
     impl VilPlugin for TestPlugin {
-        fn id(&self) -> &str { "test-plugin" }
-        fn version(&self) -> &str { "1.0.0" }
-        fn description(&self) -> &str { "Test plugin for harness" }
+        fn id(&self) -> &str {
+            "test-plugin"
+        }
+        fn version(&self) -> &str {
+            "1.0.0"
+        }
+        fn description(&self) -> &str {
+            "Test plugin for harness"
+        }
 
         fn capabilities(&self) -> Vec<PluginCapability> {
             vec![PluginCapability::Service {

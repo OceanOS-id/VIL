@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// A column definition in a table schema.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,7 +32,13 @@ impl TableSchema {
     }
 
     /// Add a column to this table schema.
-    pub fn column(mut self, name: &str, data_type: &str, nullable: bool, primary_key: bool) -> Self {
+    pub fn column(
+        mut self,
+        name: &str,
+        data_type: &str,
+        nullable: bool,
+        primary_key: bool,
+    ) -> Self {
         self.columns.push(Column {
             name: name.to_string(),
             data_type: data_type.to_string(),
@@ -76,7 +82,9 @@ impl SchemaRegistry {
     /// Look up a table by name (case-insensitive).
     pub fn get(&self, name: &str) -> Option<&TableSchema> {
         let lower = name.to_lowercase();
-        self.tables.values().find(|t| t.name.to_lowercase() == lower)
+        self.tables
+            .values()
+            .find(|t| t.name.to_lowercase() == lower)
     }
 
     /// List all registered table names.

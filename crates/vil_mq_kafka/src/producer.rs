@@ -36,7 +36,8 @@ impl KafkaProducer {
             client_config.set("sasl.password", password);
         }
 
-        let producer: FutureProducer = client_config.create()
+        let producer: FutureProducer = client_config
+            .create()
             .map_err(|e| format!("Kafka producer creation failed: {}", e))?;
 
         Ok(Self {
@@ -50,9 +51,10 @@ impl KafkaProducer {
     /// Publish a message to a topic.
     pub async fn publish(&self, topic: &str, payload: &[u8]) -> Result<(), String> {
         let __mq_start = std::time::Instant::now();
-        let record: FutureRecord<'_, str, [u8]> = FutureRecord::to(topic)
-            .payload(payload);
-        let result = self.producer.send(record, Duration::from_millis(self.config.timeout_ms))
+        let record: FutureRecord<'_, str, [u8]> = FutureRecord::to(topic).payload(payload);
+        let result = self
+            .producer
+            .send(record, Duration::from_millis(self.config.timeout_ms))
             .await
             .map_err(|(e, _)| {
                 self.errors.fetch_add(1, Ordering::Relaxed);
@@ -64,25 +66,33 @@ impl KafkaProducer {
         let __elapsed = __mq_start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash: register_str("kafka"),
-                topic_hash: register_str(topic),
-                message_bytes: payload.len() as u32,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type: 0,
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("kafka"),
+                    topic_hash: register_str(topic),
+                    message_bytes: payload.len() as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 0,
+                    ..Default::default()
+                }
+            );
         }
         result.map(|_| ())
     }
 
     /// Publish with key (for partitioning).
-    pub async fn publish_keyed(&self, topic: &str, key: &str, payload: &[u8]) -> Result<(), String> {
+    pub async fn publish_keyed(
+        &self,
+        topic: &str,
+        key: &str,
+        payload: &[u8],
+    ) -> Result<(), String> {
         let __mq_start = std::time::Instant::now();
-        let record = FutureRecord::to(topic)
-            .payload(payload)
-            .key(key);
-        let result = self.producer.send(record, Duration::from_millis(self.config.timeout_ms))
+        let record = FutureRecord::to(topic).payload(payload).key(key);
+        let result = self
+            .producer
+            .send(record, Duration::from_millis(self.config.timeout_ms))
             .await
             .map_err(|(e, _)| {
                 self.errors.fetch_add(1, Ordering::Relaxed);
@@ -94,22 +104,33 @@ impl KafkaProducer {
         let __elapsed = __mq_start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash: register_str("kafka"),
-                topic_hash: register_str(topic),
-                message_bytes: payload.len() as u32,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type: 0,
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("kafka"),
+                    topic_hash: register_str(topic),
+                    message_bytes: payload.len() as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 0,
+                    ..Default::default()
+                }
+            );
         }
         result.map(|_| ())
     }
 
-    pub fn messages_sent(&self) -> u64 { self.messages_sent.load(Ordering::Relaxed) }
-    pub fn errors(&self) -> u64 { self.errors.load(Ordering::Relaxed) }
-    pub fn config(&self) -> &KafkaConfig { &self.config }
+    pub fn messages_sent(&self) -> u64 {
+        self.messages_sent.load(Ordering::Relaxed)
+    }
+    pub fn errors(&self) -> u64 {
+        self.errors.load(Ordering::Relaxed)
+    }
+    pub fn config(&self) -> &KafkaConfig {
+        &self.config
+    }
 
     /// Access the underlying rdkafka FutureProducer.
-    pub fn inner(&self) -> &FutureProducer { &self.producer }
+    pub fn inner(&self) -> &FutureProducer {
+        &self.producer
+    }
 }

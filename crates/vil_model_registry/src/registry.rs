@@ -102,7 +102,9 @@ impl ModelRegistry {
         // Find the highest staging version that is NOT the one we just demoted
         let prev = entries
             .iter_mut()
-            .filter(|e| e.status == ModelStatus::Staging && Some(e.version) != current_active_version)
+            .filter(|e| {
+                e.status == ModelStatus::Staging && Some(e.version) != current_active_version
+            })
             .max_by_key(|e| e.version);
 
         match prev {

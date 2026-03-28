@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use vil_macros::VilAiState;
 
 /// Per-variant quality and performance metrics.
@@ -44,8 +44,7 @@ impl VariantMetrics {
         if quality_count == 0 {
             self.avg_quality_score = score;
         } else {
-            self.avg_quality_score +=
-                (score - self.avg_quality_score) / quality_count as f64;
+            self.avg_quality_score += (score - self.avg_quality_score) / quality_count as f64;
         }
     }
 

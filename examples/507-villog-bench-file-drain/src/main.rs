@@ -21,13 +21,12 @@ fn bench_tracing_file() -> (std::time::Duration, PathBuf) {
     let file_appender = tracing_appender::rolling::never(&path, "tracing.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
-    let subscriber = tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_writer(non_blocking)
-                .with_ansi(false)
-                .json(),
-        );
+    let subscriber = tracing_subscriber::registry().with(
+        tracing_subscriber::fmt::layer()
+            .with_writer(non_blocking)
+            .with_ansi(false)
+            .json(),
+    );
     let _guard2 = tracing::subscriber::set_default(subscriber);
 
     let start = Instant::now();
@@ -53,9 +52,12 @@ async fn bench_vil_file() -> (std::time::Duration, PathBuf) {
     let drain = FileDrain::new(
         &path,
         "vil",
-        RotationStrategy::Size { max_bytes: 100 * 1024 * 1024 }, // 100MB — no rotation during bench
+        RotationStrategy::Size {
+            max_bytes: 100 * 1024 * 1024,
+        }, // 100MB — no rotation during bench
         1,
-    ).expect("Failed to create FileDrain");
+    )
+    .expect("Failed to create FileDrain");
 
     let config = LogConfig {
         ring_slots: 1 << 20,
@@ -71,13 +73,26 @@ async fn bench_vil_file() -> (std::time::Duration, PathBuf) {
 
     let start = Instant::now();
     for _i in 0..EVENTS {
-        access_log!(Info, AccessPayload {
-            method: 1, status_code: 200, protocol: 0,
-            duration_us: 2300, request_bytes: 256, response_bytes: 1024,
-            client_ip: 0x7F000001, server_port: 8080,
-            route_hash: 0x1234, user_agent_hash: 0x5678, path_hash: 0xABCD,
-            session_id: 99999, authenticated: 1, cache_status: 0, _pad: [0; 18],
-        });
+        access_log!(
+            Info,
+            AccessPayload {
+                method: 1,
+                status_code: 200,
+                protocol: 0,
+                duration_us: 2300,
+                request_bytes: 256,
+                response_bytes: 1024,
+                client_ip: 0x7F000001,
+                server_port: 8080,
+                route_hash: 0x1234,
+                user_agent_hash: 0x5678,
+                path_hash: 0xABCD,
+                session_id: 99999,
+                authenticated: 1,
+                cache_status: 0,
+                _pad: [0; 18],
+            }
+        );
     }
     let emit_dur = start.elapsed();
 
@@ -104,8 +119,14 @@ fn print_row(name: &str, dur: std::time::Duration, size: u64) {
     let ns = dur.as_nanos() as f64 / EVENTS as f64;
     let mps = EVENTS as f64 / dur.as_secs_f64() / 1_000_000.0;
     let mb = size as f64 / 1024.0 / 1024.0;
-    println!("  {:<42} {:>6} {:>10.1} {:>8.2} {:>8.1}",
-        name, dur.as_millis(), ns, mps, mb);
+    println!(
+        "  {:<42} {:>6} {:>10.1} {:>8.2} {:>8.1}",
+        name,
+        dur.as_millis(),
+        ns,
+        mps,
+        mb
+    );
 }
 
 #[tokio::main]
@@ -113,7 +134,10 @@ async fn main() {
     println!();
     println!("  ╔══════════════════════════════════════════════════════════════════════════╗");
     println!("  ║        VIL Log vs tracing — File Drain Benchmark                        ║");
-    println!("  ║        {} events | --release | writing to /tmp                   ║", EVENTS);
+    println!(
+        "  ║        {} events | --release | writing to /tmp                   ║",
+        EVENTS
+    );
     println!("  ╚══════════════════════════════════════════════════════════════════════════╝");
     println!();
 
@@ -123,8 +147,10 @@ async fn main() {
     let (v_dur, v_path) = bench_vil_file().await;
     let v_size = file_size(&v_path);
 
-    println!("  {:<42} {:>6} {:>10} {:>8} {:>8}",
-        "Benchmark", "ms", "ns/event", "M ev/s", "MB");
+    println!(
+        "  {:<42} {:>6} {:>10} {:>8} {:>8}",
+        "Benchmark", "ms", "ns/event", "M ev/s", "MB"
+    );
     println!("  {}", "═".repeat(76));
     print_row("tracing (JSON fmt + rolling file)", t_dur, t_size);
     print_row("VIL access_log! → FileDrain (JSON Lines)", v_dur, v_size);

@@ -1,6 +1,6 @@
-use vil_server::prelude::*;
-use std::sync::Arc;
 use crate::pool::TensorPool;
+use std::sync::Arc;
+use vil_server::prelude::*;
 
 #[derive(Debug, Serialize)]
 pub struct StatsResponseBody {
@@ -8,9 +8,7 @@ pub struct StatsResponseBody {
     pub is_empty: bool,
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<StatsResponseBody> {
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<StatsResponseBody> {
     let pool = ctx.state::<Arc<TensorPool>>().expect("TensorPool");
     VilResponse::ok(StatsResponseBody {
         buffer_count: pool.len(),

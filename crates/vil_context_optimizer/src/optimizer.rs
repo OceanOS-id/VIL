@@ -133,10 +133,7 @@ impl ContextOptimizer {
         let texts: Vec<String> = chunks.iter().map(|(t, _)| t.clone()).collect();
         let keep_indices = deduplicate(&texts, threshold);
 
-        let deduped: Vec<(String, f32)> = keep_indices
-            .iter()
-            .map(|&i| chunks[i].clone())
-            .collect();
+        let deduped: Vec<(String, f32)> = keep_indices.iter().map(|&i| chunks[i].clone()).collect();
 
         self.budget_fit(&deduped)
     }
@@ -146,10 +143,7 @@ impl ContextOptimizer {
         let texts: Vec<String> = chunks.iter().map(|(t, _)| t.clone()).collect();
         let keep_indices = deduplicate(&texts, threshold);
 
-        let deduped: Vec<(String, f32)> = keep_indices
-            .iter()
-            .map(|&i| chunks[i].clone())
-            .collect();
+        let deduped: Vec<(String, f32)> = keep_indices.iter().map(|&i| chunks[i].clone()).collect();
 
         let count_fn = |text: &str| self.counter.count(text);
         let mut scored = score_chunks(&deduped, &self.weights, &count_fn);
@@ -202,8 +196,7 @@ mod tests {
     #[test]
     fn test_top_k_strategy() {
         let budget = TokenBudget::new(100_000);
-        let optimizer = ContextOptimizer::new(budget)
-            .strategy(OptimizeStrategy::TopK(2));
+        let optimizer = ContextOptimizer::new(budget).strategy(OptimizeStrategy::TopK(2));
 
         let chunks = make_test_chunks(
             &["low score chunk", "medium score chunk", "high score chunk"],
@@ -218,8 +211,7 @@ mod tests {
     fn test_budget_fit_respects_limit() {
         // Use a very small budget so not all chunks fit
         let budget = TokenBudget::new(20).system_tokens(0).response_tokens(0);
-        let optimizer = ContextOptimizer::new(budget)
-            .strategy(OptimizeStrategy::BudgetFit);
+        let optimizer = ContextOptimizer::new(budget).strategy(OptimizeStrategy::BudgetFit);
 
         let chunks = make_test_chunks(
             &[
@@ -238,10 +230,9 @@ mod tests {
     #[test]
     fn test_dedup_and_fit() {
         let budget = TokenBudget::new(100_000);
-        let optimizer = ContextOptimizer::new(budget)
-            .strategy(OptimizeStrategy::DedupAndFit {
-                dedup_threshold: 0.8,
-            });
+        let optimizer = ContextOptimizer::new(budget).strategy(OptimizeStrategy::DedupAndFit {
+            dedup_threshold: 0.8,
+        });
 
         let chunks = make_test_chunks(
             &[
@@ -261,10 +252,9 @@ mod tests {
     #[test]
     fn test_full_optimization() {
         let budget = TokenBudget::new(100_000);
-        let optimizer = ContextOptimizer::new(budget)
-            .strategy(OptimizeStrategy::Full {
-                dedup_threshold: 0.8,
-            });
+        let optimizer = ContextOptimizer::new(budget).strategy(OptimizeStrategy::Full {
+            dedup_threshold: 0.8,
+        });
 
         let chunks = make_test_chunks(
             &[
@@ -285,11 +275,14 @@ mod tests {
     #[test]
     fn test_compression_ratio() {
         let budget = TokenBudget::new(100_000);
-        let optimizer = ContextOptimizer::new(budget)
-            .strategy(OptimizeStrategy::TopK(1));
+        let optimizer = ContextOptimizer::new(budget).strategy(OptimizeStrategy::TopK(1));
 
         let chunks = make_test_chunks(
-            &["chunk one text here", "chunk two text here", "chunk three text here"],
+            &[
+                "chunk one text here",
+                "chunk two text here",
+                "chunk three text here",
+            ],
             &[0.9, 0.5, 0.3],
         );
 
@@ -310,10 +303,7 @@ mod tests {
             .weights(weights)
             .strategy(OptimizeStrategy::TopK(1));
 
-        let chunks = make_test_chunks(
-            &["low relevance", "high relevance"],
-            &[0.1, 0.9],
-        );
+        let chunks = make_test_chunks(&["low relevance", "high relevance"], &[0.1, 0.9]);
 
         let result = optimizer.optimize(&chunks);
         assert_eq!(result.final_count, 1);

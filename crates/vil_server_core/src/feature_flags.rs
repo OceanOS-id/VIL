@@ -28,29 +28,37 @@ pub struct FeatureFlags {
 
 impl FeatureFlags {
     pub fn new() -> Self {
-        Self { flags: Arc::new(DashMap::new()) }
+        Self {
+            flags: Arc::new(DashMap::new()),
+        }
     }
 
     /// Define a feature flag.
     pub fn define(&self, name: &str, enabled: bool, description: &str) {
-        self.flags.insert(name.to_string(), FeatureFlag {
-            name: name.to_string(),
-            enabled,
-            description: description.to_string(),
-            rollout_percentage: 100,
-            target_ids: Vec::new(),
-        });
+        self.flags.insert(
+            name.to_string(),
+            FeatureFlag {
+                name: name.to_string(),
+                enabled,
+                description: description.to_string(),
+                rollout_percentage: 100,
+                target_ids: Vec::new(),
+            },
+        );
     }
 
     /// Define a flag with percentage rollout.
     pub fn define_rollout(&self, name: &str, percentage: u8, description: &str) {
-        self.flags.insert(name.to_string(), FeatureFlag {
-            name: name.to_string(),
-            enabled: true,
-            description: description.to_string(),
-            rollout_percentage: percentage,
-            target_ids: Vec::new(),
-        });
+        self.flags.insert(
+            name.to_string(),
+            FeatureFlag {
+                name: name.to_string(),
+                enabled: true,
+                description: description.to_string(),
+                rollout_percentage: percentage,
+                target_ids: Vec::new(),
+            },
+        );
     }
 
     /// Check if a flag is enabled (simple boolean check).
@@ -120,7 +128,9 @@ impl FeatureFlags {
 }
 
 impl Default for FeatureFlags {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 fn simple_hash(s: &str) -> u64 {

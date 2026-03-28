@@ -32,8 +32,8 @@
 //         if no exact hit -> semantic search -> LLM
 //   This has fundamentally different control flow.
 
+use vil_rag::semantic::{RagFault, RagIndexState, RagIngestEvent, RagQueryEvent};
 use vil_server::prelude::*;
-use vil_rag::semantic::{RagQueryEvent, RagIngestEvent, RagFault, RagIndexState};
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -52,7 +52,7 @@ pub struct HybridSearchState {
 /// Search event — tracks which tier handled the query (exact vs semantic).
 pub struct HybridSearchEvent {
     pub query: String,
-    pub search_tier: String,      // "exact" or "semantic"
+    pub search_tier: String, // "exact" or "semantic"
     pub llm_called: bool,
     pub result_doc_id: String,
 }
@@ -86,7 +86,12 @@ struct FaqEntry {
 const FAQ_DB: &[FaqEntry] = &[
     FaqEntry {
         id: "FAQ-01",
-        triggers: &["reset my password", "change password", "forgot password", "reset password"],
+        triggers: &[
+            "reset my password",
+            "change password",
+            "forgot password",
+            "reset password",
+        ],
         question: "How do I reset my password?",
         answer: "Go to Settings > Security > Change Password. Enter your current password, \
                  then type and confirm your new password. You will receive a confirmation \
@@ -95,7 +100,12 @@ const FAQ_DB: &[FaqEntry] = &[
     },
     FaqEntry {
         id: "FAQ-02",
-        triggers: &["payment methods", "accepted payments", "how to pay", "credit card"],
+        triggers: &[
+            "payment methods",
+            "accepted payments",
+            "how to pay",
+            "credit card",
+        ],
         question: "What payment methods are accepted?",
         answer: "We accept Visa, MasterCard, American Express, and PayPal. Enterprise accounts \
                  can use wire transfers and purchase orders (NET-30 terms). Cryptocurrency \
@@ -104,7 +114,12 @@ const FAQ_DB: &[FaqEntry] = &[
     },
     FaqEntry {
         id: "FAQ-03",
-        triggers: &["cancel subscription", "cancel plan", "cancel my account", "unsubscribe"],
+        triggers: &[
+            "cancel subscription",
+            "cancel plan",
+            "cancel my account",
+            "unsubscribe",
+        ],
         question: "How do I cancel my subscription?",
         answer: "Navigate to Settings > Billing > Manage Subscription and click 'Cancel Plan'. \
                  Your access continues until the end of the current billing period. Refunds \
@@ -113,7 +128,12 @@ const FAQ_DB: &[FaqEntry] = &[
     },
     FaqEntry {
         id: "FAQ-04",
-        triggers: &["data export", "download my data", "export data", "gdpr export"],
+        triggers: &[
+            "data export",
+            "download my data",
+            "export data",
+            "gdpr export",
+        ],
         question: "How do I export my data?",
         answer: "Go to Settings > Privacy > Export Data. Click 'Request Export' and we will \
                  prepare a ZIP file containing all your data. You will receive a download \
@@ -123,7 +143,13 @@ const FAQ_DB: &[FaqEntry] = &[
     },
     FaqEntry {
         id: "FAQ-05",
-        triggers: &["two factor", "2fa", "mfa", "two-factor authentication", "enable 2fa"],
+        triggers: &[
+            "two factor",
+            "2fa",
+            "mfa",
+            "two-factor authentication",
+            "enable 2fa",
+        ],
         question: "How do I enable two-factor authentication?",
         answer: "Go to Settings > Security > Two-Factor Authentication. Choose your method: \
                  authenticator app (recommended) or SMS. Scan the QR code with your \
@@ -142,9 +168,9 @@ const FAQ_DB: &[FaqEntry] = &[
 /// This tier handles ~60% of customer queries at zero LLM cost.
 fn exact_match(query: &str) -> Option<&'static FaqEntry> {
     let q = query.to_lowercase();
-    FAQ_DB.iter().find(|entry| {
-        entry.triggers.iter().any(|trigger| q.contains(trigger))
-    })
+    FAQ_DB
+        .iter()
+        .find(|entry| entry.triggers.iter().any(|trigger| q.contains(trigger)))
 }
 
 /// Tier 2: Semantic keyword overlap scoring.
@@ -152,13 +178,15 @@ fn exact_match(query: &str) -> Option<&'static FaqEntry> {
 /// by keyword overlap and returns ranked results for LLM augmentation.
 fn semantic_search(query: &str) -> Vec<(&'static FaqEntry, f64)> {
     let q = query.to_lowercase();
-    let mut results: Vec<(&FaqEntry, f64)> = FAQ_DB.iter()
+    let mut results: Vec<(&FaqEntry, f64)> = FAQ_DB
+        .iter()
         .map(|entry| {
-            let hits = entry.keywords.iter()
-                .filter(|kw| q.contains(*kw))
-                .count();
-            let score = if entry.keywords.is_empty() { 0.0 }
-                else { hits as f64 / entry.keywords.len() as f64 };
+            let hits = entry.keywords.iter().filter(|kw| q.contains(*kw)).count();
+            let score = if entry.keywords.is_empty() {
+                0.0
+            } else {
+                hits as f64 / entry.keywords.len() as f64
+            };
             (entry, score)
         })
         .filter(|(_, score)| *score > 0.0)
@@ -179,7 +207,7 @@ struct HybridRequest {
 /// Hybrid search response — answer, search tier used, and matched FAQ ID.
 struct HybridResponse {
     content: String,
-    search_tier: String,       // "exact" or "semantic+llm"
+    search_tier: String, // "exact" or "semantic+llm"
     llm_used: bool,
     matched_faq: Option<String>,
 }
@@ -187,7 +215,8 @@ struct HybridResponse {
 // ── Handler ──────────────────────────────────────────────────────────
 
 async fn hybrid_handler(
-    ctx: ServiceCtx, body: ShmSlice,
+    ctx: ServiceCtx,
+    body: ShmSlice,
 ) -> HandlerResult<VilResponse<HybridResponse>> {
     let req: HybridRequest = body.json().expect("invalid JSON body");
     // ── Tier 1: Exact match (no LLM needed) ─────────────────────────
@@ -208,10 +237,17 @@ async fn hybrid_handler(
     let context = if semantic_results.is_empty() {
         "No relevant FAQ entries found.".to_string()
     } else {
-        semantic_results.iter().take(3)
+        semantic_results
+            .iter()
+            .take(3)
             .map(|(entry, score)| {
-                format!("[{}] (relevance: {:.0}%) Q: {} A: {}",
-                    entry.id, score * 100.0, entry.question, entry.answer)
+                format!(
+                    "[{}] (relevance: {:.0}%) Q: {} A: {}",
+                    entry.id,
+                    score * 100.0,
+                    entry.question,
+                    entry.answer
+                )
             })
             .collect::<Vec<_>>()
             .join("\n\n")
@@ -246,7 +282,9 @@ async fn hybrid_handler(
     }
 
     // Stream the LLM response and collect into a single text for the client
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Log the search event for analytics — tracks exact vs semantic usage ratio
@@ -288,13 +326,23 @@ async fn main() {
     println!("║  Unique: Exact match first (no LLM), semantic fallback     ║");
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
-    println!("  FAQ entries: {} (with exact triggers + semantic keywords)", FAQ_DB.len());
+    println!(
+        "  FAQ entries: {} (with exact triggers + semantic keywords)",
+        FAQ_DB.len()
+    );
     println!("  Tier 1: Exact substring match -> direct answer (no LLM)");
     println!("  Tier 2: Semantic keyword search -> LLM synthesis");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
     // Display authentication mode (API key vs simulator)
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     // Display the endpoint URL for this service
     println!("  Listening on http://localhost:3112/api/hybrid");
     // Display the upstream data source URL

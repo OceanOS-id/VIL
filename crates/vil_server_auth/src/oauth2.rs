@@ -145,7 +145,10 @@ impl OAuth2Client {
 
     /// Build the authorization URL for Authorization Code flow.
     pub fn authorization_url(&self, state: &str) -> Result<String, String> {
-        let redirect = self.config.redirect_uri.as_ref()
+        let redirect = self
+            .config
+            .redirect_uri
+            .as_ref()
             .ok_or("redirect_uri required for authorization code flow")?;
 
         let scopes = self.config.scopes.join(" ");
@@ -164,7 +167,11 @@ impl OAuth2Client {
     pub fn get_cached_token(&self) -> Option<CachedToken> {
         let guard = self.cached_token.read().unwrap();
         guard.as_ref().and_then(|t| {
-            if t.is_expired() { None } else { Some(t.clone()) }
+            if t.is_expired() {
+                None
+            } else {
+                Some(t.clone())
+            }
         })
     }
 

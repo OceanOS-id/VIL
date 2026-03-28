@@ -48,7 +48,7 @@ use vil_sdk::prelude::*;
 // These ensure the translation service correctly participates in the
 // observability mesh — token usage, translation quality, and fault
 // rates are tracked per language pair and per model.
-use vil_llm::semantic::{LlmResponseEvent, LlmFault, LlmUsageState};
+use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 
 // Import pipeline builders from vil_llm plugin (P8: Tri-Lane Protocol).
 // The pipeline builders provide pre-configured sink/source nodes
@@ -63,10 +63,10 @@ use vil_llm::pipeline;
 // enabling capacity planning and cost forecasting per language pair.
 #[derive(Clone, Debug)]
 pub struct MultiModelState {
-    pub gpt4_calls: u64,       // Complex language pair translations (JA, AR, ZH)
-    pub gpt35_calls: u64,      // Standard European translations (FR, DE, ES)
-    pub total_tokens: u64,     // Aggregate token consumption across all pairs
-    pub active_model: String,  // Currently primary model for routing decisions
+    pub gpt4_calls: u64,      // Complex language pair translations (JA, AR, ZH)
+    pub gpt35_calls: u64,     // Standard European translations (FR, DE, ES)
+    pub total_tokens: u64,    // Aggregate token consumption across all pairs
+    pub active_model: String, // Currently primary model for routing decisions
 }
 
 // ModelRoutedEvent: emitted each time a translation request is routed
@@ -74,9 +74,9 @@ pub struct MultiModelState {
 // complex texts being sent to the right model for quality?
 #[derive(Clone, Debug)]
 pub struct ModelRoutedEvent {
-    pub model: String,         // Which model handled this translation
-    pub prompt_len: u32,       // Source text length (affects cost)
-    pub route_reason: String,  // Why this model was selected (language pair, complexity)
+    pub model: String,        // Which model handled this translation
+    pub prompt_len: u32,      // Source text length (affects cost)
+    pub route_reason: String, // Why this model was selected (language pair, complexity)
 }
 
 // MultiModelFault: translation-specific failure modes. Each fault
@@ -84,9 +84,9 @@ pub struct ModelRoutedEvent {
 // automatic fallback to the secondary model.
 #[vil_fault]
 pub enum MultiModelFault {
-    PrimaryModelTimeout,     // GPT-4 too slow — fallback to GPT-3.5
-    FallbackModelTimeout,    // Both models failed — escalate to ops
-    InvalidRouteConfig,      // Language pair has no configured model
+    PrimaryModelTimeout,  // GPT-4 too slow — fallback to GPT-3.5
+    FallbackModelTimeout, // Both models failed — escalate to ops
+    InvalidRouteConfig,   // Language pair has no configured model
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -111,10 +111,7 @@ fn main() {
     // uses SHM for zero-copy token transfer between pipeline stages —
     // critical for large document translations where copying megabytes
     // of text between stages would waste CPU and memory bandwidth.
-    let world = Arc::new(
-        VastarRuntimeWorld::new_shared()
-            .expect("Failed to init VIL SHM Runtime"),
-    );
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // Primary translation pipeline: GPT-4 for complex language pairs.
     // The sink receives translation requests via HTTP webhook; the
@@ -161,7 +158,10 @@ fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     println!("  Models configured:");
-    println!("    Primary  : {} (active on port {})", MODEL_GPT4, WEBHOOK_PORT);
+    println!(
+        "    Primary  : {} (active on port {})",
+        MODEL_GPT4, WEBHOOK_PORT
+    );
     println!("    Secondary: {} (ready for routing)", MODEL_GPT35);
     println!();
     println!(

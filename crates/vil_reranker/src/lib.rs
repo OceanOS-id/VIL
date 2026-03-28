@@ -10,21 +10,21 @@
 //!
 //! All strategies implement the async [`Reranker`] trait.
 
-pub mod reranker;
-pub mod keyword;
 pub mod cross_encoder;
 pub mod fusion;
+pub mod keyword;
+pub mod reranker;
 
-pub use reranker::{Reranker, RerankCandidate, RerankResult, RerankError};
-pub use keyword::KeywordReranker;
 pub use cross_encoder::CrossEncoderReranker;
 pub use fusion::RRFReranker;
+pub use keyword::KeywordReranker;
+pub use reranker::{RerankCandidate, RerankError, RerankResult, Reranker};
 
 // VIL integration layer
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::RerankerPlugin;
 pub use semantic::{RerankEvent, RerankFault, RerankerState};

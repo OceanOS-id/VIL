@@ -62,7 +62,10 @@ mod tests {
     fn cosine_identical_vectors() {
         let v = vec![1.0, 2.0, 3.0];
         let d = distance(&v, &v, DistanceMetric::Cosine);
-        assert!(d.abs() < 1e-6, "identical vectors should have cosine distance ~0, got {d}");
+        assert!(
+            d.abs() < 1e-6,
+            "identical vectors should have cosine distance ~0, got {d}"
+        );
     }
 
     #[test]
@@ -70,7 +73,10 @@ mod tests {
         let a = vec![1.0, 0.0];
         let b = vec![0.0, 1.0];
         let d = distance(&a, &b, DistanceMetric::Cosine);
-        assert!((d - 1.0).abs() < 1e-6, "orthogonal vectors should have cosine distance ~1, got {d}");
+        assert!(
+            (d - 1.0).abs() < 1e-6,
+            "orthogonal vectors should have cosine distance ~1, got {d}"
+        );
     }
 
     #[test]
@@ -78,7 +84,10 @@ mod tests {
         let a = vec![1.0, 0.0];
         let b = vec![-1.0, 0.0];
         let d = distance(&a, &b, DistanceMetric::Cosine);
-        assert!((d - 2.0).abs() < 1e-6, "opposite vectors should have cosine distance ~2, got {d}");
+        assert!(
+            (d - 2.0).abs() < 1e-6,
+            "opposite vectors should have cosine distance ~2, got {d}"
+        );
     }
 
     #[test]
@@ -112,6 +121,9 @@ mod tests {
         let a = vec![0.0, 0.0];
         let b = vec![1.0, 2.0];
         let sim = cosine_similarity(&a, &b);
-        assert!(sim.abs() < 1e-6, "zero vector cosine similarity should be 0");
+        assert!(
+            sim.abs() < 1e-6,
+            "zero vector cosine similarity should be 0"
+        );
     }
 }

@@ -1,8 +1,8 @@
 //! HTTP handlers for the edge plugin — wired to real EdgeRuntime state.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use vil_server::prelude::*;
 
 use crate::runtime::EdgeRuntime;
 
@@ -28,9 +28,7 @@ pub struct EdgeStatsBody {
 // ── Handlers ────────────────────────────────────────────────────────
 
 /// GET /stats — return real edge runtime model count and config.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<EdgeStatsBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<EdgeStatsBody>> {
     let runtime = ctx.state::<Arc<Mutex<EdgeRuntime>>>()?;
     let rt = runtime.lock().await;
 

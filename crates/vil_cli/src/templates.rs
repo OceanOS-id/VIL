@@ -48,10 +48,13 @@ pub fn create_project(name: &str, template: &str) -> Result<()> {
     };
 
     // Replace placeholders in all files
-    replace_in_dir(Path::new(name), &[
-        ("{{PROJECT_NAME}}", project_name),
-        ("{{VIL_CRATES}}", &crates_path),
-    ])?;
+    replace_in_dir(
+        Path::new(name),
+        &[
+            ("{{PROJECT_NAME}}", project_name),
+            ("{{VIL_CRATES}}", &crates_path),
+        ],
+    )?;
 
     Ok(())
 }

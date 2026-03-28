@@ -11,8 +11,8 @@
 // No println!, tracing::info!, or any non-VIL log call.
 // =============================================================================
 
-use vil_log::{db_log, types::DbPayload};
 use vil_log::dict::register_str;
+use vil_log::{db_log, types::DbPayload};
 
 use crate::config::TimeseriesConfig;
 #[allow(unused_imports)]
@@ -55,9 +55,7 @@ impl TimeseriesClient {
         let db_hash = register_str(&config.bucket);
 
         #[cfg(feature = "influxdb")]
-        let influx = {
-            influxdb2::Client::new(&config.host, &config.org, &config.token)
-        };
+        let influx = { influxdb2::Client::new(&config.host, &config.org, &config.token) };
 
         Ok(Self {
             db_hash,
@@ -105,16 +103,19 @@ pub(crate) fn emit_db_log(
     pool_id: u16,
 ) {
     let query_hash = register_str(query);
-    db_log!(Info, DbPayload {
-        db_hash,
-        query_hash,
-        duration_us,
-        rows_affected,
-        op_type,
-        error_code,
-        pool_id,
-        ..DbPayload::default()
-    });
+    db_log!(
+        Info,
+        DbPayload {
+            db_hash,
+            query_hash,
+            duration_us,
+            rows_affected,
+            op_type,
+            error_code,
+            pool_id,
+            ..DbPayload::default()
+        }
+    );
 }
 
 // =============================================================================
@@ -122,8 +123,8 @@ pub(crate) fn emit_db_log(
 // =============================================================================
 
 pub(crate) fn fault_code_from_err<E: std::fmt::Debug>(e: &E) -> u32 {
-    use std::hash::{Hash, Hasher};
     use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
     let mut h = DefaultHasher::new();
     format!("{:?}", e).hash(&mut h);
     (h.finish() & 0xFFFF_FFFF) as u32

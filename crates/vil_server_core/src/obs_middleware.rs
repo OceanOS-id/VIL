@@ -29,8 +29,7 @@ use crate::state::AppState;
 /// Overhead per bucket: 1 atomic increment (~1ns). 40 buckets = 40 * 8 = 320 bytes per route.
 pub const LATENCY_BUCKETS_US: [u64; 40] = [
     // sub-ms (fast handlers)
-    10, 25, 50, 75, 100, 150, 200, 300, 500, 750,
-    // 1-10ms (typical API handlers)
+    10, 25, 50, 75, 100, 150, 200, 300, 500, 750, // 1-10ms (typical API handlers)
     1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5_000, 6_000, 7_500, 10_000,
     // 10-100ms (DB queries, moderate upstream)
     12_500, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000, 60_000, 75_000, 100_000,
@@ -106,7 +105,12 @@ impl HandlerMetricsRegistry {
             // Update min (CAS loop)
             let mut cur = m.min_us.load(Ordering::Relaxed);
             while duration_us < cur {
-                match m.min_us.compare_exchange_weak(cur, duration_us, Ordering::Relaxed, Ordering::Relaxed) {
+                match m.min_us.compare_exchange_weak(
+                    cur,
+                    duration_us,
+                    Ordering::Relaxed,
+                    Ordering::Relaxed,
+                ) {
                     Ok(_) => break,
                     Err(c) => cur = c,
                 }
@@ -114,13 +118,19 @@ impl HandlerMetricsRegistry {
             // Update max (CAS loop)
             let mut cur = m.max_us.load(Ordering::Relaxed);
             while duration_us > cur {
-                match m.max_us.compare_exchange_weak(cur, duration_us, Ordering::Relaxed, Ordering::Relaxed) {
+                match m.max_us.compare_exchange_weak(
+                    cur,
+                    duration_us,
+                    Ordering::Relaxed,
+                    Ordering::Relaxed,
+                ) {
                     Ok(_) => break,
                     Err(c) => cur = c,
                 }
             }
             // Record latency bucket
-            let idx = LATENCY_BUCKETS_US.iter()
+            let idx = LATENCY_BUCKETS_US
+                .iter()
                 .position(|&b| duration_us <= b)
                 .unwrap_or(LATENCY_BUCKETS_US.len());
             m.latency_buckets[idx].fetch_add(1, Ordering::Relaxed);
@@ -132,7 +142,9 @@ impl HandlerMetricsRegistry {
         // Use actual bucket sum as total (not requests_total which includes in-flight)
         let counts: Vec<u64> = buckets.iter().map(|b| b.load(Ordering::Relaxed)).collect();
         let total: u64 = counts.iter().sum();
-        if total == 0 { return 0; }
+        if total == 0 {
+            return 0;
+        }
         let target = (total as f64 * pct).ceil() as u64;
         let mut cumulative = 0u64;
         for (i, &count) in counts.iter().enumerate() {
@@ -159,7 +171,9 @@ impl HandlerMetricsRegistry {
         out.push_str("# HELP vil_handler_errors_total Total errors per handler\n");
         out.push_str("# TYPE vil_handler_errors_total counter\n");
 
-        out.push_str("# HELP vil_handler_duration_us_sum Total duration in microseconds per handler\n");
+        out.push_str(
+            "# HELP vil_handler_duration_us_sum Total duration in microseconds per handler\n",
+        );
         out.push_str("# TYPE vil_handler_duration_us_sum counter\n");
 
         out.push_str("# HELP vil_handler_in_flight Current in-flight requests per handler\n");
@@ -226,15 +240,20 @@ impl HandlerMetricsRegistry {
             let errs = m.errors_total.load(Ordering::Relaxed);
             let dur_count = m.duration_count.load(Ordering::Relaxed);
             let dur_sum_us = m.duration_sum_us.load(Ordering::Relaxed);
-            let avg_us = if dur_count > 0 { dur_sum_us / dur_count } else { 0 };
+            let avg_us = if dur_count > 0 {
+                dur_sum_us / dur_count
+            } else {
+                0
+            };
 
             let min = m.min_us.load(Ordering::Relaxed);
             let max = m.max_us.load(Ordering::Relaxed);
-            let p95  = Self::percentile_us(&m.latency_buckets, reqs, 0.95);
-            let p99  = Self::percentile_us(&m.latency_buckets, reqs, 0.99);
+            let p95 = Self::percentile_us(&m.latency_buckets, reqs, 0.95);
+            let p99 = Self::percentile_us(&m.latency_buckets, reqs, 0.99);
             let p999 = Self::percentile_us(&m.latency_buckets, reqs, 0.999);
 
-            collector.sync_endpoint_full(method, path, reqs, errs, avg_us, min, max, p95, p99, p999);
+            collector
+                .sync_endpoint_full(method, path, reqs, errs, avg_us, min, max, p95, p99, p999);
         }
     }
 }
@@ -291,7 +310,9 @@ pub async fn handler_metrics(
 
     let duration_us = start.elapsed().as_micros() as u64;
     let is_error = response.status().is_server_error();
-    state.handler_metrics().request_end(&key, duration_us, is_error);
+    state
+        .handler_metrics()
+        .request_end(&key, duration_us, is_error);
 
     response
 }

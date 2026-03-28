@@ -1,10 +1,10 @@
 //! HTTP handlers for the AI trace plugin — wired to real AiTracer state.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
-use crate::tracer::AiTracer;
 use crate::span::TraceSpan;
+use crate::tracer::AiTracer;
 
 // ── Response types ──────────────────────────────────────────────────
 
@@ -22,9 +22,7 @@ pub struct TraceStatsBody {
 // ── Handlers ────────────────────────────────────────────────────────
 
 /// GET /stats — return real span count and recent spans from the tracer.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<TraceStatsBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<TraceStatsBody>> {
     let tracer = ctx.state::<Arc<AiTracer>>().expect("AiTracer");
     let metrics = tracer.metrics();
     let all_spans = tracer.all_spans();

@@ -235,6 +235,9 @@ plugins:
     let config = FullServerConfig::from_str(yaml).unwrap();
     assert_eq!(config.plugins.directory, "/custom/plugins");
     assert_eq!(config.plugins.active.len(), 2);
-    assert_eq!(config.plugins.active[0].config_file, Some("plugins/db.yaml".into()));
+    assert_eq!(
+        config.plugins.active[0].config_file,
+        Some("plugins/db.yaml".into())
+    );
     assert_eq!(config.plugins.active[1].name, "vil_mq_kafka");
 }

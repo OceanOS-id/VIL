@@ -1,5 +1,5 @@
 use crate::bpe::BpeTokenizer;
-use crate::vocab::{Vocabulary, VocabSource, BuiltInVocab};
+use crate::vocab::{BuiltInVocab, VocabSource, Vocabulary};
 
 /// High-level token counter for common LLM models.
 pub struct TokenCounter {
@@ -11,25 +11,37 @@ impl TokenCounter {
     /// Create a counter for GPT-4/GPT-4o (cl100k_base).
     pub fn gpt4() -> Self {
         let vocab = Vocabulary::load(VocabSource::BuiltIn(BuiltInVocab::Cl100kBase)).unwrap();
-        Self { tokenizer: BpeTokenizer::new(vocab), model_name: "gpt-4".into() }
+        Self {
+            tokenizer: BpeTokenizer::new(vocab),
+            model_name: "gpt-4".into(),
+        }
     }
 
     /// Create a counter for GPT-3.5 (p50k_base).
     pub fn gpt35() -> Self {
         let vocab = Vocabulary::load(VocabSource::BuiltIn(BuiltInVocab::P50kBase)).unwrap();
-        Self { tokenizer: BpeTokenizer::new(vocab), model_name: "gpt-3.5".into() }
+        Self {
+            tokenizer: BpeTokenizer::new(vocab),
+            model_name: "gpt-3.5".into(),
+        }
     }
 
     /// Create a counter for Llama models.
     pub fn llama() -> Self {
         let vocab = Vocabulary::load(VocabSource::BuiltIn(BuiltInVocab::Llama)).unwrap();
-        Self { tokenizer: BpeTokenizer::new(vocab), model_name: "llama".into() }
+        Self {
+            tokenizer: BpeTokenizer::new(vocab),
+            model_name: "llama".into(),
+        }
     }
 
     /// Create a counter from a custom vocabulary file.
     pub fn from_vocab_file(path: &str, model_name: &str) -> Result<Self, crate::vocab::VocabError> {
         let vocab = Vocabulary::load(VocabSource::JsonFile(path.into()))?;
-        Ok(Self { tokenizer: BpeTokenizer::new(vocab), model_name: model_name.into() })
+        Ok(Self {
+            tokenizer: BpeTokenizer::new(vocab),
+            model_name: model_name.into(),
+        })
     }
 
     /// Count tokens in text.
@@ -47,7 +59,11 @@ impl TokenCounter {
     /// Count tokens for a list of chat messages.
     pub fn count_messages(&self, messages: &[(String, String)]) -> usize {
         let base_overhead = 3; // every reply has <|start|>assistant<|message|>
-        messages.iter().map(|(role, content)| self.count_message(role, content)).sum::<usize>() + base_overhead
+        messages
+            .iter()
+            .map(|(role, content)| self.count_message(role, content))
+            .sum::<usize>()
+            + base_overhead
     }
 
     /// Check if text fits within a token budget.
@@ -56,10 +72,14 @@ impl TokenCounter {
     }
 
     /// Model name.
-    pub fn model(&self) -> &str { &self.model_name }
+    pub fn model(&self) -> &str {
+        &self.model_name
+    }
 
     /// Get the underlying tokenizer.
-    pub fn tokenizer(&self) -> &BpeTokenizer { &self.tokenizer }
+    pub fn tokenizer(&self) -> &BpeTokenizer {
+        &self.tokenizer
+    }
 }
 
 #[cfg(test)]

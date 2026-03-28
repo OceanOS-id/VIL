@@ -67,15 +67,13 @@ impl ServiceCtx {
     ///
     /// Returns `Err` if the type does not match.
     pub fn state<T: Send + Sync + 'static>(&self) -> Result<&T, crate::VilError> {
-        self.state
-            .downcast_ref::<T>()
-            .ok_or_else(|| {
-                crate::VilError::internal(format!(
-                    "Service '{}': state type mismatch (expected {})",
-                    self.service_name,
-                    std::any::type_name::<T>(),
-                ))
-            })
+        self.state.downcast_ref::<T>().ok_or_else(|| {
+            crate::VilError::internal(format!(
+                "Service '{}': state type mismatch (expected {})",
+                self.service_name,
+                std::any::type_name::<T>(),
+            ))
+        })
     }
 
     /// Get a reference to the raw state Arc (for advanced usage).
@@ -167,25 +165,30 @@ impl FromRequestParts<AppState> for ServiceCtx {
         let Extension(tri_lane): Extension<Arc<TriLaneRouter>> =
             Extension::from_request_parts(parts, _state)
                 .await
-                .map_err(|_| crate::VilError::internal(
+                .map_err(|_| {
+                    crate::VilError::internal(
                     "ServiceCtx requires VilApp (TriLaneRouter not found in request extensions)"
-                ))?;
+                )
+                })?;
 
         // Extract service name from Extension (injected by VilApp::run per-service)
         let Extension(svc_name): Extension<ServiceName> =
             Extension::from_request_parts(parts, _state)
                 .await
-                .map_err(|_| crate::VilError::internal(
-                    "ServiceCtx requires VilApp (ServiceName not found in request extensions)"
-                ))?;
+                .map_err(|_| {
+                    crate::VilError::internal(
+                        "ServiceCtx requires VilApp (ServiceName not found in request extensions)",
+                    )
+                })?;
 
         // Extract service-specific state if available
-        let state: Arc<dyn Any + Send + Sync> =
-            if let Ok(Extension(s)) = Extension::<Arc<dyn Any + Send + Sync>>::from_request_parts(parts, _state).await {
-                s
-            } else {
-                Arc::new(()) // No state registered for this service
-            };
+        let state: Arc<dyn Any + Send + Sync> = if let Ok(Extension(s)) =
+            Extension::<Arc<dyn Any + Send + Sync>>::from_request_parts(parts, _state).await
+        {
+            s
+        } else {
+            Arc::new(()) // No state registered for this service
+        };
 
         Ok(ServiceCtx::new(svc_name.0, state, tri_lane))
     }

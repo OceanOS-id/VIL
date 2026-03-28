@@ -254,11 +254,7 @@ impl MongoClient {
     ///
     /// Returns the number of documents deleted (0 or 1).
     /// Emits `db_log!` with `op_type = 3` (DELETE).
-    pub async fn delete_one(
-        &self,
-        collection: &str,
-        filter: Document,
-    ) -> MongoResult<u64> {
+    pub async fn delete_one(&self, collection: &str, filter: Document) -> MongoResult<u64> {
         let coll_hash = register_str(collection);
         let coll = self.raw_db().collection::<Document>(collection);
 
@@ -290,11 +286,7 @@ impl MongoClient {
     ///
     /// Pass `None` as filter to count all documents.
     /// Emits `db_log!` with `op_type = 0` (SELECT).
-    pub async fn count(
-        &self,
-        collection: &str,
-        filter: Option<Document>,
-    ) -> MongoResult<u64> {
+    pub async fn count(&self, collection: &str, filter: Option<Document>) -> MongoResult<u64> {
         let coll_hash = register_str(collection);
         let coll = self.raw_db().collection::<Document>(collection);
 
@@ -306,7 +298,14 @@ impl MongoClient {
 
         match result {
             Ok(n) => {
-                emit_db_log(self.db_hash(), collection, OP_SELECT, elapsed_us, n as u32, 0);
+                emit_db_log(
+                    self.db_hash(),
+                    collection,
+                    OP_SELECT,
+                    elapsed_us,
+                    n as u32,
+                    0,
+                );
                 Ok(n)
             }
             Err(e) => {

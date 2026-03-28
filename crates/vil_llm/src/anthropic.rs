@@ -1,6 +1,6 @@
-use async_trait::async_trait;
 use crate::message::*;
 use crate::provider::*;
+use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
 pub struct AnthropicConfig {
@@ -113,7 +113,8 @@ impl LlmProvider for AnthropicProvider {
             body["temperature"] = serde_json::json!(temp);
         }
 
-        let resp = self.client
+        let resp = self
+            .client
             .post(format!("{}/v1/messages", self.config.base_url))
             .header("x-api-key", &self.config.api_key)
             .header("anthropic-version", "2023-06-01")
@@ -127,12 +128,15 @@ impl LlmProvider for AnthropicProvider {
             return Err(LlmError::AuthenticationFailed);
         }
         if resp.status() == 429 {
-            let retry_after = resp.headers()
+            let retry_after = resp
+                .headers()
                 .get("retry-after")
                 .and_then(|v| v.to_str().ok())
                 .and_then(|v| v.parse::<u64>().ok())
                 .map(|s| s * 1000);
-            return Err(LlmError::RateLimited { retry_after_ms: retry_after });
+            return Err(LlmError::RateLimited {
+                retry_after_ms: retry_after,
+            });
         }
         if !resp.status().is_success() {
             let status = resp.status();
@@ -140,14 +144,17 @@ impl LlmProvider for AnthropicProvider {
             return Err(LlmError::RequestFailed(format!("{}: {}", status, text)));
         }
 
-        let json: serde_json::Value = resp.json().await
+        let json: serde_json::Value = resp
+            .json()
+            .await
             .map_err(|e| LlmError::InvalidResponse(e.to_string()))?;
 
         // Anthropic response: { content: [{type: "text", text: "..."}], model, usage }
         let content = json["content"]
             .as_array()
             .and_then(|blocks| {
-                blocks.iter()
+                blocks
+                    .iter()
                     .filter(|b| b["type"].as_str() == Some("text"))
                     .map(|b| b["text"].as_str().unwrap_or(""))
                     .collect::<Vec<_>>()
@@ -160,7 +167,8 @@ impl LlmProvider for AnthropicProvider {
         let tool_calls = json["content"]
             .as_array()
             .map(|blocks| {
-                blocks.iter()
+                blocks
+                    .iter()
                     .filter(|b| b["type"].as_str() == Some("tool_use"))
                     .filter_map(|b| {
                         Some(ToolCall {
@@ -176,41 +184,53 @@ impl LlmProvider for AnthropicProvider {
         let usage = json["usage"].as_object().map(|u| Usage {
             prompt_tokens: u["input_tokens"].as_u64().unwrap_or(0) as u32,
             completion_tokens: u["output_tokens"].as_u64().unwrap_or(0) as u32,
-            total_tokens: (u["input_tokens"].as_u64().unwrap_or(0) + u["output_tokens"].as_u64().unwrap_or(0)) as u32,
+            total_tokens: (u["input_tokens"].as_u64().unwrap_or(0)
+                + u["output_tokens"].as_u64().unwrap_or(0)) as u32,
         });
 
         {
             use vil_log::{ai_log, types::AiPayload};
             let __elapsed = __ai_start.elapsed();
-            let (input_tokens, output_tokens) = usage.as_ref()
+            let (input_tokens, output_tokens) = usage
+                .as_ref()
                 .map(|u| (u.prompt_tokens, u.completion_tokens))
                 .unwrap_or((0, 0));
-            ai_log!(Info, AiPayload {
-                model_hash: vil_log::dict::register_str(self.model()),
-                provider_hash: vil_log::dict::register_str(self.provider_name()),
-                input_tokens,
-                output_tokens,
-                latency_us: __elapsed.as_micros() as u32,
-                cost_micro_usd: 0,
-                provider_status: 200,
-                op_type: 0,
-                streaming: 0,
-                retries: 0,
-                cache_hit: 0,
-                _pad: [0; 2],
-                meta_bytes: [0; 160],
-            });
+            ai_log!(
+                Info,
+                AiPayload {
+                    model_hash: vil_log::dict::register_str(self.model()),
+                    provider_hash: vil_log::dict::register_str(self.provider_name()),
+                    input_tokens,
+                    output_tokens,
+                    latency_us: __elapsed.as_micros() as u32,
+                    cost_micro_usd: 0,
+                    provider_status: 200,
+                    op_type: 0,
+                    streaming: 0,
+                    retries: 0,
+                    cache_hit: 0,
+                    _pad: [0; 2],
+                    meta_bytes: [0; 160],
+                }
+            );
         }
 
         Ok(ChatResponse {
             content,
-            model: json["model"].as_str().unwrap_or(&self.config.model).to_string(),
+            model: json["model"]
+                .as_str()
+                .unwrap_or(&self.config.model)
+                .to_string(),
             tool_calls,
             usage,
             finish_reason: json["stop_reason"].as_str().map(|s| s.to_string()),
         })
     }
 
-    fn model(&self) -> &str { &self.config.model }
-    fn provider_name(&self) -> &str { "anthropic" }
+    fn model(&self) -> &str {
+        &self.config.model
+    }
+    fn provider_name(&self) -> &str {
+        "anthropic"
+    }
 }

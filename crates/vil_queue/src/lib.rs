@@ -28,10 +28,10 @@
 // [ ] TODO(future): hybrid wait strategy (spin -> yield -> park)
 // =============================================================================
 
-pub mod traits;
-pub mod spsc;
 pub mod descriptor_queue;
+pub mod spsc;
+pub mod traits;
 
-pub use traits::QueueBackend;
-pub use spsc::{SpscQueue, SpscRingBuffer};
 pub use descriptor_queue::DescriptorQueue;
+pub use spsc::{SpscQueue, SpscRingBuffer};
+pub use traits::QueueBackend;

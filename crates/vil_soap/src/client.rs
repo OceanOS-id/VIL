@@ -13,8 +13,8 @@
 use reqwest::Client;
 use std::time::Duration;
 
-use vil_log::{db_log, types::DbPayload};
 use vil_log::dict::register_str;
+use vil_log::{db_log, types::DbPayload};
 
 use crate::config::SoapConfig;
 use crate::envelope::{build_envelope, parse_envelope, ParsedResponse};
@@ -53,7 +53,11 @@ impl SoapClient {
                 reason_code: 1,
             })?;
 
-        Ok(Self { http, config, endpoint_hash })
+        Ok(Self {
+            http,
+            config,
+            endpoint_hash,
+        })
     }
 
     /// Call a SOAP action on the configured endpoint.
@@ -147,22 +151,19 @@ impl SoapClient {
     // Internal helper — emit db_log! after any call (COMPLIANCE.md §8)
     // -------------------------------------------------------------------------
 
-    fn emit_db_log(
-        &self,
-        action_hash: u32,
-        duration_us: u32,
-        rows_affected: u32,
-        error_code: u8,
-    ) {
-        db_log!(Info, DbPayload {
-            db_hash:       self.endpoint_hash,
-            table_hash:    action_hash,
-            query_hash:    action_hash,
-            duration_us,
-            rows_affected,
-            op_type:       4,   // CALL — RPC-style SOAP
-            error_code,
-            ..DbPayload::default()
-        });
+    fn emit_db_log(&self, action_hash: u32, duration_us: u32, rows_affected: u32, error_code: u8) {
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: self.endpoint_hash,
+                table_hash: action_hash,
+                query_hash: action_hash,
+                duration_us,
+                rows_affected,
+                op_type: 4, // CALL — RPC-style SOAP
+                error_code,
+                ..DbPayload::default()
+            }
+        );
     }
 }

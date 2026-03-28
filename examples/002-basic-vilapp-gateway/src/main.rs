@@ -36,8 +36,8 @@
 //   oha -m POST -H "Content-Type: application/json" \
 //     -d '{"prompt": "bench"}' -c 200 -n 2000 http://localhost:3081/api/trigger
 
+use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 use vil_server::prelude::*;
-use vil_llm::semantic::{LlmResponseEvent, LlmFault, LlmUsageState};
 
 // Upstream LLM service endpoint — in production this would be
 // configured per-environment (staging vs prod) or per-tenant.
@@ -66,9 +66,7 @@ struct TriggerResponse {
 // This is the core "proxy + collect" pattern used in API gateways
 // that sit in front of streaming AI services.
 
-async fn trigger_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<TriggerResponse>> {
+async fn trigger_handler(body: ShmSlice) -> HandlerResult<VilResponse<TriggerResponse>> {
     // ShmSlice provides zero-copy access to the request body from
     // VIL's ExchangeHeap — avoids allocation per request at the gateway.
     let req: TriggerRequest = body.json().expect("invalid JSON body");
@@ -105,7 +103,9 @@ async fn trigger_handler(
     // Collect all SSE chunks into a single string — the gateway
     // shields downstream clients from the complexity of streaming.
     // Clients get a simple JSON response instead of raw SSE events.
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     Ok(VilResponse::ok(TriggerResponse { content }))
@@ -122,7 +122,14 @@ async fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode (no auth)" } else { "OPENAI_API_KEY (Bearer)" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode (no auth)"
+        } else {
+            "OPENAI_API_KEY (Bearer)"
+        }
+    );
     println!("  Listening on http://localhost:3081/api/trigger");
     println!("  Upstream: {} (stream: true)", UPSTREAM_URL);
     println!();
@@ -133,9 +140,9 @@ async fn main() {
     // validation across the entire microservices mesh.
     let svc = ServiceProcess::new("gw")
         .prefix("/api")
-        .emits::<LlmResponseEvent>()     // Tri-Lane: data lane events
-        .faults::<LlmFault>()            // Tri-Lane: fault lane errors
-        .manages::<LlmUsageState>()      // Tri-Lane: control lane state
+        .emits::<LlmResponseEvent>() // Tri-Lane: data lane events
+        .faults::<LlmFault>() // Tri-Lane: fault lane errors
+        .manages::<LlmUsageState>() // Tri-Lane: control lane state
         .endpoint(Method::POST, "/trigger", post(trigger_handler));
 
     // VilApp: the process-oriented application container that provides

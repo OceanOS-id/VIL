@@ -96,24 +96,25 @@ impl RabbitClient {
                 routing_key_hash,
             })?;
 
-        result
-            .await
-            .map_err(|_| RabbitFault::PublishFailed {
-                exchange_hash,
-                routing_key_hash,
-            })?;
+        result.await.map_err(|_| RabbitFault::PublishFailed {
+            exchange_hash,
+            routing_key_hash,
+        })?;
 
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:     register_str("rabbitmq"),
-                topic_hash:      exchange_hash,
-                message_bytes:   payload.len() as u32,
-                e2e_latency_us:  __elapsed.as_micros() as u32,
-                op_type:         0, // publish
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("rabbitmq"),
+                    topic_hash: exchange_hash,
+                    message_bytes: payload.len() as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 0, // publish
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(())
@@ -121,10 +122,7 @@ impl RabbitClient {
 
     /// Start consuming messages from the given queue.
     /// Returns an mpsc receiver. Each received item is a `RabbitMessage`.
-    pub async fn consume(
-        &self,
-        queue: &str,
-    ) -> Result<mpsc::Receiver<RabbitMessage>, RabbitFault> {
+    pub async fn consume(&self, queue: &str) -> Result<mpsc::Receiver<RabbitMessage>, RabbitFault> {
         let queue_hash = register_str(queue);
 
         // Declare the queue (idempotent).
@@ -149,7 +147,9 @@ impl RabbitClient {
         tokio::spawn(async move {
             let mut consumer = consumer;
             while let Some(delivery_result) = consumer.next().await {
-                let Ok(delivery) = delivery_result else { continue };
+                let Ok(delivery) = delivery_result else {
+                    continue;
+                };
                 let __start = std::time::Instant::now();
                 let payload_len = delivery.data.len() as u32;
                 let rk_hash = register_str(delivery.routing_key.as_str());
@@ -165,14 +165,17 @@ impl RabbitClient {
                 let __elapsed = __start.elapsed();
                 {
                     use vil_log::{mq_log, types::MqPayload};
-                    mq_log!(Info, MqPayload {
-                        broker_hash:    register_str("rabbitmq"),
-                        topic_hash:     queue_hash,
-                        message_bytes:  payload_len,
-                        e2e_latency_us: __elapsed.as_micros() as u32,
-                        op_type:        1, // consume
-                        ..Default::default()
-                    });
+                    mq_log!(
+                        Info,
+                        MqPayload {
+                            broker_hash: register_str("rabbitmq"),
+                            topic_hash: queue_hash,
+                            message_bytes: payload_len,
+                            e2e_latency_us: __elapsed.as_micros() as u32,
+                            op_type: 1, // consume
+                            ..Default::default()
+                        }
+                    );
                 }
 
                 if tx.send(msg).await.is_err() {
@@ -198,15 +201,18 @@ impl RabbitClient {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("rabbitmq"),
-                topic_hash:     0,
-                message_bytes:  0,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        2, // ack
-                offset:         delivery_tag,
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("rabbitmq"),
+                    topic_hash: 0,
+                    message_bytes: 0,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 2, // ack
+                    offset: delivery_tag,
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(())
@@ -232,15 +238,18 @@ impl RabbitClient {
         let __elapsed = __start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("rabbitmq"),
-                topic_hash:     0,
-                message_bytes:  0,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type:        3, // nack
-                offset:         delivery_tag,
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("rabbitmq"),
+                    topic_hash: 0,
+                    message_bytes: 0,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 3, // nack
+                    offset: delivery_tag,
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(())

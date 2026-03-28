@@ -38,8 +38,8 @@
 //     5. Repeats until LLM outputs FINAL_ANSWER or max 5 iterations
 //   This is fundamentally different: multi-turn, stateful, self-directed.
 
-use vil_server::prelude::*;
 use vil_agent::semantic::{AgentCompletionEvent, AgentFault, AgentMemoryState};
+use vil_server::prelude::*;
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 const MAX_ITERATIONS: usize = 5;
@@ -92,13 +92,17 @@ fn tool_search(query: &str) -> String {
     let mut results = Vec::new();
 
     if q.contains("electronics") || q.contains("product") {
-        results.push("Products in Electronics category: Wireless Keyboard ($49.99, 150 in stock), \
+        results.push(
+            "Products in Electronics category: Wireless Keyboard ($49.99, 150 in stock), \
                        USB-C Hub ($29.99, 200 in stock), Ergonomic Mouse ($79.99, 80 in stock), \
-                       Webcam HD ($69.99, 110 in stock).");
+                       Webcam HD ($69.99, 110 in stock).",
+        );
     }
     if q.contains("furniture") {
-        results.push("Products in Furniture category: Standing Desk ($499.99, 25 in stock), \
-                       Monitor Arm ($89.99, 60 in stock).");
+        results.push(
+            "Products in Furniture category: Standing Desk ($499.99, 25 in stock), \
+                       Monitor Arm ($89.99, 60 in stock).",
+        );
     }
     if q.contains("audio") || q.contains("headphone") {
         results.push("Products in Audio category: Noise-Cancel Headphones ($199.99, 45 in stock).");
@@ -108,17 +112,24 @@ fn tool_search(query: &str) -> String {
                        Average price across all products: $131.87.");
     }
     if q.contains("stock") || q.contains("inventory") {
-        results.push("Total inventory: 970 units. Desk Lamp has highest stock (300), \
-                       Standing Desk has lowest (25).");
+        results.push(
+            "Total inventory: 970 units. Desk Lamp has highest stock (300), \
+                       Standing Desk has lowest (25).",
+        );
     }
     if q.contains("revenue") || q.contains("sales") || q.contains("best seller") {
-        results.push("Best selling categories by volume: Lighting (300 units), Electronics (540 units). \
-                       By revenue estimate: Furniture leads due to Standing Desk price.");
+        results.push(
+            "Best selling categories by volume: Lighting (300 units), Electronics (540 units). \
+                       By revenue estimate: Furniture leads due to Standing Desk price.",
+        );
     }
 
     if results.is_empty() {
-        format!("No specific data found for query: '{}'. Try searching for product categories \
-                 (electronics, furniture, audio) or metrics (price, stock, revenue).", query)
+        format!(
+            "No specific data found for query: '{}'. Try searching for product categories \
+                 (electronics, furniture, audio) or metrics (price, stock, revenue).",
+            query
+        )
     } else {
         results.join("\n")
     }
@@ -129,8 +140,12 @@ fn tool_calculator(expr: &str) -> String {
     let trimmed = expr.trim();
 
     // Handle sum(...) pattern
-    if let Some(inner) = trimmed.strip_prefix("sum(").and_then(|s| s.strip_suffix(')')) {
-        let values: Vec<f64> = inner.split(',')
+    if let Some(inner) = trimmed
+        .strip_prefix("sum(")
+        .and_then(|s| s.strip_suffix(')'))
+    {
+        let values: Vec<f64> = inner
+            .split(',')
             .filter_map(|v| v.trim().parse::<f64>().ok())
             .collect();
         let total: f64 = values.iter().sum();
@@ -142,7 +157,8 @@ fn tool_calculator(expr: &str) -> String {
     let mut total = 0.0f64;
     let mut terms: Vec<&str> = trimmed.split('+').collect();
     for term in &terms {
-        let factors: Vec<f64> = term.split('*')
+        let factors: Vec<f64> = term
+            .split('*')
             .filter_map(|f| f.trim().parse::<f64>().ok())
             .collect();
         if factors.len() >= 2 {
@@ -165,7 +181,13 @@ fn tool_calculator(expr: &str) -> String {
             "+" => a + b,
             "-" => a - b,
             "*" => a * b,
-            "/" => if b != 0.0 { a / b } else { f64::NAN },
+            "/" => {
+                if b != 0.0 {
+                    a / b
+                } else {
+                    f64::NAN
+                }
+            }
             _ => f64::NAN,
         };
         format!("{}", (result * 100.0).round() / 100.0)
@@ -179,7 +201,10 @@ fn execute_tool(name: &str, input: &str) -> String {
     match name.trim() {
         "search" => tool_search(input),
         "calculator" => tool_calculator(input),
-        _ => format!("Unknown tool: {}. Available tools: search, calculator", name),
+        _ => format!(
+            "Unknown tool: {}. Available tools: search, calculator",
+            name
+        ),
     }
 }
 
@@ -190,7 +215,14 @@ fn execute_tool(name: &str, input: &str) -> String {
 ///   Action: tool_name
 ///   Action Input: input_string
 ///   FINAL_ANSWER: the conclusion
-fn parse_react_output(text: &str) -> (Option<String>, Option<String>, Option<String>, Option<String>) {
+fn parse_react_output(
+    text: &str,
+) -> (
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+) {
     let mut thought = None;
     let mut action = None;
     let mut action_input = None;
@@ -264,9 +296,7 @@ RULES:
 
 // ── Handler: ReAct Loop ─────────────────────────────────────────────
 
-async fn react_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<ReactResponse>> {
+async fn react_handler(body: ShmSlice) -> HandlerResult<VilResponse<ReactResponse>> {
     let req: ReactRequest = body.json().expect("invalid JSON body");
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
 
@@ -296,7 +326,9 @@ async fn react_handler(
             collector = collector.bearer_token(&api_key);
         }
 
-        let llm_output = collector.collect_text().await
+        let llm_output = collector
+            .collect_text()
+            .await
             .map_err(|e| VilError::internal(e.to_string()))?;
 
         // Parse ReAct output
@@ -359,12 +391,16 @@ async fn react_handler(
 
     // Max iterations reached — safety valve to prevent runaway costs.
     // Business: at $0.03/iteration with GPT-4, 5 iterations = $0.15 max per query.
-    let last_thought = trace.last()
+    let last_thought = trace
+        .last()
         .and_then(|s| s.observation.clone())
         .unwrap_or_else(|| "Max iterations reached without final answer.".into());
 
     Ok(VilResponse::ok(ReactResponse {
-        answer: format!("Reached maximum {} iterations. Last observation: {}", MAX_ITERATIONS, last_thought),
+        answer: format!(
+            "Reached maximum {} iterations. Last observation: {}",
+            MAX_ITERATIONS, last_thought
+        ),
         reasoning_trace: trace,
         iterations: MAX_ITERATIONS as u32,
         max_iter_reached: true,
@@ -386,14 +422,24 @@ async fn main() {
     println!("    1. LLM thinks and decides tool");
     println!("    2. Tool executes locally");
     println!("    3. Observation fed back to LLM");
-    println!("    4. Repeat until FINAL_ANSWER (max {} iters)", MAX_ITERATIONS);
+    println!(
+        "    4. Repeat until FINAL_ANSWER (max {} iters)",
+        MAX_ITERATIONS
+    );
     println!();
     println!("  Tools:");
     println!("    - search    : product data, prices, inventory");
     println!("    - calculator: arithmetic expressions");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     println!("  Listening on http://localhost:3124/api/react");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!();

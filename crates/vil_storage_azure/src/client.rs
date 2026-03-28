@@ -26,11 +26,11 @@ use crate::config::AzureConfig;
 use crate::error::AzureFault;
 
 // op_type constants
-const OP_GET: u8 = 0;    // SELECT — download_blob
-const OP_PUT: u8 = 1;    // INSERT — upload_blob
+const OP_GET: u8 = 0; // SELECT — download_blob
+const OP_PUT: u8 = 1; // INSERT — upload_blob
 const OP_DELETE: u8 = 3; // DELETE — delete_blob
-const OP_LIST: u8 = 0;   // SELECT — list_blobs
-const OP_HEAD: u8 = 0;   // SELECT — get_properties
+const OP_LIST: u8 = 0; // SELECT — list_blobs
+const OP_HEAD: u8 = 0; // SELECT — get_properties
 
 // =============================================================================
 // Result types
@@ -82,10 +82,8 @@ impl AzureClient {
     pub fn new(config: AzureConfig) -> Result<Self, AzureFault> {
         let config_hash = register_str(&config.account);
 
-        let credentials = StorageCredentials::access_key(
-            config.account.clone(),
-            config.access_key.clone(),
-        );
+        let credentials =
+            StorageCredentials::access_key(config.account.clone(), config.access_key.clone());
 
         let service_client = BlobServiceClient::new(config.account.clone(), credentials);
         let container_client = service_client.container_client(config.container.clone());
@@ -102,30 +100,35 @@ impl AzureClient {
     // =========================================================================
 
     /// Upload `body` bytes as a block blob named `name`.
-    pub async fn upload_blob(&self, name: &str, body: Bytes) -> Result<AzureUploadResult, AzureFault> {
+    pub async fn upload_blob(
+        &self,
+        name: &str,
+        body: Bytes,
+    ) -> Result<AzureUploadResult, AzureFault> {
         let start = Instant::now();
         let name_hash = register_str(name);
         let size = body.len() as u64;
 
         let blob_client = self.container_client.blob_client(name);
-        let result = blob_client
-            .put_block_blob(body)
-            .await;
+        let result = blob_client.put_block_blob(body).await;
 
         let elapsed = start.elapsed();
 
         match result {
             Ok(response) => {
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.container),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_PUT,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.container),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_PUT,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(AzureUploadResult {
                     e_tag: Some(response.etag.to_string()),
@@ -135,16 +138,19 @@ impl AzureClient {
             Err(e) => {
                 let fault = classify_azure_error(&e, name_hash, Some(size), &self.container);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.container),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_PUT,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.container),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_PUT,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -167,32 +173,38 @@ impl AzureClient {
 
         match result {
             Ok(data) => {
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.container),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_GET,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.container),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_GET,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(Bytes::from(data))
             }
             Err(e) => {
                 let fault = classify_azure_error(&e, name_hash, None, &self.container);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.container),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_GET,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.container),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_GET,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -215,32 +227,38 @@ impl AzureClient {
 
         match result {
             Ok(_) => {
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.container),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_DELETE,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.container),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_DELETE,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(())
             }
             Err(e) => {
                 let fault = classify_azure_error(&e, name_hash, None, &self.container);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.container),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_DELETE,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.container),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_DELETE,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -298,32 +316,38 @@ impl AzureClient {
         let elapsed = start.elapsed();
 
         if let Some(fault) = error {
-            db_log!(Info, DbPayload {
-                db_hash:       self.config_hash,
-                table_hash:    register_str(&self.container),
-                query_hash:    prefix_hash,
-                duration_us:   elapsed.as_micros() as u32,
-                rows_affected: 0,
-                op_type:       OP_LIST,
-                error_code:    1,
-                ..Default::default()
-            });
+            db_log!(
+                Info,
+                DbPayload {
+                    db_hash: self.config_hash,
+                    table_hash: register_str(&self.container),
+                    query_hash: prefix_hash,
+                    duration_us: elapsed.as_micros() as u32,
+                    rows_affected: 0,
+                    op_type: OP_LIST,
+                    error_code: 1,
+                    ..Default::default()
+                }
+            );
 
             return Err(fault);
         }
 
         let count = blobs.len() as u32;
 
-        db_log!(Info, DbPayload {
-            db_hash:       self.config_hash,
-            table_hash:    register_str(&self.container),
-            query_hash:    prefix_hash,
-            duration_us:   elapsed.as_micros() as u32,
-            rows_affected: count,
-            op_type:       OP_LIST,
-            error_code:    0,
-            ..Default::default()
-        });
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: self.config_hash,
+                table_hash: register_str(&self.container),
+                query_hash: prefix_hash,
+                duration_us: elapsed.as_micros() as u32,
+                rows_affected: count,
+                op_type: OP_LIST,
+                error_code: 0,
+                ..Default::default()
+            }
+        );
 
         Ok(blobs)
     }
@@ -352,32 +376,38 @@ impl AzureClient {
                     e_tag: Some(response.blob.properties.etag.to_string()),
                 };
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.container),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_HEAD,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.container),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_HEAD,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(meta)
             }
             Err(e) => {
                 let fault = classify_azure_error(&e, name_hash, None, &self.container);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.container),
-                    query_hash:    name_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_HEAD,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.container),
+                        query_hash: name_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_HEAD,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -398,11 +428,18 @@ fn classify_azure_error(
     let msg = e.to_string();
     let msg_lower = msg.to_lowercase();
 
-    if msg_lower.contains("401") || msg_lower.contains("403") || msg_lower.contains("unauthorized") || msg_lower.contains("forbidden") {
+    if msg_lower.contains("401")
+        || msg_lower.contains("403")
+        || msg_lower.contains("unauthorized")
+        || msg_lower.contains("forbidden")
+    {
         return AzureFault::AccessDenied { name_hash };
     }
 
-    if msg_lower.contains("404") || msg_lower.contains("not found") || msg_lower.contains("blobnotfound") {
+    if msg_lower.contains("404")
+        || msg_lower.contains("not found")
+        || msg_lower.contains("blobnotfound")
+    {
         if msg_lower.contains("container") || msg_lower.contains("containernotfound") {
             return AzureFault::ContainerNotFound {
                 container_hash: register_str(container),

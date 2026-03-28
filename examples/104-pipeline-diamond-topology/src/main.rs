@@ -164,16 +164,16 @@ fn configure_detail_source() -> HttpSourceBuilder {
             let risk_score = kol as f64 * 20.0 + saldo / 1_000_000.0;
 
             record["_risk_score"] = serde_json::json!((risk_score * 100.0).round() / 100.0);
-            record["_risk_class"] = serde_json::json!(
-                if risk_score > 100.0 { "HIGH" }
-                else if risk_score > 50.0 { "MEDIUM" }
-                else { "LOW" }
-            );
+            record["_risk_class"] = serde_json::json!(if risk_score > 100.0 {
+                "HIGH"
+            } else if risk_score > 50.0 {
+                "MEDIUM"
+            } else {
+                "LOW"
+            });
 
             // LTV ratio
-            record["_ltv_ratio"] = serde_json::json!(
-                ((saldo / plafon * 100.0).round() / 100.0)
-            );
+            record["_ltv_ratio"] = serde_json::json!(((saldo / plafon * 100.0).round() / 100.0));
 
             // Risk category
             record["_risk_category"] = serde_json::json!(match kol {
@@ -207,8 +207,7 @@ fn configure_detail_source() -> HttpSourceBuilder {
 
 fn main() {
     // Shared ExchangeHeap — diamond branches share SHM pool
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // ── Pipeline A: Summary View ────────────────────────────────────────
     let summary_sink = configure_summary_sink();
@@ -258,12 +257,18 @@ fn main() {
     println!("    cargo run -p fintec01-simulators");
     println!();
     println!("  Test Summary View (NPL only, compact):");
-    println!("  curl -N -X POST http://localhost:{}{} \\", SUMMARY_PORT, SUMMARY_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        SUMMARY_PORT, SUMMARY_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"request\":\"summary\"}}'");
     println!();
     println!("  Test Detail View (all records, full enrichment):");
-    println!("  curl -N -X POST http://localhost:{}{} \\", DETAIL_PORT, DETAIL_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        DETAIL_PORT, DETAIL_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"request\":\"detail\"}}'");
     println!();

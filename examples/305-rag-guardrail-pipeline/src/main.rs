@@ -36,8 +36,8 @@
 //         4. Add guardrail_status: PASS / REDACTED / BLOCKED
 //         5. Add confidence_score
 
+use vil_rag::semantic::{RagFault, RagIndexState, RagIngestEvent, RagQueryEvent};
 use vil_server::prelude::*;
-use vil_rag::semantic::{RagQueryEvent, RagIngestEvent, RagFault, RagIndexState};
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -72,20 +72,32 @@ pub enum GuardrailFault {
 // ── Medical Knowledge Base ──────────────────────────────────────────
 
 const MEDICAL_DOCS: &[(&str, &str)] = &[
-    ("[Doc1]", "DISCLAIMER: This system provides information based on published medical \
+    (
+        "[Doc1]",
+        "DISCLAIMER: This system provides information based on published medical \
                guidelines for educational purposes only. NOT medical advice. Always consult \
-               a qualified healthcare professional."),
-    ("[Doc2]", "Type 2 Diabetes — Screening (ADA 2024): Recommended for adults aged 35+ \
+               a qualified healthcare professional.",
+    ),
+    (
+        "[Doc2]",
+        "Type 2 Diabetes — Screening (ADA 2024): Recommended for adults aged 35+ \
                or BMI >= 25 with risk factors. Diagnostic criteria: fasting glucose >= 126 \
                mg/dL, HbA1c >= 6.5%, or 2-hour glucose >= 200 mg/dL. Common symptoms: \
-               increased thirst, frequent urination, fatigue, blurred vision."),
-    ("[Doc3]", "Hypertension Management (ACC/AHA 2023): BP target < 130/80 mmHg. First-line: \
+               increased thirst, frequent urination, fatigue, blurred vision.",
+    ),
+    (
+        "[Doc3]",
+        "Hypertension Management (ACC/AHA 2023): BP target < 130/80 mmHg. First-line: \
                thiazide diuretics, ACE inhibitors, ARBs, or calcium channel blockers. \
-               Lifestyle: DASH diet, sodium < 2300 mg/day, exercise 150 min/week."),
-    ("[Doc4]", "Common Cold vs Flu (CDC 2024): Cold symptoms are gradual onset, mild fever, \
+               Lifestyle: DASH diet, sodium < 2300 mg/day, exercise 150 min/week.",
+    ),
+    (
+        "[Doc4]",
+        "Common Cold vs Flu (CDC 2024): Cold symptoms are gradual onset, mild fever, \
                runny nose, sore throat. Flu symptoms are sudden onset, high fever (100-104F), \
                body aches, severe fatigue. Seek emergency care for difficulty breathing, \
-               persistent chest pain, or confusion."),
+               persistent chest pain, or confusion.",
+    ),
 ];
 
 // ── Guardrail Functions ─────────────────────────────────────────────
@@ -106,7 +118,8 @@ fn check_and_redact_pii(text: &str) -> (String, Vec<PiiDetection>) {
     let mut redacted = text.to_string();
 
     // Email pattern: simple check for word@word.word
-    let email_indicators: Vec<&str> = text.split_whitespace()
+    let email_indicators: Vec<&str> = text
+        .split_whitespace()
         .filter(|w| w.contains('@') && w.contains('.'))
         .collect();
     for email in &email_indicators {
@@ -124,7 +137,9 @@ fn check_and_redact_pii(text: &str) -> (String, Vec<PiiDetection>) {
     let mut phone_buf = String::new();
     let mut in_phone = false;
     for ch in text.chars() {
-        if ch.is_ascii_digit() || (in_phone && (ch == '-' || ch == ' ' || ch == '+' || ch == '(' || ch == ')')) {
+        if ch.is_ascii_digit()
+            || (in_phone && (ch == '-' || ch == ' ' || ch == '+' || ch == '(' || ch == ')'))
+        {
             phone_buf.push(ch);
             in_phone = true;
         } else {
@@ -203,9 +218,13 @@ fn check_hallucination(text: &str) -> (f64, Vec<String>) {
 /// Compute confidence score based on guardrail results
 fn compute_confidence(pii_count: usize, hallucination_score: f64, answer_len: usize) -> f64 {
     let mut confidence = 1.0;
-    if pii_count > 0 { confidence -= 0.3; }
+    if pii_count > 0 {
+        confidence -= 0.3;
+    }
     confidence -= hallucination_score * 0.4;
-    if answer_len < 20 { confidence -= 0.2; }  // Too short = likely low quality
+    if answer_len < 20 {
+        confidence -= 0.2;
+    } // Too short = likely low quality
     confidence.max(0.0).min(1.0)
 }
 
@@ -219,7 +238,7 @@ struct SafeRagRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, VilModel)]
 struct SafeRagResponse {
     content: String,
-    guardrail_status: String,     // "PASS", "REDACTED", "BLOCKED"
+    guardrail_status: String, // "PASS", "REDACTED", "BLOCKED"
     confidence_score: f64,
     pii_detections: Vec<PiiDetection>,
     hallucination_markers: Vec<String>,
@@ -230,11 +249,13 @@ struct SafeRagResponse {
 // ── Handler ──────────────────────────────────────────────────────────
 
 async fn safe_rag_handler(
-    ctx: ServiceCtx, body: ShmSlice,
+    ctx: ServiceCtx,
+    body: ShmSlice,
 ) -> HandlerResult<VilResponse<SafeRagResponse>> {
     let req: SafeRagRequest = body.json().expect("invalid JSON body");
     // Step 1: Build RAG context
-    let context: String = MEDICAL_DOCS.iter()
+    let context: String = MEDICAL_DOCS
+        .iter()
         .map(|(id, content)| format!("{} {}", id, content))
         .collect::<Vec<_>>()
         .join("\n\n");
@@ -264,7 +285,9 @@ async fn safe_rag_handler(
         collector = collector.bearer_token(&api_key);
     }
 
-    let raw_answer = collector.collect_text().await
+    let raw_answer = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Step 2: GUARDRAIL PIPELINE
@@ -287,17 +310,15 @@ async fn safe_rag_handler(
     };
 
     // 2d. Compute confidence
-    let confidence_score = compute_confidence(
-        pii_detections.len(),
-        hallucination_score,
-        raw_answer.len(),
-    );
+    let confidence_score =
+        compute_confidence(pii_detections.len(), hallucination_score, raw_answer.len());
     let confidence_score = (confidence_score * 100.0).round() / 100.0;
 
     // 2e. Choose final content
     let content = if guardrail_status == "BLOCKED" {
         "Response blocked by guardrail. The generated answer contained too many \
-         hallucination markers and cannot be safely returned.".to_string()
+         hallucination markers and cannot be safely returned."
+            .to_string()
     } else {
         redacted_answer
     };
@@ -347,7 +368,14 @@ async fn main() {
     println!("    - Status: PASS / REDACTED / BLOCKED");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     println!("  Listening on http://localhost:3114/api/safe-rag");
     println!("  Upstream: {} (stream: true)", UPSTREAM_URL);
     println!();

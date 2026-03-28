@@ -17,7 +17,7 @@
 
 use crate::enums::*;
 use crate::ids::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Observability specification attached to a process, port, or message.
 ///

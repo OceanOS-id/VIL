@@ -117,12 +117,13 @@ impl RegionSlot {
     #[doc(alias = "vil_keep")]
     fn new_named(name: String, size: usize) -> std::io::Result<Self> {
         let shm_path = format!("/vil_{}", name);
-        
+
         let fd = mman::shm_open(
             shm_path.as_str(),
             OFlag::O_CREAT | OFlag::O_RDWR,
             Mode::S_IRUSR | Mode::S_IWUSR,
-        ).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+        )
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
         nix::unistd::ftruncate(&fd, size as nix::libc::off_t)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
@@ -145,12 +146,9 @@ impl RegionSlot {
     #[doc(alias = "vil_keep")]
     fn attach_named(name: String) -> std::io::Result<Self> {
         let shm_path = format!("/vil_{}", name);
-        
-        let fd = mman::shm_open(
-            shm_path.as_str(),
-            OFlag::O_RDWR,
-            Mode::empty(),
-        ).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+        let fd = mman::shm_open(shm_path.as_str(), OFlag::O_RDWR, Mode::empty())
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
         let stat = nix::sys::stat::fstat(fd.as_raw_fd())
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
@@ -257,7 +255,9 @@ impl BumpRegion {
     pub fn alloc_and_write(&self, data: &[u8]) -> Option<(Offset, u32)> {
         let offset = self.alloc(data.len())?;
         // SAFETY: offset obtained from alloc(), guaranteed within bounds.
-        unsafe { self.write(offset, data); }
+        unsafe {
+            self.write(offset, data);
+        }
         Some((offset, data.len() as u32))
     }
 
@@ -291,7 +291,9 @@ impl ExchangeHeap {
         let mut state = self.inner.lock().expect("exchange heap lock poisoned");
         let id = RegionId(state.next_region_id);
         state.next_region_id += 1;
-        state.regions.insert(id, RegionSlot::new_anonymous(name.to_string(), size));
+        state
+            .regions
+            .insert(id, RegionSlot::new_anonymous(name.to_string(), size));
         id
     }
 
@@ -300,7 +302,9 @@ impl ExchangeHeap {
         let mut state = self.inner.lock().expect("exchange heap lock poisoned");
         let id = RegionId(state.next_region_id);
         state.next_region_id += 1;
-        state.regions.insert(id, RegionSlot::new_named(name.to_string(), size)?);
+        state
+            .regions
+            .insert(id, RegionSlot::new_named(name.to_string(), size)?);
         Ok(id)
     }
 
@@ -309,7 +313,9 @@ impl ExchangeHeap {
         let mut state = self.inner.lock().expect("exchange heap lock poisoned");
         let id = RegionId(state.next_region_id);
         state.next_region_id += 1;
-        state.regions.insert(id, RegionSlot::attach_named(name.to_string())?);
+        state
+            .regions
+            .insert(id, RegionSlot::attach_named(name.to_string())?);
         Ok(id)
     }
 
@@ -321,21 +327,29 @@ impl ExchangeHeap {
     }
 
     #[doc(alias = "vil_keep")]
-    pub fn alloc_in_region_raw(&self, region_id: RegionId, size: usize, align: usize) -> Option<Offset> {
+    pub fn alloc_in_region_raw(
+        &self,
+        region_id: RegionId,
+        size: usize,
+        align: usize,
+    ) -> Option<Offset> {
         let state = self.inner.lock().expect("exchange heap lock poisoned");
         let slot = state.regions.get(&region_id)?;
         slot.allocator.try_alloc(size, align)
     }
 
     #[doc(alias = "vil_keep")]
-    pub fn alloc_and_write<T: Copy>(&self, region_id: RegionId, value: T) -> Option<RelativePtr<T>> {
+    pub fn alloc_and_write<T: Copy>(
+        &self,
+        region_id: RegionId,
+        value: T,
+    ) -> Option<RelativePtr<T>> {
         let mut state = self.inner.lock().expect("exchange heap lock poisoned");
         let slot = state.regions.get_mut(&region_id)?;
 
-        let offset = slot.allocator.try_alloc(
-            std::mem::size_of::<T>(),
-            std::mem::align_of::<T>(),
-        )?;
+        let offset = slot
+            .allocator
+            .try_alloc(std::mem::size_of::<T>(), std::mem::align_of::<T>())?;
 
         let off = offset.as_usize();
         let size = std::mem::size_of::<T>();
@@ -356,7 +370,10 @@ impl ExchangeHeap {
         let off = ptr.offset().as_usize();
         let size = std::mem::size_of::<T>();
 
-        if off.checked_add(size).map_or(true, |end| end > slot.buffer.len()) {
+        if off
+            .checked_add(size)
+            .map_or(true, |end| end > slot.buffer.len())
+        {
             return None;
         }
 
@@ -383,7 +400,10 @@ impl ExchangeHeap {
         let off = ptr.offset().as_usize();
         let size = std::mem::size_of::<T>();
 
-        if off.checked_add(size).map_or(true, |end| end > slot.buffer.len()) {
+        if off
+            .checked_add(size)
+            .map_or(true, |end| end > slot.buffer.len())
+        {
             return false;
         }
 
@@ -434,12 +454,19 @@ impl ExchangeHeap {
             None => return false,
         };
         let off = offset.as_usize();
-        if off.checked_add(data.len()).map_or(true, |end| end > slot.buffer.len()) {
+        if off
+            .checked_add(data.len())
+            .map_or(true, |end| end > slot.buffer.len())
+        {
             return false;
         }
         // SAFETY: bounds checked above; src (caller slice) and dst (buffer) do not overlap.
         unsafe {
-            std::ptr::copy_nonoverlapping(data.as_ptr(), slot.buffer.as_mut_ptr().add(off), data.len());
+            std::ptr::copy_nonoverlapping(
+                data.as_ptr(),
+                slot.buffer.as_mut_ptr().add(off),
+                data.len(),
+            );
         }
         true
     }
@@ -449,7 +476,10 @@ impl ExchangeHeap {
         let state = self.inner.lock().expect("exchange heap lock poisoned");
         let slot = state.regions.get(&region_id)?;
         let off = offset.as_usize();
-        if off.checked_add(len).map_or(true, |end| end > slot.buffer.len()) {
+        if off
+            .checked_add(len)
+            .map_or(true, |end| end > slot.buffer.len())
+        {
             return None;
         }
         let mut dest = vec![0u8; len];
@@ -463,7 +493,10 @@ impl ExchangeHeap {
     #[doc(alias = "vil_keep")]
     pub fn get_region_ptr(&self, region_id: RegionId) -> Option<*mut u8> {
         let mut state = self.inner.lock().expect("exchange heap lock poisoned");
-        state.regions.get_mut(&region_id).map(|s| s.buffer.as_mut_ptr())
+        state
+            .regions
+            .get_mut(&region_id)
+            .map(|s| s.buffer.as_mut_ptr())
     }
 
     #[doc(alias = "vil_keep")]
@@ -475,7 +508,11 @@ impl ExchangeHeap {
     #[doc(alias = "vil_keep")]
     pub fn all_stats(&self) -> Vec<RegionStats> {
         let state = self.inner.lock().expect("exchange heap lock poisoned");
-        state.regions.iter().map(|(id, slot)| slot.stats(*id)).collect()
+        state
+            .regions
+            .iter()
+            .map(|(id, slot)| slot.stats(*id))
+            .collect()
     }
 
     #[doc(alias = "vil_keep")]
@@ -499,9 +536,16 @@ impl ExchangeHeap {
     /// Perform in-place compaction on a region.
     /// Moves active samples to the beginning of the region to eliminate fragmentation.
     #[doc(alias = "vil_keep")]
-    pub fn compact_region(&self, region_id: vil_types::RegionId, registry: &dyn crate::DefragRegistry) -> Result<usize, String> {
+    pub fn compact_region(
+        &self,
+        region_id: vil_types::RegionId,
+        registry: &dyn crate::DefragRegistry,
+    ) -> Result<usize, String> {
         let mut state = self.inner.lock().expect("exchange heap lock poisoned");
-        let slot = state.regions.get_mut(&region_id).ok_or("Region not found")?;
+        let slot = state
+            .regions
+            .get_mut(&region_id)
+            .ok_or("Region not found")?;
 
         // 1. Get active sample metadata for this region via trait
         let active_samples = registry.get_active_samples(region_id);
@@ -522,10 +566,10 @@ impl ExchangeHeap {
         for sample in sorted_samples {
             let size = sample.size;
             let align = sample.align;
-            
+
             // Determine new aligned offset
             let aligned_offset = (next_offset + align - 1) & !(align - 1);
-            
+
             if aligned_offset != sample.offset as usize {
                 // Move data
                 // SAFETY: samples sorted by offset; dst <= src so regions may overlap,
@@ -535,12 +579,12 @@ impl ExchangeHeap {
                     let dst = slot.buffer.as_mut_ptr().add(aligned_offset);
                     std::ptr::copy(src, dst, size);
                 }
-                
+
                 // Update registry atomically via trait
                 registry.update_offset(sample.id, aligned_offset as u64);
                 moved_count += 1;
             }
-            
+
             next_offset = aligned_offset + size;
         }
 

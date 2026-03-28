@@ -26,9 +26,15 @@ pub struct SqsConfig {
     pub wait_time_secs: i32,
 }
 
-fn default_max_msgs() -> i32 { 10 }
-fn default_visibility() -> i32 { 30 }
-fn default_wait() -> i32 { 20 }
+fn default_max_msgs() -> i32 {
+    10
+}
+fn default_visibility() -> i32 {
+    30
+}
+fn default_wait() -> i32 {
+    20
+}
 
 impl SqsConfig {
     pub fn new(region: &str, queue_url: &str) -> Self {

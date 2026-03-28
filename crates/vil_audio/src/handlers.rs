@@ -16,7 +16,9 @@ pub struct TranscribeRequest {
     pub language: String,
 }
 
-fn default_language() -> String { "auto".into() }
+fn default_language() -> String {
+    "auto".into()
+}
 
 #[derive(Debug, Serialize)]
 pub struct TranscribeResponseBody {
@@ -57,9 +59,7 @@ pub async fn transcribe_handler(
 }
 
 /// GET /stats — Audio service stats.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<AudioStatsBody> {
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<AudioStatsBody> {
     let transcriber = ctx.state::<Arc<dyn Transcriber>>().expect("Transcriber");
     VilResponse::ok(AudioStatsBody {
         backend: transcriber.name().to_string(),

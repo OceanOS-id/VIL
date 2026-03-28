@@ -10,14 +10,14 @@
 //   - Config hot-reload (change pool size without restart)
 //   - Plugin manifest for Admin GUI registration
 
-pub mod pool;
-pub mod multi_pool;
-pub mod metrics;
-pub mod health;
 pub mod config;
 pub mod extractor;
+pub mod health;
+pub mod metrics;
+pub mod multi_pool;
+pub mod pool;
 
-pub use pool::SqlxPool;
-pub use multi_pool::MultiPoolManager;
 pub use config::SqlxConfig;
 pub use extractor::DbConn;
+pub use multi_pool::MultiPoolManager;
+pub use pool::SqlxPool;

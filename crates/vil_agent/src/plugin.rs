@@ -7,7 +7,6 @@ use vil_server::prelude::*;
 
 use std::sync::Arc;
 
-
 use vil_llm::LlmProvider;
 use vil_rag::Retriever;
 

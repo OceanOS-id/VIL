@@ -17,10 +17,7 @@
 //
 //   VilApp::new("app").plugin(plugin).run().await;
 
-use crate::{
-    VilPlugin, PluginContext, PluginCapability,
-    PluginDependency, PluginHealth,
-};
+use crate::{PluginCapability, PluginContext, PluginDependency, PluginHealth, VilPlugin};
 
 type RegisterFn = Box<dyn Fn(&mut PluginContext) + Send + Sync + 'static>;
 type HealthFn = Box<dyn Fn() -> PluginHealth + Send + Sync + 'static>;
@@ -106,11 +103,21 @@ pub struct BuiltPlugin {
 }
 
 impl VilPlugin for BuiltPlugin {
-    fn id(&self) -> &str { &self.id }
-    fn version(&self) -> &str { &self.version }
-    fn description(&self) -> &str { &self.description }
-    fn capabilities(&self) -> Vec<PluginCapability> { self.capabilities.clone() }
-    fn dependencies(&self) -> Vec<PluginDependency> { self.dependencies.clone() }
+    fn id(&self) -> &str {
+        &self.id
+    }
+    fn version(&self) -> &str {
+        &self.version
+    }
+    fn description(&self) -> &str {
+        &self.description
+    }
+    fn capabilities(&self) -> Vec<PluginCapability> {
+        self.capabilities.clone()
+    }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        self.dependencies.clone()
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         (self.register_fn)(ctx);

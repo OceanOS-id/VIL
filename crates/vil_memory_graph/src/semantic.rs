@@ -37,15 +37,24 @@ pub struct MemoryFault {
 
 impl MemoryFault {
     pub fn entity_not_found(msg: impl Into<String>) -> Self {
-        Self { error_type: MemoryFaultType::EntityNotFound, message: msg.into() }
+        Self {
+            error_type: MemoryFaultType::EntityNotFound,
+            message: msg.into(),
+        }
     }
 
     pub fn relation_cycle(msg: impl Into<String>) -> Self {
-        Self { error_type: MemoryFaultType::RelationCycle, message: msg.into() }
+        Self {
+            error_type: MemoryFaultType::RelationCycle,
+            message: msg.into(),
+        }
     }
 
     pub fn storage_corrupted(msg: impl Into<String>) -> Self {
-        Self { error_type: MemoryFaultType::StorageCorrupted, message: msg.into() }
+        Self {
+            error_type: MemoryFaultType::StorageCorrupted,
+            message: msg.into(),
+        }
     }
 }
 

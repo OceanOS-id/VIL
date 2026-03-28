@@ -49,10 +49,10 @@ impl EvmFault {
     pub fn as_error_code(&self) -> u32 {
         match self {
             EvmFault::ConnectionFailed { .. } => 1,
-            EvmFault::SubscribeFailed { .. }  => 2,
-            EvmFault::StreamClosed { .. }     => 3,
-            EvmFault::DecodeFailed { .. }     => 4,
-            EvmFault::InvalidAddress { .. }   => 5,
+            EvmFault::SubscribeFailed { .. } => 2,
+            EvmFault::StreamClosed { .. } => 3,
+            EvmFault::DecodeFailed { .. } => 4,
+            EvmFault::InvalidAddress { .. } => 5,
         }
     }
 }

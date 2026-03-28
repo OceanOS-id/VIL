@@ -36,11 +36,16 @@ pub struct SubscriptionRegistry {
 
 impl SubscriptionRegistry {
     pub fn new() -> Self {
-        Self { topics: dashmap::DashMap::new() }
+        Self {
+            topics: dashmap::DashMap::new(),
+        }
     }
 
     pub fn subscribe(&self, topic: &str) {
-        self.topics.entry(topic.to_string()).and_modify(|c| *c += 1).or_insert(1);
+        self.topics
+            .entry(topic.to_string())
+            .and_modify(|c| *c += 1)
+            .or_insert(1);
     }
 
     pub fn unsubscribe(&self, topic: &str) {
@@ -54,10 +59,16 @@ impl SubscriptionRegistry {
     }
 
     pub fn active_topics(&self) -> Vec<String> {
-        self.topics.iter().filter(|e| *e.value() > 0).map(|e| e.key().clone()).collect()
+        self.topics
+            .iter()
+            .filter(|e| *e.value() > 0)
+            .map(|e| e.key().clone())
+            .collect()
     }
 }
 
 impl Default for SubscriptionRegistry {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }

@@ -5,7 +5,6 @@
 // Builds an async-graphql schema from registered VilEntityMeta types.
 // CRUD resolvers auto-generated: query, mutation, subscription.
 
-
 use crate::config::GraphQLConfig;
 
 /// Dynamic schema builder from VilEntityMeta.
@@ -33,7 +32,10 @@ pub struct FieldDef {
 
 impl VilSchemaBuilder {
     pub fn new(config: GraphQLConfig) -> Self {
-        Self { config, entities: Vec::new() }
+        Self {
+            config,
+            entities: Vec::new(),
+        }
     }
 
     /// Register an entity for schema generation.
@@ -65,7 +67,9 @@ impl VilSchemaBuilder {
 
         for entity in &self.entities {
             // Object type
-            let fields: Vec<String> = entity.fields.iter()
+            let fields: Vec<String> = entity
+                .fields
+                .iter()
                 .map(|f| format!("{}: {}", f.name, f.graphql_type))
                 .collect();
             types.push(format!("type {} {{ {} }}", entity.name, fields.join(", ")));
@@ -73,16 +77,15 @@ impl VilSchemaBuilder {
             // Queries
             queries.push(format!(
                 "{}(id: Int!): {}",
-                to_camel_case(&entity.name, false), entity.name
+                to_camel_case(&entity.name, false),
+                entity.name
             ));
             queries.push(format!(
                 "{}s(limit: Int, offset: Int): [{}!]!",
-                to_camel_case(&entity.name, false), entity.name
+                to_camel_case(&entity.name, false),
+                entity.name
             ));
-            queries.push(format!(
-                "{}Count: Int!",
-                to_camel_case(&entity.name, false)
-            ));
+            queries.push(format!("{}Count: Int!", to_camel_case(&entity.name, false)));
 
             // Mutations
             mutations.push(format!(
@@ -93,13 +96,14 @@ impl VilSchemaBuilder {
                 "update{}(id: Int!, input: Update{}Input!): {}!",
                 entity.name, entity.name, entity.name
             ));
-            mutations.push(format!(
-                "delete{}(id: Int!): Boolean!",
-                entity.name
-            ));
+            mutations.push(format!("delete{}(id: Int!): Boolean!", entity.name));
         }
 
-        SchemaDescription { types, queries, mutations }
+        SchemaDescription {
+            types,
+            queries,
+            mutations,
+        }
     }
 }
 

@@ -19,8 +19,8 @@
 // No println!, tracing::info!, or any non-VIL log call.
 // =============================================================================
 
-use std::time::Instant;
 use std::collections::HashMap;
+use std::time::Instant;
 
 use aws_sdk_dynamodb::types::AttributeValue;
 
@@ -31,12 +31,12 @@ use crate::error::DynamoFault;
 use crate::types::DynamoResult;
 
 // op_type codes
-const OP_GET: u8    = 0;
-const OP_PUT: u8    = 1;
+const OP_GET: u8 = 0;
+const OP_PUT: u8 = 1;
 const OP_UPDATE: u8 = 2;
 const OP_DELETE: u8 = 3;
-const OP_QUERY: u8  = 4;
-const OP_SCAN: u8   = 5;
+const OP_QUERY: u8 = 4;
+const OP_SCAN: u8 = 5;
 
 impl DynamoClient {
     // =========================================================================
@@ -68,11 +68,27 @@ impl DynamoClient {
             Ok(out) => {
                 let item = out.item;
                 let rows = if item.is_some() { 1u32 } else { 0u32 };
-                emit_db_log(self.db_hash(), table, OP_GET, elapsed_us, rows, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_GET,
+                    elapsed_us,
+                    rows,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(item)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), table, OP_GET, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_GET,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(DynamoFault::GetFailed {
                     table_hash,
                     reason_code: fault_code_from_sdk_err(&e),
@@ -107,11 +123,27 @@ impl DynamoClient {
 
         match result {
             Ok(_) => {
-                emit_db_log(self.db_hash(), table, OP_PUT, elapsed_us, 1, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_PUT,
+                    elapsed_us,
+                    1,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(())
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), table, OP_PUT, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_PUT,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(DynamoFault::PutFailed {
                     table_hash,
                     reason_code: fault_code_from_sdk_err(&e),
@@ -146,11 +178,27 @@ impl DynamoClient {
 
         match result {
             Ok(_) => {
-                emit_db_log(self.db_hash(), table, OP_DELETE, elapsed_us, 1, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_DELETE,
+                    elapsed_us,
+                    1,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(())
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), table, OP_DELETE, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_DELETE,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(DynamoFault::DeleteFailed {
                     table_hash,
                     reason_code: fault_code_from_sdk_err(&e),
@@ -190,11 +238,27 @@ impl DynamoClient {
             Ok(out) => {
                 let items = out.items.unwrap_or_default();
                 let rows = items.len() as u32;
-                emit_db_log(self.db_hash(), table, OP_QUERY, elapsed_us, rows, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_QUERY,
+                    elapsed_us,
+                    rows,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(items)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), table, OP_QUERY, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_QUERY,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(DynamoFault::QueryFailed {
                     table_hash,
                     reason_code: fault_code_from_sdk_err(&e),
@@ -235,11 +299,27 @@ impl DynamoClient {
             Ok(out) => {
                 let items = out.items.unwrap_or_default();
                 let rows = items.len() as u32;
-                emit_db_log(self.db_hash(), table, OP_SCAN, elapsed_us, rows, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_SCAN,
+                    elapsed_us,
+                    rows,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(items)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), table, OP_SCAN, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_SCAN,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(DynamoFault::ScanFailed {
                     table_hash,
                     reason_code: fault_code_from_sdk_err(&e),
@@ -278,11 +358,27 @@ impl DynamoClient {
 
         match result {
             Ok(_) => {
-                emit_db_log(self.db_hash(), table, OP_UPDATE, elapsed_us, 1, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_UPDATE,
+                    elapsed_us,
+                    1,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(())
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), table, OP_UPDATE, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    table,
+                    OP_UPDATE,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(DynamoFault::UpdateFailed {
                     table_hash,
                     reason_code: fault_code_from_sdk_err(&e),

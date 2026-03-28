@@ -24,7 +24,7 @@
 use vil_server::prelude::*;
 
 // Semantic types from vil_rag plugin
-use vil_rag::semantic::{RagQueryEvent, RagIngestEvent, RagFault, RagIndexState};
+use vil_rag::semantic::{RagFault, RagIndexState, RagIngestEvent, RagQueryEvent};
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -105,10 +105,26 @@ const DOCS: &[Document] = &[
 fn mock_embed_query(query: &str) -> [f64; 4] {
     let q = query.to_lowercase();
     [
-        if q.contains("ownership") || q.contains("memory") || q.contains("safety") { 0.9 } else { 0.1 },
-        if q.contains("trait") || q.contains("generic") || q.contains("polymorphism") { 0.9 } else { 0.1 },
-        if q.contains("type") || q.contains("abstract") { 0.7 } else { 0.1 },
-        if q.contains("borrow") || q.contains("reference") || q.contains("lifetime") { 0.9 } else { 0.1 },
+        if q.contains("ownership") || q.contains("memory") || q.contains("safety") {
+            0.9
+        } else {
+            0.1
+        },
+        if q.contains("trait") || q.contains("generic") || q.contains("polymorphism") {
+            0.9
+        } else {
+            0.1
+        },
+        if q.contains("type") || q.contains("abstract") {
+            0.7
+        } else {
+            0.1
+        },
+        if q.contains("borrow") || q.contains("reference") || q.contains("lifetime") {
+            0.9
+        } else {
+            0.1
+        },
     ]
 }
 
@@ -119,7 +135,11 @@ fn cosine_similarity(a: &[f64; 4], b: &[f64; 4]) -> f64 {
     let dot: f64 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
     let mag_a: f64 = a.iter().map(|x| x * x).sum::<f64>().sqrt();
     let mag_b: f64 = b.iter().map(|x| x * x).sum::<f64>().sqrt();
-    if mag_a == 0.0 || mag_b == 0.0 { 0.0 } else { dot / (mag_a * mag_b) }
+    if mag_a == 0.0 || mag_b == 0.0 {
+        0.0
+    } else {
+        dot / (mag_a * mag_b)
+    }
 }
 
 // ── Request / Response ───────────────────────────────────────────────
@@ -130,15 +150,15 @@ fn cosine_similarity(a: &[f64; 4], b: &[f64; 4]) -> f64 {
 /// Wiki search request — natural language question from an employee
 #[derive(Debug, Deserialize)]
 struct RagRequest {
-    prompt: String,   // e.g., "What is Rust ownership?" or "How to configure VPN?"
+    prompt: String, // e.g., "What is Rust ownership?" or "How to configure VPN?"
 }
 
 /// Wiki search response — LLM answer grounded in specific wiki articles
 #[derive(Debug, Clone, Serialize, Deserialize, VilModel)]
 struct RagResponse {
-    content: String,                 // Generated answer citing [DocN] sources
-    docs_used: Vec<String>,          // Wiki article IDs used as context
-    similarity_scores: Vec<f64>,     // Cosine similarity scores for transparency
+    content: String,             // Generated answer citing [DocN] sources
+    docs_used: Vec<String>,      // Wiki article IDs used as context
+    similarity_scores: Vec<f64>, // Cosine similarity scores for transparency
 }
 
 // ── Handler ──────────────────────────────────────────────────────────
@@ -147,14 +167,14 @@ struct RagResponse {
 // hallucination by constraining the LLM to only use provided context.
 
 /// POST /api/rag — semantic search with LLM-generated answer
-async fn rag_handler(
-    ctx: ServiceCtx, body: ShmSlice,
-) -> HandlerResult<VilResponse<RagResponse>> {
+async fn rag_handler(ctx: ServiceCtx, body: ShmSlice) -> HandlerResult<VilResponse<RagResponse>> {
     let req: RagRequest = body.json().expect("invalid JSON body");
     // Step 1: Embed query and compute similarities
     let query_emb = mock_embed_query(&req.prompt);
     // Step 1: Compute similarity scores between query and all documents in the wiki index
-    let mut scored: Vec<(usize, f64)> = DOCS.iter().enumerate()
+    let mut scored: Vec<(usize, f64)> = DOCS
+        .iter()
+        .enumerate()
         .map(|(i, doc)| (i, cosine_similarity(&query_emb, &doc.embedding)))
         .collect();
     scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -163,11 +183,16 @@ async fn rag_handler(
     let top_k = 2;
     // Step 2: Select top-k most relevant documents for LLM context augmentation
     let top_docs: Vec<&Document> = scored.iter().take(top_k).map(|(i, _)| &DOCS[*i]).collect();
-    let scores: Vec<f64> = scored.iter().take(top_k).map(|(_, s)| (*s * 100.0).round() / 100.0).collect();
+    let scores: Vec<f64> = scored
+        .iter()
+        .take(top_k)
+        .map(|(_, s)| (*s * 100.0).round() / 100.0)
+        .collect();
     let doc_ids: Vec<String> = top_docs.iter().map(|d| d.id.to_string()).collect();
 
     // Step 3: Build context for LLM
-    let context: String = top_docs.iter()
+    let context: String = top_docs
+        .iter()
         .map(|d| format!("[{}] {}: {}", d.id, d.title, d.content))
         .collect::<Vec<_>>()
         .join("\n\n");
@@ -198,7 +223,9 @@ async fn rag_handler(
     }
 
     // Step 4: Collect the full SSE response into a single text string for the client
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Semantic audit
@@ -238,9 +265,19 @@ async fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     // Display the number of indexed documents in the knowledge base
-    println!("  Documents indexed: {} (mock embeddings: 4-dim)", DOCS.len());
+    println!(
+        "  Documents indexed: {} (mock embeddings: 4-dim)",
+        DOCS.len()
+    );
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     println!("  Listening on http://localhost:3110/api/rag");
     println!("  Upstream: {} (stream: true)", UPSTREAM_URL);
     println!();

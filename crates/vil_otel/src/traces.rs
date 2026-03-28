@@ -20,28 +20,28 @@ use opentelemetry::{trace::SpanKind, KeyValue};
 use crate::config::OtelConfig;
 
 /// Attribute key constants — registered in vil_log dict for hash lookup.
-const ATTR_SERVICE:   &str = "service.name";
-const ATTR_LEVEL:     &str = "vil.log.level";
-const ATTR_CATEGORY:  &str = "vil.log.category";
-const ATTR_PROCESS:   &str = "vil.log.process_id";
+const ATTR_SERVICE: &str = "service.name";
+const ATTR_LEVEL: &str = "vil.log.level";
+const ATTR_CATEGORY: &str = "vil.log.category";
+const ATTR_PROCESS: &str = "vil.log.process_id";
 const ATTR_TIMESTAMP: &str = "vil.log.timestamp_ns";
-const ATTR_VERSION:   &str = "vil.log.version";
+const ATTR_VERSION: &str = "vil.log.version";
 const ATTR_SERVICE_H: &str = "vil.log.service_hash";
 const ATTR_HANDLER_H: &str = "vil.log.handler_hash";
-const ATTR_NODE_H:    &str = "vil.log.node_hash";
+const ATTR_NODE_H: &str = "vil.log.node_hash";
 
 /// A lightweight representation of a LogSlot header for OTel bridging.
 /// This mirrors `vil_log::VilLogHeader` without a direct dependency.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct LogSlotHeader {
-    pub timestamp_ns:  u64,
-    pub level:         u8,
-    pub category:      u8,
-    pub version:       u8,
-    pub service_hash:  u32,
-    pub handler_hash:  u32,
-    pub node_hash:     u32,
-    pub process_id:    u64,
+    pub timestamp_ns: u64,
+    pub level: u8,
+    pub category: u8,
+    pub version: u8,
+    pub service_hash: u32,
+    pub handler_hash: u32,
+    pub node_hash: u32,
+    pub process_id: u64,
 }
 
 /// Span kind inferred from log category.
@@ -55,8 +55,8 @@ pub enum InferredSpanKind {
 impl From<InferredSpanKind> for SpanKind {
     fn from(k: InferredSpanKind) -> Self {
         match k {
-            InferredSpanKind::Server   => SpanKind::Server,
-            InferredSpanKind::Client   => SpanKind::Client,
+            InferredSpanKind::Server => SpanKind::Server,
+            InferredSpanKind::Client => SpanKind::Client,
             InferredSpanKind::Internal => SpanKind::Internal,
         }
     }
@@ -91,15 +91,15 @@ impl TracesBridge {
     /// The caller uses these attributes to annotate an OTel span.
     pub fn slot_to_span_attrs(&self, header: &LogSlotHeader) -> Vec<KeyValue> {
         vec![
-            KeyValue::new(ATTR_SERVICE,   self.service_name.clone()),
-            KeyValue::new(ATTR_LEVEL,     header.level as i64),
-            KeyValue::new(ATTR_CATEGORY,  header.category as i64),
-            KeyValue::new(ATTR_PROCESS,   header.process_id as i64),
+            KeyValue::new(ATTR_SERVICE, self.service_name.clone()),
+            KeyValue::new(ATTR_LEVEL, header.level as i64),
+            KeyValue::new(ATTR_CATEGORY, header.category as i64),
+            KeyValue::new(ATTR_PROCESS, header.process_id as i64),
             KeyValue::new(ATTR_TIMESTAMP, header.timestamp_ns as i64),
-            KeyValue::new(ATTR_VERSION,   header.version as i64),
+            KeyValue::new(ATTR_VERSION, header.version as i64),
             KeyValue::new(ATTR_SERVICE_H, header.service_hash as i64),
             KeyValue::new(ATTR_HANDLER_H, header.handler_hash as i64),
-            KeyValue::new(ATTR_NODE_H,    header.node_hash as i64),
+            KeyValue::new(ATTR_NODE_H, header.node_hash as i64),
         ]
     }
 
@@ -109,9 +109,9 @@ impl TracesBridge {
     ///   0=App, 1=Access, 2=Ai, 3=Db, 4=Mq, 5=System, 6=Security
     pub fn infer_span_kind(&self, category: u8) -> InferredSpanKind {
         match category {
-            1 => InferredSpanKind::Server,  // Access — inbound HTTP/gRPC
-            3 => InferredSpanKind::Client,  // Db — outbound database calls
-            4 => InferredSpanKind::Client,  // Mq — outbound message publish
+            1 => InferredSpanKind::Server, // Access — inbound HTTP/gRPC
+            3 => InferredSpanKind::Client, // Db — outbound database calls
+            4 => InferredSpanKind::Client, // Mq — outbound message publish
             _ => InferredSpanKind::Internal,
         }
     }

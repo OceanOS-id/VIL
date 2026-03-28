@@ -50,7 +50,13 @@ impl ConfigReloader {
     }
 
     /// Record a reload event.
-    pub fn record_reload(&self, source: &str, success: bool, duration_us: u64, changes: Vec<String>) {
+    pub fn record_reload(
+        &self,
+        source: &str,
+        success: bool,
+        duration_us: u64,
+        changes: Vec<String>,
+    ) {
         self.reload_count.fetch_add(1, Ordering::Relaxed);
         *self.last_reload.write().unwrap() = Some(Instant::now());
 
@@ -103,7 +109,9 @@ async fn reload_config(State(state): State<AppState>) -> impl IntoResponse {
     let changes = vec!["config reloaded via HTTP".to_string()];
     let duration_us = start.elapsed().as_micros() as u64;
 
-    state.config_reloader().record_reload("http", true, duration_us, changes.clone());
+    state
+        .config_reloader()
+        .record_reload("http", true, duration_us, changes.clone());
 
     {
         use vil_log::app_log;

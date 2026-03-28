@@ -16,7 +16,13 @@ pub struct SandboxConfig {
 
 impl Default for SandboxConfig {
     fn default() -> Self {
-        Self { timeout_ms: 10, max_memory_mb: 16, allow_net: false, allow_fs: false, max_output_size_kb: 512 }
+        Self {
+            timeout_ms: 10,
+            max_memory_mb: 16,
+            allow_net: false,
+            allow_fs: false,
+            max_output_size_kb: 512,
+        }
     }
 }
 
@@ -29,7 +35,12 @@ pub struct JsRuntime {
 
 impl JsRuntime {
     pub fn new(config: SandboxConfig) -> Self {
-        Self { config, script: None, file_path: None, version: 0 }
+        Self {
+            config,
+            script: None,
+            file_path: None,
+            version: 0,
+        }
     }
 
     pub fn load_file(&mut self, path: &str) -> Result<(), String> {
@@ -60,53 +71,66 @@ impl JsRuntime {
         }
     }
 
-    pub fn version(&self) -> u64 { self.version }
+    pub fn version(&self) -> u64 {
+        self.version
+    }
 }
 
 /// Execute JS script with boa_engine.
 #[cfg(feature = "js")]
 fn execute_js(script: &str, input: &Value, _config: &SandboxConfig) -> Result<Value, String> {
-    use boa_engine::{Context, Source, JsValue};
+    use boa_engine::{Context, JsValue, Source};
 
     let mut context = Context::default();
 
     // Set input global
     let input_json = serde_json::to_string(input).map_err(|e| e.to_string())?;
-    let setup = format!("var input = JSON.parse('{}');", input_json.replace('\'', "\\'"));
-    context.eval(Source::from_bytes(setup.as_bytes()))
+    let setup = format!(
+        "var input = JSON.parse('{}');",
+        input_json.replace('\'', "\\'")
+    );
+    context
+        .eval(Source::from_bytes(setup.as_bytes()))
         .map_err(|e| format!("JS input setup: {:?}", e))?;
 
     // Set ctx global
-    context.eval(Source::from_bytes(b"var ctx = { log: function(){}, requestId: 'test', traceId: 'test' };"))
+    context
+        .eval(Source::from_bytes(
+            b"var ctx = { log: function(){}, requestId: 'test', traceId: 'test' };",
+        ))
         .map_err(|e| format!("JS ctx setup: {:?}", e))?;
 
     // Wrap script to capture return value
     let wrapped = format!("(function() {{ {} }})()", script);
-    let result = context.eval(Source::from_bytes(wrapped.as_bytes()))
+    let result = context
+        .eval(Source::from_bytes(wrapped.as_bytes()))
         .map_err(|e| format!("JS execution error: {:?}", e))?;
 
     js_value_to_json(&result, &mut context)
 }
 
 #[cfg(feature = "js")]
-fn js_value_to_json(val: &boa_engine::JsValue, ctx: &mut boa_engine::Context) -> Result<Value, String> {
+fn js_value_to_json(
+    val: &boa_engine::JsValue,
+    ctx: &mut boa_engine::Context,
+) -> Result<Value, String> {
     use boa_engine::JsValue;
 
     match val {
         JsValue::Null | JsValue::Undefined => Ok(Value::Null),
         JsValue::Boolean(b) => Ok(Value::Bool(*b)),
         JsValue::Integer(i) => Ok(Value::Number(serde_json::Number::from(*i))),
-        JsValue::Rational(f) => {
-            serde_json::Number::from_f64(*f)
-                .map(Value::Number)
-                .ok_or_else(|| "Invalid float".into())
-        }
+        JsValue::Rational(f) => serde_json::Number::from_f64(*f)
+            .map(Value::Number)
+            .ok_or_else(|| "Invalid float".into()),
         JsValue::String(s) => Ok(Value::String(s.to_std_string_escaped())),
         JsValue::Object(obj) => {
             // Use JSON.stringify to convert
-            let json_str = ctx.eval(boa_engine::Source::from_bytes(
-                format!("JSON.stringify({})", val.display().to_string()).as_bytes()
-            )).map_err(|e| format!("JSON.stringify error: {:?}", e))?;
+            let json_str = ctx
+                .eval(boa_engine::Source::from_bytes(
+                    format!("JSON.stringify({})", val.display().to_string()).as_bytes(),
+                ))
+                .map_err(|e| format!("JSON.stringify error: {:?}", e))?;
 
             if let JsValue::String(s) = json_str {
                 serde_json::from_str(&s.to_std_string_escaped()).map_err(|e| e.to_string())

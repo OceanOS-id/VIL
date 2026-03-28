@@ -89,7 +89,10 @@ impl PiiDetector {
         for m in self.ssn_re.find_iter(text) {
             // Check this isn't part of a credit card number
             let val = m.as_str();
-            if !self.credit_card_re.is_match(&text[m.start().saturating_sub(10)..text.len().min(m.end() + 10)]) {
+            if !self
+                .credit_card_re
+                .is_match(&text[m.start().saturating_sub(10)..text.len().min(m.end() + 10)])
+            {
                 matches.push(PiiMatch {
                     pii_type: PiiType::SSN,
                     value: val.to_string(),

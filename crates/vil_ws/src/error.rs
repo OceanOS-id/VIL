@@ -66,13 +66,13 @@ impl WsFault {
     /// Return a stable numeric error code for log `error_code` fields.
     pub fn as_error_code(&self) -> u8 {
         match self {
-            WsFault::BindFailed { .. }             => 1,
-            WsFault::HandshakeFailed { .. }        => 2,
+            WsFault::BindFailed { .. } => 1,
+            WsFault::HandshakeFailed { .. } => 2,
             WsFault::ConnectionLimitReached { .. } => 3,
-            WsFault::SendFailed { .. }             => 4,
-            WsFault::BroadcastPartialFail { .. }   => 5,
-            WsFault::RoomNotFound { .. }           => 6,
-            WsFault::MessageTooLarge { .. }        => 7,
+            WsFault::SendFailed { .. } => 4,
+            WsFault::BroadcastPartialFail { .. } => 5,
+            WsFault::RoomNotFound { .. } => 6,
+            WsFault::MessageTooLarge { .. } => 7,
         }
     }
 }

@@ -11,10 +11,10 @@ pub struct StatsResponseBody {
     pub version: String,
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<StatsResponseBody>> {
-    let config = ctx.state::<Arc<SpeculativeConfig>>().expect("SpeculativeConfig");
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<StatsResponseBody>> {
+    let config = ctx
+        .state::<Arc<SpeculativeConfig>>()
+        .expect("SpeculativeConfig");
     Ok(VilResponse::ok(StatsResponseBody {
         max_draft_tokens: config.max_draft_tokens,
         max_total_tokens: config.max_total_tokens,

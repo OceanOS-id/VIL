@@ -128,11 +128,7 @@ impl AgentGraphBuilder {
     }
 
     /// Add an agent with the given name. Role defaults to the name.
-    pub fn agent(
-        mut self,
-        name: impl Into<String>,
-        agent: Arc<dyn AgentRunnable>,
-    ) -> Self {
+    pub fn agent(mut self, name: impl Into<String>, agent: Arc<dyn AgentRunnable>) -> Self {
         let n: String = name.into();
         self.agents.insert(n.clone(), (n.clone(), agent));
         self
@@ -176,9 +172,7 @@ impl AgentGraphBuilder {
         let mut nodes: HashMap<String, AgentNode> = self
             .agents
             .into_iter()
-            .map(|(name, (role, agent))| {
-                (name.clone(), AgentNode::new(name, role, agent))
-            })
+            .map(|(name, (role, agent))| (name.clone(), AgentNode::new(name, role, agent)))
             .collect();
 
         for (from, to) in &self.edges {
@@ -303,7 +297,10 @@ mod tests {
             .agent("a", mock("a"))
             .edge("a", "unknown")
             .build();
-        assert_eq!(result.unwrap_err(), GraphError::UnknownAgent("unknown".into()));
+        assert_eq!(
+            result.unwrap_err(),
+            GraphError::UnknownAgent("unknown".into())
+        );
     }
 
     #[test]

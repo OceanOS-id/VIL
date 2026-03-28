@@ -39,15 +39,24 @@ pub struct CompileFault {
 
 impl CompileFault {
     pub fn cycle_detected(msg: impl Into<String>) -> Self {
-        Self { error_type: CompileFaultType::CycleDetected, message: msg.into() }
+        Self {
+            error_type: CompileFaultType::CycleDetected,
+            message: msg.into(),
+        }
     }
 
     pub fn missing_node(msg: impl Into<String>) -> Self {
-        Self { error_type: CompileFaultType::MissingNode, message: msg.into() }
+        Self {
+            error_type: CompileFaultType::MissingNode,
+            message: msg.into(),
+        }
     }
 
     pub fn execution_failed(msg: impl Into<String>) -> Self {
-        Self { error_type: CompileFaultType::ExecutionFailed, message: msg.into() }
+        Self {
+            error_type: CompileFaultType::ExecutionFailed,
+            message: msg.into(),
+        }
     }
 }
 

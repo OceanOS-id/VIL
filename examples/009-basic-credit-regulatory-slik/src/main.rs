@@ -70,8 +70,7 @@ const WEBHOOK_PATH: &str = "/regulatory-stream";
 /// Core Banking NDJSON — bulk mode for monthly SLIK regulatory reporting.
 /// Large count (1000 records per batch) — in production, this processes
 /// the bank's entire credit portfolio (500K+ records) for OJK submission.
-const CORE_BANKING_NDJSON: &str =
-    "http://localhost:18081/api/v1/credits/ndjson?count=1000";
+const CORE_BANKING_NDJSON: &str = "http://localhost:18081/api/v1/credits/ndjson?count=1000";
 
 // ── Node Builders ───────────────────────────────────────────────────────
 
@@ -122,8 +121,7 @@ fn configure_source() -> HttpSourceBuilder {
 }
 
 fn main() {
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     let sink = configure_sink();
     let source = configure_source();

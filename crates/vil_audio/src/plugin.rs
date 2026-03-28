@@ -44,7 +44,8 @@ impl VilPlugin for AudioPlugin {
         vec![PluginCapability::Service {
             name: "audio".into(),
             endpoints: vec![
-                EndpointSpec::post("/api/audio/transcribe").with_description("Transcribe audio to text"),
+                EndpointSpec::post("/api/audio/transcribe")
+                    .with_description("Transcribe audio to text"),
                 EndpointSpec::get("/api/audio/stats").with_description("Audio service stats"),
             ],
         }]
@@ -57,7 +58,11 @@ impl VilPlugin for AudioPlugin {
     fn register(&self, ctx: &mut PluginContext) {
         let svc = ServiceProcess::new("audio")
             .state(Arc::clone(&self.transcriber))
-            .endpoint(Method::POST, "/transcribe", post(handlers::transcribe_handler))
+            .endpoint(
+                Method::POST,
+                "/transcribe",
+                post(handlers::transcribe_handler),
+            )
             .endpoint(Method::GET, "/stats", get(handlers::stats_handler))
             .emits::<AudioEvent>()
             .faults::<AudioFault>()

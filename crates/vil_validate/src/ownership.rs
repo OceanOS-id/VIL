@@ -36,7 +36,7 @@ impl ValidationPass for OwnershipLegalityPass {
                         }
                     }
                 };
-                
+
                 check_proc(&route.from_process, "producer");
                 check_proc(&route.to_process, "consumer");
             }
@@ -50,8 +50,12 @@ impl ValidationPass for OwnershipLegalityPass {
             );
 
             if implies_ownership {
-                let has_published = transfer.expected_flow.contains(&vil_ir::OwnershipState::Published);
-                let has_released = transfer.expected_flow.contains(&vil_ir::OwnershipState::Released);
+                let has_published = transfer
+                    .expected_flow
+                    .contains(&vil_ir::OwnershipState::Published);
+                let has_released = transfer
+                    .expected_flow
+                    .contains(&vil_ir::OwnershipState::Released);
 
                 if has_published && !has_released {
                     report.push(Diagnostic::error(
@@ -74,8 +78,8 @@ impl ValidationPass for OwnershipLegalityPass {
 mod tests {
     use super::*;
     use vil_ir::builder::*;
-    use vil_types::{QueueKind, CleanupPolicy};
     use vil_ir::{OwnershipState, TransferExprIR};
+    use vil_types::{CleanupPolicy, QueueKind};
 
     #[test]
     fn test_ownership_leak_detection() {
@@ -83,12 +87,24 @@ mod tests {
             .add_message(MessageBuilder::new("Data").build())
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "Data").queue(QueueKind::Spsc, 10).done()
-                    .in_port("rx", "Data").queue(QueueKind::Spsc, 10).done()
-                    .build()
+                    .out_port("tx", "Data")
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .in_port("rx", "Data")
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .build(),
             )
-            .add_process(ProcessBuilder::new("Producer", "Iface").cleanup(CleanupPolicy::ReclaimOrphans).build())
-            .add_process(ProcessBuilder::new("Consumer", "Iface").cleanup(CleanupPolicy::ReclaimOrphans).build())
+            .add_process(
+                ProcessBuilder::new("Producer", "Iface")
+                    .cleanup(CleanupPolicy::ReclaimOrphans)
+                    .build(),
+            )
+            .add_process(
+                ProcessBuilder::new("Consumer", "Iface")
+                    .cleanup(CleanupPolicy::ReclaimOrphans)
+                    .build(),
+            )
             .route("Producer", "tx", "Consumer", "rx", TransferMode::LoanWrite)
             .build();
 
@@ -101,12 +117,20 @@ mod tests {
             to_port: "rx".into(),
             transfer_mode: TransferMode::LoanWrite,
             message_name: "Data".into(),
-            expected_flow: vec![OwnershipState::Allocated, OwnershipState::Published, OwnershipState::Received, OwnershipState::Released],
+            expected_flow: vec![
+                OwnershipState::Allocated,
+                OwnershipState::Published,
+                OwnershipState::Received,
+                OwnershipState::Released,
+            ],
         });
 
         let pass = OwnershipLegalityPass;
         let report = pass.run(&ir);
-        assert!(!report.has_errors(), "Valid transfer should not have errors");
+        assert!(
+            !report.has_errors(),
+            "Valid transfer should not have errors"
+        );
 
         // 2. Add an invalid transfer (leak)
         ir.transfers.clear();
@@ -119,11 +143,18 @@ mod tests {
             transfer_mode: TransferMode::LoanWrite,
             message_name: "Data".into(),
             // Missing Released
-            expected_flow: vec![OwnershipState::Allocated, OwnershipState::Published, OwnershipState::Received],
+            expected_flow: vec![
+                OwnershipState::Allocated,
+                OwnershipState::Published,
+                OwnershipState::Received,
+            ],
         });
 
         let report = pass.run(&ir);
         assert!(report.has_errors());
-        assert!(report.diagnostics.iter().any(|d| d.code == "E-OWNERSHIP-LEAK-01"));
+        assert!(report
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "E-OWNERSHIP-LEAK-01"));
     }
 }

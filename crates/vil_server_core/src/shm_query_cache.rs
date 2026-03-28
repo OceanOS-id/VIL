@@ -64,8 +64,11 @@ impl ShmQueryCache {
     ) -> Self {
         let region_id = heap.create_region("vil_query_cache", region_size);
         Self {
-            heap, region_id, entries: DashMap::new(),
-            default_ttl, max_entries,
+            heap,
+            region_id,
+            entries: DashMap::new(),
+            default_ttl,
+            max_entries,
             hits: std::sync::atomic::AtomicU64::new(0),
             misses: std::sync::atomic::AtomicU64::new(0),
         }
@@ -82,12 +85,14 @@ impl ShmQueryCache {
         if entry.is_expired() {
             drop(entry);
             self.entries.remove(key);
-            self.misses.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            self.misses
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             return None;
         }
         entry.hit_count += 1;
         self.hits.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        self.heap.read_bytes(entry.region_id, entry.offset, entry.len)
+        self.heap
+            .read_bytes(entry.region_id, entry.offset, entry.len)
     }
 
     /// Get cached result as JSON.
@@ -124,14 +129,17 @@ impl ShmQueryCache {
             return false;
         }
 
-        self.entries.insert(key.to_string(), CacheEntry {
-            region_id: self.region_id,
-            offset,
-            len: data.len(),
-            cached_at: Instant::now(),
-            ttl,
-            hit_count: 0,
-        });
+        self.entries.insert(
+            key.to_string(),
+            CacheEntry {
+                region_id: self.region_id,
+                offset,
+                len: data.len(),
+                cached_at: Instant::now(),
+                ttl,
+                hit_count: 0,
+            },
+        );
 
         true
     }
@@ -166,14 +174,21 @@ impl ShmQueryCache {
         let hits = self.hits.load(std::sync::atomic::Ordering::Relaxed);
         let misses = self.misses.load(std::sync::atomic::Ordering::Relaxed);
         let total = hits + misses;
-        let (used, capacity) = self.heap.region_stats(self.region_id)
+        let (used, capacity) = self
+            .heap
+            .region_stats(self.region_id)
             .map(|s| (s.used, s.capacity))
             .unwrap_or((0, 0));
         QueryCacheStats {
             entries: self.entries.len(),
             max_entries: self.max_entries,
-            hits, misses,
-            hit_rate: if total > 0 { hits as f64 / total as f64 } else { 0.0 },
+            hits,
+            misses,
+            hit_rate: if total > 0 {
+                hits as f64 / total as f64
+            } else {
+                0.0
+            },
             shm_used_bytes: used,
             shm_capacity_bytes: capacity,
         }

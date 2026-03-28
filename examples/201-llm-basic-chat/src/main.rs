@@ -38,8 +38,8 @@
 //     -d '{"prompt": "Hello, world!"}' \
 //     http://localhost:3100/api/chat
 
+use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 use vil_server::prelude::*;
-use vil_llm::semantic::{LlmResponseEvent, LlmFault, LlmUsageState};
 
 // Upstream LLM endpoint. In a medical triage system, this would point
 // to a HIPAA-compliant LLM deployment with no data retention.
@@ -53,9 +53,9 @@ const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 // token consumption, and active triage model version.
 #[derive(Clone, Debug)]
 pub struct ChatState {
-    pub total_requests: u64,         // Total triage sessions today
-    pub total_tokens_approx: u64,    // Approximate token usage (cost tracking)
-    pub last_model: String,          // Active triage model version
+    pub total_requests: u64,      // Total triage sessions today
+    pub total_tokens_approx: u64, // Approximate token usage (cost tracking)
+    pub last_model: String,       // Active triage model version
 }
 
 // ChatCompletedEvent: emitted after each triage interaction. Used for
@@ -63,9 +63,9 @@ pub struct ChatState {
 // Did it correctly assess urgency? Compliance teams audit these events.
 #[derive(Clone, Debug)]
 pub struct ChatCompletedEvent {
-    pub prompt_len: u32,      // Patient symptom description length
-    pub response_len: u32,    // Triage recommendation length
-    pub model: String,        // Model used for this assessment
+    pub prompt_len: u32,   // Patient symptom description length
+    pub response_len: u32, // Triage recommendation length
+    pub model: String,     // Model used for this assessment
 }
 
 // ChatFault: typed error conditions specific to medical triage.
@@ -73,9 +73,9 @@ pub struct ChatCompletedEvent {
 // in a triage context is critical (patient received no guidance).
 #[vil_fault]
 pub enum ChatFault {
-    UpstreamTimeout,   // LLM service didn't respond — patient sees delay
-    EmptyResponse,     // LLM returned nothing — critical in medical context
-    InvalidPrompt,     // Patient input couldn't be parsed
+    UpstreamTimeout, // LLM service didn't respond — patient sees delay
+    EmptyResponse,   // LLM returned nothing — critical in medical context
+    InvalidPrompt,   // Patient input couldn't be parsed
 }
 
 // ── Request / Response ──────────────────────────────────────────────
@@ -109,9 +109,7 @@ struct ChatResponse {
 // - PII redaction before logging
 // - Specialist routing recommendation
 
-async fn chat_handler(
-    ctx: ServiceCtx, body: ShmSlice,
-) -> HandlerResult<VilResponse<ChatResponse>> {
+async fn chat_handler(ctx: ServiceCtx, body: ShmSlice) -> HandlerResult<VilResponse<ChatResponse>> {
     // ShmSlice: zero-copy body from ExchangeHeap — essential for
     // healthcare applications where response latency directly
     // impacts patient experience and triage accuracy.
@@ -144,7 +142,9 @@ async fn chat_handler(
         collector = collector.bearer_token(&api_key);
     }
 
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Semantic audit: record the triage completion event.
@@ -181,7 +181,14 @@ async fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode (no auth)" } else { "OPENAI_API_KEY (Bearer)" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode (no auth)"
+        } else {
+            "OPENAI_API_KEY (Bearer)"
+        }
+    );
     println!("  Listening on http://localhost:3100/api/chat");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!();

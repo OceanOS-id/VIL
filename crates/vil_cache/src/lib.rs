@@ -10,7 +10,7 @@
 // from relational DB concerns.
 
 pub mod cache_trait;
-pub mod shm_backend;
 pub mod redis_backend;
+pub mod shm_backend;
 
 pub use cache_trait::VilCache;

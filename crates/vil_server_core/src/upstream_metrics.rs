@@ -5,10 +5,10 @@
 // Tracks outbound HTTP calls to upstream services (LLM providers, databases,
 // external APIs). Feeds into the observer dashboard "Upstreams" panel.
 
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, OnceLock};
 use dashmap::DashMap;
 use serde::Serialize;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, OnceLock};
 
 use crate::obs_middleware::LATENCY_BUCKETS_US;
 
@@ -29,13 +29,17 @@ pub fn global() -> &'static Arc<UpstreamRegistry> {
 
 /// Record an upstream call (no-op when observer OFF).
 pub fn record_start(url: &str) {
-    if !ENABLED.load(std::sync::atomic::Ordering::Relaxed) { return; }
+    if !ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
+        return;
+    }
     global().call_start(url);
 }
 
 /// Record upstream call completion (no-op when observer OFF).
 pub fn record_end(url: &str, duration_us: u64, status: u16, is_error: bool) {
-    if !ENABLED.load(std::sync::atomic::Ordering::Relaxed) { return; }
+    if !ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
+        return;
+    }
     global().call_end(url, duration_us, status, is_error);
 }
 
@@ -80,7 +84,8 @@ impl UpstreamRegistry {
 
     /// Record start of an upstream call.
     pub fn call_start(&self, url: &str) {
-        let entry = self.upstreams
+        let entry = self
+            .upstreams
             .entry(url.to_string())
             .or_insert_with(|| Arc::new(UpstreamEndpoint::new(url)));
         entry.requests.fetch_add(1, Ordering::Relaxed);
@@ -98,7 +103,8 @@ impl UpstreamRegistry {
                 m.errors.fetch_add(1, Ordering::Relaxed);
             }
             // Histogram bucket
-            let idx = LATENCY_BUCKETS_US.iter()
+            let idx = LATENCY_BUCKETS_US
+                .iter()
                 .position(|&b| duration_us <= b)
                 .unwrap_or(LATENCY_BUCKETS_US.len());
             m.latency_buckets[idx].fetch_add(1, Ordering::Relaxed);
@@ -107,34 +113,54 @@ impl UpstreamRegistry {
 
     /// Get all upstream snapshots for observer dashboard.
     pub fn all_snapshots(&self) -> Vec<UpstreamSnapshot> {
-        self.upstreams.iter().map(|entry| {
-            let m = entry.value();
-            let reqs = m.requests.load(Ordering::Relaxed);
-            let errs = m.errors.load(Ordering::Relaxed);
-            let dur_count = m.duration_count.load(Ordering::Relaxed);
-            let dur_sum = m.duration_sum_us.load(Ordering::Relaxed);
-            let avg_us = if dur_count > 0 { dur_sum / dur_count } else { 0 };
+        self.upstreams
+            .iter()
+            .map(|entry| {
+                let m = entry.value();
+                let reqs = m.requests.load(Ordering::Relaxed);
+                let errs = m.errors.load(Ordering::Relaxed);
+                let dur_count = m.duration_count.load(Ordering::Relaxed);
+                let dur_sum = m.duration_sum_us.load(Ordering::Relaxed);
+                let avg_us = if dur_count > 0 {
+                    dur_sum / dur_count
+                } else {
+                    0
+                };
 
-            let p95 = crate::obs_middleware::HandlerMetricsRegistry::percentile_us(
-                &m.latency_buckets, reqs, 0.95);
-            let p99 = crate::obs_middleware::HandlerMetricsRegistry::percentile_us(
-                &m.latency_buckets, reqs, 0.99);
-            let p999 = crate::obs_middleware::HandlerMetricsRegistry::percentile_us(
-                &m.latency_buckets, reqs, 0.999);
+                let p95 = crate::obs_middleware::HandlerMetricsRegistry::percentile_us(
+                    &m.latency_buckets,
+                    reqs,
+                    0.95,
+                );
+                let p99 = crate::obs_middleware::HandlerMetricsRegistry::percentile_us(
+                    &m.latency_buckets,
+                    reqs,
+                    0.99,
+                );
+                let p999 = crate::obs_middleware::HandlerMetricsRegistry::percentile_us(
+                    &m.latency_buckets,
+                    reqs,
+                    0.999,
+                );
 
-            UpstreamSnapshot {
-                url: m.url.clone(),
-                requests: reqs,
-                errors: errs,
-                error_rate: if reqs > 0 { errs as f64 / reqs as f64 } else { 0.0 },
-                avg_latency_us: avg_us,
-                p95_us: p95,
-                p99_us: p99,
-                p999_us: p999,
-                in_flight: m.in_flight.load(Ordering::Relaxed),
-                last_status: m.last_status.load(Ordering::Relaxed) as u16,
-            }
-        }).collect()
+                UpstreamSnapshot {
+                    url: m.url.clone(),
+                    requests: reqs,
+                    errors: errs,
+                    error_rate: if reqs > 0 {
+                        errs as f64 / reqs as f64
+                    } else {
+                        0.0
+                    },
+                    avg_latency_us: avg_us,
+                    p95_us: p95,
+                    p99_us: p99,
+                    p999_us: p999,
+                    in_flight: m.in_flight.load(Ordering::Relaxed),
+                    last_status: m.last_status.load(Ordering::Relaxed) as u16,
+                }
+            })
+            .collect()
     }
 }
 

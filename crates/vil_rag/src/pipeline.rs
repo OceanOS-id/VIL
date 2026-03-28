@@ -4,7 +4,7 @@ use std::sync::Arc;
 use vil_llm::{ChatMessage, EmbeddingProvider, LlmProvider};
 
 use crate::chunk::{ChunkerStrategy, EmbeddedChunk};
-use crate::retriever::{Retriever, DenseRetriever};
+use crate::retriever::{DenseRetriever, Retriever};
 use crate::store::VectorStore;
 
 // ---------------------------------------------------------------------------
@@ -209,9 +209,9 @@ impl RagPipelineBuilder {
     pub fn build(self) -> RagPipeline {
         let embedder = self.embedder.expect("RagPipeline requires an embedder");
         let store = self.store.expect("RagPipeline requires a store");
-        let retriever = self.retriever.unwrap_or_else(|| {
-            Arc::new(DenseRetriever::new(embedder.clone(), store.clone()))
-        });
+        let retriever = self
+            .retriever
+            .unwrap_or_else(|| Arc::new(DenseRetriever::new(embedder.clone(), store.clone())));
 
         RagPipeline {
             chunker: self.chunker.expect("RagPipeline requires a chunker"),

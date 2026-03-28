@@ -16,7 +16,6 @@ pub trait RpcHandler: Send + Sync {
     fn endpoint_name(&self) -> &str;
 }
 
-
 /// RPC registry — maps endpoint names to handler functions.
 pub struct RpcRegistry {
     handlers: HashMap<String, Box<dyn RpcHandler>>,
@@ -24,18 +23,17 @@ pub struct RpcRegistry {
 
 impl RpcRegistry {
     pub fn new() -> Self {
-        Self { handlers: HashMap::new() }
+        Self {
+            handlers: HashMap::new(),
+        }
     }
 
     /// Register a typed RPC handler.
     ///
     /// The handler function takes deserialized Req and returns Resp.
     /// Serialization/deserialization is handled automatically.
-    pub fn register<Req, Resp, F>(
-        &mut self,
-        name: &str,
-        handler: F,
-    ) where
+    pub fn register<Req, Resp, F>(&mut self, name: &str, handler: F)
+    where
         Req: DeserializeOwned + 'static,
         Resp: Serialize + 'static,
         F: Fn(Req) -> Resp + Send + Sync + 'static,
@@ -56,8 +54,7 @@ impl RpcRegistry {
                 let req: Req2 = serde_json::from_slice(input)
                     .map_err(|e| format!("Deserialization failed: {}", e))?;
                 let resp = (self.f)(req);
-                serde_json::to_vec(&resp)
-                    .map_err(|e| format!("Serialization failed: {}", e))
+                serde_json::to_vec(&resp).map_err(|e| format!("Serialization failed: {}", e))
             }
 
             fn endpoint_name(&self) -> &str {
@@ -80,7 +77,9 @@ impl RpcRegistry {
 
     /// Invoke an RPC endpoint by name with raw bytes.
     pub fn invoke(&self, endpoint: &str, input: &[u8]) -> Result<Vec<u8>, String> {
-        let handler = self.handlers.get(endpoint)
+        let handler = self
+            .handlers
+            .get(endpoint)
             .ok_or_else(|| format!("RPC endpoint '{}' not found", endpoint))?;
         handler.handle(input)
     }
@@ -122,8 +121,8 @@ impl RpcClient {
         endpoint: &str,
         request: &Req,
     ) -> Result<Resp, String> {
-        let _input = serde_json::to_vec(request)
-            .map_err(|e| format!("Serialization failed: {}", e))?;
+        let _input =
+            serde_json::to_vec(request).map_err(|e| format!("Serialization failed: {}", e))?;
 
         let transport = if self.co_located { "SHM" } else { "TCP" };
         {
@@ -138,6 +137,10 @@ impl RpcClient {
         ))
     }
 
-    pub fn target(&self) -> &str { &self.target }
-    pub fn is_co_located(&self) -> bool { self.co_located }
+    pub fn target(&self) -> &str {
+        &self.target
+    }
+    pub fn is_co_located(&self) -> bool {
+        self.co_located
+    }
 }

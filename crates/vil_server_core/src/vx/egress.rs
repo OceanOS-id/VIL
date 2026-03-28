@@ -55,12 +55,7 @@ impl EgressHandle {
     /// Send an error response back to the waiting HTTP handler.
     ///
     /// Constructs a JSON error body with the given message and status code.
-    pub fn respond_error(
-        &self,
-        request_id: u64,
-        status: StatusCode,
-        message: &str,
-    ) -> bool {
+    pub fn respond_error(&self, request_id: u64, status: StatusCode, message: &str) -> bool {
         let error_body = serde_json::json!({
             "error": message,
             "status": status.as_u16(),
@@ -111,11 +106,7 @@ mod tests {
 
         let (req_id, rx) = bridge.register_pending();
 
-        assert!(egress.respond_error(
-            req_id,
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "something broke",
-        ));
+        assert!(egress.respond_error(req_id, StatusCode::INTERNAL_SERVER_ERROR, "something broke",));
 
         let resp = rx.await.unwrap();
         assert_eq!(resp.status, StatusCode::INTERNAL_SERVER_ERROR);
@@ -130,12 +121,7 @@ mod tests {
     fn egress_respond_unknown_id() {
         let bridge = IngressBridge::new();
         let egress = EgressHandle::new(bridge);
-        assert!(!egress.respond(
-            999,
-            StatusCode::OK,
-            Bytes::new(),
-            "text/plain",
-        ));
+        assert!(!egress.respond(999, StatusCode::OK, Bytes::new(), "text/plain",));
     }
 
     #[test]

@@ -32,8 +32,8 @@
 //   403 = File system tools (read_file, count_lines, find_pattern)
 //   Completely different tool set and domain (code files vs products).
 
-use vil_server::prelude::*;
 use vil_agent::semantic::{AgentCompletionEvent, AgentFault, AgentMemoryState};
+use vil_server::prelude::*;
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -226,7 +226,10 @@ fn tool_count_lines(path: &str) -> ToolResult {
 
 fn tool_find_pattern(path: &str, pattern: &str) -> ToolResult {
     if let Some(file) = MOCK_FILES.iter().find(|f| f.path == path) {
-        let matches: Vec<String> = file.content.lines().enumerate()
+        let matches: Vec<String> = file
+            .content
+            .lines()
+            .enumerate()
             .filter(|(_, line)| line.contains(pattern))
             .map(|(i, line)| format!("  L{}: {}", i + 1, line.trim()))
             .collect();
@@ -234,8 +237,13 @@ fn tool_find_pattern(path: &str, pattern: &str) -> ToolResult {
         let output = if matches.is_empty() {
             format!("No matches for '{}' in {}", pattern, path)
         } else {
-            format!("{} matches for '{}' in {}:\n{}",
-                matches.len(), pattern, path, matches.join("\n"))
+            format!(
+                "{} matches for '{}' in {}:\n{}",
+                matches.len(),
+                pattern,
+                path,
+                matches.join("\n")
+            )
         };
 
         ToolResult {
@@ -270,9 +278,7 @@ struct CodeReviewResponse {
 
 // ── Handler ─────────────────────────────────────────────────────────
 
-async fn code_review_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<CodeReviewResponse>> {
+async fn code_review_handler(body: ShmSlice) -> HandlerResult<VilResponse<CodeReviewResponse>> {
     let req: CodeReviewRequest = body.json().expect("invalid JSON body");
     // Step 1: Pre-execute tools based on query.
     // Business strategy: eagerly gather ALL available data before calling LLM.
@@ -281,14 +287,18 @@ async fn code_review_handler(
     let mut tool_results = Vec::new();
 
     // Always read the files mentioned in the prompt, or all files
-    let files_to_read: Vec<&str> = MOCK_FILES.iter()
-        .filter(|f| req.prompt.to_lowercase().contains(&f.path.to_lowercase())
-                     || req.prompt.contains("all") || req.prompt.contains("review"))
+    let files_to_read: Vec<&str> = MOCK_FILES
+        .iter()
+        .filter(|f| {
+            req.prompt.to_lowercase().contains(&f.path.to_lowercase())
+                || req.prompt.contains("all")
+                || req.prompt.contains("review")
+        })
         .map(|f| f.path)
         .collect();
 
     let files_to_read = if files_to_read.is_empty() {
-        vec![MOCK_FILES[0].path]  // Default to first file
+        vec![MOCK_FILES[0].path] // Default to first file
     } else {
         files_to_read
     };
@@ -308,7 +318,8 @@ async fn code_review_handler(
     }
 
     // Step 2: Build context from tool results for LLM
-    let tool_context: String = tool_results.iter()
+    let tool_context: String = tool_results
+        .iter()
         .map(|r| format!("[{}] {}\n{}", r.tool, r.input, r.output))
         .collect::<Vec<_>>()
         .join("\n\n");
@@ -342,7 +353,9 @@ async fn code_review_handler(
         collector = collector.bearer_token(&api_key);
     }
 
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Semantic anchors
@@ -371,10 +384,20 @@ async fn main() {
     println!("    - read_file   : read source file content");
     println!("    - count_lines : count total/code/blank lines");
     println!("    - find_pattern: regex search in code");
-    println!("  Mock files: {:?}", MOCK_FILES.iter().map(|f| f.path).collect::<Vec<_>>());
+    println!(
+        "  Mock files: {:?}",
+        MOCK_FILES.iter().map(|f| f.path).collect::<Vec<_>>()
+    );
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     println!("  Listening on http://localhost:3122/api/code-review");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!();

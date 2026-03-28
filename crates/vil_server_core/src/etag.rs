@@ -9,7 +9,6 @@
 //
 // Useful for API responses that are cacheable (GET list endpoints, config, etc.)
 
-
 /// Generate a weak ETag from content bytes.
 ///
 /// Uses FNV-1a hash for speed (not cryptographic — ETags don't need to be).

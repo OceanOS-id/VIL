@@ -1,7 +1,7 @@
 use vil_server::prelude::*;
 
-use crate::handlers;
 use crate::config::SpeculativeConfig;
+use crate::handlers;
 use crate::semantic::{SpeculativeEvent, SpeculativeFault, SpeculativeState};
 use std::sync::Arc;
 
@@ -14,16 +14,20 @@ impl SpeculativePlugin {
 }
 
 impl VilPlugin for SpeculativePlugin {
-    fn id(&self) -> &str { "vil-speculative" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Speculative decoding proxy for 2-3x faster LLM generation" }
+    fn id(&self) -> &str {
+        "vil-speculative"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Speculative decoding proxy for 2-3x faster LLM generation"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "speculative".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/speculative/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/speculative/stats")],
         }]
     }
 
@@ -39,5 +43,7 @@ impl VilPlugin for SpeculativePlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

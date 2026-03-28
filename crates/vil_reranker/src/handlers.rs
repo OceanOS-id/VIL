@@ -26,7 +26,9 @@ pub async fn rerank_handler(
         return Err(VilError::bad_request("candidates must not be empty"));
     }
     let top_k = req.top_k.unwrap_or(req.candidates.len());
-    let results = reranker.rerank(&req.query, &req.candidates, top_k).await
+    let results = reranker
+        .rerank(&req.query, &req.candidates, top_k)
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
     let count = results.len();
     Ok(VilResponse::ok(RerankResponseBody { results, count }))

@@ -2,25 +2,35 @@
 
 use vil_server::prelude::*;
 
-use std::sync::Arc;
 use crate::counter::TokenCounter;
 use crate::handlers;
 use crate::semantic::{TokenizeEvent, TokenizeFault, TokenizerState};
+use std::sync::Arc;
 
 pub struct TokenizerPlugin;
 
 impl TokenizerPlugin {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl Default for TokenizerPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for TokenizerPlugin {
-    fn id(&self) -> &str { "vil-tokenizer" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "BPE tokenizer: count, truncate, encode/decode" }
+    fn id(&self) -> &str {
+        "vil-tokenizer"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "BPE tokenizer: count, truncate, encode/decode"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -47,5 +57,7 @@ impl VilPlugin for TokenizerPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

@@ -24,19 +24,19 @@
 //! ```
 
 pub mod config;
+pub mod decoder;
 pub mod draft;
 pub mod verifier;
-pub mod decoder;
 
 pub use config::SpeculativeConfig;
-pub use draft::{DraftProvider, DraftError};
+pub use decoder::{SpeculativeDecoder, SpeculativeError, SpeculativeResult};
+pub use draft::{DraftError, DraftProvider};
 pub use verifier::{verify_draft, VerificationResult};
-pub use decoder::{SpeculativeDecoder, SpeculativeResult, SpeculativeError};
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::SpeculativePlugin;
 pub use semantic::{SpeculativeEvent, SpeculativeFault, SpeculativeState};
@@ -45,8 +45,8 @@ pub use semantic::{SpeculativeEvent, SpeculativeFault, SpeculativeState};
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Arc;
     use vil_llm::message::{ChatMessage, ChatResponse, LlmError};
     use vil_llm::provider::LlmProvider;
 
@@ -66,8 +66,7 @@ mod tests {
                 call_count: AtomicUsize::new(0),
             }
         }
-
-}
+    }
 
     #[async_trait]
     impl DraftProvider for MockDraft {
@@ -141,16 +140,16 @@ mod tests {
     #[tokio::test]
     async fn test_full_decode_with_mock() {
         // Draft proposes "Hello world", target confirms by returning matching prefix.
-        let draft = Arc::new(MockDraft::new(vec![
-            vec!["Hello".into(), " world".into()],
-        ]));
+        let draft = Arc::new(MockDraft::new(vec![vec!["Hello".into(), " world".into()]]));
         // Target sees draft as assistant message, returns empty (confirming).
         let target = Arc::new(MockTarget::new(vec!["".into()]));
 
         let decoder = SpeculativeDecoder::new(
             draft,
             target,
-            SpeculativeConfig::new().max_draft_tokens(2).max_iterations(2),
+            SpeculativeConfig::new()
+                .max_draft_tokens(2)
+                .max_iterations(2),
         );
 
         let result = decoder
@@ -167,9 +166,7 @@ mod tests {
     #[tokio::test]
     async fn test_high_acceptance_rate() {
         // Draft: ["The", " cat"], Target confirms with "The cat" prefix.
-        let draft = Arc::new(MockDraft::new(vec![
-            vec!["The".into(), " cat".into()],
-        ]));
+        let draft = Arc::new(MockDraft::new(vec![vec!["The".into(), " cat".into()]]));
         let target = Arc::new(MockTarget::new(vec![
             "The cat".into(), // matches both draft tokens
         ]));
@@ -177,7 +174,9 @@ mod tests {
         let decoder = SpeculativeDecoder::new(
             draft,
             target,
-            SpeculativeConfig::new().max_draft_tokens(2).max_iterations(2),
+            SpeculativeConfig::new()
+                .max_draft_tokens(2)
+                .max_iterations(2),
         );
 
         let result = decoder
@@ -195,23 +194,18 @@ mod tests {
     #[tokio::test]
     async fn test_zero_acceptance_all_rejected() {
         // Draft proposes tokens that don't match target at all.
-        let draft = Arc::new(MockDraft::new(vec![
-            vec!["foo".into(), "bar".into()],
-        ]));
-        let target = Arc::new(MockTarget::new(vec![
-            "completely different".into(),
-        ]));
+        let draft = Arc::new(MockDraft::new(vec![vec!["foo".into(), "bar".into()]]));
+        let target = Arc::new(MockTarget::new(vec!["completely different".into()]));
 
         let decoder = SpeculativeDecoder::new(
             draft,
             target,
-            SpeculativeConfig::new().max_draft_tokens(2).max_iterations(2),
+            SpeculativeConfig::new()
+                .max_draft_tokens(2)
+                .max_iterations(2),
         );
 
-        let result = decoder
-            .decode(&[ChatMessage::user("test")])
-            .await
-            .unwrap();
+        let result = decoder.decode(&[ChatMessage::user("test")]).await.unwrap();
 
         assert_eq!(result.accepted_tokens, 0);
         assert_eq!(result.draft_tokens, 2);
@@ -222,15 +216,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_empty_input() {
-        let draft = Arc::new(MockDraft::new(vec![
-            vec!["Hello".into()],
-        ]));
+        let draft = Arc::new(MockDraft::new(vec![vec!["Hello".into()]]));
         let target = Arc::new(MockTarget::new(vec!["Hello".into()]));
 
         let decoder = SpeculativeDecoder::new(
             draft,
             target,
-            SpeculativeConfig::new().max_draft_tokens(1).max_iterations(2),
+            SpeculativeConfig::new()
+                .max_draft_tokens(1)
+                .max_iterations(2),
         );
 
         // Empty messages array.
@@ -261,9 +255,11 @@ mod tests {
     #[tokio::test]
     async fn test_partial_acceptance() {
         // Draft: ["The", " quick", " fox"], target matches first two only.
-        let draft = Arc::new(MockDraft::new(vec![
-            vec!["The".into(), " quick".into(), " fox".into()],
-        ]));
+        let draft = Arc::new(MockDraft::new(vec![vec![
+            "The".into(),
+            " quick".into(),
+            " fox".into(),
+        ]]));
         let target = Arc::new(MockTarget::new(vec![
             "The quick brown".into(), // matches "The" and " quick" but not " fox"
         ]));
@@ -271,13 +267,12 @@ mod tests {
         let decoder = SpeculativeDecoder::new(
             draft,
             target,
-            SpeculativeConfig::new().max_draft_tokens(3).max_iterations(2),
+            SpeculativeConfig::new()
+                .max_draft_tokens(3)
+                .max_iterations(2),
         );
 
-        let result = decoder
-            .decode(&[ChatMessage::user("test")])
-            .await
-            .unwrap();
+        let result = decoder.decode(&[ChatMessage::user("test")]).await.unwrap();
 
         assert_eq!(result.accepted_tokens, 2);
         assert_eq!(result.draft_tokens, 3);
@@ -293,20 +288,19 @@ mod tests {
             vec!["world".into(), "!".into()],
         ]));
         let target = Arc::new(MockTarget::new(vec![
-            "Hello ".into(),  // first round: full match
-            "world!".into(),  // second round: full match
+            "Hello ".into(), // first round: full match
+            "world!".into(), // second round: full match
         ]));
 
         let decoder = SpeculativeDecoder::new(
             draft,
             target,
-            SpeculativeConfig::new().max_draft_tokens(2).max_iterations(5),
+            SpeculativeConfig::new()
+                .max_draft_tokens(2)
+                .max_iterations(5),
         );
 
-        let result = decoder
-            .decode(&[ChatMessage::user("greet")])
-            .await
-            .unwrap();
+        let result = decoder.decode(&[ChatMessage::user("greet")]).await.unwrap();
 
         assert_eq!(result.accepted_tokens, 4);
         assert_eq!(result.draft_tokens, 4);

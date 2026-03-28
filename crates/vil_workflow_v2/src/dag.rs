@@ -15,7 +15,10 @@ pub fn resolve_layers(tasks: &[Task]) -> Result<Vec<Vec<String>>, String> {
     for task in tasks {
         for dep in &task.deps {
             if !task_map.contains_key(dep.as_str()) {
-                return Err(format!("Task '{}' depends on unknown task '{}'", task.id, dep));
+                return Err(format!(
+                    "Task '{}' depends on unknown task '{}'",
+                    task.id, dep
+                ));
             }
         }
     }
@@ -28,7 +31,10 @@ pub fn resolve_layers(tasks: &[Task]) -> Result<Vec<Vec<String>>, String> {
         in_degree.entry(task.id.as_str()).or_insert(0);
         for dep in &task.deps {
             *in_degree.entry(task.id.as_str()).or_insert(0) += 1;
-            dependents.entry(dep.as_str()).or_default().push(task.id.as_str());
+            dependents
+                .entry(dep.as_str())
+                .or_default()
+                .push(task.id.as_str());
         }
     }
 

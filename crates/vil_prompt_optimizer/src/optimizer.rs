@@ -72,9 +72,11 @@ impl PromptOptimizer {
 
     /// Return the highest scoring candidate.
     pub fn best(&self) -> Option<&PromptCandidate> {
-        self.candidates
-            .iter()
-            .max_by(|a, b| a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal))
+        self.candidates.iter().max_by(|a, b| {
+            a.score
+                .partial_cmp(&b.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
     }
 
     /// Generate a variation of a prompt template via simple mutations.

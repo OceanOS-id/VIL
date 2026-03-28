@@ -19,8 +19,12 @@ pub struct GraphRagQueryRequest {
     pub max_results: usize,
 }
 
-fn default_max_hops() -> usize { 2 }
-fn default_max_results() -> usize { 10 }
+fn default_max_hops() -> usize {
+    2
+}
+fn default_max_results() -> usize {
+    10
+}
 
 #[derive(Debug, Serialize)]
 pub struct GraphRagQueryResponse {
@@ -57,7 +61,9 @@ pub async fn query_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<GraphRagQueryResponse>> {
     let graph = ctx.state::<Arc<MemoryGraph>>()?;
-    let req: GraphRagQueryRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: GraphRagQueryRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     if req.query.trim().is_empty() {
         return Err(VilError::bad_request("query must not be empty"));
     }
@@ -95,9 +101,7 @@ pub async fn query_handler(
 }
 
 /// GET /stats — GraphRAG service stats.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<GraphRagStatsBody> {
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<GraphRagStatsBody> {
     let graph = ctx.state::<Arc<MemoryGraph>>().expect("MemoryGraph");
     VilResponse::ok(GraphRagStatsBody {
         entity_count: graph.entity_count(),

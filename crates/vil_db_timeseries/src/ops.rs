@@ -65,11 +65,27 @@ impl TimeseriesClient {
 
         match result {
             Ok(_) => {
-                emit_db_log(self.db_hash(), bucket, OP_WRITE, elapsed_us, count, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    bucket,
+                    OP_WRITE,
+                    elapsed_us,
+                    count,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(())
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), bucket, OP_WRITE, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    bucket,
+                    OP_WRITE,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(TimeseriesFault::WriteFailed {
                     bucket_hash,
                     reason_code: fault_code_from_err(&e),
@@ -104,11 +120,27 @@ impl TimeseriesClient {
         match result {
             Ok(records) => {
                 let rows = records.len() as u32;
-                emit_db_log(self.db_hash(), flux, OP_QUERY, elapsed_us, rows, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    flux,
+                    OP_QUERY,
+                    elapsed_us,
+                    rows,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(records)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), flux, OP_QUERY, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    flux,
+                    OP_QUERY,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(TimeseriesFault::QueryFailed {
                     query_hash,
                     reason_code: fault_code_from_err(&e),

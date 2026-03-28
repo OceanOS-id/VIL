@@ -91,8 +91,11 @@ impl ValidationPass for ReactiveInterfacePass {
 
             if iface.reactive_kind == ReactiveInterfaceKind::SessionReactive {
                 // Ensure a Control Lane exists
-                let has_control = iface.ports.values().any(|p| p.lane_kind == LaneKind::Control);
-                
+                let has_control = iface
+                    .ports
+                    .values()
+                    .any(|p| p.lane_kind == LaneKind::Control);
+
                 if !has_control {
                     report.push(Diagnostic::error(
                         "E-REACTIVE-01",
@@ -102,7 +105,10 @@ impl ValidationPass for ReactiveInterfacePass {
                 }
 
                 // Ensure a Data Lane exists (Trigger or Data)
-                let has_data = iface.ports.values().any(|p| p.lane_kind == LaneKind::Data || p.lane_kind == LaneKind::Trigger);
+                let has_data = iface
+                    .ports
+                    .values()
+                    .any(|p| p.lane_kind == LaneKind::Data || p.lane_kind == LaneKind::Trigger);
                 if !has_data {
                     report.push(Diagnostic::error(
                         "E-REACTIVE-02",

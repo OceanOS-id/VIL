@@ -60,13 +60,13 @@ impl<S: Subscriber> Layer<S> for VilTracingLayer {
         let mut slot = LogSlot::default();
         slot.header = VilLogHeader {
             timestamp_ns: ts,
-            level:        level as u8,
-            category:     LogCategory::App as u8,
-            version:      1,
+            level: level as u8,
+            category: LogCategory::App as u8,
+            version: 1,
             service_hash,
             handler_hash,
-            node_hash:    0,
-            process_id:   std::process::id() as u64,
+            node_hash: 0,
+            process_id: std::process::id() as u64,
             ..VilLogHeader::default()
         };
 
@@ -87,8 +87,8 @@ fn tracing_level_to_vil(level: &Level) -> LogLevel {
     match *level {
         Level::TRACE => LogLevel::Trace,
         Level::DEBUG => LogLevel::Debug,
-        Level::INFO  => LogLevel::Info,
-        Level::WARN  => LogLevel::Warn,
+        Level::INFO => LogLevel::Info,
+        Level::WARN => LogLevel::Warn,
         Level::ERROR => LogLevel::Error,
     }
 }
@@ -104,38 +104,28 @@ struct FieldCollector {
 
 impl tracing::field::Visit for FieldCollector {
     fn record_f64(&mut self, field: &tracing::field::Field, value: f64) {
-        self.fields.insert(
-            field.name().to_string(),
-            serde_json::Value::from(value),
-        );
+        self.fields
+            .insert(field.name().to_string(), serde_json::Value::from(value));
     }
 
     fn record_i64(&mut self, field: &tracing::field::Field, value: i64) {
-        self.fields.insert(
-            field.name().to_string(),
-            serde_json::Value::from(value),
-        );
+        self.fields
+            .insert(field.name().to_string(), serde_json::Value::from(value));
     }
 
     fn record_u64(&mut self, field: &tracing::field::Field, value: u64) {
-        self.fields.insert(
-            field.name().to_string(),
-            serde_json::Value::from(value),
-        );
+        self.fields
+            .insert(field.name().to_string(), serde_json::Value::from(value));
     }
 
     fn record_bool(&mut self, field: &tracing::field::Field, value: bool) {
-        self.fields.insert(
-            field.name().to_string(),
-            serde_json::Value::from(value),
-        );
+        self.fields
+            .insert(field.name().to_string(), serde_json::Value::from(value));
     }
 
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
-        self.fields.insert(
-            field.name().to_string(),
-            serde_json::Value::from(value),
-        );
+        self.fields
+            .insert(field.name().to_string(), serde_json::Value::from(value));
     }
 
     fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {

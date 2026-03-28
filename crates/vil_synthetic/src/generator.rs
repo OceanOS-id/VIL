@@ -38,7 +38,11 @@ impl SyntheticGenerator {
 
     /// Generate a batch of synthetic examples from seeds.
     /// Cycles through templates and seeds to produce `count` examples.
-    pub fn generate_batch(&self, seed_examples: &[SeedExample], count: usize) -> Vec<SyntheticExample> {
+    pub fn generate_batch(
+        &self,
+        seed_examples: &[SeedExample],
+        count: usize,
+    ) -> Vec<SyntheticExample> {
         if seed_examples.is_empty() || self.templates.is_empty() {
             return Vec::new();
         }
@@ -56,7 +60,10 @@ impl SyntheticGenerator {
 
             let rendered = template.render(&seed.instruction, &seed.input, &seed.output);
 
-            let combined = format!("{} {} {}", rendered.instruction, rendered.input, rendered.output);
+            let combined = format!(
+                "{} {} {}",
+                rendered.instruction, rendered.input, rendered.output
+            );
             let quality_score = self.quality_checker.score(&combined, &seed_texts);
 
             results.push(SyntheticExample {

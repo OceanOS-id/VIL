@@ -13,4 +13,8 @@ pub enum CachePolicy {
     SharedAcrossServices,
 }
 
-impl Default for CachePolicy { fn default() -> Self { Self::None } }
+impl Default for CachePolicy {
+    fn default() -> Self {
+        Self::None
+    }
+}

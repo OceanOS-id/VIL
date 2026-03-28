@@ -1,8 +1,11 @@
-use vil_types::{ProcessSpec, PortSpec, PortDirection, QueueKind, HostId, MessageContract, ExecClass, CleanupPolicy, ObservabilitySpec, BoundaryKind, MessageMeta, LayoutProfile, TransferMode};
-use vil_rt::VastarRuntimeWorld;
-use vil_net::VerbsDriver;
-use std::time::Duration;
 use std::sync::Arc;
+use std::time::Duration;
+use vil_net::VerbsDriver;
+use vil_rt::VastarRuntimeWorld;
+use vil_types::{
+    BoundaryKind, CleanupPolicy, ExecClass, HostId, LayoutProfile, MessageContract, MessageMeta,
+    ObservabilitySpec, PortDirection, PortSpec, ProcessSpec, QueueKind, TransferMode,
+};
 
 #[derive(Clone, Debug)]
 struct SensorData {
@@ -26,7 +29,7 @@ fn main() -> std::io::Result<()> {
 
     // 1. Initialize Runtime with Host 1 (The "Server")
     let world_v1 = VastarRuntimeWorld::new_shared_with_host(HostId(1))?;
-    
+
     static PORTS: &[PortSpec] = &[PortSpec {
         name: "out",
         direction: PortDirection::Out,
@@ -91,14 +94,16 @@ fn main() -> std::io::Result<()> {
 
     let consumer = world_v1.register_process(spec_cons).unwrap();
     let port_in_id = consumer.port_id("in").unwrap();
-    
+
     // Connect them!
     world_v1.connect(port_out_id, port_in_id);
 
     // 2. Publish a sample (This will trigger mlock in our hardware-ready substrate)
     println!("📡 Publishing sample from Host 1...");
     let data = SensorData { id: 42, val: 3.14 };
-    let _published = world_v1.publish_value(producer.id(), port_out_id, data).unwrap();
+    let _published = world_v1
+        .publish_value(producer.id(), port_out_id, data)
+        .unwrap();
 
     // Verify verbs driver exists
     if let Some(driver) = world_v1.verbs_driver() {
@@ -108,13 +113,15 @@ fn main() -> std::io::Result<()> {
     // 3. Initialize Runtime with Host 2 (The "Client" performing remote pull)
     println!("🔗 Initializing Host 2 to simulate remote RDMA pull...");
     let world_v2 = VastarRuntimeWorld::new_shared_with_host(HostId(2))?;
-    
+
     // Check if the sample location is visible to Host 2 via the shared registry
     let samples = world_v2.registry_samples();
     for sample in samples {
-        println!("🔍 Found Sample ID: {}, Host: {}, Offset: {}", 
-            sample.id.0, sample.origin_host.0, sample.offset);
-        
+        println!(
+            "🔍 Found Sample ID: {}, Host: {}, Offset: {}",
+            sample.id.0, sample.origin_host.0, sample.offset
+        );
+
         if sample.origin_host == HostId(1) {
             println!("✅ Sample from Host 1 is globally visible in Registry!");
         }

@@ -4,7 +4,7 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, Fields};
+use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
 /// Parsed attributes from `#[vil_error(status = NNN, code = "...", retry = bool)]`.
 struct ErrorAttr {
@@ -15,7 +15,11 @@ struct ErrorAttr {
 
 /// Parse `#[vil_error(status = NNN, code = "...", retry = bool)]` from a variant's attributes.
 fn parse_error_attr(attrs: &[syn::Attribute]) -> ErrorAttr {
-    let mut result = ErrorAttr { status: 500, code: None, retry: None };
+    let mut result = ErrorAttr {
+        status: 500,
+        code: None,
+        retry: None,
+    };
     for attr in attrs {
         if attr.path().is_ident("vil_error") {
             let _ = attr.parse_nested_meta(|meta| {
@@ -40,7 +44,10 @@ fn parse_error_attr(attrs: &[syn::Attribute]) -> ErrorAttr {
 }
 
 /// Map a status code to the VilError factory method name (as an ident string).
-fn status_to_factory_call(status: u16, detail_expr: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+fn status_to_factory_call(
+    status: u16,
+    detail_expr: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
     match status {
         400 => quote! { ::vil_server_core::VilError::bad_request(#detail_expr) },
         401 => quote! { ::vil_server_core::VilError::unauthorized(#detail_expr) },
@@ -50,7 +57,7 @@ fn status_to_factory_call(status: u16, detail_expr: proc_macro2::TokenStream) ->
         429 => quote! { ::vil_server_core::VilError::rate_limited() },
         500 => quote! { ::vil_server_core::VilError::internal(#detail_expr) },
         503 => quote! { ::vil_server_core::VilError::service_unavailable(#detail_expr) },
-        _   => quote! { ::vil_server_core::VilError::internal(#detail_expr) },
+        _ => quote! { ::vil_server_core::VilError::internal(#detail_expr) },
     }
 }
 
@@ -132,10 +139,8 @@ pub fn derive_vil_error_impl(input: TokenStream) -> TokenStream {
                 let field_names: Vec<String> = field_idents.iter().map(|i| i.to_string()).collect();
 
                 // Build format string: "NotFound: id={}, other={}"
-                let fmt_parts: Vec<String> = field_names
-                    .iter()
-                    .map(|n| format!("{}={{}}", n))
-                    .collect();
+                let fmt_parts: Vec<String> =
+                    field_names.iter().map(|n| format!("{}={{}}", n)).collect();
                 let fmt_str = format!("{}: {}", var_name, fmt_parts.join(", "));
 
                 display_arms.push(quote! {
@@ -156,7 +161,9 @@ pub fn derive_vil_error_impl(input: TokenStream) -> TokenStream {
                 } else {
                     // Multiple positional fields: _0, _1, ...
                     let bindings: Vec<syn::Ident> = (0..count)
-                        .map(|i| syn::Ident::new(&format!("_{}", i), proc_macro2::Span::call_site()))
+                        .map(|i| {
+                            syn::Ident::new(&format!("_{}", i), proc_macro2::Span::call_site())
+                        })
                         .collect();
                     let fmt_placeholders: String = (0..count)
                         .map(|_| "{}".to_string())

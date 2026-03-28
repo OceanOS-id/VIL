@@ -1,7 +1,7 @@
 //! VilPlugin implementation for A/B testing integration.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::handlers::{self, ExperimentRegistry};
 use crate::semantic::{AbTestEvent, AbTestFault, AbTestState};
@@ -52,7 +52,7 @@ impl VilPlugin for AbTestPlugin {
         vec![PluginCapability::Service {
             name: "abtest".into(),
             endpoints: vec![
-                EndpointSpec::get("/api/abtest/stats").with_description("A/B test stats"),
+                EndpointSpec::get("/api/abtest/stats").with_description("A/B test stats")
             ],
         }]
     }

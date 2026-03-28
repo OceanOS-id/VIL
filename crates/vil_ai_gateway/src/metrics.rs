@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
-use serde::{Serialize, Deserialize};
 
 /// Gateway-level metrics.
 pub struct GatewayMetrics {
@@ -49,7 +49,8 @@ impl GatewayMetrics {
     }
 
     pub fn record_circuit_rejection(&self) {
-        self.total_circuit_rejections.fetch_add(1, Ordering::Relaxed);
+        self.total_circuit_rejections
+            .fetch_add(1, Ordering::Relaxed);
     }
 
     pub fn snapshot(&self) -> MetricsSnapshot {

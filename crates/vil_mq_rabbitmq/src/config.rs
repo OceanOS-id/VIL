@@ -26,9 +26,15 @@ pub struct RabbitConfig {
     pub prefetch_count: u16,
 }
 
-fn default_consumer_tag() -> String { "vil-consumer".into() }
-fn default_timeout_ms() -> u64 { 5_000 }
-fn default_prefetch() -> u16 { 10 }
+fn default_consumer_tag() -> String {
+    "vil-consumer".into()
+}
+fn default_timeout_ms() -> u64 {
+    5_000
+}
+fn default_prefetch() -> u16 {
+    10
+}
 
 impl RabbitConfig {
     pub fn new(uri: &str, exchange: &str, queue: &str) -> Self {

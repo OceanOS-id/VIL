@@ -96,8 +96,11 @@ async fn place_order(
 ) -> Result<VilResponse<OrderConfirmation>, VilError> {
     // Parse the incoming order from the HTTP request body.
     // ShmSlice provides zero-copy access to the request bytes.
-    let order: PlaceOrderRequest = body.json()
-        .map_err(|_| VilError::bad_request("Invalid order JSON — expected customer_id, product_id, quantity, amount_cents"))?;
+    let order: PlaceOrderRequest = body.json().map_err(|_| {
+        VilError::bad_request(
+            "Invalid order JSON — expected customer_id, product_id, quantity, amount_cents",
+        )
+    })?;
 
     // Generate a simple order ID (in production: use a distributed ID generator)
     let order_id = order.customer_id * 10000 + order.product_id;
@@ -163,8 +166,8 @@ async fn main() {
     println!("╚════════════════════════════════════════════════════════════════════════╝");
 
     // OrderGateway: public-facing service that accepts customer orders
-    let order_gateway = ServiceProcess::new("gateway")
-        .endpoint(Method::POST, "/orders/place", post(place_order));
+    let order_gateway =
+        ServiceProcess::new("gateway").endpoint(Method::POST, "/orders/place", post(place_order));
 
     // Fulfillment: internal service that processes orders and manages inventory
     // Visibility::Internal means it is only reachable via mesh, not public HTTP
@@ -178,10 +181,12 @@ async fn main() {
         .port(8080)
         .service(order_gateway)
         .service(fulfillment)
-        .mesh(VxMeshConfig::new()
-            .route("gateway", "fulfillment", VxLane::Trigger)   // "wake up" signal
-            .route("gateway", "fulfillment", VxLane::Data)      // order payload
-            .route("gateway", "fulfillment", VxLane::Control))  // inventory reservation
+        .mesh(
+            VxMeshConfig::new()
+                .route("gateway", "fulfillment", VxLane::Trigger) // "wake up" signal
+                .route("gateway", "fulfillment", VxLane::Data) // order payload
+                .route("gateway", "fulfillment", VxLane::Control),
+        ) // inventory reservation
         .run()
         .await;
 }

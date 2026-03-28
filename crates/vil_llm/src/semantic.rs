@@ -116,8 +116,7 @@ impl LlmUsageState {
         self.total_prompt_tokens += event.prompt_tokens as u64;
         self.total_completion_tokens += event.completion_tokens as u64;
         let n = self.total_requests as f64;
-        self.avg_latency_ms =
-            self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
+        self.avg_latency_ms = self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
     }
 
     /// Record an error occurrence.

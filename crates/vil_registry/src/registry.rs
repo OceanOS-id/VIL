@@ -29,8 +29,8 @@
 use dashmap::DashMap;
 use std::sync::Arc;
 
+use crate::shm_registry::{PortSnapshot, ProcessSnapshot, SampleSnapshot};
 use vil_types::{CleanupPolicy, Epoch, PortId, ProcessId, RegionId, SampleId};
-use crate::shm_registry::{ProcessSnapshot, PortSnapshot, SampleSnapshot};
 
 /// Record of a registered process in the registry.
 #[derive(Clone, Debug)]
@@ -105,12 +105,7 @@ impl Registry {
 
     /// Register a new process in the registry.
     #[doc(alias = "vil_keep")]
-    pub fn register_process(
-        &self,
-        process_id: ProcessId,
-        name: &str,
-        cleanup: CleanupPolicy,
-    ) {
+    pub fn register_process(&self, process_id: ProcessId, name: &str, cleanup: CleanupPolicy) {
         self.processes.insert(
             process_id,
             ProcessRecord {
@@ -140,7 +135,13 @@ impl Registry {
 
     /// Register a port in the registry.
     #[doc(alias = "vil_keep")]
-    pub fn register_port(&self, port_id: PortId, process_id: ProcessId, direction: vil_types::PortDirection, name: &str) {
+    pub fn register_port(
+        &self,
+        port_id: PortId,
+        process_id: ProcessId,
+        direction: vil_types::PortDirection,
+        name: &str,
+    ) {
         self.ports.insert(
             port_id,
             PortRecord {
@@ -283,7 +284,6 @@ impl Registry {
             .collect()
     }
 
-
     /// Number of registered samples.
     pub fn sample_count(&self) -> usize {
         self.samples.len()
@@ -307,7 +307,10 @@ impl Registry {
     }
 
     pub fn get_routes(&self, from: PortId) -> Vec<PortId> {
-        self.routes.get(&from).map(|r| r.value().clone()).unwrap_or_default()
+        self.routes
+            .get(&from)
+            .map(|r| r.value().clone())
+            .unwrap_or_default()
     }
 }
 
@@ -361,7 +364,17 @@ mod tests {
     #[test]
     fn test_sample_lifecycle() {
         let reg = Registry::new();
-        reg.register_sample(SampleId(1), ProcessId(1), vil_types::HostId(0), PortId(1), 2, RegionId(0), 123, 1024, 8); // 2 consumers
+        reg.register_sample(
+            SampleId(1),
+            ProcessId(1),
+            vil_types::HostId(0),
+            PortId(1),
+            2,
+            RegionId(0),
+            123,
+            1024,
+            8,
+        ); // 2 consumers
 
         // Not yet published
         let report = reg.sample_report();
@@ -392,9 +405,39 @@ mod tests {
         let reg = Registry::new();
         let pid = ProcessId(42);
 
-        reg.register_sample(SampleId(1), pid, vil_types::HostId(0), PortId(1), 1, RegionId(0), 1, 1024, 8);
-        reg.register_sample(SampleId(2), pid, vil_types::HostId(0), PortId(1), 1, RegionId(0), 2, 1024, 8);
-        reg.register_sample(SampleId(3), ProcessId(99), vil_types::HostId(0), PortId(2), 1, RegionId(0), 3, 1024, 8); // different process
+        reg.register_sample(
+            SampleId(1),
+            pid,
+            vil_types::HostId(0),
+            PortId(1),
+            1,
+            RegionId(0),
+            1,
+            1024,
+            8,
+        );
+        reg.register_sample(
+            SampleId(2),
+            pid,
+            vil_types::HostId(0),
+            PortId(1),
+            1,
+            RegionId(0),
+            2,
+            1024,
+            8,
+        );
+        reg.register_sample(
+            SampleId(3),
+            ProcessId(99),
+            vil_types::HostId(0),
+            PortId(2),
+            1,
+            RegionId(0),
+            3,
+            1024,
+            8,
+        ); // different process
 
         assert_eq!(reg.sample_count(), 3);
 
@@ -416,7 +459,17 @@ mod tests {
     #[test]
     fn test_reclaim_sample_directly() {
         let reg = Registry::new();
-        reg.register_sample(SampleId(1), ProcessId(1), vil_types::HostId(0), PortId(1), 1, RegionId(0), 0, 1024, 8);
+        reg.register_sample(
+            SampleId(1),
+            ProcessId(1),
+            vil_types::HostId(0),
+            PortId(1),
+            1,
+            RegionId(0),
+            0,
+            1024,
+            8,
+        );
         assert_eq!(reg.sample_count(), 1);
 
         reg.reclaim_sample(SampleId(1));

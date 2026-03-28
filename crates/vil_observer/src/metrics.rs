@@ -1,6 +1,6 @@
+use serde::Serialize;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use serde::Serialize;
 
 /// Per-endpoint metrics with atomic counters.
 #[derive(Debug)]
@@ -38,11 +38,17 @@ impl EndpointMetrics {
         if is_error {
             self.errors.fetch_add(1, Ordering::Relaxed);
         }
-        self.total_latency_us.fetch_add(latency_us, Ordering::Relaxed);
+        self.total_latency_us
+            .fetch_add(latency_us, Ordering::Relaxed);
         // Update min (atomic min via compare_exchange loop)
         let mut current = self.min_latency_us.load(Ordering::Relaxed);
         while latency_us < current {
-            match self.min_latency_us.compare_exchange_weak(current, latency_us, Ordering::Relaxed, Ordering::Relaxed) {
+            match self.min_latency_us.compare_exchange_weak(
+                current,
+                latency_us,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            ) {
                 Ok(_) => break,
                 Err(c) => current = c,
             }
@@ -50,7 +56,12 @@ impl EndpointMetrics {
         // Update max
         let mut current = self.max_latency_us.load(Ordering::Relaxed);
         while latency_us > current {
-            match self.max_latency_us.compare_exchange_weak(current, latency_us, Ordering::Relaxed, Ordering::Relaxed) {
+            match self.max_latency_us.compare_exchange_weak(
+                current,
+                latency_us,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            ) {
                 Ok(_) => break,
                 Err(c) => current = c,
             }
@@ -69,7 +80,11 @@ impl EndpointMetrics {
             method: self.method.clone(),
             requests,
             errors,
-            error_rate: if requests > 0 { errors as f64 / requests as f64 } else { 0.0 },
+            error_rate: if requests > 0 {
+                errors as f64 / requests as f64
+            } else {
+                0.0
+            },
             avg_latency_us: if requests > 0 { total / requests } else { 0 },
             min_latency_us: if min == u64::MAX { 0 } else { min },
             max_latency_us: max,
@@ -136,20 +151,26 @@ impl MetricsCollector {
     }
 
     pub fn all_snapshots(&self) -> Vec<EndpointSnapshot> {
-        self.endpoints.lock().unwrap()
+        self.endpoints
+            .lock()
+            .unwrap()
             .iter()
             .map(|m| m.snapshot())
             .collect()
     }
 
     pub fn uptime_secs(&self) -> u64 {
-        self.started_at.lock().unwrap()
+        self.started_at
+            .lock()
+            .unwrap()
             .map(|t| t.elapsed().as_secs())
             .unwrap_or(0)
     }
 
     pub fn total_requests(&self) -> u64 {
-        self.endpoints.lock().unwrap()
+        self.endpoints
+            .lock()
+            .unwrap()
             .iter()
             .map(|m| m.requests.load(Ordering::Relaxed))
             .sum()
@@ -157,7 +178,17 @@ impl MetricsCollector {
 
     /// Sync endpoint data from an external metrics source (e.g. HandlerMetricsRegistry).
     /// Creates the endpoint entry if it doesn't exist, then overwrites counters.
-    pub fn sync_endpoint(&self, method: &str, path: &str, requests: u64, errors: u64, avg_latency_us: u64, p95_us: u64, p99_us: u64, p999_us: u64) {
+    pub fn sync_endpoint(
+        &self,
+        method: &str,
+        path: &str,
+        requests: u64,
+        errors: u64,
+        avg_latency_us: u64,
+        p95_us: u64,
+        p99_us: u64,
+        p999_us: u64,
+    ) {
         let mut started = self.started_at.lock().unwrap();
         if started.is_none() {
             *started = Some(std::time::Instant::now());
@@ -165,11 +196,14 @@ impl MetricsCollector {
         drop(started);
 
         let mut endpoints = self.endpoints.lock().unwrap();
-        let existing = endpoints.iter().find(|m| m.method == method && m.path == path);
+        let existing = endpoints
+            .iter()
+            .find(|m| m.method == method && m.path == path);
         if let Some(m) = existing {
             m.requests.store(requests, Ordering::Relaxed);
             m.errors.store(errors, Ordering::Relaxed);
-            m.total_latency_us.store(avg_latency_us * requests, Ordering::Relaxed);
+            m.total_latency_us
+                .store(avg_latency_us * requests, Ordering::Relaxed);
             m.p95_us.store(p95_us, Ordering::Relaxed);
             m.p99_us.store(p99_us, Ordering::Relaxed);
             m.p999_us.store(p999_us, Ordering::Relaxed);
@@ -187,7 +221,8 @@ impl MetricsCollector {
             let m = Arc::new(EndpointMetrics::new(method, path));
             m.requests.store(requests, Ordering::Relaxed);
             m.errors.store(errors, Ordering::Relaxed);
-            m.total_latency_us.store(avg_latency_us * requests, Ordering::Relaxed);
+            m.total_latency_us
+                .store(avg_latency_us * requests, Ordering::Relaxed);
             m.p95_us.store(p95_us, Ordering::Relaxed);
             m.p99_us.store(p99_us, Ordering::Relaxed);
             m.p999_us.store(p999_us, Ordering::Relaxed);
@@ -200,7 +235,19 @@ impl MetricsCollector {
     }
 
     /// Sync with actual min/max from HandlerMetricsRegistry.
-    pub fn sync_endpoint_full(&self, method: &str, path: &str, requests: u64, errors: u64, avg_latency_us: u64, min_us: u64, max_us: u64, p95_us: u64, p99_us: u64, p999_us: u64) {
+    pub fn sync_endpoint_full(
+        &self,
+        method: &str,
+        path: &str,
+        requests: u64,
+        errors: u64,
+        avg_latency_us: u64,
+        min_us: u64,
+        max_us: u64,
+        p95_us: u64,
+        p99_us: u64,
+        p999_us: u64,
+    ) {
         let mut started = self.started_at.lock().unwrap();
         if started.is_none() {
             *started = Some(std::time::Instant::now());
@@ -208,12 +255,18 @@ impl MetricsCollector {
         drop(started);
 
         let mut endpoints = self.endpoints.lock().unwrap();
-        let existing = endpoints.iter().find(|m| m.method == method && m.path == path);
+        let existing = endpoints
+            .iter()
+            .find(|m| m.method == method && m.path == path);
         if let Some(m) = existing {
             m.requests.store(requests, Ordering::Relaxed);
             m.errors.store(errors, Ordering::Relaxed);
-            m.total_latency_us.store(avg_latency_us * requests, Ordering::Relaxed);
-            m.min_latency_us.store(if min_us == u64::MAX { 0 } else { min_us }, Ordering::Relaxed);
+            m.total_latency_us
+                .store(avg_latency_us * requests, Ordering::Relaxed);
+            m.min_latency_us.store(
+                if min_us == u64::MAX { 0 } else { min_us },
+                Ordering::Relaxed,
+            );
             m.max_latency_us.store(max_us, Ordering::Relaxed);
             m.p95_us.store(p95_us, Ordering::Relaxed);
             m.p99_us.store(p99_us, Ordering::Relaxed);
@@ -222,8 +275,12 @@ impl MetricsCollector {
             let m = Arc::new(EndpointMetrics::new(method, path));
             m.requests.store(requests, Ordering::Relaxed);
             m.errors.store(errors, Ordering::Relaxed);
-            m.total_latency_us.store(avg_latency_us * requests, Ordering::Relaxed);
-            m.min_latency_us.store(if min_us == u64::MAX { 0 } else { min_us }, Ordering::Relaxed);
+            m.total_latency_us
+                .store(avg_latency_us * requests, Ordering::Relaxed);
+            m.min_latency_us.store(
+                if min_us == u64::MAX { 0 } else { min_us },
+                Ordering::Relaxed,
+            );
             m.max_latency_us.store(max_us, Ordering::Relaxed);
             m.p95_us.store(p95_us, Ordering::Relaxed);
             m.p99_us.store(p99_us, Ordering::Relaxed);

@@ -46,7 +46,9 @@ impl OutputParser for JsonOutputParser {
             return Ok(ParsedOutput::Json(v));
         }
 
-        Err(ParseError::InvalidJson("could not extract valid JSON".into()))
+        Err(ParseError::InvalidJson(
+            "could not extract valid JSON".into(),
+        ))
     }
 }
 
@@ -54,7 +56,11 @@ impl OutputParser for JsonOutputParser {
 fn extract_json_block(text: &str) -> Option<String> {
     let (open, close) = if let Some(pos) = text.find('{') {
         if let Some(arr_pos) = text.find('[') {
-            if arr_pos < pos { ('[', ']') } else { ('{', '}') }
+            if arr_pos < pos {
+                ('[', ']')
+            } else {
+                ('{', '}')
+            }
         } else {
             ('{', '}')
         }

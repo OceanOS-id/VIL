@@ -16,9 +16,7 @@ use std::time::Duration;
 #[derive(Debug, Clone)]
 pub enum RetryStrategy {
     /// Fixed delay between retries
-    Fixed {
-        delay: Duration,
-    },
+    Fixed { delay: Duration },
     /// Exponential backoff: delay * 2^attempt
     ExponentialBackoff {
         initial_delay: Duration,
@@ -36,11 +34,17 @@ impl RetryStrategy {
     pub fn delay_for_attempt(&self, attempt: u32) -> Duration {
         match self {
             Self::Fixed { delay } => *delay,
-            Self::ExponentialBackoff { initial_delay, max_delay } => {
+            Self::ExponentialBackoff {
+                initial_delay,
+                max_delay,
+            } => {
                 let delay = initial_delay.as_millis() as u64 * 2u64.pow(attempt);
                 Duration::from_millis(delay.min(max_delay.as_millis() as u64))
             }
-            Self::ExponentialBackoffJitter { initial_delay, max_delay } => {
+            Self::ExponentialBackoffJitter {
+                initial_delay,
+                max_delay,
+            } => {
                 let base = initial_delay.as_millis() as u64 * 2u64.pow(attempt);
                 let capped = base.min(max_delay.as_millis() as u64);
                 // Add ±25% jitter
@@ -119,10 +123,7 @@ impl RetryPolicy {
 /// let policy = RetryPolicy::default();
 /// let result = retry_async(&policy, || call_upstream()).await;
 /// ```
-pub async fn retry_async<F, Fut, T, E>(
-    policy: &RetryPolicy,
-    mut f: F,
-) -> Result<T, E>
+pub async fn retry_async<F, Fut, T, E>(policy: &RetryPolicy, mut f: F) -> Result<T, E>
 where
     F: FnMut() -> Fut,
     Fut: std::future::Future<Output = Result<T, E>>,

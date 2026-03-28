@@ -6,9 +6,8 @@
 use std::sync::Arc;
 use vil_rt::VastarRuntimeWorld;
 use vil_types::{
-    BackpressurePolicy, BoundaryKind, CleanupPolicy, DeliveryGuarantee, ExecClass,
-    GenericToken, ObservabilitySpec, PortDirection, PortSpec, Priority, ProcessSpec,
-    QueueKind, TransferMode,
+    BackpressurePolicy, BoundaryKind, CleanupPolicy, DeliveryGuarantee, ExecClass, GenericToken,
+    ObservabilitySpec, PortDirection, PortSpec, Priority, ProcessSpec, QueueKind, TransferMode,
 };
 
 /// Builder for configuring a transform node.
@@ -132,14 +131,20 @@ impl TransformNode {
             let in_pid = match handle.port_id(&in_port) {
                 Ok(p) => p,
                 Err(e) => {
-                    eprintln!("[transform:{}] in_port '{}' not found: {}", name, in_port, e);
+                    eprintln!(
+                        "[transform:{}] in_port '{}' not found: {}",
+                        name, in_port, e
+                    );
                     return;
                 }
             };
             let out_pid = match handle.port_id(&out_port) {
                 Ok(p) => p,
                 Err(e) => {
-                    eprintln!("[transform:{}] out_port '{}' not found: {}", name, out_port, e);
+                    eprintln!(
+                        "[transform:{}] out_port '{}' not found: {}",
+                        name, out_port, e
+                    );
                     return;
                 }
             };

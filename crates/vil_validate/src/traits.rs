@@ -31,7 +31,11 @@ pub struct Diagnostic {
 }
 
 impl Diagnostic {
-    pub fn error(code: impl Into<String>, message: impl Into<String>, context: impl Into<String>) -> Self {
+    pub fn error(
+        code: impl Into<String>,
+        message: impl Into<String>,
+        context: impl Into<String>,
+    ) -> Self {
         Self {
             severity: Severity::Error,
             code: code.into(),
@@ -40,7 +44,11 @@ impl Diagnostic {
         }
     }
 
-    pub fn warning(code: impl Into<String>, message: impl Into<String>, context: impl Into<String>) -> Self {
+    pub fn warning(
+        code: impl Into<String>,
+        message: impl Into<String>,
+        context: impl Into<String>,
+    ) -> Self {
         Self {
             severity: Severity::Warning,
             code: code.into(),
@@ -81,7 +89,9 @@ impl ValidationReport {
     }
 
     pub fn has_errors(&self) -> bool {
-        self.diagnostics.iter().any(|d| d.severity == Severity::Error)
+        self.diagnostics
+            .iter()
+            .any(|d| d.severity == Severity::Error)
     }
 
     /// Merge another report into this one.

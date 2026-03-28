@@ -27,10 +27,10 @@ pub use engine::{ConsensusEngine, ConsensusError, ConsensusResult, ProviderRespo
 pub use scorer::{score_response, text_similarity, ResponseScore};
 pub use strategy::ConsensusStrategy;
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::ConsensusPlugin;
 pub use semantic::{ConsensusEvent, ConsensusFault, ConsensusState};
@@ -40,8 +40,8 @@ mod tests {
     use super::*;
     use async_trait::async_trait;
     use std::sync::Arc;
-    use vil_llm::{ChatMessage, ChatResponse, LlmProvider};
     use vil_llm::message::LlmError;
+    use vil_llm::{ChatMessage, ChatResponse, LlmProvider};
 
     // -----------------------------------------------------------------------
     // Mock provider
@@ -107,14 +107,21 @@ mod tests {
     async fn test_longest_strategy() {
         let providers = vec![
             MockProvider::ok("a", "model-a", "short"),
-            MockProvider::ok("b", "model-b", "this is a much longer response with more detail"),
+            MockProvider::ok(
+                "b",
+                "model-b",
+                "this is a much longer response with more detail",
+            ),
             MockProvider::ok("c", "model-c", "medium length response"),
         ];
 
         let engine = ConsensusEngine::new(providers, ConsensusStrategy::Longest);
         let result = engine.query(&messages()).await.unwrap();
 
-        assert_eq!(result.answer, "this is a much longer response with more detail");
+        assert_eq!(
+            result.answer,
+            "this is a much longer response with more detail"
+        );
         assert_eq!(result.strategy_used, "longest");
     }
 
@@ -138,9 +145,21 @@ mod tests {
     async fn test_majority_agreement_strategy() {
         // Two similar responses should beat one outlier.
         let providers = vec![
-            MockProvider::ok("a", "model-a", "Rust ownership ensures memory safety through the borrow checker"),
-            MockProvider::ok("b", "model-b", "Rust ownership ensures memory safety via the borrow checker system"),
-            MockProvider::ok("c", "model-c", "Bananas are yellow fruit that grow in tropical climates"),
+            MockProvider::ok(
+                "a",
+                "model-a",
+                "Rust ownership ensures memory safety through the borrow checker",
+            ),
+            MockProvider::ok(
+                "b",
+                "model-b",
+                "Rust ownership ensures memory safety via the borrow checker system",
+            ),
+            MockProvider::ok(
+                "c",
+                "model-c",
+                "Bananas are yellow fruit that grow in tropical climates",
+            ),
         ];
 
         let engine = ConsensusEngine::new(providers, ConsensusStrategy::MajorityAgreement);
@@ -159,7 +178,8 @@ mod tests {
         ];
 
         // Give provider a (index 0) a very high weight.
-        let engine = ConsensusEngine::new(providers, ConsensusStrategy::Weighted(vec![100.0, 0.01]));
+        let engine =
+            ConsensusEngine::new(providers, ConsensusStrategy::Weighted(vec![100.0, 0.01]));
         let result = engine.query(&messages()).await.unwrap();
 
         assert_eq!(result.answer, "short");
@@ -180,7 +200,11 @@ mod tests {
         assert_eq!(result.answer, "valid response here");
         assert_eq!(result.all_responses.len(), 3);
 
-        let errors: Vec<_> = result.all_responses.iter().filter(|r| r.error.is_some()).collect();
+        let errors: Vec<_> = result
+            .all_responses
+            .iter()
+            .filter(|r| r.error.is_some())
+            .collect();
         assert_eq!(errors.len(), 2);
     }
 

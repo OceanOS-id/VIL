@@ -7,8 +7,8 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use vil_server::prelude::*;
 
-use crate::serving::ModelServer;
 use crate::metrics::VariantMetrics;
+use crate::serving::ModelServer;
 
 // ── Request / Response types ────────────────────────────────────────────────
 
@@ -73,9 +73,7 @@ pub async fn handle_infer(
 }
 
 /// GET /api/serving/models — list active model variants.
-pub async fn handle_models(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<ModelsResponse>> {
+pub async fn handle_models(ctx: ServiceCtx) -> HandlerResult<VilResponse<ModelsResponse>> {
     let server = ctx.state::<Arc<ModelServer>>().expect("ModelServer");
     let variants = server.get_metrics();
     let resp = ModelsResponse {
@@ -86,9 +84,7 @@ pub async fn handle_models(
 }
 
 /// GET /api/serving/stats — return serving statistics.
-pub async fn handle_stats(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<ServingStatsResponse>> {
+pub async fn handle_stats(ctx: ServiceCtx) -> HandlerResult<VilResponse<ServingStatsResponse>> {
     let server = ctx.state::<Arc<ModelServer>>().expect("ModelServer");
     let metrics = server.get_metrics();
     let resp = ServingStatsResponse {

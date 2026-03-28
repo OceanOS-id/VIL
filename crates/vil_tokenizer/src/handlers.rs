@@ -1,8 +1,8 @@
 //! VIL pattern HTTP handlers for the tokenizer plugin.
 
-use vil_server::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::counter::TokenCounter;
 
@@ -35,7 +35,9 @@ pub async fn count_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<CountResponseBody>> {
     let counter = ctx.state::<Arc<TokenCounter>>()?;
-    let req: CountRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: CountRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     let count = counter.count(&req.text);
     Ok(VilResponse::ok(CountResponseBody {
         token_count: count,
@@ -48,7 +50,9 @@ pub async fn truncate_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<TruncateResponseBody>> {
     let counter = ctx.state::<Arc<TokenCounter>>()?;
-    let req: TruncateRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: TruncateRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     let original_count = counter.count(&req.text);
     let result = crate::truncate::truncate_to_tokens(
         counter.tokenizer(),

@@ -21,19 +21,34 @@ pub struct KafkaConfig {
     pub sasl_password: Option<String>,
 }
 
-fn default_acks() -> String { "all".into() }
-fn default_timeout() -> u64 { 5000 }
+fn default_acks() -> String {
+    "all".into()
+}
+fn default_timeout() -> u64 {
+    5000
+}
 
 impl KafkaConfig {
     pub fn new(brokers: &str) -> Self {
         Self {
-            brokers: brokers.into(), group_id: None, topic: None,
-            acks: "all".into(), timeout_ms: 5000,
-            security_protocol: None, sasl_mechanism: None,
-            sasl_username: None, sasl_password: None,
+            brokers: brokers.into(),
+            group_id: None,
+            topic: None,
+            acks: "all".into(),
+            timeout_ms: 5000,
+            security_protocol: None,
+            sasl_mechanism: None,
+            sasl_username: None,
+            sasl_password: None,
         }
     }
 
-    pub fn group(mut self, id: &str) -> Self { self.group_id = Some(id.into()); self }
-    pub fn topic(mut self, t: &str) -> Self { self.topic = Some(t.into()); self }
+    pub fn group(mut self, id: &str) -> Self {
+        self.group_id = Some(id.into());
+        self
+    }
+    pub fn topic(mut self, t: &str) -> Self {
+        self.topic = Some(t.into());
+        self
+    }
 }

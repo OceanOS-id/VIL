@@ -64,13 +64,20 @@ impl CqrsDispatcher {
             f: Box<dyn Fn(&[u8]) -> Result<Vec<u8>, String> + Send + Sync>,
         }
         impl CommandHandler for FnHandler {
-            fn handle(&self, input: &[u8]) -> Result<Vec<u8>, String> { (self.f)(input) }
-            fn command_name(&self) -> &str { &self.name }
+            fn handle(&self, input: &[u8]) -> Result<Vec<u8>, String> {
+                (self.f)(input)
+            }
+            fn command_name(&self) -> &str {
+                &self.name
+            }
         }
-        self.command_handlers.insert(name.to_string(), Box::new(FnHandler {
-            name: name.to_string(),
-            f: Box::new(handler),
-        }));
+        self.command_handlers.insert(
+            name.to_string(),
+            Box::new(FnHandler {
+                name: name.to_string(),
+                f: Box::new(handler),
+            }),
+        );
     }
 
     /// Register a query handler.
@@ -83,25 +90,36 @@ impl CqrsDispatcher {
             f: Box<dyn Fn(&[u8]) -> Result<Vec<u8>, String> + Send + Sync>,
         }
         impl QueryHandler for FnHandler {
-            fn handle(&self, input: &[u8]) -> Result<Vec<u8>, String> { (self.f)(input) }
-            fn query_name(&self) -> &str { &self.name }
+            fn handle(&self, input: &[u8]) -> Result<Vec<u8>, String> {
+                (self.f)(input)
+            }
+            fn query_name(&self) -> &str {
+                &self.name
+            }
         }
-        self.query_handlers.insert(name.to_string(), Box::new(FnHandler {
-            name: name.to_string(),
-            f: Box::new(handler),
-        }));
+        self.query_handlers.insert(
+            name.to_string(),
+            Box::new(FnHandler {
+                name: name.to_string(),
+                f: Box::new(handler),
+            }),
+        );
     }
 
     /// Dispatch a command.
     pub fn dispatch_command(&self, name: &str, input: &[u8]) -> Result<Vec<u8>, String> {
-        let handler = self.command_handlers.get(name)
+        let handler = self
+            .command_handlers
+            .get(name)
             .ok_or_else(|| format!("Command '{}' not found", name))?;
         handler.handle(input)
     }
 
     /// Dispatch a query.
     pub fn dispatch_query(&self, name: &str, input: &[u8]) -> Result<Vec<u8>, String> {
-        let handler = self.query_handlers.get(name)
+        let handler = self
+            .query_handlers
+            .get(name)
             .ok_or_else(|| format!("Query '{}' not found", name))?;
         handler.handle(input)
     }
@@ -118,5 +136,7 @@ impl CqrsDispatcher {
 }
 
 impl Default for CqrsDispatcher {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }

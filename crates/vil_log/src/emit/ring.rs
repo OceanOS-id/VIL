@@ -39,13 +39,13 @@ struct CachePad<T> {
 ///
 /// **ONLY safe for exactly 1 producer thread and 1 consumer thread.**
 pub struct LogRing {
-    buffer:   Box<[UnsafeCell<MaybeUninit<LogSlot>>]>,
+    buffer: Box<[UnsafeCell<MaybeUninit<LogSlot>>]>,
     capacity: usize,
-    mask:     usize,
+    mask: usize,
     /// Write index — mutated only by the producer.
-    tail:     CachePad<AtomicUsize>,
+    tail: CachePad<AtomicUsize>,
     /// Read index — mutated only by the consumer.
-    head:     CachePad<AtomicUsize>,
+    head: CachePad<AtomicUsize>,
     /// Counts ring-full drop events.
     pub drops: AtomicU64,
 }
@@ -59,7 +59,10 @@ impl std::fmt::Debug for LogRing {
         f.debug_struct("LogRing")
             .field("capacity", &self.capacity)
             .field("len", &self.len())
-            .field("drops", &self.drops.load(std::sync::atomic::Ordering::Relaxed))
+            .field(
+                "drops",
+                &self.drops.load(std::sync::atomic::Ordering::Relaxed),
+            )
             .finish()
     }
 }
@@ -77,12 +80,16 @@ impl LogRing {
         }
 
         Self {
-            buffer:   buf.into_boxed_slice(),
+            buffer: buf.into_boxed_slice(),
             capacity,
             mask,
-            tail:     CachePad { v: AtomicUsize::new(0) },
-            head:     CachePad { v: AtomicUsize::new(0) },
-            drops:    AtomicU64::new(0),
+            tail: CachePad {
+                v: AtomicUsize::new(0),
+            },
+            head: CachePad {
+                v: AtomicUsize::new(0),
+            },
+            drops: AtomicU64::new(0),
         }
     }
 
@@ -242,7 +249,11 @@ impl StripedRing {
             .map(|_| LogRing::new(capacity_per_ring))
             .collect();
 
-        Self { rings, stripe_count, mask }
+        Self {
+            rings,
+            stripe_count,
+            mask,
+        }
     }
 
     /// Create with explicit stripe count (for testing / override).
@@ -252,7 +263,11 @@ impl StripedRing {
         let rings: Vec<LogRing> = (0..stripe_count)
             .map(|_| LogRing::new(capacity_per_ring))
             .collect();
-        Self { rings, stripe_count, mask }
+        Self {
+            rings,
+            stripe_count,
+            mask,
+        }
     }
 
     /// Number of stripe lanes.

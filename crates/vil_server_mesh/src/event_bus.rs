@@ -111,7 +111,8 @@ impl EventBus {
 
     /// Get subscriber count for a topic.
     pub fn subscriber_count(&self, topic: &str) -> usize {
-        self.topics.get(topic)
+        self.topics
+            .get(topic)
             .map(|tx| tx.receiver_count())
             .unwrap_or(0)
     }

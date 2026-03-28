@@ -4,7 +4,7 @@
 
 use crate::config::{MqttConfig, QoS};
 use rumqttc::{AsyncClient, MqttOptions, QoS as MqttQoS};
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Duration;
 
 /// Map our QoS enum to rumqttc QoS.
@@ -27,10 +27,14 @@ pub struct MqttClient {
 
 impl MqttClient {
     pub async fn new(config: MqttConfig) -> Result<Self, String> {
-        let client_id = config.client_id.clone().unwrap_or_else(|| "vil-mqtt-client".into());
+        let client_id = config
+            .client_id
+            .clone()
+            .unwrap_or_else(|| "vil-mqtt-client".into());
 
         // Parse host from broker_url (strip mqtt:// prefix if present)
-        let host = config.broker_url
+        let host = config
+            .broker_url
             .trim_start_matches("mqtt://")
             .trim_start_matches("mqtts://")
             .trim_start_matches("tcp://")
@@ -73,7 +77,10 @@ impl MqttClient {
             return Err("MQTT not connected".into());
         }
         let __mq_start = std::time::Instant::now();
-        let result = self.client.publish(topic, to_mqtt_qos(qos), false, payload).await
+        let result = self
+            .client
+            .publish(topic, to_mqtt_qos(qos), false, payload)
+            .await
             .map_err(|e| format!("MQTT publish failed: {}", e));
         if result.is_ok() {
             self.published.fetch_add(1, Ordering::Relaxed);
@@ -81,14 +88,17 @@ impl MqttClient {
         let __elapsed = __mq_start.elapsed();
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash: register_str("mqtt"),
-                topic_hash: register_str(topic),
-                message_bytes: payload.len() as u32,
-                e2e_latency_us: __elapsed.as_micros() as u32,
-                op_type: 0,
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("mqtt"),
+                    topic_hash: register_str(topic),
+                    message_bytes: payload.len() as u32,
+                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    op_type: 0,
+                    ..Default::default()
+                }
+            );
         }
         result
     }
@@ -98,7 +108,9 @@ impl MqttClient {
         if !self.connected.load(Ordering::Relaxed) {
             return Err("MQTT not connected".into());
         }
-        self.client.subscribe(topic_filter, to_mqtt_qos(self.config.qos)).await
+        self.client
+            .subscribe(topic_filter, to_mqtt_qos(self.config.qos))
+            .await
             .map_err(|e| format!("MQTT subscribe failed: {}", e))?;
         Ok(())
     }
@@ -109,8 +121,16 @@ impl MqttClient {
         let _ = self.client.disconnect().await;
     }
 
-    pub fn is_connected(&self) -> bool { self.connected.load(Ordering::Relaxed) }
-    pub fn published_count(&self) -> u64 { self.published.load(Ordering::Relaxed) }
-    pub fn received_count(&self) -> u64 { self.received.load(Ordering::Relaxed) }
-    pub fn config(&self) -> &MqttConfig { &self.config }
+    pub fn is_connected(&self) -> bool {
+        self.connected.load(Ordering::Relaxed)
+    }
+    pub fn published_count(&self) -> u64 {
+        self.published.load(Ordering::Relaxed)
+    }
+    pub fn received_count(&self) -> u64 {
+        self.received.load(Ordering::Relaxed)
+    }
+    pub fn config(&self) -> &MqttConfig {
+        &self.config
+    }
 }

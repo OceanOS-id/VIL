@@ -16,7 +16,7 @@ pub fn generate_processes_and_handles(ir: &WorkflowIR) -> (TokenStream, TokenStr
         let process_ident = format_ident!("{}_proc", proc_name.to_lowercase());
         let process_name_str = proc_name.clone();
         let interface_name = &proc_ir.interface_name;
-        
+
         let ports_ident = format_ident!("{}_PORTS", proc_name.to_uppercase());
 
         // Look up the interface to get port specifications
@@ -94,6 +94,6 @@ pub fn generate_processes_and_handles(ir: &WorkflowIR) -> (TokenStream, TokenStr
     (
         quote! { #(#tokens)* },
         quote! { #(#fields)* },
-        quote! { #(#instantiations)* }
+        quote! { #(#instantiations)* },
     )
 }

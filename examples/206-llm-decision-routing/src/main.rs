@@ -34,15 +34,15 @@
 //         -H 'Content-Type: application/json' \
 //         -d '{"applicant_name":"Jane Smith","age":35,"occupation":"software_engineer","health_score":"excellent","coverage_cents":50000000}'
 
+use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 use vil_server::prelude::*;
-use vil_llm::semantic::{LlmResponseEvent, LlmFault, LlmUsageState};
 
 // ── Premium Tier Constants ──────────────────────────────────────────────
 // These are integer codes because #[vil_decision] requires POD-only fields.
 // No String, no Vec — just Copy types that fit in a CPU cache line.
-const TIER_PREFERRED: u8 = 1;   // Low risk — best rates
-const TIER_STANDARD: u8 = 2;    // Average risk — normal rates
-const TIER_HIGH_RISK: u8 = 3;   // Elevated risk — surcharge + review
+const TIER_PREFERRED: u8 = 1; // Low risk — best rates
+const TIER_STANDARD: u8 = 2; // Average risk — normal rates
+const TIER_HIGH_RISK: u8 = 3; // Elevated risk — surcharge + review
 
 // ── AI Decision (POD-only for Control Lane) ─────────────────────────────
 //
@@ -63,9 +63,9 @@ pub struct PremiumDecision {
 }
 
 // ── Reason Codes ────────────────────────────────────────────────────────
-const REASON_AGE_HEALTH: u8 = 1;   // Decision driven by age + health factors
-const REASON_OCCUPATION: u8 = 2;   // Decision driven by occupation risk
-const REASON_COVERAGE: u8 = 3;     // Decision driven by coverage amount
+const REASON_AGE_HEALTH: u8 = 1; // Decision driven by age + health factors
+const REASON_OCCUPATION: u8 = 2; // Decision driven by occupation risk
+const REASON_COVERAGE: u8 = 3; // Decision driven by coverage amount
 
 // ── Business Fault Types ────────────────────────────────────────────────
 #[vil_fault]
@@ -151,27 +151,50 @@ async fn underwrite(body: ShmSlice) -> Result<VilResponse<UnderwritingResponse>,
 
     // Make the AI decision based on risk score thresholds
     let decision = if risk_score < 250 {
-        PremiumDecision { tier: TIER_PREFERRED, confidence: 92, risk_score, is_cached: false }
+        PremiumDecision {
+            tier: TIER_PREFERRED,
+            confidence: 92,
+            risk_score,
+            is_cached: false,
+        }
     } else if risk_score < 500 {
-        PremiumDecision { tier: TIER_STANDARD, confidence: 85, risk_score, is_cached: false }
+        PremiumDecision {
+            tier: TIER_STANDARD,
+            confidence: 85,
+            risk_score,
+            is_cached: false,
+        }
     } else {
-        PremiumDecision { tier: TIER_HIGH_RISK, confidence: 78, risk_score, is_cached: false }
+        PremiumDecision {
+            tier: TIER_HIGH_RISK,
+            confidence: 78,
+            risk_score,
+            is_cached: false,
+        }
     };
 
     // Map decision to human-readable output
     let (tier_name, reason, requires_review) = match decision.tier {
-        TIER_PREFERRED => ("Preferred", "Low risk profile — eligible for best rates", false),
+        TIER_PREFERRED => (
+            "Preferred",
+            "Low risk profile — eligible for best rates",
+            false,
+        ),
         TIER_STANDARD => ("Standard", "Average risk — standard pricing applies", false),
-        TIER_HIGH_RISK => ("High-Risk", "Elevated risk — surcharge applied, medical review required", true),
+        TIER_HIGH_RISK => (
+            "High-Risk",
+            "Elevated risk — surcharge applied, medical review required",
+            true,
+        ),
         _ => ("Unknown", "Fallback", false),
     };
 
     // Calculate monthly premium based on tier and coverage amount
     // (simplified: in production, actuarial tables + regional factors)
     let base_rate = match decision.tier {
-        TIER_PREFERRED => 15,   // 0.015% of coverage per month
-        TIER_STANDARD => 25,    // 0.025%
-        TIER_HIGH_RISK => 45,   // 0.045%
+        TIER_PREFERRED => 15, // 0.015% of coverage per month
+        TIER_STANDARD => 25,  // 0.025%
+        TIER_HIGH_RISK => 45, // 0.045%
         _ => 30,
     };
     let monthly_premium_cents = req.coverage_cents * base_rate / 100_000;
@@ -202,9 +225,11 @@ async fn main() {
     println!("║  Tiers: Preferred (low risk) / Standard / High-Risk (review needed)  ║");
     println!("╚════════════════════════════════════════════════════════════════════════╝");
 
-    let underwriting_svc = ServiceProcess::new("underwriter")
-        .prefix("/api")
-        .endpoint(Method::POST, "/underwrite", post(underwrite));
+    let underwriting_svc = ServiceProcess::new("underwriter").prefix("/api").endpoint(
+        Method::POST,
+        "/underwrite",
+        post(underwrite),
+    );
 
     VilApp::new("insurance-underwriting-ai")
         .port(3116)

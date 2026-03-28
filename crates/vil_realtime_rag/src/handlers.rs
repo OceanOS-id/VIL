@@ -1,6 +1,6 @@
-use vil_server::prelude::*;
-use std::sync::Arc;
 use crate::pipeline::RealtimeRagPipeline;
+use std::sync::Arc;
+use vil_server::prelude::*;
 
 #[derive(Debug, Deserialize)]
 pub struct QueryRequest {
@@ -33,21 +33,31 @@ pub async fn query_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<QueryResponseBody>> {
     let pipeline = ctx.state::<Arc<RealtimeRagPipeline>>()?;
-    let req: QueryRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: QueryRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     let result = pipeline.query_with_embedding(&req.embedding);
-    let chunks: Vec<ChunkHit> = result.chunks.iter().map(|r| ChunkHit {
-        doc_id: r.doc_id.clone(),
-        content: r.text.clone(),
-        score: r.score,
-    }).collect();
+    let chunks: Vec<ChunkHit> = result
+        .chunks
+        .iter()
+        .map(|r| ChunkHit {
+            doc_id: r.doc_id.clone(),
+            content: r.text.clone(),
+            score: r.score,
+        })
+        .collect();
     let count = chunks.len();
-    Ok(VilResponse::ok(QueryResponseBody { chunks, count, from_cache: false }))
+    Ok(VilResponse::ok(QueryResponseBody {
+        chunks,
+        count,
+        from_cache: false,
+    }))
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<StatsResponseBody> {
-    let pipeline = ctx.state::<Arc<RealtimeRagPipeline>>().expect("RealtimeRagPipeline");
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<StatsResponseBody> {
+    let pipeline = ctx
+        .state::<Arc<RealtimeRagPipeline>>()
+        .expect("RealtimeRagPipeline");
     VilResponse::ok(StatsResponseBody {
         doc_count: pipeline.doc_count(),
         cache_size: pipeline.cache_size(),

@@ -26,11 +26,11 @@ use vil_log::{LogConfig, LogLevel};
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -43,7 +43,7 @@ async fn main() {
     println!();
 
     let es_cfg = ElasticConfig {
-        url:      "http://localhost:9200".into(),
+        url: "http://localhost:9200".into(),
         username: None,
         password: None,
     };
@@ -59,7 +59,7 @@ async fn main() {
     println!();
 
     let client = match ElasticClient::new(es_cfg) {
-        Ok(c)  => c,
+        Ok(c) => c,
         Err(e) => {
             println!("  [SKIP] Cannot build Elasticsearch client: {:?}", e);
             return;
@@ -75,8 +75,11 @@ async fn main() {
     });
 
     match client.index("vil-articles", "article-1", doc).await {
-        Ok(res) => println!("  INDEX  vil-articles  id={}  result={}", res.id, res.result),
-        Err(e)  => {
+        Ok(res) => println!(
+            "  INDEX  vil-articles  id={}  result={}",
+            res.id, res.result
+        ),
+        Err(e) => {
             println!("  INDEX  error: {:?}", e);
             println!("  [SKIP] Elasticsearch not reachable.");
             return;
@@ -95,10 +98,17 @@ async fn main() {
 
     match client.search("vil-articles", query).await {
         Ok(res) => {
-            println!("  SEARCH vil-articles  total={}  hits={}", res.total, res.hits.len());
+            println!(
+                "  SEARCH vil-articles  total={}  hits={}",
+                res.total,
+                res.hits.len()
+            );
             for hit in &res.hits {
                 if let Some(src) = hit.get("_source") {
-                    println!("         - {}", src.get("title").and_then(|t| t.as_str()).unwrap_or("?"));
+                    println!(
+                        "         - {}",
+                        src.get("title").and_then(|t| t.as_str()).unwrap_or("?")
+                    );
                 }
             }
         }

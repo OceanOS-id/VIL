@@ -4,7 +4,7 @@
 
 use crate::config::PulsarConfig;
 use crate::error::PulsarFault;
-use pulsar::{Pulsar, TokioExecutor, Authentication};
+use pulsar::{Authentication, Pulsar, TokioExecutor};
 use vil_log::dict::register_str;
 
 /// Pulsar client connected to a broker.
@@ -42,14 +42,17 @@ impl PulsarClient {
 
         {
             use vil_log::{mq_log, types::MqPayload};
-            mq_log!(Info, MqPayload {
-                broker_hash:    register_str("pulsar"),
-                topic_hash:     url_hash,
-                message_bytes:  0,
-                e2e_latency_us: __start.elapsed().as_micros() as u32,
-                op_type:        1, // consume (connection = setup for consume)
-                ..Default::default()
-            });
+            mq_log!(
+                Info,
+                MqPayload {
+                    broker_hash: register_str("pulsar"),
+                    topic_hash: url_hash,
+                    message_bytes: 0,
+                    e2e_latency_us: __start.elapsed().as_micros() as u32,
+                    op_type: 1, // consume (connection = setup for consume)
+                    ..Default::default()
+                }
+            );
         }
 
         Ok(Self { inner, config })

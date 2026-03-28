@@ -19,7 +19,11 @@ pub struct TrainingRecord {
 }
 
 impl TrainingRecord {
-    pub fn new(instruction: impl Into<String>, input: impl Into<String>, output: impl Into<String>) -> Self {
+    pub fn new(
+        instruction: impl Into<String>,
+        input: impl Into<String>,
+        output: impl Into<String>,
+    ) -> Self {
         Self {
             instruction: instruction.into(),
             input: input.into(),
@@ -105,7 +109,11 @@ mod tests {
 
     fn sample_records() -> Vec<TrainingRecord> {
         vec![
-            TrainingRecord::new("Summarize this", "The cat sat on the mat.", "A cat sat on a mat."),
+            TrainingRecord::new(
+                "Summarize this",
+                "The cat sat on the mat.",
+                "A cat sat on a mat.",
+            ),
             TrainingRecord::new("Translate to French", "Hello", "Bonjour"),
         ]
     }

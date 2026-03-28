@@ -8,7 +8,7 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, Fields, Lit, Meta, NestedMeta};
+use syn::{parse_macro_input, Data, DeriveInput, Fields, Lit, Meta, NestedMeta};
 
 /// Derive macro for VilEntity.
 ///

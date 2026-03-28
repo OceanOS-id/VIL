@@ -29,8 +29,11 @@ impl OrmMetrics {
 
     pub fn record_query(&self, duration_us: u64, is_error: bool) {
         self.queries_total.fetch_add(1, Ordering::Relaxed);
-        self.query_duration_sum_us.fetch_add(duration_us, Ordering::Relaxed);
-        if is_error { self.query_errors.fetch_add(1, Ordering::Relaxed); }
+        self.query_duration_sum_us
+            .fetch_add(duration_us, Ordering::Relaxed);
+        if is_error {
+            self.query_errors.fetch_add(1, Ordering::Relaxed);
+        }
     }
 
     pub fn record_acquire(&self) {
@@ -38,8 +41,11 @@ impl OrmMetrics {
     }
 
     pub fn record_health_check(&self, ok: bool) {
-        if ok { self.health_ok.fetch_add(1, Ordering::Relaxed); }
-        else { self.health_fail.fetch_add(1, Ordering::Relaxed); }
+        if ok {
+            self.health_ok.fetch_add(1, Ordering::Relaxed);
+        } else {
+            self.health_fail.fetch_add(1, Ordering::Relaxed);
+        }
     }
 
     pub fn record_migration(&self) {
@@ -52,12 +58,20 @@ impl OrmMetrics {
              vil_orm_query_errors{{pool=\"{}\"}} {}\n\
              vil_orm_acquires{{pool=\"{}\"}} {}\n\
              vil_orm_migrations{{pool=\"{}\"}} {}\n",
-            pool_name, self.queries_total.load(Ordering::Relaxed),
-            pool_name, self.query_errors.load(Ordering::Relaxed),
-            pool_name, self.acquires_total.load(Ordering::Relaxed),
-            pool_name, self.migrations_run.load(Ordering::Relaxed),
+            pool_name,
+            self.queries_total.load(Ordering::Relaxed),
+            pool_name,
+            self.query_errors.load(Ordering::Relaxed),
+            pool_name,
+            self.acquires_total.load(Ordering::Relaxed),
+            pool_name,
+            self.migrations_run.load(Ordering::Relaxed),
         )
     }
 }
 
-impl Default for OrmMetrics { fn default() -> Self { Self::new() } }
+impl Default for OrmMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
+}

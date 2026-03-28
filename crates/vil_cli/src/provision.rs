@@ -65,7 +65,16 @@ pub fn run_provision(action: Action) -> Result<(), String> {
 
 fn curl_post(url: &str, body: &str) -> Result<String, String> {
     let output = Command::new("curl")
-        .args(["-s", "-X", "POST", "-H", "Content-Type: application/json", "-d", body, url])
+        .args([
+            "-s",
+            "-X",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-d",
+            body,
+            url,
+        ])
         .output()
         .map_err(|e| format!("Failed to run curl: {}", e))?;
     Ok(String::from_utf8_lossy(&output.stdout).to_string())

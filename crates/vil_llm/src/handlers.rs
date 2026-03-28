@@ -5,8 +5,8 @@
 //! - Return `HandlerResult<VilResponse<T>>` or `VilResponse<T>`
 //! - Use `VilError` for structured error responses
 
-use vil_server::prelude::*;
 use serde::{Deserialize, Serialize};
+use vil_server::prelude::*;
 
 use crate::extractors::{Embedder, Llm};
 use crate::message::ChatMessage;
@@ -65,15 +65,15 @@ pub async fn chat_handler(
 ) -> HandlerResult<VilResponse<ChatResponseBody>> {
     let state = ctx.state::<LlmServiceState>()?;
     let llm = &state.llm;
-    let req: ChatRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: ChatRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     if req.messages.is_empty() {
         return Err(VilError::bad_request("messages must not be empty"));
     }
 
     let resp = match req.tools {
-        Some(ref tools) if !tools.is_empty() => {
-            llm.chat_with_tools(&req.messages, tools).await
-        }
+        Some(ref tools) if !tools.is_empty() => llm.chat_with_tools(&req.messages, tools).await,
         _ => llm.chat(&req.messages).await,
     };
 
@@ -94,9 +94,13 @@ pub async fn embed_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<EmbedResponseBody>> {
     let state = ctx.state::<LlmServiceState>()?;
-    let embedder = state.embedder.as_ref()
+    let embedder = state
+        .embedder
+        .as_ref()
         .ok_or_else(|| VilError::internal("no embedder configured"))?;
-    let req: EmbedRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: EmbedRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     if req.texts.is_empty() {
         return Err(VilError::bad_request("texts must not be empty"));
     }
@@ -117,9 +121,7 @@ pub async fn embed_handler(
 }
 
 /// GET /models — List available LLM models.
-pub async fn models_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<ModelsResponseBody> {
+pub async fn models_handler(ctx: ServiceCtx) -> VilResponse<ModelsResponseBody> {
     let state = ctx.state::<LlmServiceState>().expect("LlmServiceState");
     VilResponse::ok(state.models.clone())
 }

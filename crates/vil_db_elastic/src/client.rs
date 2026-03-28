@@ -18,7 +18,10 @@ use std::time::Instant;
 use elasticsearch::auth::Credentials;
 use elasticsearch::http::transport::{SingleNodeConnectionPool, TransportBuilder};
 use elasticsearch::http::Url;
-use elasticsearch::{BulkOperation, BulkParts, DeleteParts, Elasticsearch, GetParts, IndexParts, SearchParts, indices::IndicesCreateParts};
+use elasticsearch::{
+    indices::IndicesCreateParts, BulkOperation, BulkParts, DeleteParts, Elasticsearch, GetParts,
+    IndexParts, SearchParts,
+};
 use serde_json::Value;
 
 use vil_log::dict::register_str;
@@ -31,7 +34,7 @@ use crate::error::ElasticFault;
 const OP_SELECT: u8 = 0; // SELECT — search, get
 const OP_INSERT: u8 = 1; // INSERT — index, bulk
 const OP_DELETE: u8 = 3; // DELETE — delete
-const OP_DDL: u8 = 5;    // DDL    — create_index
+const OP_DDL: u8 = 5; // DDL    — create_index
 
 // =============================================================================
 // Result types
@@ -92,10 +95,12 @@ impl ElasticClient {
             builder = builder.auth(Credentials::Basic(user, pass));
         }
 
-        let transport = builder.build().map_err(|e| ElasticFault::ConnectionFailed {
-            url_hash: register_str(&e.to_string()),
-            reason_code: 2,
-        })?;
+        let transport = builder
+            .build()
+            .map_err(|e| ElasticFault::ConnectionFailed {
+                url_hash: register_str(&e.to_string()),
+                reason_code: 2,
+            })?;
 
         let inner = Elasticsearch::new(transport);
 
@@ -134,16 +139,19 @@ impl ElasticClient {
                 if status >= 400 {
                     let fault = classify_status(status, index_hash, id_hash);
 
-                    db_log!(Info, DbPayload {
-                        db_hash:       self.config_hash,
-                        table_hash:    index_hash,
-                        query_hash:    id_hash,
-                        duration_us:   elapsed.as_micros() as u32,
-                        rows_affected: 0,
-                        op_type:       OP_INSERT,
-                        error_code:    1,
-                        ..Default::default()
-                    });
+                    db_log!(
+                        Info,
+                        DbPayload {
+                            db_hash: self.config_hash,
+                            table_hash: index_hash,
+                            query_hash: id_hash,
+                            duration_us: elapsed.as_micros() as u32,
+                            rows_affected: 0,
+                            op_type: OP_INSERT,
+                            error_code: 1,
+                            ..Default::default()
+                        }
+                    );
 
                     return Err(fault);
                 }
@@ -152,16 +160,19 @@ impl ElasticClient {
                     message_hash: register_str(&e.to_string()),
                 })?;
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    id_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_INSERT,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: id_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_INSERT,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(IndexResult {
                     id: json["_id"].as_str().unwrap_or(id).to_owned(),
@@ -171,18 +182,24 @@ impl ElasticClient {
                 })
             }
             Err(e) => {
-                let fault = ElasticFault::IndexFailed { index_hash, id_hash };
+                let fault = ElasticFault::IndexFailed {
+                    index_hash,
+                    id_hash,
+                };
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    register_str(&e.to_string()),
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_INSERT,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: register_str(&e.to_string()),
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_INSERT,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -221,16 +238,19 @@ impl ElasticClient {
                 if status >= 400 {
                     let fault = classify_status(status, index_hash, query_hash);
 
-                    db_log!(Info, DbPayload {
-                        db_hash:       self.config_hash,
-                        table_hash:    index_hash,
-                        query_hash,
-                        duration_us:   elapsed.as_micros() as u32,
-                        rows_affected: 0,
-                        op_type:       OP_SELECT,
-                        error_code:    1,
-                        ..Default::default()
-                    });
+                    db_log!(
+                        Info,
+                        DbPayload {
+                            db_hash: self.config_hash,
+                            table_hash: index_hash,
+                            query_hash,
+                            duration_us: elapsed.as_micros() as u32,
+                            rows_affected: 0,
+                            op_type: OP_SELECT,
+                            error_code: 1,
+                            ..Default::default()
+                        }
+                    );
 
                     return Err(fault);
                 }
@@ -240,37 +260,43 @@ impl ElasticClient {
                 })?;
 
                 let total = json["hits"]["total"]["value"].as_u64().unwrap_or(0);
-                let hits = json["hits"]["hits"]
-                    .as_array()
-                    .cloned()
-                    .unwrap_or_default();
+                let hits = json["hits"]["hits"].as_array().cloned().unwrap_or_default();
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: hits.len() as u32,
-                    op_type:       OP_SELECT,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: hits.len() as u32,
+                        op_type: OP_SELECT,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(SearchResult { total, hits })
             }
             Err(e) => {
-                let fault = ElasticFault::SearchFailed { index_hash, query_hash };
+                let fault = ElasticFault::SearchFailed {
+                    index_hash,
+                    query_hash,
+                };
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    register_str(&e.to_string()),
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_SELECT,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: register_str(&e.to_string()),
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_SELECT,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -301,33 +327,42 @@ impl ElasticClient {
             Ok(response) => {
                 let status = response.status_code().as_u16();
                 if status == 404 {
-                    db_log!(Info, DbPayload {
-                        db_hash:       self.config_hash,
-                        table_hash:    index_hash,
-                        query_hash:    id_hash,
-                        duration_us:   elapsed.as_micros() as u32,
-                        rows_affected: 0,
-                        op_type:       OP_SELECT,
-                        error_code:    1,
-                        ..Default::default()
-                    });
+                    db_log!(
+                        Info,
+                        DbPayload {
+                            db_hash: self.config_hash,
+                            table_hash: index_hash,
+                            query_hash: id_hash,
+                            duration_us: elapsed.as_micros() as u32,
+                            rows_affected: 0,
+                            op_type: OP_SELECT,
+                            error_code: 1,
+                            ..Default::default()
+                        }
+                    );
 
-                    return Err(ElasticFault::NotFound { index_hash, id_hash });
+                    return Err(ElasticFault::NotFound {
+                        index_hash,
+                        id_hash,
+                    });
                 }
 
                 if status >= 400 {
                     let fault = classify_status(status, index_hash, id_hash);
 
-                    db_log!(Info, DbPayload {
-                        db_hash:       self.config_hash,
-                        table_hash:    index_hash,
-                        query_hash:    id_hash,
-                        duration_us:   elapsed.as_micros() as u32,
-                        rows_affected: 0,
-                        op_type:       OP_SELECT,
-                        error_code:    1,
-                        ..Default::default()
-                    });
+                    db_log!(
+                        Info,
+                        DbPayload {
+                            db_hash: self.config_hash,
+                            table_hash: index_hash,
+                            query_hash: id_hash,
+                            duration_us: elapsed.as_micros() as u32,
+                            rows_affected: 0,
+                            op_type: OP_SELECT,
+                            error_code: 1,
+                            ..Default::default()
+                        }
+                    );
 
                     return Err(fault);
                 }
@@ -336,16 +371,19 @@ impl ElasticClient {
                     message_hash: register_str(&e.to_string()),
                 })?;
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    id_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_SELECT,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: id_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_SELECT,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(json["_source"].clone())
             }
@@ -354,16 +392,19 @@ impl ElasticClient {
                     message_hash: register_str(&e.to_string()),
                 };
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    id_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_SELECT,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: id_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_SELECT,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -394,30 +435,36 @@ impl ElasticClient {
                 if status >= 400 {
                     let fault = classify_status(status, index_hash, id_hash);
 
-                    db_log!(Info, DbPayload {
-                        db_hash:       self.config_hash,
-                        table_hash:    index_hash,
-                        query_hash:    id_hash,
-                        duration_us:   elapsed.as_micros() as u32,
-                        rows_affected: 0,
-                        op_type:       OP_DELETE,
-                        error_code:    1,
-                        ..Default::default()
-                    });
+                    db_log!(
+                        Info,
+                        DbPayload {
+                            db_hash: self.config_hash,
+                            table_hash: index_hash,
+                            query_hash: id_hash,
+                            duration_us: elapsed.as_micros() as u32,
+                            rows_affected: 0,
+                            op_type: OP_DELETE,
+                            error_code: 1,
+                            ..Default::default()
+                        }
+                    );
 
                     return Err(fault);
                 }
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    id_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_DELETE,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: id_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_DELETE,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(())
             }
@@ -426,16 +473,19 @@ impl ElasticClient {
                     message_hash: register_str(&e.to_string()),
                 };
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    id_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_DELETE,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: id_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_DELETE,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -480,16 +530,19 @@ impl ElasticClient {
                 if status >= 400 {
                     let fault = classify_status(status, index_hash, 0);
 
-                    db_log!(Info, DbPayload {
-                        db_hash:       self.config_hash,
-                        table_hash:    index_hash,
-                        query_hash:    register_str("bulk"),
-                        duration_us:   elapsed.as_micros() as u32,
-                        rows_affected: 0,
-                        op_type:       OP_INSERT,
-                        error_code:    1,
-                        ..Default::default()
-                    });
+                    db_log!(
+                        Info,
+                        DbPayload {
+                            db_hash: self.config_hash,
+                            table_hash: index_hash,
+                            query_hash: register_str("bulk"),
+                            duration_us: elapsed.as_micros() as u32,
+                            rows_affected: 0,
+                            op_type: OP_INSERT,
+                            error_code: 1,
+                            ..Default::default()
+                        }
+                    );
 
                     return Err(fault);
                 }
@@ -516,16 +569,19 @@ impl ElasticClient {
                         })
                         .unwrap_or(0);
 
-                    db_log!(Info, DbPayload {
-                        db_hash:       self.config_hash,
-                        table_hash:    index_hash,
-                        query_hash:    register_str("bulk"),
-                        duration_us:   elapsed.as_micros() as u32,
-                        rows_affected: items as u32 - failed,
-                        op_type:       OP_INSERT,
-                        error_code:    if failed > 0 { 1 } else { 0 },
-                        ..Default::default()
-                    });
+                    db_log!(
+                        Info,
+                        DbPayload {
+                            db_hash: self.config_hash,
+                            table_hash: index_hash,
+                            query_hash: register_str("bulk"),
+                            duration_us: elapsed.as_micros() as u32,
+                            rows_affected: items as u32 - failed,
+                            op_type: OP_INSERT,
+                            error_code: if failed > 0 { 1 } else { 0 },
+                            ..Default::default()
+                        }
+                    );
 
                     if failed > 0 {
                         return Err(ElasticFault::BulkFailed {
@@ -537,16 +593,19 @@ impl ElasticClient {
 
                 let succeeded = items as u32;
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    register_str("bulk"),
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: succeeded,
-                    op_type:       OP_INSERT,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: register_str("bulk"),
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: succeeded,
+                        op_type: OP_INSERT,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(succeeded)
             }
@@ -555,16 +614,19 @@ impl ElasticClient {
                     message_hash: register_str(&e.to_string()),
                 };
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    register_str("bulk"),
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_INSERT,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: register_str("bulk"),
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_INSERT,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -604,30 +666,36 @@ impl ElasticClient {
                 if status >= 400 {
                     let fault = classify_status(status, index_hash, 0);
 
-                    db_log!(Info, DbPayload {
-                        db_hash:       self.config_hash,
-                        table_hash:    index_hash,
-                        query_hash:    register_str("create_index"),
-                        duration_us:   elapsed.as_micros() as u32,
-                        rows_affected: 0,
-                        op_type:       OP_DDL,
-                        error_code:    1,
-                        ..Default::default()
-                    });
+                    db_log!(
+                        Info,
+                        DbPayload {
+                            db_hash: self.config_hash,
+                            table_hash: index_hash,
+                            query_hash: register_str("create_index"),
+                            duration_us: elapsed.as_micros() as u32,
+                            rows_affected: 0,
+                            op_type: OP_DDL,
+                            error_code: 1,
+                            ..Default::default()
+                        }
+                    );
 
                     return Err(fault);
                 }
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    register_str("create_index"),
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_DDL,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: register_str("create_index"),
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_DDL,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(())
             }
@@ -636,16 +704,19 @@ impl ElasticClient {
                     message_hash: register_str(&e.to_string()),
                 };
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    index_hash,
-                    query_hash:    register_str("create_index"),
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_DDL,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: index_hash,
+                        query_hash: register_str("create_index"),
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_DDL,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -660,7 +731,10 @@ impl ElasticClient {
 fn classify_status(status: u16, index_hash: u32, id_hash: u32) -> ElasticFault {
     match status {
         401 | 403 => ElasticFault::AccessDenied { index_hash },
-        404 => ElasticFault::NotFound { index_hash, id_hash },
+        404 => ElasticFault::NotFound {
+            index_hash,
+            id_hash,
+        },
         _ => ElasticFault::Unknown {
             message_hash: register_str("elastic_http_error"),
         },

@@ -198,6 +198,8 @@ pub fn list_errors() {
         println!("  {}  {}", entry.code.yellow(), entry.title);
     }
     println!();
-    println!("Use {} to see details for a specific error.",
-        "vil explain <ERROR_CODE>".cyan());
+    println!(
+        "Use {} to see details for a specific error.",
+        "vil explain <ERROR_CODE>".cyan()
+    );
 }

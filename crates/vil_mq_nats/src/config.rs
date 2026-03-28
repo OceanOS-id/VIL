@@ -23,32 +23,54 @@ pub struct NatsCredentials {
     pub nkey: Option<String>,
 }
 
-fn default_name() -> String { "vil-client".into() }
-fn default_reconnect() -> u32 { 60 }
-fn default_buffer() -> usize { 65536 }
+fn default_name() -> String {
+    "vil-client".into()
+}
+fn default_reconnect() -> u32 {
+    60
+}
+fn default_buffer() -> usize {
+    65536
+}
 
 impl NatsConfig {
     pub fn new(url: &str) -> Self {
         Self {
-            url: url.into(), credentials: None, tls: false,
-            client_name: default_name(), max_reconnects: 60, buffer_size: 65536,
+            url: url.into(),
+            credentials: None,
+            tls: false,
+            client_name: default_name(),
+            max_reconnects: 60,
+            buffer_size: 65536,
         }
     }
 
     pub fn with_token(mut self, token: &str) -> Self {
         self.credentials = Some(NatsCredentials {
-            token: Some(token.into()), username: None, password: None, nkey: None,
+            token: Some(token.into()),
+            username: None,
+            password: None,
+            nkey: None,
         });
         self
     }
 
     pub fn with_userpass(mut self, user: &str, pass: &str) -> Self {
         self.credentials = Some(NatsCredentials {
-            username: Some(user.into()), password: Some(pass.into()), token: None, nkey: None,
+            username: Some(user.into()),
+            password: Some(pass.into()),
+            token: None,
+            nkey: None,
         });
         self
     }
 
-    pub fn tls(mut self, enabled: bool) -> Self { self.tls = enabled; self }
-    pub fn name(mut self, n: &str) -> Self { self.client_name = n.into(); self }
+    pub fn tls(mut self, enabled: bool) -> Self {
+        self.tls = enabled;
+        self
+    }
+    pub fn name(mut self, n: &str) -> Self {
+        self.client_name = n.into();
+        self
+    }
 }

@@ -773,16 +773,36 @@ pub struct SidecarFailoverManifest {
 // Default value functions
 // ═══════════════════════════════════════════════════════════════════════════════
 
-fn default_exec_class() -> String { "AsyncTask".into() }
-fn default_failover_strategy() -> String { "immediate".into() }
-fn default_message_kind() -> String { "message".into() }
-fn default_loan_write() -> String { "LoanWrite".into() }
-fn default_true() -> bool { true }
-fn default_rust() -> String { "rust".into() }
-fn default_shm() -> String { "shm".into() }
-fn default_20() -> u32 { 20 }
-fn default_5() -> u32 { 5 }
-fn default_mqtt_port() -> u16 { 1883 }
+fn default_exec_class() -> String {
+    "AsyncTask".into()
+}
+fn default_failover_strategy() -> String {
+    "immediate".into()
+}
+fn default_message_kind() -> String {
+    "message".into()
+}
+fn default_loan_write() -> String {
+    "LoanWrite".into()
+}
+fn default_true() -> bool {
+    true
+}
+fn default_rust() -> String {
+    "rust".into()
+}
+fn default_shm() -> String {
+    "shm".into()
+}
+fn default_20() -> u32 {
+    20
+}
+fn default_5() -> u32 {
+    5
+}
+fn default_mqtt_port() -> u16 {
+    1883
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Connector declarations (Phase 6)
@@ -802,7 +822,7 @@ pub struct ConnectorsManifest {
 pub struct DatabaseConnectorManifest {
     pub name: String,
     #[serde(rename = "type")]
-    pub db_type: String,  // mongo, clickhouse, dynamodb, cassandra, timeseries, neo4j, elastic
+    pub db_type: String, // mongo, clickhouse, dynamodb, cassandra, timeseries, neo4j, elastic
     #[serde(default)]
     pub uri: Option<String>,
     #[serde(default)]
@@ -817,7 +837,7 @@ pub struct DatabaseConnectorManifest {
 pub struct StorageConnectorManifest {
     pub name: String,
     #[serde(rename = "type")]
-    pub storage_type: String,  // s3, gcs, azure
+    pub storage_type: String, // s3, gcs, azure
     #[serde(default)]
     pub endpoint: Option<String>,
     #[serde(default)]
@@ -834,7 +854,7 @@ pub struct StorageConnectorManifest {
 pub struct QueueConnectorManifest {
     pub name: String,
     #[serde(rename = "type")]
-    pub queue_type: String,  // rabbitmq, sqs, pulsar, pubsub, kafka, nats, mqtt
+    pub queue_type: String, // rabbitmq, sqs, pulsar, pubsub, kafka, nats, mqtt
     #[serde(default)]
     pub uri: Option<String>,
     #[serde(default)]
@@ -853,7 +873,7 @@ pub struct QueueConnectorManifest {
 pub struct TriggerManifest {
     pub name: String,
     #[serde(rename = "type")]
-    pub trigger_type: String,  // cron, fs, cdc, email, iot, evm, webhook
+    pub trigger_type: String, // cron, fs, cdc, email, iot, evm, webhook
     #[serde(default)]
     pub schedule: Option<String>,
     #[serde(default)]
@@ -889,7 +909,7 @@ pub struct LoggingManifest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DrainManifest {
     #[serde(rename = "type")]
-    pub drain_type: String,  // stdout, file, clickhouse, nats
+    pub drain_type: String, // stdout, file, clickhouse, nats
     #[serde(default)]
     pub format: Option<String>,
     #[serde(default)]
@@ -904,7 +924,9 @@ pub struct DrainManifest {
     pub options: HashMap<String, String>,
 }
 
-fn default_log_level() -> String { "info".to_string() }
+fn default_log_level() -> String {
+    "info".to_string()
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Impl
@@ -912,7 +934,11 @@ fn default_log_level() -> String { "info".to_string() }
 
 impl WorkflowManifest {
     pub fn manifest_mode(&self) -> &str {
-        if !self.nodes.is_empty() { "workflow" } else { "server" }
+        if !self.nodes.is_empty() {
+            "workflow"
+        } else {
+            "server"
+        }
     }
 
     pub fn is_workflow(&self) -> bool {
@@ -931,8 +957,12 @@ impl WorkflowManifest {
 
     pub fn validate(&self) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();
-        if self.name.is_empty() { errors.push("name is required".into()); }
-        if self.port == 0 { errors.push("port must be > 0".into()); }
+        if self.name.is_empty() {
+            errors.push("name is required".into());
+        }
+        if self.port == 0 {
+            errors.push("port must be > 0".into());
+        }
 
         match self.manifest_mode() {
             "workflow" => {
@@ -945,12 +975,18 @@ impl WorkflowManifest {
                     let from_parts: Vec<&str> = route.from.splitn(2, '.').collect();
                     let to_parts: Vec<&str> = route.to.splitn(2, '.').collect();
                     if from_parts.len() != 2 {
-                        errors.push(format!("route[{}]: 'from' must be node.port, got '{}'", i, route.from));
+                        errors.push(format!(
+                            "route[{}]: 'from' must be node.port, got '{}'",
+                            i, route.from
+                        ));
                     } else if !self.nodes.contains_key(from_parts[0]) {
                         errors.push(format!("route[{}]: node '{}' not found", i, from_parts[0]));
                     }
                     if to_parts.len() != 2 {
-                        errors.push(format!("route[{}]: 'to' must be node.port, got '{}'", i, route.to));
+                        errors.push(format!(
+                            "route[{}]: 'to' must be node.port, got '{}'",
+                            i, route.to
+                        ));
                     } else if !self.nodes.contains_key(to_parts[0]) {
                         errors.push(format!("route[{}]: node '{}' not found", i, to_parts[0]));
                     }
@@ -959,11 +995,17 @@ impl WorkflowManifest {
                 // Validate workflow bindings
                 for (wf_name, wf) in &self.workflows {
                     if !self.nodes.contains_key(wf_name) && wf.trigger.is_none() {
-                        errors.push(format!("workflow '{}' not bound to any node and has no 'trigger:'", wf_name));
+                        errors.push(format!(
+                            "workflow '{}' not bound to any node and has no 'trigger:'",
+                            wf_name
+                        ));
                     }
                     if let Some(trigger) = &wf.trigger {
                         if !self.nodes.contains_key(trigger) {
-                            errors.push(format!("workflow '{}' trigger '{}' references unknown node", wf_name, trigger));
+                            errors.push(format!(
+                                "workflow '{}' trigger '{}' references unknown node",
+                                wf_name, trigger
+                            ));
                         }
                     }
                 }
@@ -972,11 +1014,17 @@ impl WorkflowManifest {
                 for (name, node) in &self.nodes {
                     match node.node_type.as_str() {
                         "http-sink" => {
-                            if node.port.is_none() { errors.push(format!("node '{}': port required", name)); }
-                            if node.path.is_none() { errors.push(format!("node '{}': path required", name)); }
+                            if node.port.is_none() {
+                                errors.push(format!("node '{}': port required", name));
+                            }
+                            if node.path.is_none() {
+                                errors.push(format!("node '{}': path required", name));
+                            }
                         }
                         "http-source" => {
-                            if node.url.is_none() { errors.push(format!("node '{}': url required", name)); }
+                            if node.url.is_none() {
+                                errors.push(format!("node '{}': url required", name));
+                            }
                         }
                         "transform" => {}
                         _ => {} // Allow AI/DB built-in types without validation here
@@ -984,16 +1032,28 @@ impl WorkflowManifest {
                 }
             }
             _ => {
-                if self.endpoints.is_empty() { errors.push("at least one endpoint required".into()); }
+                if self.endpoints.is_empty() {
+                    errors.push("at least one endpoint required".into());
+                }
                 for (i, ep) in self.endpoints.iter().enumerate() {
-                    if ep.method.is_empty() { errors.push(format!("endpoint[{}]: method required", i)); }
-                    if ep.path.is_empty() { errors.push(format!("endpoint[{}]: path required", i)); }
-                    if ep.handler.is_empty() { errors.push(format!("endpoint[{}]: handler required", i)); }
+                    if ep.method.is_empty() {
+                        errors.push(format!("endpoint[{}]: method required", i));
+                    }
+                    if ep.path.is_empty() {
+                        errors.push(format!("endpoint[{}]: path required", i));
+                    }
+                    if ep.handler.is_empty() {
+                        errors.push(format!("endpoint[{}]: handler required", i));
+                    }
                 }
             }
         }
 
-        if errors.is_empty() { Ok(()) } else { Err(errors) }
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 }
 

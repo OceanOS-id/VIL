@@ -29,10 +29,7 @@ use axum::response::Response;
 /// - Content-Security-Policy: default-src 'self'
 /// - Strict-Transport-Security: max-age=31536000 (if HTTPS)
 /// - Permissions-Policy: camera=(), microphone=(), geolocation=()
-pub async fn security_headers(
-    request: Request<axum::body::Body>,
-    next: Next,
-) -> Response {
+pub async fn security_headers(request: Request<axum::body::Body>, next: Next) -> Response {
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
 
@@ -40,14 +37,8 @@ pub async fn security_headers(
         "x-content-type-options",
         HeaderValue::from_static("nosniff"),
     );
-    headers.insert(
-        "x-frame-options",
-        HeaderValue::from_static("DENY"),
-    );
-    headers.insert(
-        "x-xss-protection",
-        HeaderValue::from_static("0"),
-    );
+    headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
+    headers.insert("x-xss-protection", HeaderValue::from_static("0"));
     headers.insert(
         "referrer-policy",
         HeaderValue::from_static("strict-origin-when-cross-origin"),
@@ -121,7 +112,10 @@ impl BruteForceProtection {
 
     /// Record a failed authentication attempt.
     pub fn record_failure(&self, ip: &str) {
-        let mut entry = self.attempts.entry(ip.to_string()).or_insert((0, std::time::Instant::now()));
+        let mut entry = self
+            .attempts
+            .entry(ip.to_string())
+            .or_insert((0, std::time::Instant::now()));
         entry.0 += 1;
         entry.1 = std::time::Instant::now();
     }
@@ -169,8 +163,8 @@ impl SecurityStatus {
     pub fn default_posture() -> Self {
         Self {
             security_headers: true,
-            jwt_auth: false,  // opt-in
-            rate_limiting: false, // opt-in
+            jwt_auth: false,        // opt-in
+            rate_limiting: false,   // opt-in
             circuit_breaker: false, // opt-in
             body_size_limit: true,
             cors_configured: true,

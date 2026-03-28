@@ -383,10 +383,7 @@ fn generate_struct(name: &str, fields: &[FieldManifest], is_input: bool) -> Stri
 
 fn generate_error_enum(name: &str, variants: &[ErrorVariant]) -> String {
     let enum_name = format!("{}Error", to_pascal_case(name));
-    let mut s = format!(
-        "#[derive(Debug, DeriveVilError)]\nenum {} {{\n",
-        enum_name
-    );
+    let mut s = format!("#[derive(Debug, DeriveVilError)]\nenum {} {{\n", enum_name);
     for v in variants {
         let mut attrs = vec![format!("status = {}", v.status)];
         if let Some(code) = &v.code {
@@ -511,9 +508,7 @@ fn generate_handler(ep: &EndpointManifest) -> String {
             s.push_str("        .json(&upstream_body)\n");
         }
         s.push_str("        .send().await\n");
-        s.push_str(
-            "        .map_err(|e| VilError::internal(format!(\"Upstream: {}\", e)))?;\n\n",
-        );
+        s.push_str("        .map_err(|e| VilError::internal(format!(\"Upstream: {}\", e)))?;\n\n");
 
         if is_sse {
             // SSE streaming: read the byte stream, parse SSE events, extract content
@@ -554,9 +549,7 @@ fn generate_handler(ep: &EndpointManifest) -> String {
         } else {
             // Non-SSE: parse JSON response
             s.push_str("    let upstream_data: serde_json::Value = resp.json().await\n");
-            s.push_str(
-                "        .map_err(|e| VilError::internal(format!(\"Parse: {}\", e)))?;\n\n",
-            );
+            s.push_str("        .map_err(|e| VilError::internal(format!(\"Parse: {}\", e)))?;\n\n");
 
             if has_output {
                 if let Some(output) = &ep.output {
@@ -1888,9 +1881,7 @@ pub fn generate_workflow_rust(manifest: &WorkflowManifest) -> String {
     }
 
     // Register + wire via vil_workflow! macro (proven working path)
-    code.push_str(
-        "    // ── Register + Wire via vil_workflow! ─────────────────────────────\n\n",
-    );
+    code.push_str("    // ── Register + Wire via vil_workflow! ─────────────────────────────\n\n");
 
     // Collect all builder names (sinks + sources only — transforms use ProcessSpec)
     let all_instance_names: Vec<&str> = sink_names
@@ -2343,13 +2334,21 @@ fn generate_connector_init(manifest: &WorkflowManifest) -> String {
     // Logging init
     if let Some(logging) = &manifest.logging {
         let level = match logging.level.as_str() {
-            "trace" => "Trace", "debug" => "Debug", "info" => "Info",
-            "warn" => "Warn", "error" => "Error", _ => "Info",
+            "trace" => "Trace",
+            "debug" => "Debug",
+            "info" => "Info",
+            "warn" => "Warn",
+            "error" => "Error",
+            _ => "Info",
         };
-        let threads = logging.threads.map(|t| format!("Some({})", t)).unwrap_or("None".into());
+        let threads = logging
+            .threads
+            .map(|t| format!("Some({})", t))
+            .unwrap_or("None".into());
         let ring_slots = logging.ring_slots.unwrap_or(1 << 20);
 
-        code.push_str(&format!(r#"
+        code.push_str(&format!(
+            r#"
     // ── VIL Log System ──
     let _log_task = vil_log::runtime::init_logging(
         vil_log::LogConfig {{
@@ -2361,7 +2360,9 @@ fn generate_connector_init(manifest: &WorkflowManifest) -> String {
         }},
         vil_log::StdoutDrain::resolved(),
     );
-"#, ring_slots, level, threads));
+"#,
+            ring_slots, level, threads
+        ));
     }
 
     // Database connectors
@@ -2372,24 +2373,34 @@ fn generate_connector_init(manifest: &WorkflowManifest) -> String {
                 "mongo" => {
                     let uri = db.uri.as_deref().unwrap_or("mongodb://localhost:27017");
                     let database = db.database.as_deref().unwrap_or("default");
-                    code.push_str(&format!(r#"
+                    code.push_str(&format!(
+                        r#"
     let {var} = vil_db_mongo::process::create_client(vil_db_mongo::MongoConfig {{
         uri: "{}".into(),
         database: "{}".into(),
         ..Default::default()
     }}).await.expect("Failed to connect to MongoDB");
-"#, uri, database, var = var_name));
+"#,
+                        uri,
+                        database,
+                        var = var_name
+                    ));
                 }
                 "clickhouse" => {
                     let url = db.url.as_deref().unwrap_or("http://localhost:8123");
                     let database = db.database.as_deref().unwrap_or("default");
-                    code.push_str(&format!(r#"
+                    code.push_str(&format!(
+                        r#"
     let {var} = vil_db_clickhouse::process::create_client(vil_db_clickhouse::ClickHouseConfig {{
         url: "{}".into(),
         database: "{}".into(),
         ..Default::default()
     }});
-"#, url, database, var = var_name));
+"#,
+                        url,
+                        database,
+                        var = var_name
+                    ));
                 }
                 // Additional DB types can be added here: dynamodb, cassandra, timeseries, neo4j, elastic
                 _ => {}
@@ -2400,19 +2411,27 @@ fn generate_connector_init(manifest: &WorkflowManifest) -> String {
             let var_name = storage.name.replace('-', "_");
             match storage.storage_type.as_str() {
                 "s3" => {
-                    let endpoint = storage.endpoint.as_deref()
+                    let endpoint = storage
+                        .endpoint
+                        .as_deref()
                         .map(|e| format!("Some(\"{}\".into())", e))
                         .unwrap_or("None".into());
                     let bucket = storage.bucket.as_deref().unwrap_or("default");
                     let region = storage.region.as_deref().unwrap_or("us-east-1");
-                    code.push_str(&format!(r#"
+                    code.push_str(&format!(
+                        r#"
     let {var} = vil_storage_s3::process::create_client(vil_storage_s3::S3Config {{
         endpoint: {endpoint},
         bucket: "{}".into(),
         region: "{}".into(),
         ..Default::default()
     }}).await.expect("Failed to connect to S3");
-"#, bucket, region, var = var_name, endpoint = endpoint));
+"#,
+                        bucket,
+                        region,
+                        var = var_name,
+                        endpoint = endpoint
+                    ));
                 }
                 _ => {}
             }
@@ -2423,12 +2442,16 @@ fn generate_connector_init(manifest: &WorkflowManifest) -> String {
             match mq.queue_type.as_str() {
                 "rabbitmq" => {
                     let uri = mq.uri.as_deref().unwrap_or("amqp://localhost:5672");
-                    code.push_str(&format!(r#"
+                    code.push_str(&format!(
+                        r#"
     let {var} = vil_mq_rabbitmq::process::create_client(vil_mq_rabbitmq::RabbitConfig {{
         uri: "{}".into(),
         ..Default::default()
     }}).await.expect("Failed to connect to RabbitMQ");
-"#, uri, var = var_name));
+"#,
+                        uri,
+                        var = var_name
+                    ));
                 }
                 _ => {}
             }
@@ -2441,14 +2464,18 @@ fn generate_connector_init(manifest: &WorkflowManifest) -> String {
         match trigger.trigger_type.as_str() {
             "cron" => {
                 let schedule = trigger.schedule.as_deref().unwrap_or("0 * * * * *");
-                code.push_str(&format!(r#"
+                code.push_str(&format!(
+                    r#"
     let ({var}_trigger, {var}_rx) = vil_trigger_cron::process::create_cron_trigger(
         vil_trigger_cron::CronConfig {{
             schedule: "{}".into(),
             ..Default::default()
         }}
     ).expect("Failed to create cron trigger");
-"#, schedule, var = var_name));
+"#,
+                    schedule,
+                    var = var_name
+                ));
             }
             _ => {}
         }
@@ -2614,7 +2641,10 @@ endpoints:
     handler: hello
 "#;
         let manifest = WorkflowManifest::from_yaml(yaml).unwrap();
-        assert!(!manifest.observer, "manifest.observer should default to false");
+        assert!(
+            !manifest.observer,
+            "manifest.observer should default to false"
+        );
         let code = generate_rust(&manifest);
         assert!(
             !code.contains(".observer(true)"),

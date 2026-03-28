@@ -24,7 +24,7 @@
 //     }
 //   }
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Declarative plugin manifest.
@@ -136,8 +136,7 @@ impl PluginManifest {
     pub fn from_file(path: &std::path::Path) -> Result<Self, String> {
         let content = std::fs::read_to_string(path)
             .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
-        serde_json::from_str(&content)
-            .map_err(|e| format!("Failed to parse manifest: {}", e))
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse manifest: {}", e))
     }
 
     /// Serialize to JSON string.
@@ -155,27 +154,65 @@ impl PluginManifest {
         if self.version.is_empty() {
             errors.push("version is required".into());
         }
-        if !self.name.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+        if !self
+            .name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+        {
             errors.push("name must contain only alphanumeric, '-', or '_' characters".into());
         }
 
-        if errors.is_empty() { Ok(()) } else { Err(errors) }
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 }
 
 impl ConfigFieldSchema {
     pub fn string() -> Self {
-        Self { field_type: "string".into(), required: false, default: None, description: String::new(), secret: false }
+        Self {
+            field_type: "string".into(),
+            required: false,
+            default: None,
+            description: String::new(),
+            secret: false,
+        }
     }
     pub fn integer() -> Self {
-        Self { field_type: "integer".into(), required: false, default: None, description: String::new(), secret: false }
+        Self {
+            field_type: "integer".into(),
+            required: false,
+            default: None,
+            description: String::new(),
+            secret: false,
+        }
     }
     pub fn boolean() -> Self {
-        Self { field_type: "boolean".into(), required: false, default: None, description: String::new(), secret: false }
+        Self {
+            field_type: "boolean".into(),
+            required: false,
+            default: None,
+            description: String::new(),
+            secret: false,
+        }
     }
 
-    pub fn required(mut self) -> Self { self.required = true; self }
-    pub fn secret(mut self) -> Self { self.secret = true; self }
-    pub fn description(mut self, desc: impl Into<String>) -> Self { self.description = desc.into(); self }
-    pub fn default_value(mut self, val: serde_json::Value) -> Self { self.default = Some(val); self }
+    pub fn required(mut self) -> Self {
+        self.required = true;
+        self
+    }
+    pub fn secret(mut self) -> Self {
+        self.secret = true;
+        self
+    }
+    pub fn description(mut self, desc: impl Into<String>) -> Self {
+        self.description = desc.into();
+        self
+    }
+    pub fn default_value(mut self, val: serde_json::Value) -> Self {
+        self.default = Some(val);
+        self
+    }
 }

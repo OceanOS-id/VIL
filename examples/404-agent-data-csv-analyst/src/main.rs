@@ -34,8 +34,8 @@
 //   Input is raw CSV data, tools parse it into records, compute stats,
 //   and produce chart-ready JSON. Different domain (tabular data analysis).
 
-use vil_server::prelude::*;
 use vil_agent::semantic::{AgentCompletionEvent, AgentFault, AgentMemoryState};
+use vil_server::prelude::*;
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -81,7 +81,15 @@ fn tool_parse_csv(csv_data: &str) -> (CsvRecord, String) {
     let mut lines = csv_data.lines();
     let headers: Vec<String> = match lines.next() {
         Some(h) => h.split(',').map(|s| s.trim().to_string()).collect(),
-        None => return (CsvRecord { headers: vec![], rows: vec![] }, "Empty CSV".into()),
+        None => {
+            return (
+                CsvRecord {
+                    headers: vec![],
+                    rows: vec![],
+                },
+                "Empty CSV".into(),
+            )
+        }
     };
 
     let rows: Vec<Vec<String>> = lines
@@ -89,7 +97,12 @@ fn tool_parse_csv(csv_data: &str) -> (CsvRecord, String) {
         .map(|l| l.split(',').map(|s| s.trim().to_string()).collect())
         .collect();
 
-    let summary = format!("{} columns x {} rows. Headers: {:?}", headers.len(), rows.len(), headers);
+    let summary = format!(
+        "{} columns x {} rows. Headers: {:?}",
+        headers.len(),
+        rows.len(),
+        headers
+    );
     (CsvRecord { headers, rows }, summary)
 }
 
@@ -115,11 +128,15 @@ struct ColumnStats {
 /// std_dev indicates revenue volatility (risk signal for investors).
 fn tool_compute_stats(record: &CsvRecord, col_name: &str) -> Option<ColumnStats> {
     let col_idx = record.headers.iter().position(|h| h == col_name)?;
-    let mut values: Vec<f64> = record.rows.iter()
+    let mut values: Vec<f64> = record
+        .rows
+        .iter()
         .filter_map(|row| row.get(col_idx).and_then(|v| v.parse::<f64>().ok()))
         .collect();
 
-    if values.is_empty() { return None; }
+    if values.is_empty() {
+        return None;
+    }
 
     let count = values.len();
     let sum: f64 = values.iter().sum();
@@ -141,7 +158,11 @@ fn tool_compute_stats(record: &CsvRecord, col_name: &str) -> Option<ColumnStats>
     // Growth rate: (last - first) / first * 100
     let first = values.first().copied().unwrap_or(1.0);
     let last = values.last().copied().unwrap_or(1.0);
-    let growth_rate_pct = if first != 0.0 { ((last - first) / first) * 100.0 } else { 0.0 };
+    let growth_rate_pct = if first != 0.0 {
+        ((last - first) / first) * 100.0
+    } else {
+        0.0
+    };
 
     Some(ColumnStats {
         column: col_name.into(),
@@ -179,18 +200,30 @@ struct ChartDataset {
 fn tool_chart_data(record: &CsvRecord, label_col: &str, data_cols: &[&str]) -> ChartData {
     let label_idx = record.headers.iter().position(|h| h == label_col);
     let labels: Vec<String> = if let Some(idx) = label_idx {
-        record.rows.iter().filter_map(|r| r.get(idx).cloned()).collect()
+        record
+            .rows
+            .iter()
+            .filter_map(|r| r.get(idx).cloned())
+            .collect()
     } else {
-        (1..=record.rows.len()).map(|i| format!("Row {}", i)).collect()
+        (1..=record.rows.len())
+            .map(|i| format!("Row {}", i))
+            .collect()
     };
 
-    let datasets: Vec<ChartDataset> = data_cols.iter()
+    let datasets: Vec<ChartDataset> = data_cols
+        .iter()
         .filter_map(|col| {
             let idx = record.headers.iter().position(|h| h == *col)?;
-            let data: Vec<f64> = record.rows.iter()
+            let data: Vec<f64> = record
+                .rows
+                .iter()
                 .filter_map(|r| r.get(idx).and_then(|v| v.parse().ok()))
                 .collect();
-            Some(ChartDataset { label: col.to_string(), data })
+            Some(ChartDataset {
+                label: col.to_string(),
+                data,
+            })
         })
         .collect();
 
@@ -220,9 +253,7 @@ struct CsvAnalyzeResponse {
 
 // ── Handler ─────────────────────────────────────────────────────────
 
-async fn csv_analyze_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<CsvAnalyzeResponse>> {
+async fn csv_analyze_handler(body: ShmSlice) -> HandlerResult<VilResponse<CsvAnalyzeResponse>> {
     let req: CsvAnalyzeRequest = body.json().expect("invalid JSON body");
     // Step 1: Parse CSV
     let (record, parse_summary) = tool_parse_csv(&req.csv_data);
@@ -233,9 +264,14 @@ async fn csv_analyze_handler(
     // Step 2: Compute stats for all numeric columns
     let mut all_stats = Vec::new();
     let mut numeric_cols = Vec::new();
-    let label_col = record.headers.first().map(|s| s.as_str()).unwrap_or("index");
+    let label_col = record
+        .headers
+        .first()
+        .map(|s| s.as_str())
+        .unwrap_or("index");
 
-    for header in &record.headers[1..] {  // Skip first column (usually labels/dates)
+    for header in &record.headers[1..] {
+        // Skip first column (usually labels/dates)
         if let Some(stats) = tool_compute_stats(&record, header) {
             all_stats.push(stats);
             numeric_cols.push(header.as_str());
@@ -246,11 +282,14 @@ async fn csv_analyze_handler(
     let chart = tool_chart_data(&record, label_col, &numeric_cols);
 
     // Step 4: Build context for LLM
-    let stats_text: String = all_stats.iter()
-        .map(|s| format!(
-            "Column '{}': mean={}, median={}, std_dev={}, min={}, max={}, growth={}%",
-            s.column, s.mean, s.median, s.std_dev, s.min, s.max, s.growth_rate_pct
-        ))
+    let stats_text: String = all_stats
+        .iter()
+        .map(|s| {
+            format!(
+                "Column '{}': mean={}, median={}, std_dev={}, min={}, max={}, growth={}%",
+                s.column, s.mean, s.median, s.std_dev, s.min, s.max, s.growth_rate_pct
+            )
+        })
         .collect::<Vec<_>>()
         .join("\n");
 
@@ -283,7 +322,9 @@ async fn csv_analyze_handler(
         collector = collector.bearer_token(&api_key);
     }
 
-    let analysis = collector.collect_text().await
+    let analysis = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Semantic anchors
@@ -315,7 +356,14 @@ async fn main() {
     println!("    - chart_data: generate chart-friendly JSON");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     println!("  Listening on http://localhost:3123/api/csv-analyze");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!();

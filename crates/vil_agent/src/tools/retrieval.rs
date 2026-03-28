@@ -1,7 +1,7 @@
 //! RAG retrieval tool — searches the knowledge base via the Retriever trait.
 
-use std::sync::Arc;
 use async_trait::async_trait;
+use std::sync::Arc;
 use vil_rag::Retriever;
 
 use crate::tool::{Tool, ToolError, ToolResult};

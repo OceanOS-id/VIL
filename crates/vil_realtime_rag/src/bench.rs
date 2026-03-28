@@ -48,9 +48,7 @@ mod tests {
         let idx = RealtimeIndex::new(384);
         // Add a few docs so there's something to search.
         for i in 0..10u64 {
-            let v: Vec<f32> = (0..384)
-                .map(|d| ((i * 384 + d) as f32).sin())
-                .collect();
+            let v: Vec<f32> = (0..384).map(|d| ((i * 384 + d) as f32).sin()).collect();
             idx.add(
                 &v,
                 DocEntry {

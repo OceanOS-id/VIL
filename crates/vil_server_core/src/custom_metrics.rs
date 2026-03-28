@@ -85,7 +85,8 @@ impl CustomMetrics {
 
     /// Register a counter metric.
     pub fn register_counter(&self, name: &str, description: &str) {
-        self.counters.insert(name.to_string(), Arc::new(AtomicU64::new(0)));
+        self.counters
+            .insert(name.to_string(), Arc::new(AtomicU64::new(0)));
         self.descriptions.insert(
             name.to_string(),
             (MetricType::Counter, description.to_string()),
@@ -108,14 +109,18 @@ impl CustomMetrics {
 
     /// Get counter value.
     pub fn counter_value(&self, name: &str) -> u64 {
-        self.counters.get(name).map(|c| c.load(Ordering::Relaxed)).unwrap_or(0)
+        self.counters
+            .get(name)
+            .map(|c| c.load(Ordering::Relaxed))
+            .unwrap_or(0)
     }
 
     // ========== Gauges ==========
 
     /// Register a gauge metric.
     pub fn register_gauge(&self, name: &str, description: &str) {
-        self.gauges.insert(name.to_string(), Arc::new(AtomicI64::new(0)));
+        self.gauges
+            .insert(name.to_string(), Arc::new(AtomicI64::new(0)));
         self.descriptions.insert(
             name.to_string(),
             (MetricType::Gauge, description.to_string()),
@@ -145,14 +150,18 @@ impl CustomMetrics {
 
     /// Get gauge value.
     pub fn gauge_value(&self, name: &str) -> i64 {
-        self.gauges.get(name).map(|g| g.load(Ordering::Relaxed)).unwrap_or(0)
+        self.gauges
+            .get(name)
+            .map(|g| g.load(Ordering::Relaxed))
+            .unwrap_or(0)
     }
 
     // ========== Histograms ==========
 
     /// Register a histogram with custom bucket boundaries.
     pub fn register_histogram(&self, name: &str, description: &str, buckets: Vec<f64>) {
-        self.histograms.insert(name.to_string(), Arc::new(HistogramData::new(buckets)));
+        self.histograms
+            .insert(name.to_string(), Arc::new(HistogramData::new(buckets)));
         self.descriptions.insert(
             name.to_string(),
             (MetricType::Histogram, description.to_string()),
@@ -161,7 +170,9 @@ impl CustomMetrics {
 
     /// Register a histogram with default buckets (HTTP latency).
     pub fn register_histogram_default(&self, name: &str, description: &str) {
-        let buckets = vec![5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0, 2500.0, 5000.0];
+        let buckets = vec![
+            5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0, 2500.0, 5000.0,
+        ];
         self.register_histogram(name, description, buckets);
     }
 
@@ -210,7 +221,11 @@ impl CustomMetrics {
             }
             let count = h.count.load(Ordering::Relaxed);
             out.push_str(&format!("{}_count {}\n", name, count));
-            out.push_str(&format!("{}_sum {}\n", name, f64::from_bits(h.sum.load(Ordering::Relaxed))));
+            out.push_str(&format!(
+                "{}_sum {}\n",
+                name,
+                f64::from_bits(h.sum.load(Ordering::Relaxed))
+            ));
         }
 
         out

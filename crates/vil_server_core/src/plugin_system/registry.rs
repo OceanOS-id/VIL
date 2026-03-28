@@ -1,7 +1,7 @@
 //! PluginRegistry -- manages plugin lifecycle and dependency resolution.
 
-use super::{VilPlugin, PluginHealth, PluginCapability, PluginContext};
 use super::resource::ResourceRegistry;
+use super::{PluginCapability, PluginContext, PluginHealth, VilPlugin};
 use crate::vx::service::ServiceProcess;
 use std::collections::HashMap;
 
@@ -31,9 +31,17 @@ pub enum PluginError {
 impl std::fmt::Display for PluginError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::CircularDependency(cycle) => write!(f, "circular plugin dependency: {}", cycle.join(" -> ")),
-            Self::MissingDependency { plugin, requires } => write!(f, "plugin '{}' requires '{}' which is not registered", plugin, requires),
-            Self::RegistrationFailed { plugin, error } => write!(f, "plugin '{}' registration failed: {}", plugin, error),
+            Self::CircularDependency(cycle) => {
+                write!(f, "circular plugin dependency: {}", cycle.join(" -> "))
+            }
+            Self::MissingDependency { plugin, requires } => write!(
+                f,
+                "plugin '{}' requires '{}' which is not registered",
+                plugin, requires
+            ),
+            Self::RegistrationFailed { plugin, error } => {
+                write!(f, "plugin '{}' registration failed: {}", plugin, error)
+            }
             Self::DuplicatePlugin(id) => write!(f, "duplicate plugin ID: '{}'", id),
         }
     }
@@ -70,7 +78,9 @@ impl PluginRegistry {
 
     /// Resolve dependencies and register all plugins in order.
     /// Returns (services_to_add, mesh_routes_to_add).
-    pub fn resolve_and_register(&mut self) -> Result<(Vec<ServiceProcess>, Vec<(String, String)>), PluginError> {
+    pub fn resolve_and_register(
+        &mut self,
+    ) -> Result<(Vec<ServiceProcess>, Vec<(String, String)>), PluginError> {
         if self.plugins.is_empty() {
             return Ok((Vec::new(), Vec::new()));
         }
@@ -118,7 +128,9 @@ impl PluginRegistry {
         let n = self.plugins.len();
 
         // Build name -> index map
-        let id_to_idx: HashMap<String, usize> = self.plugins.iter()
+        let id_to_idx: HashMap<String, usize> = self
+            .plugins
+            .iter()
             .enumerate()
             .map(|(i, p)| (p.id().to_string(), i))
             .collect();
@@ -170,34 +182,44 @@ impl PluginRegistry {
 
     /// List all registered plugins.
     pub fn list(&self) -> Vec<PluginInfo> {
-        self.plugins.iter().map(|p| {
-            let caps: Vec<String> = p.capabilities().iter().map(|c| match c {
-                PluginCapability::Service { name, .. } => format!("service:{}", name),
-                PluginCapability::Middleware { name, .. } => format!("middleware:{}", name),
-                PluginCapability::CliCommand { name, .. } => format!("cli:{}", name),
-                PluginCapability::Resource { type_name, name } => format!("resource:{}({})", type_name, name),
-                PluginCapability::DashboardWidget { name } => format!("widget:{}", name),
-            }).collect();
+        self.plugins
+            .iter()
+            .map(|p| {
+                let caps: Vec<String> = p
+                    .capabilities()
+                    .iter()
+                    .map(|c| match c {
+                        PluginCapability::Service { name, .. } => format!("service:{}", name),
+                        PluginCapability::Middleware { name, .. } => format!("middleware:{}", name),
+                        PluginCapability::CliCommand { name, .. } => format!("cli:{}", name),
+                        PluginCapability::Resource { type_name, name } => {
+                            format!("resource:{}({})", type_name, name)
+                        }
+                        PluginCapability::DashboardWidget { name } => format!("widget:{}", name),
+                    })
+                    .collect();
 
-            let health = match p.health() {
-                PluginHealth::Healthy => "healthy".into(),
-                PluginHealth::Degraded(msg) => format!("degraded: {}", msg),
-                PluginHealth::Unhealthy(msg) => format!("unhealthy: {}", msg),
-            };
+                let health = match p.health() {
+                    PluginHealth::Healthy => "healthy".into(),
+                    PluginHealth::Degraded(msg) => format!("degraded: {}", msg),
+                    PluginHealth::Unhealthy(msg) => format!("unhealthy: {}", msg),
+                };
 
-            PluginInfo {
-                id: p.id().to_string(),
-                version: p.version().to_string(),
-                description: p.description().to_string(),
-                capabilities: caps,
-                health,
-            }
-        }).collect()
+                PluginInfo {
+                    id: p.id().to_string(),
+                    version: p.version().to_string(),
+                    description: p.description().to_string(),
+                    capabilities: caps,
+                    health,
+                }
+            })
+            .collect()
     }
 
     /// Get health of all plugins.
     pub fn health_all(&self) -> Vec<(String, PluginHealth)> {
-        self.plugins.iter()
+        self.plugins
+            .iter()
             .map(|p| (p.id().to_string(), p.health()))
             .collect()
     }
@@ -220,7 +242,9 @@ impl PluginRegistry {
 }
 
 impl Default for PluginRegistry {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -232,8 +256,12 @@ mod tests {
 
     struct PluginA;
     impl VilPlugin for PluginA {
-        fn id(&self) -> &str { "plugin-a" }
-        fn version(&self) -> &str { "1.0.0" }
+        fn id(&self) -> &str {
+            "plugin-a"
+        }
+        fn version(&self) -> &str {
+            "1.0.0"
+        }
         fn register(&self, ctx: &mut PluginContext) {
             ctx.provide::<String>("greeting", "hello from A".into());
         }
@@ -241,8 +269,12 @@ mod tests {
 
     struct PluginB;
     impl VilPlugin for PluginB {
-        fn id(&self) -> &str { "plugin-b" }
-        fn version(&self) -> &str { "1.0.0" }
+        fn id(&self) -> &str {
+            "plugin-b"
+        }
+        fn version(&self) -> &str {
+            "1.0.0"
+        }
         fn dependencies(&self) -> Vec<PluginDependency> {
             vec![PluginDependency::required("plugin-a", ">=1.0")]
         }
@@ -254,8 +286,12 @@ mod tests {
 
     struct PluginC;
     impl VilPlugin for PluginC {
-        fn id(&self) -> &str { "plugin-c" }
-        fn version(&self) -> &str { "1.0.0" }
+        fn id(&self) -> &str {
+            "plugin-c"
+        }
+        fn version(&self) -> &str {
+            "1.0.0"
+        }
         fn dependencies(&self) -> Vec<PluginDependency> {
             vec![PluginDependency::required("plugin-b", ">=1.0")]
         }
@@ -276,7 +312,10 @@ mod tests {
 
         let (services, _routes) = reg.resolve_and_register().unwrap();
         assert!(services.is_empty()); // these plugins don't add services
-        assert_eq!(reg.resources().require::<String>("extended"), "hello from A + B");
+        assert_eq!(
+            reg.resources().require::<String>("extended"),
+            "hello from A + B"
+        );
     }
 
     #[test]
@@ -292,8 +331,12 @@ mod tests {
     fn test_circular_dependency() {
         struct CycleA;
         impl VilPlugin for CycleA {
-            fn id(&self) -> &str { "cycle-a" }
-            fn version(&self) -> &str { "1.0.0" }
+            fn id(&self) -> &str {
+                "cycle-a"
+            }
+            fn version(&self) -> &str {
+                "1.0.0"
+            }
             fn dependencies(&self) -> Vec<PluginDependency> {
                 vec![PluginDependency::required("cycle-b", ">=1.0")]
             }
@@ -301,8 +344,12 @@ mod tests {
         }
         struct CycleB;
         impl VilPlugin for CycleB {
-            fn id(&self) -> &str { "cycle-b" }
-            fn version(&self) -> &str { "1.0.0" }
+            fn id(&self) -> &str {
+                "cycle-b"
+            }
+            fn version(&self) -> &str {
+                "1.0.0"
+            }
             fn dependencies(&self) -> Vec<PluginDependency> {
                 vec![PluginDependency::required("cycle-a", ">=1.0")]
             }
@@ -331,8 +378,12 @@ mod tests {
     fn test_optional_dependency_missing_ok() {
         struct OptPlugin;
         impl VilPlugin for OptPlugin {
-            fn id(&self) -> &str { "opt-plugin" }
-            fn version(&self) -> &str { "1.0.0" }
+            fn id(&self) -> &str {
+                "opt-plugin"
+            }
+            fn version(&self) -> &str {
+                "1.0.0"
+            }
             fn dependencies(&self) -> Vec<PluginDependency> {
                 vec![PluginDependency::optional("nonexistent", ">=1.0")]
             }
@@ -367,13 +418,17 @@ mod tests {
 
     #[test]
     fn test_plugin_adds_service() {
-        use crate::vx::service::ServiceProcess;
         use crate::plugin_system::EndpointSpec;
+        use crate::vx::service::ServiceProcess;
 
         struct SvcPlugin;
         impl VilPlugin for SvcPlugin {
-            fn id(&self) -> &str { "svc-plugin" }
-            fn version(&self) -> &str { "1.0.0" }
+            fn id(&self) -> &str {
+                "svc-plugin"
+            }
+            fn version(&self) -> &str {
+                "1.0.0"
+            }
             fn capabilities(&self) -> Vec<PluginCapability> {
                 vec![PluginCapability::Service {
                     name: "my-svc".into(),

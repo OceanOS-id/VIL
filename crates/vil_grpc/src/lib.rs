@@ -8,10 +8,10 @@
 //   - Per-service metrics
 //   - VilServer dual-port support (HTTP + gRPC)
 
+pub mod config;
 pub mod gateway;
 pub mod health;
 pub mod metrics;
-pub mod config;
 
-pub use gateway::GrpcGatewayBuilder;
 pub use config::GrpcServerConfig;
+pub use gateway::GrpcGatewayBuilder;

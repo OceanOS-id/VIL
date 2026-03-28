@@ -15,9 +15,9 @@ use async_trait::async_trait;
 use crate::drain::traits::LogDrain;
 use crate::types::{LogCategory, LogLevel, LogSlot};
 
-const RESET: &str  = "\x1b[0m";
-const BOLD:  &str  = "\x1b[1m";
-const DIM:   &str  = "\x1b[2m";
+const RESET: &str = "\x1b[0m";
+const BOLD: &str = "\x1b[1m";
+const DIM: &str = "\x1b[2m";
 
 /// Output format for `StdoutDrain`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -43,10 +43,18 @@ impl StdoutDrain {
         Self { format }
     }
 
-    pub fn pretty()   -> Self { Self::new(StdoutFormat::Pretty) }
-    pub fn compact()  -> Self { Self::new(StdoutFormat::Compact) }
-    pub fn json()     -> Self { Self::new(StdoutFormat::Json) }
-    pub fn resolved() -> Self { Self::new(StdoutFormat::Resolved) }
+    pub fn pretty() -> Self {
+        Self::new(StdoutFormat::Pretty)
+    }
+    pub fn compact() -> Self {
+        Self::new(StdoutFormat::Compact)
+    }
+    pub fn json() -> Self {
+        Self::new(StdoutFormat::Json)
+    }
+    pub fn resolved() -> Self {
+        Self::new(StdoutFormat::Resolved)
+    }
 }
 
 impl Default for StdoutDrain {
@@ -56,16 +64,20 @@ impl Default for StdoutDrain {
 }
 
 fn format_slot_compact(slot: &LogSlot, out: &mut impl Write) {
-    let level    = LogLevel::from(slot.header.level);
+    let level = LogLevel::from(slot.header.level);
     let category = LogCategory::from(slot.header.category);
-    let color    = level.ansi_color();
-    let ts_ms    = slot.header.timestamp_ns / 1_000_000;
+    let color = level.ansi_color();
+    let ts_ms = slot.header.timestamp_ns / 1_000_000;
 
     let _ = writeln!(
         out,
         "{}{}{} {}[{}]{} ts={} svc={:08x} pid={}",
-        color, BOLD, level, RESET,
-        category, RESET,
+        color,
+        BOLD,
+        level,
+        RESET,
+        category,
+        RESET,
         ts_ms,
         slot.header.service_hash,
         slot.header.process_id,
@@ -73,15 +85,27 @@ fn format_slot_compact(slot: &LogSlot, out: &mut impl Write) {
 }
 
 fn format_slot_pretty(slot: &LogSlot, out: &mut impl Write) {
-    let level    = LogLevel::from(slot.header.level);
+    let level = LogLevel::from(slot.header.level);
     let category = LogCategory::from(slot.header.category);
-    let color    = level.ansi_color();
-    let ts_ms    = slot.header.timestamp_ns / 1_000_000;
+    let color = level.ansi_color();
+    let ts_ms = slot.header.timestamp_ns / 1_000_000;
 
-    let _ = writeln!(out, "{}{}┌── {} [{}]{}", color, BOLD, level, category, RESET);
+    let _ = writeln!(
+        out,
+        "{}{}┌── {} [{}]{}",
+        color, BOLD, level, category, RESET
+    );
     let _ = writeln!(out, "{}│  timestamp : {}ms", DIM, ts_ms);
-    let _ = writeln!(out, "{}│  service   : {:08x}", DIM, slot.header.service_hash);
-    let _ = writeln!(out, "{}│  handler   : {:08x}", DIM, slot.header.handler_hash);
+    let _ = writeln!(
+        out,
+        "{}│  service   : {:08x}",
+        DIM, slot.header.service_hash
+    );
+    let _ = writeln!(
+        out,
+        "{}│  handler   : {:08x}",
+        DIM, slot.header.handler_hash
+    );
     let _ = writeln!(out, "{}│  pid       : {}", DIM, slot.header.process_id);
     let _ = writeln!(out, "{}│  trace_id  : {:016x}", DIM, slot.header.trace_id);
 
@@ -100,7 +124,7 @@ fn format_slot_pretty(slot: &LogSlot, out: &mut impl Write) {
 }
 
 fn format_slot_json(slot: &LogSlot, out: &mut impl Write) {
-    let level    = LogLevel::from(slot.header.level);
+    let level = LogLevel::from(slot.header.level);
     let category = LogCategory::from(slot.header.category);
 
     let mut map = serde_json::json!({
@@ -138,15 +162,18 @@ impl LogDrain for StdoutDrain {
         "stdout"
     }
 
-    async fn flush(&mut self, batch: &[LogSlot]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn flush(
+        &mut self,
+        batch: &[LogSlot],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let stdout = std::io::stdout();
         let mut handle = stdout.lock();
 
         for slot in batch {
             match self.format {
-                StdoutFormat::Pretty   => format_slot_pretty(slot, &mut handle),
-                StdoutFormat::Compact  => format_slot_compact(slot, &mut handle),
-                StdoutFormat::Json     => format_slot_json(slot, &mut handle),
+                StdoutFormat::Pretty => format_slot_pretty(slot, &mut handle),
+                StdoutFormat::Compact => format_slot_compact(slot, &mut handle),
+                StdoutFormat::Json => format_slot_json(slot, &mut handle),
                 StdoutFormat::Resolved => format_slot_resolved(slot, &mut handle),
             }
         }

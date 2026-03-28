@@ -12,17 +12,21 @@ pub struct OptimizerStatsBody {
     pub version: String,
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<OptimizerStatsBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<OptimizerStatsBody>> {
     let optimizer = ctx.state::<Arc<RwLock<PromptOptimizer>>>()?;
-    let opt = optimizer.read().map_err(|_| VilError::internal("lock poisoned"))?;
+    let opt = optimizer
+        .read()
+        .map_err(|_| VilError::internal("lock poisoned"))?;
     let best = opt.best();
     Ok(VilResponse::ok(OptimizerStatsBody {
         candidate_count: opt.candidates.len(),
         best_template: best.map(|c| c.template.clone()),
         best_score: best.map(|c| c.score),
-        strategies: vec!["grid_search".into(), "random_search".into(), "bayesian".into()],
+        strategies: vec![
+            "grid_search".into(),
+            "random_search".into(),
+            "bayesian".into(),
+        ],
         version: env!("CARGO_PKG_VERSION").into(),
     }))
 }

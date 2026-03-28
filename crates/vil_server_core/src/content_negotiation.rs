@@ -62,12 +62,17 @@ impl ContentType {
 impl AcceptHeader {
     /// Get the most preferred content type.
     pub fn preferred(&self) -> ContentType {
-        self.types.first().map(|(ct, _)| *ct).unwrap_or(ContentType::Json)
+        self.types
+            .first()
+            .map(|(ct, _)| *ct)
+            .unwrap_or(ContentType::Json)
     }
 
     /// Check if a specific content type is accepted.
     pub fn accepts(&self, ct: ContentType) -> bool {
-        self.types.iter().any(|(t, _)| *t == ct || *t == ContentType::Any)
+        self.types
+            .iter()
+            .any(|(t, _)| *t == ct || *t == ContentType::Any)
     }
 
     /// Check if JSON is preferred.
@@ -80,10 +85,7 @@ impl AcceptHeader {
 impl<S: Send + Sync> FromRequestParts<S> for AcceptHeader {
     type Rejection = std::convert::Infallible;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let accept = parts
             .headers
             .get("accept")

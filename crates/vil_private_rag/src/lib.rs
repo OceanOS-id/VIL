@@ -14,10 +14,10 @@ pub use config::PrivacyConfig;
 pub use redactor::{default_pii_patterns, RedactPattern, RedactResult, Redaction, Redactor};
 
 // VIL integration layer
-pub mod vil_semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod vil_semantic;
 
 pub use plugin::PrivateRagPlugin;
 pub use vil_semantic::{PrivateRagEvent, PrivateRagFault, PrivateRagState};
@@ -102,8 +102,14 @@ mod tests {
         log.log_anonymization(3, Some("doc-001"));
 
         assert_eq!(log.len(), 2);
-        assert!(matches!(log.entries[0].operation, AuditOperation::Redaction));
-        assert!(matches!(log.entries[1].operation, AuditOperation::Anonymization));
+        assert!(matches!(
+            log.entries[0].operation,
+            AuditOperation::Redaction
+        ));
+        assert!(matches!(
+            log.entries[1].operation,
+            AuditOperation::Anonymization
+        ));
         assert_eq!(log.entries[0].items_affected, 2);
     }
 

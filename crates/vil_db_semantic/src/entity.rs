@@ -1,7 +1,7 @@
 // Entity metadata trait — all const, zero runtime cost.
 
-use crate::portability::PortabilityTier;
 use crate::cache_policy::CachePolicy;
+use crate::portability::PortabilityTier;
 
 /// Trait implemented by #[derive(VilEntity)].
 /// All associated items are const — zero heap, zero runtime cost.

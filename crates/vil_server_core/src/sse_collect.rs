@@ -420,7 +420,10 @@ impl SseCollect {
 
             for line in text.lines() {
                 // event: field
-                if let Some(evt) = line.strip_prefix("event: ").or_else(|| line.strip_prefix("event:")) {
+                if let Some(evt) = line
+                    .strip_prefix("event: ")
+                    .or_else(|| line.strip_prefix("event:"))
+                {
                     let evt = evt.trim();
                     if let Some(ref de) = self.done_event {
                         if evt == de {
@@ -434,7 +437,10 @@ impl SseCollect {
                 }
 
                 // data: field
-                if let Some(data) = line.strip_prefix("data: ").or_else(|| line.strip_prefix("data:")) {
+                if let Some(data) = line
+                    .strip_prefix("data: ")
+                    .or_else(|| line.strip_prefix("data:"))
+                {
                     let data = data.trim();
 
                     if let Some(ref dm) = self.done_marker {
@@ -449,7 +455,12 @@ impl SseCollect {
                         if let Ok(json) = serde_json::from_str::<serde_json::Value>(data) {
                             if &json[field.as_str()] == expected {
                                 let dur = start.elapsed().as_micros() as u64;
-                                crate::upstream_metrics::record_end(&upstream_url, dur, status, false);
+                                crate::upstream_metrics::record_end(
+                                    &upstream_url,
+                                    dur,
+                                    status,
+                                    false,
+                                );
                                 return Ok(content);
                             }
                         }
@@ -464,10 +475,8 @@ impl SseCollect {
                     }
 
                     if let Some(ref tap) = self.tap_path {
-                        let extracted = apply_json_tap(
-                            Bytes::copy_from_slice(data.as_bytes()),
-                            tap,
-                        );
+                        let extracted =
+                            apply_json_tap(Bytes::copy_from_slice(data.as_bytes()), tap);
                         if !extracted.is_empty() {
                             content.push_str(&String::from_utf8_lossy(&extracted));
                         }
@@ -554,7 +563,10 @@ mod tests {
     #[test]
     fn test_json_tap_openai() {
         let data = Bytes::from(r#"{"choices":[{"delta":{"content":"hello"}}]}"#);
-        assert_eq!(&apply_json_tap(data, "choices[0].delta.content")[..], b"hello");
+        assert_eq!(
+            &apply_json_tap(data, "choices[0].delta.content")[..],
+            b"hello"
+        );
     }
 
     #[test]
@@ -572,7 +584,10 @@ mod tests {
     #[test]
     fn test_json_tap_gemini() {
         let data = Bytes::from(r#"{"candidates":[{"content":{"parts":[{"text":"gem"}]}}]}"#);
-        assert_eq!(&apply_json_tap(data, "candidates[0].content.parts[0].text")[..], b"gem");
+        assert_eq!(
+            &apply_json_tap(data, "candidates[0].content.parts[0].text")[..],
+            b"gem"
+        );
     }
 
     #[test]

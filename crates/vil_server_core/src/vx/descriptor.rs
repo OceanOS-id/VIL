@@ -218,8 +218,7 @@ mod tests {
 
     #[test]
     fn response_descriptor_basic() {
-        let desc = ResponseDescriptor::new(42, 200)
-            .with_body(4096, 128, CONTENT_TYPE_JSON);
+        let desc = ResponseDescriptor::new(42, 200).with_body(4096, 128, CONTENT_TYPE_JSON);
 
         assert!(desc.is_success());
         assert!(desc.has_body());

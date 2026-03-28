@@ -6,10 +6,10 @@
 // Note: Full rumqttc integration requires adding the rumqttc crate.
 // This provides the API surface and bridge architecture.
 
-pub mod config;
-pub mod client;
 pub mod bridge;
+pub mod client;
+pub mod config;
 
-pub use config::{MqttConfig, QoS};
-pub use client::MqttClient;
 pub use bridge::MqttBridge;
+pub use client::MqttClient;
+pub use config::{MqttConfig, QoS};

@@ -13,12 +13,12 @@
 //   Tier 3: Pluggable trait (discovery.rs) — Consul/etcd adapters
 
 use async_trait::async_trait;
-use std::sync::Arc;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use vil_rt::VastarRuntimeWorld;
 
-use crate::discovery::{ServiceDiscovery, Endpoint, ServiceInfo, DiscoveryError, HealthStatus};
+use crate::discovery::{DiscoveryError, Endpoint, HealthStatus, ServiceDiscovery, ServiceInfo};
 
 /// Automatic SHM-based service discovery for co-located services.
 ///

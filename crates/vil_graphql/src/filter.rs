@@ -84,9 +84,13 @@ pub fn build_where_clause(filters: &serde_json::Value) -> (String, Vec<ToSqlValu
 fn json_val_to_sql(val: &serde_json::Value) -> ToSqlValue {
     match val {
         serde_json::Value::Number(n) => {
-            if let Some(i) = n.as_i64() { ToSqlValue::Int(i) }
-            else if let Some(f) = n.as_f64() { ToSqlValue::Float(f) }
-            else { ToSqlValue::Null }
+            if let Some(i) = n.as_i64() {
+                ToSqlValue::Int(i)
+            } else if let Some(f) = n.as_f64() {
+                ToSqlValue::Float(f)
+            } else {
+                ToSqlValue::Null
+            }
         }
         serde_json::Value::String(s) => ToSqlValue::Text(s.clone()),
         serde_json::Value::Bool(b) => ToSqlValue::Bool(*b),

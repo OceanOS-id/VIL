@@ -25,16 +25,20 @@ impl ConsensusPlugin {
 }
 
 impl VilPlugin for ConsensusPlugin {
-    fn id(&self) -> &str { "vil-consensus" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Multi-model consensus with parallel inference and voting" }
+    fn id(&self) -> &str {
+        "vil-consensus"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Multi-model consensus with parallel inference and voting"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "consensus".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/consensus/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/consensus/stats")],
         }]
     }
 
@@ -48,5 +52,7 @@ impl VilPlugin for ConsensusPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

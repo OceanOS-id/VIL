@@ -44,7 +44,8 @@ impl VilPlugin for SqlAgentPlugin {
         vec![PluginCapability::Service {
             name: "sql-agent".into(),
             endpoints: vec![
-                EndpointSpec::post("/api/sql-agent/generate").with_description("Generate SQL from natural language"),
+                EndpointSpec::post("/api/sql-agent/generate")
+                    .with_description("Generate SQL from natural language"),
                 EndpointSpec::get("/api/sql-agent/stats").with_description("SQL agent stats"),
             ],
         }]

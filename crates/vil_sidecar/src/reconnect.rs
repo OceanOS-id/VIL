@@ -5,8 +5,8 @@
 // When a sidecar connection drops, this module handles reconnection with
 // configurable exponential backoff, jitter, and re-handshake.
 
-use crate::transport::{SidecarConnection, socket_path};
-use crate::protocol::{Message, Handshake};
+use crate::protocol::{Handshake, Message};
+use crate::transport::{socket_path, SidecarConnection};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
@@ -145,8 +145,11 @@ pub enum ReconnectError {
 impl std::fmt::Display for ReconnectError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::MaxRetriesExhausted { name, attempts } =>
-                write!(f, "reconnect to sidecar '{}' failed after {} attempts", name, attempts),
+            Self::MaxRetriesExhausted { name, attempts } => write!(
+                f,
+                "reconnect to sidecar '{}' failed after {} attempts",
+                name, attempts
+            ),
         }
     }
 }
@@ -176,11 +179,11 @@ mod tests {
         };
 
         // Without jitter, backoff should be exact exponential
-        assert_eq!(policy.backoff_duration(0), Duration::from_millis(100));   // 100 * 2^0
-        assert_eq!(policy.backoff_duration(1), Duration::from_millis(200));   // 100 * 2^1
-        assert_eq!(policy.backoff_duration(2), Duration::from_millis(400));   // 100 * 2^2
-        assert_eq!(policy.backoff_duration(3), Duration::from_millis(800));   // 100 * 2^3
-        assert_eq!(policy.backoff_duration(4), Duration::from_millis(1600));  // 100 * 2^4
+        assert_eq!(policy.backoff_duration(0), Duration::from_millis(100)); // 100 * 2^0
+        assert_eq!(policy.backoff_duration(1), Duration::from_millis(200)); // 100 * 2^1
+        assert_eq!(policy.backoff_duration(2), Duration::from_millis(400)); // 100 * 2^2
+        assert_eq!(policy.backoff_duration(3), Duration::from_millis(800)); // 100 * 2^3
+        assert_eq!(policy.backoff_duration(4), Duration::from_millis(1600)); // 100 * 2^4
     }
 
     #[test]
@@ -218,7 +221,10 @@ mod tests {
             assert!(
                 dur.as_millis() >= lower as u128 && dur.as_millis() <= upper as u128,
                 "attempt {}: {:?} not in range [{}, {}]",
-                attempt, dur, lower, upper
+                attempt,
+                dur,
+                lower,
+                upper
             );
         }
     }

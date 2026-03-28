@@ -1,7 +1,7 @@
 //! VilPlugin implementation for web crawler integration.
 
-use vil_server::prelude::*;
 use std::sync::Arc;
+use vil_server::prelude::*;
 
 use crate::config::CrawlConfig;
 use crate::handlers;

@@ -243,7 +243,9 @@ pub fn init_server_in_current_dir(template: &str) -> Result<(), String> {
     }
 
     println!("  Template: {}", template);
-    println!("  Add to Cargo.toml: vil_server = {{ git = \"https://github.com/OceanOS-id/VIL.git\" }}");
+    println!(
+        "  Add to Cargo.toml: vil_server = {{ git = \"https://github.com/OceanOS-id/VIL.git\" }}"
+    );
     Ok(())
 }
 
@@ -259,7 +261,8 @@ async fn main() {
         .run()
         .await;
 }
-"#.into()
+"#
+    .into()
 }
 
 fn generate_nats_template() -> String {
@@ -279,7 +282,8 @@ async fn main() {
         .run()
         .await;
 }
-"#.into()
+"#
+    .into()
 }
 
 fn generate_kafka_template() -> String {
@@ -298,7 +302,8 @@ async fn main() {
         .run()
         .await;
 }
-"#.into()
+"#
+    .into()
 }
 
 fn generate_mqtt_template() -> String {
@@ -317,7 +322,8 @@ async fn main() {
         .run()
         .await;
 }
-"#.into()
+"#
+    .into()
 }
 
 fn generate_graphql_template() -> String {
@@ -332,7 +338,8 @@ async fn main() {
         .run()
         .await;
 }
-"#.into()
+"#
+    .into()
 }
 
 fn generate_fullstack_template() -> String {
@@ -349,5 +356,6 @@ async fn main() {
         .run()
         .await;
 }
-"#.into()
+"#
+    .into()
 }

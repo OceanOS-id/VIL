@@ -1,7 +1,7 @@
 //! VIL pattern HTTP handlers for the RAG plugin.
 
-use vil_server::prelude::*;
 use serde::{Deserialize, Serialize};
+use vil_server::prelude::*;
 
 use crate::extractors::Rag;
 
@@ -57,7 +57,9 @@ pub async fn ingest_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<IngestResponseBody>> {
     let rag = ctx.state::<Rag>()?;
-    let req: IngestRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: IngestRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     if req.content.trim().is_empty() {
         return Err(VilError::bad_request("content must not be empty"));
     }
@@ -82,7 +84,9 @@ pub async fn query_handler(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<QueryResponseBody>> {
     let rag = ctx.state::<Rag>()?;
-    let req: QueryRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: QueryRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     if req.question.trim().is_empty() {
         return Err(VilError::bad_request("question must not be empty"));
     }
@@ -107,9 +111,7 @@ pub async fn query_handler(
 }
 
 /// GET /stats — RAG index stats.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<StatsResponseBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<StatsResponseBody>> {
     let rag = ctx.state::<Rag>()?;
     let store = rag.store();
     let count = store

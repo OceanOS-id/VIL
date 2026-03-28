@@ -26,7 +26,12 @@ pub struct FieldDef {
 }
 
 impl FieldDef {
-    pub fn new(name: impl Into<String>, field_type: FieldType, patterns: Vec<String>, required: bool) -> Self {
+    pub fn new(
+        name: impl Into<String>,
+        field_type: FieldType,
+        patterns: Vec<String>,
+        required: bool,
+    ) -> Self {
         Self {
             name: name.into(),
             field_type,

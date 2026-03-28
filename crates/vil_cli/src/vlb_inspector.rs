@@ -1,9 +1,14 @@
 //! VLB Inspector — inspect .vlb artifacts and service topology
 
-pub fn inspect_vlb(path: &str, show_contract: bool, show_routes: bool, show_processes: bool, show_schemas: bool) -> Result<(), String> {
+pub fn inspect_vlb(
+    path: &str,
+    show_contract: bool,
+    show_routes: bool,
+    show_processes: bool,
+    show_schemas: bool,
+) -> Result<(), String> {
     // Read VLB file
-    let data = std::fs::read(path)
-        .map_err(|e| format!("Cannot read '{}': {}", path, e))?;
+    let data = std::fs::read(path).map_err(|e| format!("Cannot read '{}': {}", path, e))?;
 
     // Check magic
     if data.len() < 16 || &data[0..4] != b"VLNG" {
@@ -31,15 +36,22 @@ pub fn inspect_vlb(path: &str, show_contract: bool, show_routes: bool, show_proc
 
     for i in 0..section_count as usize {
         let base = 16 + i * 8;
-        if base + 8 > data.len() { break; }
-        let id = u16::from_le_bytes([data[base], data[base+1]]);
-        let offset = u32::from_le_bytes([data[base+2], data[base+3], data[base+4], data[base+5]]) as usize;
-        let size = u16::from_le_bytes([data[base+6], data[base+7]]) as usize;
+        if base + 8 > data.len() {
+            break;
+        }
+        let id = u16::from_le_bytes([data[base], data[base + 1]]);
+        let offset = u32::from_le_bytes([
+            data[base + 2],
+            data[base + 3],
+            data[base + 4],
+            data[base + 5],
+        ]) as usize;
+        let size = u16::from_le_bytes([data[base + 6], data[base + 7]]) as usize;
 
         if offset + size <= data.len() {
             match id {
-                1 => manifest_data = Some(&data[offset..offset+size]),  // Manifest
-                2 => schemas_data = Some(&data[offset..offset+size]),   // Schemas
+                1 => manifest_data = Some(&data[offset..offset + size]), // Manifest
+                2 => schemas_data = Some(&data[offset..offset + size]),  // Schemas
                 4 => code_size = size,                                   // NativeCode
                 5 => resource_size = size,                               // Resources
                 _ => {}
@@ -112,15 +124,24 @@ pub fn inspect_vlb(path: &str, show_contract: bool, show_routes: bool, show_proc
     }
 
     // State type
-    let state_type = manifest["state_type"].as_str()
-        .or_else(|| manifest["state_type"].as_object().and_then(|_| Some("custom")))
+    let state_type = manifest["state_type"]
+        .as_str()
+        .or_else(|| {
+            manifest["state_type"]
+                .as_object()
+                .and_then(|_| Some("custom"))
+        })
         .unwrap_or("None");
     let min_shm = manifest["min_shm_bytes"].as_u64().unwrap_or(0);
 
     if show_processes {
         println!();
         println!("  State:         {}", state_type);
-        println!("  Min SHM:       {} bytes ({} MB)", min_shm, min_shm / (1024*1024));
+        println!(
+            "  Min SHM:       {} bytes ({} MB)",
+            min_shm,
+            min_shm / (1024 * 1024)
+        );
         println!("  Code Section:  {} bytes", code_size);
         println!("  Resources:     {} bytes", resource_size);
     }
@@ -135,11 +156,14 @@ pub fn inspect_vlb(path: &str, show_contract: bool, show_routes: bool, show_proc
                     for schema in &schemas {
                         let sname = schema["name"].as_str().unwrap_or("?");
                         if let Some(fields) = schema["fields"].as_array() {
-                            let fields_str: Vec<String> = fields.iter().map(|f| {
-                                let fname = f["name"].as_str().unwrap_or("?");
-                                let ftype = f["field_type"].as_str().unwrap_or("?");
-                                format!("{}: {}", fname, ftype)
-                            }).collect();
+                            let fields_str: Vec<String> = fields
+                                .iter()
+                                .map(|f| {
+                                    let fname = f["name"].as_str().unwrap_or("?");
+                                    let ftype = f["field_type"].as_str().unwrap_or("?");
+                                    format!("{}: {}", fname, ftype)
+                                })
+                                .collect();
                             println!("    {} {{ {} }}", sname, fields_str.join(", "));
                         }
                     }
@@ -164,7 +188,12 @@ pub fn inspect_vlb(path: &str, show_contract: bool, show_routes: bool, show_proc
 }
 
 /// Inspect current project topology (scan Cargo.toml + src/)
-pub fn inspect_project(show_contract: bool, show_routes: bool, show_processes: bool, show_schemas: bool) -> Result<(), String> {
+pub fn inspect_project(
+    show_contract: bool,
+    show_routes: bool,
+    show_processes: bool,
+    show_schemas: bool,
+) -> Result<(), String> {
     let cargo_toml = std::fs::read_to_string("Cargo.toml")
         .map_err(|e| format!("Cannot read Cargo.toml: {}. Run from project root.", e))?;
 
@@ -192,7 +221,8 @@ pub fn inspect_project(show_contract: bool, show_routes: bool, show_processes: b
     let has_vil_endpoint = src.contains("vil_endpoint");
     let has_vil_model = src.contains("VilModel");
     let has_mesh = src.contains("VxMeshConfig") || src.contains("vil_service");
-    let has_tri_lane = src.contains("VxLane") || src.contains("Lane::Data") || src.contains("Lane::Trigger");
+    let has_tri_lane =
+        src.contains("VxLane") || src.contains("Lane::Data") || src.contains("Lane::Trigger");
 
     println!();
     println!("  ═══════════════════════════════════════════════════");
@@ -200,11 +230,30 @@ pub fn inspect_project(show_contract: bool, show_routes: bool, show_processes: b
     println!("  ═══════════════════════════════════════════════════");
     println!();
     println!("  VX Architecture:");
-    println!("    VilApp:         {}", if has_vil_app { "yes" } else { "no" });
-    println!("    ServiceProcess:   {}", if has_service_process { "yes" } else { "no" });
-    println!("    #[vil_endpoint]:{}", if has_vil_endpoint { " yes" } else { " no" });
-    println!("    VilModel:       {}", if has_vil_model { "yes" } else { "no" });
-    println!("    Tri-Lane Mesh:    {}", if has_mesh || has_tri_lane { "yes" } else { "no" });
+    println!(
+        "    VilApp:         {}",
+        if has_vil_app { "yes" } else { "no" }
+    );
+    println!(
+        "    ServiceProcess:   {}",
+        if has_service_process { "yes" } else { "no" }
+    );
+    println!(
+        "    #[vil_endpoint]:{}",
+        if has_vil_endpoint { " yes" } else { " no" }
+    );
+    println!(
+        "    VilModel:       {}",
+        if has_vil_model { "yes" } else { "no" }
+    );
+    println!(
+        "    Tri-Lane Mesh:    {}",
+        if has_mesh || has_tri_lane {
+            "yes"
+        } else {
+            "no"
+        }
+    );
 
     // Count endpoints (rough -- count occurrences of vil_endpoint)
     let endpoint_count = src.matches("vil_endpoint").count();
@@ -218,9 +267,18 @@ pub fn inspect_project(show_contract: bool, show_routes: bool, show_processes: b
     // VLB readiness
     println!();
     println!("  VLB Readiness:");
-    println!("    [{}] #[vil_endpoint] on handlers", if has_vil_endpoint { "ok" } else { "--" });
-    println!("    [{}] VilModel on types", if has_vil_model { "ok" } else { "--" });
-    println!("    [{}] VilApp / vil_app!", if has_vil_app { "ok" } else { "--" });
+    println!(
+        "    [{}] #[vil_endpoint] on handlers",
+        if has_vil_endpoint { "ok" } else { "--" }
+    );
+    println!(
+        "    [{}] VilModel on types",
+        if has_vil_model { "ok" } else { "--" }
+    );
+    println!(
+        "    [{}] VilApp / vil_app!",
+        if has_vil_app { "ok" } else { "--" }
+    );
 
     let vlb_ready = has_vil_endpoint && has_vil_model && has_vil_app;
     if vlb_ready {

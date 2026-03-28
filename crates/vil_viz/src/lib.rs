@@ -11,17 +11,17 @@
 //!   - SVG: vector graphics via `dot -Tsvg`
 //!   - HTML: self-contained interactive viewer
 
-pub mod graph;
-pub mod config;
-pub mod mermaid;
-pub mod json;
-pub mod dot;
 pub mod ascii;
-pub mod svg;
+pub mod config;
+pub mod dot;
+pub mod graph;
 pub mod html;
+pub mod json;
+pub mod mermaid;
+pub mod svg;
 
-pub use graph::*;
 pub use config::*;
+pub use graph::*;
 
 /// Render a VizGraph to the specified output format.
 pub fn render(graph: &VizGraph, config: &VizConfig) -> Result<String, String> {

@@ -77,8 +77,7 @@ impl VisionState {
             self.total_ocr_extractions += 1;
         }
         let n = self.total_analyses as f64;
-        self.avg_latency_ms =
-            self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
+        self.avg_latency_ms = self.avg_latency_ms * (n - 1.0) / n + event.latency_ms as f64 / n;
     }
 
     pub fn record_error(&mut self) {

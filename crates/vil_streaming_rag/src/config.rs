@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Configuration for the streaming RAG pipeline.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,7 +31,9 @@ pub struct StreamConfigBuilder {
 
 impl StreamConfigBuilder {
     pub fn new() -> Self {
-        Self { config: StreamConfig::default() }
+        Self {
+            config: StreamConfig::default(),
+        }
     }
 
     pub fn chunk_size(mut self, size: usize) -> Self {

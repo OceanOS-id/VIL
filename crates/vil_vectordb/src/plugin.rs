@@ -1,10 +1,10 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
 use crate::collection::Collection;
 use crate::config::HnswConfig;
 use crate::handlers;
-use crate::semantic::{SearchEvent, IndexEvent, VectorDbFault, VectorDbState};
+use crate::semantic::{IndexEvent, SearchEvent, VectorDbFault, VectorDbState};
+use std::sync::Arc;
 
 pub struct VectorDbPlugin {
     name: String,
@@ -14,17 +14,28 @@ pub struct VectorDbPlugin {
 
 impl VectorDbPlugin {
     pub fn new(name: impl Into<String>, dimension: usize) -> Self {
-        Self { name: name.into(), dimension, config: HnswConfig::default() }
+        Self {
+            name: name.into(),
+            dimension,
+            config: HnswConfig::default(),
+        }
     }
     pub fn config(mut self, config: HnswConfig) -> Self {
-        self.config = config; self
+        self.config = config;
+        self
     }
 }
 
 impl VilPlugin for VectorDbPlugin {
-    fn id(&self) -> &str { "vil-vectordb" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Native HNSW vector database for RAG pipelines" }
+    fn id(&self) -> &str {
+        "vil-vectordb"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Native HNSW vector database for RAG pipelines"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -38,7 +49,11 @@ impl VilPlugin for VectorDbPlugin {
     }
 
     fn register(&self, ctx: &mut PluginContext) {
-        let col = Arc::new(Collection::new(&self.name, self.dimension, self.config.clone()));
+        let col = Arc::new(Collection::new(
+            &self.name,
+            self.dimension,
+            self.config.clone(),
+        ));
         ctx.provide::<Arc<Collection>>("vectordb", col.clone());
 
         let svc = ServiceProcess::new("vectordb")
@@ -53,5 +68,7 @@ impl VilPlugin for VectorDbPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

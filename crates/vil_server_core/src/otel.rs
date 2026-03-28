@@ -16,7 +16,6 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Instant, SystemTime};
 
-
 /// Trace ID — 128-bit unique identifier for a distributed trace.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TraceId(pub u128);
@@ -249,6 +248,11 @@ impl TraceContext {
     /// Format as W3C traceparent header.
     pub fn to_header(&self, span_id: SpanId) -> String {
         let flags = if self.sampled { "01" } else { "00" };
-        format!("00-{}-{}-{}", self.trace_id.to_hex(), span_id.to_hex(), flags)
+        format!(
+            "00-{}-{}-{}",
+            self.trace_id.to_hex(),
+            span_id.to_hex(),
+            flags
+        )
     }
 }

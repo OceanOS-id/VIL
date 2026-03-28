@@ -11,11 +11,11 @@ pub struct RlhfStatsBody {
     pub version: String,
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<RlhfStatsBody>> {
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<RlhfStatsBody>> {
     let dataset = ctx.state::<Arc<RwLock<PreferenceDataset>>>()?;
-    let ds = dataset.read().map_err(|_| VilError::internal("lock poisoned"))?;
+    let ds = dataset
+        .read()
+        .map_err(|_| VilError::internal("lock poisoned"))?;
     Ok(VilResponse::ok(RlhfStatsBody {
         pair_count: ds.len(),
         dataset_stats: ds.stats(),

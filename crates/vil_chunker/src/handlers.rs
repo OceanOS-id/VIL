@@ -1,7 +1,7 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
 use crate::{ChunkStrategy, TextChunk};
+use std::sync::Arc;
 
 #[derive(Debug, Deserialize)]
 pub struct ChunkRequest {
@@ -25,7 +25,9 @@ pub async fn chunk_handler(
     ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<ChunkResponseBody>> {
-    let chunker = ctx.state::<Arc<dyn ChunkStrategy>>().expect("ChunkStrategy");
+    let chunker = ctx
+        .state::<Arc<dyn ChunkStrategy>>()
+        .expect("ChunkStrategy");
     let req: ChunkRequest = body.json().expect("invalid JSON");
     if req.text.is_empty() {
         return Err(VilError::bad_request("text must not be empty"));

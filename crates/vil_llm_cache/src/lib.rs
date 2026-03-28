@@ -27,15 +27,15 @@ pub mod hasher;
 pub mod similarity;
 
 // Re-exports
-pub use cache::{CachedResponse, CacheStats, SemanticCache};
+pub use cache::{CacheStats, CachedResponse, SemanticCache};
 pub use config::CacheConfig;
 pub use hasher::{fnv1a_hash, hash_messages};
 
 // VIL integration layer
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::LlmCachePlugin;
-pub use semantic::{CacheHitEvent, CacheFault, LlmCacheState};
+pub use semantic::{CacheFault, CacheHitEvent, LlmCacheState};

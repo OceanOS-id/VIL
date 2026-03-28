@@ -11,7 +11,7 @@
 
 use crate::dispatcher::{self, InvokeResponse};
 use crate::registry::SidecarRegistry;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Instant;
 
 /// Circuit breaker state for a sidecar.
@@ -95,9 +95,7 @@ pub async fn invoke_with_failover(
     circuit_breaker: Option<&CircuitBreaker>,
 ) -> Result<InvokeResponse, FailoverError> {
     // Step 1: Try primary sidecar (if circuit is closed)
-    let skip_primary = circuit_breaker
-        .map(|cb| !cb.is_closed())
-        .unwrap_or(false);
+    let skip_primary = circuit_breaker.map(|cb| !cb.is_closed()).unwrap_or(false);
 
     if !skip_primary {
         match dispatcher::invoke(registry, target, method, request_data).await {
@@ -133,10 +131,8 @@ pub async fn invoke_with_failover(
             match dispatcher::invoke(registry, backup, method, request_data).await {
                 Ok(resp) => return Ok(resp),
                 Err(e) => {
-                    {
-                        use vil_log::app_log;
-                        app_log!(Warn, "sidecar.failover.backup.failed", { backup: backup.as_str(), error: e.to_string() });
-                    }
+                    use vil_log::app_log;
+                    app_log!(Warn, "sidecar.failover.backup.failed", { backup: backup.as_str(), error: e.to_string() });
                 }
             }
         }
@@ -163,17 +159,31 @@ pub enum FailoverError {
     AllFailed { target: String, method: String },
     /// All sidecars failed, but a WASM fallback is available.
     /// The caller should dispatch to the WASM module.
-    WasmFallback { module: String, original_target: String },
+    WasmFallback {
+        module: String,
+        original_target: String,
+    },
 }
 
 impl std::fmt::Display for FailoverError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::AllFailed { target, method } => {
-                write!(f, "all sidecars failed for '{}.{}', no fallback", target, method)
+                write!(
+                    f,
+                    "all sidecars failed for '{}.{}', no fallback",
+                    target, method
+                )
             }
-            Self::WasmFallback { module, original_target } => {
-                write!(f, "sidecars for '{}' failed, WASM fallback: {}", original_target, module)
+            Self::WasmFallback {
+                module,
+                original_target,
+            } => {
+                write!(
+                    f,
+                    "sidecars for '{}' failed, WASM fallback: {}",
+                    original_target, module
+                )
             }
         }
     }

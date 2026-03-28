@@ -79,14 +79,16 @@ impl CapsuleRegistry {
     /// Hot-reload a handler from its source file.
     /// Returns reload time in microseconds.
     pub fn reload(&self, name: &str) -> Result<u64, String> {
-        let path = self.sources.get(name)
+        let path = self
+            .sources
+            .get(name)
             .ok_or_else(|| format!("Handler '{}' has no source file", name))?
             .clone();
 
         let start = Instant::now();
 
-        let bytes = std::fs::read(&path)
-            .map_err(|e| format!("Failed to read '{}': {}", path, e))?;
+        let bytes =
+            std::fs::read(&path).map_err(|e| format!("Failed to read '{}': {}", path, e))?;
 
         self.modules.insert(name.to_string(), Arc::new(bytes));
 
@@ -190,18 +192,20 @@ async fn reload_handler(
 }
 
 /// List all loaded capsule handlers.
-async fn list_capsules(
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+async fn list_capsules(State(state): State<AppState>) -> impl IntoResponse {
     let registry = state.capsule_registry();
-    let handlers: Vec<serde_json::Value> = registry.loaded_handlers().iter().map(|name| {
-        serde_json::json!({
-            "name": name,
-            "loaded": true,
-            "reloads": registry.reload_count(name),
-            "has_source": registry.modules.contains_key(name),
+    let handlers: Vec<serde_json::Value> = registry
+        .loaded_handlers()
+        .iter()
+        .map(|name| {
+            serde_json::json!({
+                "name": name,
+                "loaded": true,
+                "reloads": registry.reload_count(name),
+                "has_source": registry.modules.contains_key(name),
+            })
         })
-    }).collect();
+        .collect();
 
     axum::Json(serde_json::json!({
         "capsule_handlers": handlers,

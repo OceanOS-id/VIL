@@ -70,13 +70,13 @@ impl ModbusFault {
     /// Return a stable numeric error code for log `error_code` fields.
     pub fn as_error_code(&self) -> u8 {
         match self {
-            ModbusFault::ConnectionFailed { .. }     => 1,
-            ModbusFault::ReadCoilsFailed { .. }      => 2,
-            ModbusFault::ReadRegistersFailed { .. }  => 3,
-            ModbusFault::WriteCoilFailed { .. }      => 4,
-            ModbusFault::WriteRegisterFailed { .. }  => 5,
-            ModbusFault::Timeout { .. }              => 6,
-            ModbusFault::UnitIdMismatch { .. }       => 7,
+            ModbusFault::ConnectionFailed { .. } => 1,
+            ModbusFault::ReadCoilsFailed { .. } => 2,
+            ModbusFault::ReadRegistersFailed { .. } => 3,
+            ModbusFault::WriteCoilFailed { .. } => 4,
+            ModbusFault::WriteRegisterFailed { .. } => 5,
+            ModbusFault::Timeout { .. } => 6,
+            ModbusFault::UnitIdMismatch { .. } => 7,
         }
     }
 }

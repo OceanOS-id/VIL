@@ -47,8 +47,8 @@
 //   curl -X DELETE http://localhost:8080/api/tasks/1
 // =============================================================================
 
-use vil_server::prelude::*;
 use vil_server::axum::extract::Extension;
+use vil_server::prelude::*;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -120,9 +120,7 @@ impl Store {
 // -- Handlers ----------------------------------------------------------------
 
 /// GET /tasks — list all tasks.
-async fn list_tasks(
-    ctx: ServiceCtx,
-) -> VilResponse<TaskListResponse> {
+async fn list_tasks(ctx: ServiceCtx) -> VilResponse<TaskListResponse> {
     let store = ctx.state::<Store>().expect("state type mismatch");
     let map = store.tasks.read().await;
     let tasks: Vec<Task> = map.values().cloned().collect();
@@ -133,10 +131,7 @@ async fn list_tasks(
 }
 
 /// POST /tasks — create a new task with validation.
-async fn create_task(
-    ctx: ServiceCtx,
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<TaskResponse>> {
+async fn create_task(ctx: ServiceCtx, body: ShmSlice) -> HandlerResult<VilResponse<TaskResponse>> {
     let store = ctx.state::<Store>().expect("state type mismatch");
     let input: CreateTask = body.json().expect("invalid JSON body");
     // Validate: title must not be empty
@@ -144,7 +139,9 @@ async fn create_task(
         return Err(VilError::bad_request("title must not be empty"));
     }
 
-    let id = store.next_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    let id = store
+        .next_id
+        .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     let task = Task {
         id,
         title: input.title,
@@ -247,11 +244,11 @@ async fn main() {
     let task_service = ServiceProcess::new("tasks")
         .prefix("/api")
         // Collection endpoints: /tasks
-        .endpoint(Method::GET,    "/tasks", get(list_tasks))
-        .endpoint(Method::POST,   "/tasks", post(create_task))
+        .endpoint(Method::GET, "/tasks", get(list_tasks))
+        .endpoint(Method::POST, "/tasks", post(create_task))
         // Item endpoints: /tasks/:id
-        .endpoint(Method::GET,    "/tasks/:id", get(get_task))
-        .endpoint(Method::PUT,    "/tasks/:id", put(update_task))
+        .endpoint(Method::GET, "/tasks/:id", get(get_task))
+        .endpoint(Method::PUT, "/tasks/:id", put(update_task))
         .endpoint(Method::DELETE, "/tasks/:id", delete(delete_task))
         // Inject the in-memory store so handlers can extract via Extension<Store>
         .state(store);

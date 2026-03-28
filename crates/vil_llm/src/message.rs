@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Role {
@@ -24,16 +24,36 @@ pub struct ChatMessage {
 
 impl ChatMessage {
     pub fn system(content: impl Into<String>) -> Self {
-        Self { role: Role::System, content: content.into(), name: None, tool_call_id: None }
+        Self {
+            role: Role::System,
+            content: content.into(),
+            name: None,
+            tool_call_id: None,
+        }
     }
     pub fn user(content: impl Into<String>) -> Self {
-        Self { role: Role::User, content: content.into(), name: None, tool_call_id: None }
+        Self {
+            role: Role::User,
+            content: content.into(),
+            name: None,
+            tool_call_id: None,
+        }
     }
     pub fn assistant(content: impl Into<String>) -> Self {
-        Self { role: Role::Assistant, content: content.into(), name: None, tool_call_id: None }
+        Self {
+            role: Role::Assistant,
+            content: content.into(),
+            name: None,
+            tool_call_id: None,
+        }
     }
     pub fn tool_result(id: impl Into<String>, content: impl Into<String>) -> Self {
-        Self { role: Role::Tool, content: content.into(), name: None, tool_call_id: Some(id.into()) }
+        Self {
+            role: Role::Tool,
+            content: content.into(),
+            name: None,
+            tool_call_id: Some(id.into()),
+        }
     }
 }
 
@@ -75,7 +95,9 @@ impl std::fmt::Display for LlmError {
         match self {
             Self::RequestFailed(e) => write!(f, "LLM request failed: {}", e),
             Self::InvalidResponse(e) => write!(f, "invalid LLM response: {}", e),
-            Self::RateLimited { retry_after_ms } => write!(f, "rate limited (retry after {:?}ms)", retry_after_ms),
+            Self::RateLimited { retry_after_ms } => {
+                write!(f, "rate limited (retry after {:?}ms)", retry_after_ms)
+            }
             Self::AuthenticationFailed => write!(f, "LLM authentication failed"),
             Self::ModelNotFound(m) => write!(f, "model '{}' not found", m),
             Self::Timeout => write!(f, "LLM request timeout"),

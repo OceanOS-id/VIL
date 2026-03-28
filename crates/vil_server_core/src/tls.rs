@@ -59,15 +59,14 @@ impl TlsConfig {
 }
 
 /// Middleware that adds HSTS header to all responses.
-pub async fn hsts_middleware(
-    request: Request<axum::body::Body>,
-    next: Next,
-) -> Response {
+pub async fn hsts_middleware(request: Request<axum::body::Body>, next: Next) -> Response {
     let config = TlsConfig::default();
     let mut response = next.run(request).await;
 
     if let Ok(val) = HeaderValue::from_str(&config.hsts_header()) {
-        response.headers_mut().insert("strict-transport-security", val);
+        response
+            .headers_mut()
+            .insert("strict-transport-security", val);
     }
 
     response

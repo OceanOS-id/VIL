@@ -24,7 +24,7 @@ impl std::fmt::Display for SchedulerMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             SchedulerMode::SingleCore => write!(f, "single_core"),
-            SchedulerMode::MultiCore  => write!(f, "multi_core"),
+            SchedulerMode::MultiCore => write!(f, "multi_core"),
         }
     }
 }
@@ -50,11 +50,11 @@ impl Default for EdgeConfig {
     fn default() -> Self {
         let preset = EdgeProfile::Minimal.preset();
         Self {
-            target:            EdgeTarget::X86_64Linux,
-            profile:           EdgeProfile::Minimal,
-            shm_size_kb:       preset.shm_size_kb,
-            max_processes:     preset.max_processes,
-            scheduler_mode:    preset.scheduler_mode,
+            target: EdgeTarget::X86_64Linux,
+            profile: EdgeProfile::Minimal,
+            shm_size_kb: preset.shm_size_kb,
+            max_processes: preset.max_processes,
+            scheduler_mode: preset.scheduler_mode,
             offline_buffer_kb: preset.offline_buffer_kb,
         }
     }
@@ -67,9 +67,9 @@ impl EdgeConfig {
         Self {
             target,
             profile,
-            shm_size_kb:       preset.shm_size_kb,
-            max_processes:     preset.max_processes,
-            scheduler_mode:    preset.scheduler_mode,
+            shm_size_kb: preset.shm_size_kb,
+            max_processes: preset.max_processes,
+            scheduler_mode: preset.scheduler_mode,
             offline_buffer_kb: preset.offline_buffer_kb,
         }
     }
@@ -86,8 +86,8 @@ impl EdgeConfig {
 
     /// Load from a YAML file on disk.
     pub fn from_file(path: &std::path::Path) -> Result<Self, crate::error::EdgeFault> {
-        let content = std::fs::read_to_string(path)
-            .map_err(|_| crate::error::EdgeFault::ConfigReadFailed)?;
+        let content =
+            std::fs::read_to_string(path).map_err(|_| crate::error::EdgeFault::ConfigReadFailed)?;
         Self::from_yaml(&content)
     }
 

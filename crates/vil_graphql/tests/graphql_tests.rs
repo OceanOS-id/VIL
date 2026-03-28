@@ -21,8 +21,8 @@ fn test_config_defaults() {
 
 #[test]
 fn test_schema_builder_empty() {
-    use vil_graphql::VilSchemaBuilder;
     use vil_graphql::GraphQLConfig;
+    use vil_graphql::VilSchemaBuilder;
 
     let builder = VilSchemaBuilder::new(GraphQLConfig::default());
     assert_eq!(builder.entity_count(), 0);
@@ -31,9 +31,9 @@ fn test_schema_builder_empty() {
 
 #[test]
 fn test_schema_builder_register_entity() {
-    use vil_graphql::VilSchemaBuilder;
-    use vil_graphql::GraphQLConfig;
     use vil_graphql::schema::{EntityDef, FieldDef};
+    use vil_graphql::GraphQLConfig;
+    use vil_graphql::VilSchemaBuilder;
 
     let builder = VilSchemaBuilder::new(GraphQLConfig::default())
         .entity(EntityDef {
@@ -42,9 +42,18 @@ fn test_schema_builder_register_entity() {
             source: "main_db".into(),
             primary_key: "id".into(),
             fields: vec![
-                FieldDef { name: "id".into(), graphql_type: "Int!".into() },
-                FieldDef { name: "total".into(), graphql_type: "Float!".into() },
-                FieldDef { name: "status".into(), graphql_type: "String!".into() },
+                FieldDef {
+                    name: "id".into(),
+                    graphql_type: "Int!".into(),
+                },
+                FieldDef {
+                    name: "total".into(),
+                    graphql_type: "Float!".into(),
+                },
+                FieldDef {
+                    name: "status".into(),
+                    graphql_type: "String!".into(),
+                },
             ],
         })
         .entity(EntityDef {
@@ -53,8 +62,14 @@ fn test_schema_builder_register_entity() {
             source: "main_db".into(),
             primary_key: "id".into(),
             fields: vec![
-                FieldDef { name: "id".into(), graphql_type: "Int!".into() },
-                FieldDef { name: "name".into(), graphql_type: "String!".into() },
+                FieldDef {
+                    name: "id".into(),
+                    graphql_type: "Int!".into(),
+                },
+                FieldDef {
+                    name: "name".into(),
+                    graphql_type: "String!".into(),
+                },
             ],
         });
 
@@ -65,21 +80,26 @@ fn test_schema_builder_register_entity() {
 
 #[test]
 fn test_schema_description() {
-    use vil_graphql::VilSchemaBuilder;
-    use vil_graphql::GraphQLConfig;
     use vil_graphql::schema::{EntityDef, FieldDef};
+    use vil_graphql::GraphQLConfig;
+    use vil_graphql::VilSchemaBuilder;
 
-    let builder = VilSchemaBuilder::new(GraphQLConfig::default())
-        .entity(EntityDef {
-            name: "Order".into(),
-            table: "orders".into(),
-            source: "main_db".into(),
-            primary_key: "id".into(),
-            fields: vec![
-                FieldDef { name: "id".into(), graphql_type: "Int!".into() },
-                FieldDef { name: "total".into(), graphql_type: "Float!".into() },
-            ],
-        });
+    let builder = VilSchemaBuilder::new(GraphQLConfig::default()).entity(EntityDef {
+        name: "Order".into(),
+        table: "orders".into(),
+        source: "main_db".into(),
+        primary_key: "id".into(),
+        fields: vec![
+            FieldDef {
+                name: "id".into(),
+                graphql_type: "Int!".into(),
+            },
+            FieldDef {
+                name: "total".into(),
+                graphql_type: "Float!".into(),
+            },
+        ],
+    });
 
     let desc = builder.describe_schema();
     assert_eq!(desc.types.len(), 1);
@@ -176,9 +196,18 @@ fn test_calc_pagination_capped() {
 fn test_subscription_topic() {
     use vil_graphql::subscription::{entity_topic, SubscriptionOp};
 
-    assert_eq!(entity_topic("Order", &SubscriptionOp::Created), "order:created");
-    assert_eq!(entity_topic("Order", &SubscriptionOp::Updated), "order:updated");
-    assert_eq!(entity_topic("Order", &SubscriptionOp::Deleted), "order:deleted");
+    assert_eq!(
+        entity_topic("Order", &SubscriptionOp::Created),
+        "order:created"
+    );
+    assert_eq!(
+        entity_topic("Order", &SubscriptionOp::Updated),
+        "order:updated"
+    );
+    assert_eq!(
+        entity_topic("Order", &SubscriptionOp::Deleted),
+        "order:deleted"
+    );
 }
 
 #[test]
@@ -205,8 +234,8 @@ fn test_subscription_registry() {
 
 #[test]
 fn test_resolver_json_to_sql_value() {
-    use vil_graphql::resolver::CrudResolver;
     use vil_db_semantic::ToSqlValue;
+    use vil_graphql::resolver::CrudResolver;
 
     // Test via the public API indirectly — CrudResolver requires DbProvider
     // So we test the json conversion via filter module

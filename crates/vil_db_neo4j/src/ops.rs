@@ -30,9 +30,9 @@ use crate::error::Neo4jFault;
 use crate::types::Neo4jResult;
 
 // op_type codes
-const OP_MATCH: u8  = 0;
+const OP_MATCH: u8 = 0;
 const OP_CREATE: u8 = 1;
-const OP_CALL: u8   = 4;
+const OP_CALL: u8 = 4;
 
 impl Neo4jClient {
     // =========================================================================
@@ -53,7 +53,15 @@ impl Neo4jClient {
         let mut stream = match stream_result {
             Ok(s) => s,
             Err(e) => {
-                emit_db_log(self.db_hash(), cypher, OP_MATCH, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    cypher,
+                    OP_MATCH,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 return Err(Neo4jFault::ExecuteFailed {
                     query_hash,
                     reason_code: fault_code_from_err(&e),
@@ -68,7 +76,15 @@ impl Neo4jClient {
                 Ok(None) => break,
                 Err(e) => {
                     let total_us = start.elapsed().as_micros() as u32;
-                    emit_db_log(self.db_hash(), cypher, OP_MATCH, total_us, 0, 1, self.pool_id());
+                    emit_db_log(
+                        self.db_hash(),
+                        cypher,
+                        OP_MATCH,
+                        total_us,
+                        0,
+                        1,
+                        self.pool_id(),
+                    );
                     return Err(Neo4jFault::ExecuteFailed {
                         query_hash,
                         reason_code: fault_code_from_err(&e),
@@ -79,7 +95,15 @@ impl Neo4jClient {
 
         let total_us = start.elapsed().as_micros() as u32;
         let count = rows.len() as u32;
-        emit_db_log(self.db_hash(), cypher, OP_MATCH, total_us, count, 0, self.pool_id());
+        emit_db_log(
+            self.db_hash(),
+            cypher,
+            OP_MATCH,
+            total_us,
+            count,
+            0,
+            self.pool_id(),
+        );
         Ok(rows)
     }
 
@@ -100,7 +124,15 @@ impl Neo4jClient {
             Ok(t) => t,
             Err(e) => {
                 let elapsed_us = start.elapsed().as_micros() as u32;
-                emit_db_log(self.db_hash(), cypher, OP_CALL, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    cypher,
+                    OP_CALL,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 return Err(Neo4jFault::TransactionFailed {
                     reason_code: fault_code_from_err(&e),
                 });
@@ -111,7 +143,15 @@ impl Neo4jClient {
         if let Err(e) = run_result {
             let elapsed_us = start.elapsed().as_micros() as u32;
             let _ = txn.rollback().await;
-            emit_db_log(self.db_hash(), cypher, OP_CALL, elapsed_us, 0, 1, self.pool_id());
+            emit_db_log(
+                self.db_hash(),
+                cypher,
+                OP_CALL,
+                elapsed_us,
+                0,
+                1,
+                self.pool_id(),
+            );
             return Err(Neo4jFault::TransactionFailed {
                 reason_code: fault_code_from_err(&e),
             });
@@ -122,11 +162,27 @@ impl Neo4jClient {
 
         match commit_result {
             Ok(_) => {
-                emit_db_log(self.db_hash(), cypher, OP_CALL, elapsed_us, 0, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    cypher,
+                    OP_CALL,
+                    elapsed_us,
+                    0,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(())
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), cypher, OP_CALL, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    cypher,
+                    OP_CALL,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(Neo4jFault::TransactionFailed {
                     reason_code: fault_code_from_err(&e),
                 })
@@ -144,28 +200,37 @@ impl Neo4jClient {
     /// `"{ name: 'Alice', age: 30 }"`.
     ///
     /// Emits `db_log!` with `op_type = 1` (CREATE).
-    pub async fn create_node(
-        &self,
-        label: &str,
-        props_cypher: &str,
-    ) -> Neo4jResult<()> {
+    pub async fn create_node(&self, label: &str, props_cypher: &str) -> Neo4jResult<()> {
         let label_hash = register_str(label);
         let cypher = format!("CREATE (n:{} {})", label, props_cypher);
 
         let start = Instant::now();
-        let result = self
-            .raw_graph()
-            .run(neo4rs::query(&cypher))
-            .await;
+        let result = self.raw_graph().run(neo4rs::query(&cypher)).await;
         let elapsed_us = start.elapsed().as_micros() as u32;
 
         match result {
             Ok(_) => {
-                emit_db_log(self.db_hash(), &cypher, OP_CREATE, elapsed_us, 1, 0, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    &cypher,
+                    OP_CREATE,
+                    elapsed_us,
+                    1,
+                    0,
+                    self.pool_id(),
+                );
                 Ok(())
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), &cypher, OP_CREATE, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    &cypher,
+                    OP_CREATE,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 Err(Neo4jFault::CreateNodeFailed {
                     label_hash,
                     reason_code: fault_code_from_err(&e),
@@ -186,16 +251,21 @@ impl Neo4jClient {
         let query_hash = register_str(cypher);
 
         let start = Instant::now();
-        let stream_result = self
-            .raw_graph()
-            .execute(neo4rs::query(cypher))
-            .await;
+        let stream_result = self.raw_graph().execute(neo4rs::query(cypher)).await;
         let elapsed_us = start.elapsed().as_micros() as u32;
 
         let mut stream = match stream_result {
             Ok(s) => s,
             Err(e) => {
-                emit_db_log(self.db_hash(), cypher, OP_MATCH, elapsed_us, 0, 1, self.pool_id());
+                emit_db_log(
+                    self.db_hash(),
+                    cypher,
+                    OP_MATCH,
+                    elapsed_us,
+                    0,
+                    1,
+                    self.pool_id(),
+                );
                 return Err(Neo4jFault::MatchFailed {
                     query_hash,
                     reason_code: fault_code_from_err(&e),
@@ -210,7 +280,15 @@ impl Neo4jClient {
                 Ok(None) => break,
                 Err(e) => {
                     let total_us = start.elapsed().as_micros() as u32;
-                    emit_db_log(self.db_hash(), cypher, OP_MATCH, total_us, 0, 1, self.pool_id());
+                    emit_db_log(
+                        self.db_hash(),
+                        cypher,
+                        OP_MATCH,
+                        total_us,
+                        0,
+                        1,
+                        self.pool_id(),
+                    );
                     return Err(Neo4jFault::MatchFailed {
                         query_hash,
                         reason_code: fault_code_from_err(&e),
@@ -221,7 +299,15 @@ impl Neo4jClient {
 
         let total_us = start.elapsed().as_micros() as u32;
         let count = rows.len() as u32;
-        emit_db_log(self.db_hash(), cypher, OP_MATCH, total_us, count, 0, self.pool_id());
+        emit_db_log(
+            self.db_hash(),
+            cypher,
+            OP_MATCH,
+            total_us,
+            count,
+            0,
+            self.pool_id(),
+        );
         Ok(rows)
     }
 }

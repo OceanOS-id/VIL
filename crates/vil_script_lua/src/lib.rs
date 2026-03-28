@@ -18,7 +18,13 @@ pub struct SandboxConfig {
 
 impl Default for SandboxConfig {
     fn default() -> Self {
-        Self { timeout_ms: 10, max_memory_mb: 16, allow_net: false, allow_fs: false, max_output_size_kb: 512 }
+        Self {
+            timeout_ms: 10,
+            max_memory_mb: 16,
+            allow_net: false,
+            allow_fs: false,
+            max_output_size_kb: 512,
+        }
     }
 }
 
@@ -31,7 +37,12 @@ pub struct LuaRuntime {
 
 impl LuaRuntime {
     pub fn new(config: SandboxConfig) -> Self {
-        Self { config, script: None, file_path: None, version: 0 }
+        Self {
+            config,
+            script: None,
+            file_path: None,
+            version: 0,
+        }
     }
 
     pub fn load_file(&mut self, path: &str) -> Result<(), String> {
@@ -62,13 +73,15 @@ impl LuaRuntime {
         }
     }
 
-    pub fn version(&self) -> u64 { self.version }
+    pub fn version(&self) -> u64 {
+        self.version
+    }
 }
 
 /// Execute Lua script with input JSON, return output JSON.
 #[cfg(feature = "lua")]
 fn execute_lua(script: &str, input: &Value, config: &SandboxConfig) -> Result<Value, String> {
-    use mlua::{Lua, Result as LuaResult, MultiValue};
+    use mlua::{Lua, MultiValue, Result as LuaResult};
 
     let lua = Lua::new();
 
@@ -98,19 +111,27 @@ fn execute_lua(script: &str, input: &Value, config: &SandboxConfig) -> Result<Va
         input = vil_json_decode('{}')
         "#,
         input_json.replace('\\', "\\\\").replace('\'', "\\'")
-    )).exec().map_err(|e| format!("Lua input setup: {}", e))?;
+    ))
+    .exec()
+    .map_err(|e| format!("Lua input setup: {}", e))?;
 
     // Set `ctx` global
-    lua.load(r#"
+    lua.load(
+        r#"
         ctx = {
             log = function(level, msg) end,
             request_id = "test",
             trace_id = "test",
         }
-    "#).exec().map_err(|e| format!("Lua ctx setup: {}", e))?;
+    "#,
+    )
+    .exec()
+    .map_err(|e| format!("Lua ctx setup: {}", e))?;
 
     // Execute the user script
-    let result: mlua::Value = lua.load(script).eval()
+    let result: mlua::Value = lua
+        .load(script)
+        .eval()
         .map_err(|e| format!("Lua execution error: {}", e))?;
 
     // Convert result to JSON
@@ -123,11 +144,9 @@ fn lua_value_to_json(val: &mlua::Value) -> Result<Value, String> {
         mlua::Value::Nil => Ok(Value::Null),
         mlua::Value::Boolean(b) => Ok(Value::Bool(*b)),
         mlua::Value::Integer(i) => Ok(Value::Number(serde_json::Number::from(*i))),
-        mlua::Value::Number(n) => {
-            serde_json::Number::from_f64(*n)
-                .map(Value::Number)
-                .ok_or_else(|| "Invalid float".into())
-        }
+        mlua::Value::Number(n) => serde_json::Number::from_f64(*n)
+            .map(Value::Number)
+            .ok_or_else(|| "Invalid float".into()),
         mlua::Value::String(s) => {
             let s = s.to_str().map_err(|e| e.to_string())?;
             Ok(Value::String(s.to_string()))

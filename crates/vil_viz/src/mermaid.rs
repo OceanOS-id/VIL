@@ -25,9 +25,15 @@ pub fn render(graph: &VizGraph, config: &VizConfig) -> Result<String, String> {
             }
         } else {
             if edge.detach {
-                out.push_str(&format!("  {} -.->|{}| {}\n", edge.from_node, label, edge.to_node));
+                out.push_str(&format!(
+                    "  {} -.->|{}| {}\n",
+                    edge.from_node, label, edge.to_node
+                ));
             } else {
-                out.push_str(&format!("  {} -->|{}| {}\n", edge.from_node, label, edge.to_node));
+                out.push_str(&format!(
+                    "  {} -->|{}| {}\n",
+                    edge.from_node, label, edge.to_node
+                ));
             }
         }
     }
@@ -107,7 +113,10 @@ fn edge_label(edge: &VizEdge, config: &VizConfig) -> String {
 }
 
 fn render_subgraph(out: &mut String, sg: &VizSubgraph, config: &VizConfig) {
-    out.push_str(&format!("  subgraph {}_dag [\"{}\"]\n", sg.parent_node, sg.parent_node));
+    out.push_str(&format!(
+        "  subgraph {}_dag [\"{}\"]\n",
+        sg.parent_node, sg.parent_node
+    ));
     for node in &sg.nodes {
         let shape = mermaid_node(&node.id, &node.label, &node.node_type, config);
         out.push_str(&format!("    {}\n", shape));
@@ -117,7 +126,10 @@ fn render_subgraph(out: &mut String, sg: &VizSubgraph, config: &VizConfig) {
         if label.is_empty() {
             out.push_str(&format!("    {} --> {}\n", edge.from_node, edge.to_node));
         } else {
-            out.push_str(&format!("    {} -->|{}| {}\n", edge.from_node, label, edge.to_node));
+            out.push_str(&format!(
+                "    {} -->|{}| {}\n",
+                edge.from_node, label, edge.to_node
+            ));
         }
     }
     out.push_str("  end\n");

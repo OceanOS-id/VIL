@@ -1,5 +1,5 @@
 use vil_rt::world::VastarRuntimeWorld;
-use vil_types::{ProcessSpec, MessageContract, PortSpec, PortDirection, TransferMode};
+use vil_types::{MessageContract, PortDirection, PortSpec, ProcessSpec, TransferMode};
 
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🧪 Starting Adaptive Compaction Soak Test...");
 
     let world = VastarRuntimeWorld::new_shared()?;
-    
+
     let spec = ProcessSpec {
         id: "compactor_test",
         name: "Compactor Test Process",
@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 direction: PortDirection::In,
                 capacity: 1024,
                 ..Default::default()
-            }
+            },
         ])),
         observability: Default::default(),
     };
@@ -55,13 +55,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     world.connect(port_out, port_in);
 
     // 1. Fragment the heap
-    println!("📦 Step 1: Fragmenting heap (Allocating 500 samples, releasing even-numbered ones)...");
+    println!(
+        "📦 Step 1: Fragmenting heap (Allocating 500 samples, releasing even-numbered ones)..."
+    );
     let mut live_samples = Vec::new();
 
     for i in 0..500 {
-        let data = LargeData { id: i, payload: [i as u8; 1024] };
+        let data = LargeData {
+            id: i,
+            payload: [i as u8; 1024],
+        };
         let _published = world.publish_value(p_id, port_out, data)?;
-        
+
         if i % 2 == 1 {
             // Keep odd-numbered samples alive
             let guard = world.recv::<LargeData>(port_in)?;
@@ -81,7 +86,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             panic!("Unexpected sample ID: {}", guard.id);
         }
     }
-    println!("✅ Verified {} active samples are readable.", live_samples.len());
+    println!(
+        "✅ Verified {} active samples are readable.",
+        live_samples.len()
+    );
 
     // 3. Trigger Compaction
     println!("🧹 Step 2: Triggering Compaction...");
@@ -96,7 +104,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for guard in &live_samples {
         let val = guard.get();
         if val.id % 2 != 1 || val.payload[0] != (val.id as u8) {
-            panic!("DATA CORRUPTION! Sample ID {} is invalid after compaction.", val.id);
+            panic!(
+                "DATA CORRUPTION! Sample ID {} is invalid after compaction.",
+                val.id
+            );
         }
     }
     println!("✅ SUCCESS: All live samples correctly resolved to new offsets.");
@@ -104,7 +115,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 5. Verify we can still allocate
     println!("🚀 Step 4: Verifying new allocations in reclaimed space...");
     for i in 1000..1100 {
-        let data = LargeData { id: i, payload: [0xAA; 1024] };
+        let data = LargeData {
+            id: i,
+            payload: [0xAA; 1024],
+        };
         let _p = world.publish_value(p_id, port_out, data)?;
         let _g = world.recv::<LargeData>(port_in)?;
     }

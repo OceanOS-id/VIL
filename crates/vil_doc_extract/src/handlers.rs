@@ -2,12 +2,12 @@
 
 use vil_server::prelude::*;
 
-use std::sync::Arc;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use crate::extractor::DataExtractor;
-use crate::rules::{invoice_fields, receipt_fields, resume_fields};
 use crate::field::FieldDef;
+use crate::rules::{invoice_fields, receipt_fields, resume_fields};
 
 // ── Request / Response types ────────────────────────────────────────
 
@@ -45,7 +45,9 @@ pub async fn extract_handler(
     ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<ExtractResponseBody>> {
-    let extractor = ctx.state::<Arc<dyn DataExtractor>>().expect("DataExtractor");
+    let extractor = ctx
+        .state::<Arc<dyn DataExtractor>>()
+        .expect("DataExtractor");
     let req: ExtractRequest = body.json().expect("invalid JSON");
     if req.text.trim().is_empty() {
         return Err(VilError::bad_request("text must not be empty"));
@@ -55,7 +57,12 @@ pub async fn extract_handler(
         Some("invoice") => invoice_fields(),
         Some("receipt") => receipt_fields(),
         Some("resume") => resume_fields(),
-        Some(other) => return Err(VilError::bad_request(format!("unknown template: {}", other))),
+        Some(other) => {
+            return Err(VilError::bad_request(format!(
+                "unknown template: {}",
+                other
+            )))
+        }
         None => invoice_fields(),
     };
 
@@ -88,11 +95,7 @@ pub async fn extract_handler(
 /// GET /stats — Extraction service stats.
 pub async fn stats_handler() -> VilResponse<ExtractStatsBody> {
     VilResponse::ok(ExtractStatsBody {
-        available_templates: vec![
-            "invoice".into(),
-            "receipt".into(),
-            "resume".into(),
-        ],
+        available_templates: vec!["invoice".into(), "receipt".into(), "resume".into()],
         version: env!("CARGO_PKG_VERSION").into(),
     })
 }

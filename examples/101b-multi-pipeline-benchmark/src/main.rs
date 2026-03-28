@@ -64,7 +64,8 @@ fn configure_source() -> HttpSourceBuilder {
         .ctrl_out_port("response_ctrl_out")
         .transform(|payload: &[u8]| -> Option<Vec<u8>> {
             let text = String::from_utf8_lossy(payload);
-            let enriched = format!("{{\"stage\":\"transform\",\"data\":\"{}\"}}",
+            let enriched = format!(
+                "{{\"stage\":\"transform\",\"data\":\"{}\"}}",
                 text.replace('"', "\\\"")
             );
             Some(enriched.into_bytes())
@@ -73,9 +74,7 @@ fn configure_source() -> HttpSourceBuilder {
 
 fn main() {
     // ── Init Runtime (SHM shared) ──────────────────────────────────────
-    let world = Arc::new(
-        VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime")
-    );
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // ── Observer Sidecar ───────────────────────────────────────────────
     vil_observer::sidecar(3190).attach(&world).spawn();

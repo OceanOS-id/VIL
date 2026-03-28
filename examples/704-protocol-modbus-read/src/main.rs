@@ -22,18 +22,18 @@ use vil_log::{LogConfig, LogLevel};
 use vil_modbus::{ModbusClient, ModbusConfig};
 
 const MODBUS_HOST: &str = "127.0.0.1";
-const MODBUS_PORT: u16  = 502;
-const UNIT_ID: u8       = 1;
+const MODBUS_PORT: u16 = 502;
+const UNIT_ID: u8 = 1;
 
 #[tokio::main]
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -56,13 +56,15 @@ async fn main() {
     println!();
 
     let mut client = match ModbusClient::connect(modbus_cfg).await {
-        Ok(c)  => c,
+        Ok(c) => c,
         Err(e) => {
             println!("  [SKIP] Cannot connect to Modbus server: {:?}", e);
             println!("  (All db_log! calls would appear above in resolved format)");
             println!();
             println!("  In production, a successful read_registers call emits:");
-            println!("    db_log! {{ op_type=0(SELECT), db_hash=<host:port>, rows_affected=<count> }}");
+            println!(
+                "    db_log! {{ op_type=0(SELECT), db_hash=<host:port>, rows_affected=<count> }}"
+            );
             return;
         }
     };

@@ -13,14 +13,14 @@
 // (or a timeout).  No external services required.
 // =============================================================================
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 
 use vil_log::drain::{StdoutDrain, StdoutFormat};
 use vil_log::runtime::init_logging;
 use vil_log::{LogConfig, LogLevel};
 use vil_trigger_core::{EventCallback, TriggerEvent, TriggerSource};
-use vil_trigger_fs::{FsConfig, FsEventMask, create_fs_trigger};
+use vil_trigger_fs::{create_fs_trigger, FsConfig, FsEventMask};
 
 /// Watch path — must be &'static str; we use a known temp location.
 /// The directory is created at startup if it doesn't exist.
@@ -30,11 +30,11 @@ const WATCH_DIR: &str = "/tmp/vil-802-watch";
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let log_config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -56,12 +56,12 @@ async fn main() {
     println!("  Directory ready: {}", WATCH_DIR);
 
     let fs_cfg = FsConfig {
-        trigger_id:       2,
-        watch_path:       WATCH_DIR,
-        pattern:          Some("*.log"),
-        debounce_ms:      100,
-        recursive:        false,
-        events:           FsEventMask::all(),
+        trigger_id: 2,
+        watch_path: WATCH_DIR,
+        pattern: Some("*.log"),
+        debounce_ms: 100,
+        recursive: false,
+        events: FsEventMask::all(),
         channel_capacity: 256,
     };
 
@@ -74,10 +74,9 @@ async fn main() {
 
     let on_event: EventCallback = Arc::new(move |event: TriggerEvent| {
         let n = event_count_cb.fetch_add(1, Ordering::Relaxed) + 1;
-        println!("  FS EVENT #{n}  seq={}  source_hash={:#010x}  payload_bytes={}",
-            event.sequence,
-            event.source_hash,
-            event.payload_bytes,
+        println!(
+            "  FS EVENT #{n}  seq={}  source_hash={:#010x}  payload_bytes={}",
+            event.sequence, event.source_hash, event.payload_bytes,
         );
     });
 
@@ -109,16 +108,19 @@ async fn main() {
     println!("  Collecting events from channel (timeout 5s)...");
     let mut received = 0u32;
     while received < 5 {
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(5),
-            rx.recv(),
-        ).await {
+        match tokio::time::timeout(std::time::Duration::from_secs(5), rx.recv()).await {
             Ok(Some(event)) => {
                 received += 1;
                 println!("  RECV  seq={}  op={}", event.sequence, event.op);
             }
-            Ok(None) => { println!("  Channel closed"); break; }
-            Err(_)   => { println!("  Timeout"); break; }
+            Ok(None) => {
+                println!("  Channel closed");
+                break;
+            }
+            Err(_) => {
+                println!("  Timeout");
+                break;
+            }
         }
     }
 
@@ -136,6 +138,9 @@ async fn main() {
     // Allow drain to flush
     tokio::time::sleep(std::time::Duration::from_millis(200)).await;
     println!();
-    println!("  Done. {} events received. mq_log! entries emitted above.", received);
+    println!(
+        "  Done. {} events received. mq_log! entries emitted above.",
+        received
+    );
     println!();
 }

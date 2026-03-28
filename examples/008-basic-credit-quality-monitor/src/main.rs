@@ -91,21 +91,31 @@ fn configure_source() -> HttpSourceBuilder {
 
             // Rule 1: kolektabilitas must be 1-5
             let kol = record["kolektabilitas"].as_u64().unwrap_or(0);
-            if kol < 1 || kol > 5 { issues.push("invalid_kolektabilitas"); }
+            if kol < 1 || kol > 5 {
+                issues.push("invalid_kolektabilitas");
+            }
 
             // Rule 2: saldo_outstanding must not exceed jumlah_kredit
             let saldo = record["saldo_outstanding"].as_i64().unwrap_or(0);
             let kredit = record["jumlah_kredit"].as_i64().unwrap_or(0);
-            if saldo > kredit { issues.push("saldo_exceeds_kredit"); }
-            if saldo < 0 || kredit < 0 { issues.push("negative_amount"); }
+            if saldo > kredit {
+                issues.push("saldo_exceeds_kredit");
+            }
+            if saldo < 0 || kredit < 0 {
+                issues.push("negative_amount");
+            }
 
             // Rule 3: nik must be 16 digits
             let nik = record["nik"].as_str().unwrap_or("");
-            if nik.len() != 16 { issues.push("invalid_nik_length"); }
+            if nik.len() != 16 {
+                issues.push("invalid_nik_length");
+            }
 
             // Rule 4: nama_lengkap must not be empty
             let nama = record["nama_lengkap"].as_str().unwrap_or("");
-            if nama.is_empty() { issues.push("missing_nama"); }
+            if nama.is_empty() {
+                issues.push("missing_nama");
+            }
 
             // Rule 5: detect simulator _has_error flag
             if record["_has_error"].as_bool().unwrap_or(false) {
@@ -121,9 +131,8 @@ fn configure_source() -> HttpSourceBuilder {
             // _quality_score: PASS/FAIL summary (for dashboard reporting)
             // _issue_count: numeric count (for aggregation and trending)
             record["_quality_issues"] = serde_json::json!(issues);
-            record["_quality_score"] = serde_json::json!(
-                if issues.is_empty() { "PASS" } else { "FAIL" }
-            );
+            record["_quality_score"] =
+                serde_json::json!(if issues.is_empty() { "PASS" } else { "FAIL" });
             record["_issue_count"] = serde_json::json!(issues.len());
 
             Some(serde_json::to_vec(&record).unwrap_or_else(|_| line.to_vec()))
@@ -140,8 +149,7 @@ fn configure_source() -> HttpSourceBuilder {
 
 fn main() {
     // Initialize SHM runtime for zero-copy transport of credit records
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // Configure the two pipeline nodes: gateway (HTTP sink) and validator (NDJSON source)
     let sink = configure_sink();

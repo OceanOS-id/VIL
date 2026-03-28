@@ -51,11 +51,17 @@ where
         match crate::dict::load_from_file(&dict_path) {
             Ok(n) => {
                 if n > 0 {
-                    eprintln!("[vil_log] Loaded {} dictionary entries from {:?}", n, dict_path);
+                    eprintln!(
+                        "[vil_log] Loaded {} dictionary entries from {:?}",
+                        n, dict_path
+                    );
                 }
             }
             Err(e) => {
-                eprintln!("[vil_log] Failed to load dictionary from {:?}: {}", dict_path, e);
+                eprintln!(
+                    "[vil_log] Failed to load dictionary from {:?}: {}",
+                    dict_path, e
+                );
             }
         }
     }
@@ -78,7 +84,7 @@ pub fn spawn_drain_task<D>(config: LogConfig, mut drain: D) -> tokio::task::Join
 where
     D: LogDrain + 'static,
 {
-    let batch_size        = config.batch_size.max(1);
+    let batch_size = config.batch_size.max(1);
     let flush_interval_ms = config.flush_interval_ms.max(1);
 
     tokio::spawn(async move {
@@ -112,11 +118,10 @@ pub fn init_logging_with_tracing<D>(config: LogConfig, drain: D) -> tokio::task:
 where
     D: LogDrain + 'static,
 {
-    use tracing_subscriber::prelude::*;
     use crate::emit::VilTracingLayer;
+    use tracing_subscriber::prelude::*;
 
-    let subscriber = tracing_subscriber::registry()
-        .with(VilTracingLayer::new());
+    let subscriber = tracing_subscriber::registry().with(VilTracingLayer::new());
 
     // Best-effort: ignore if already set.
     let _ = tracing::subscriber::set_global_default(subscriber);

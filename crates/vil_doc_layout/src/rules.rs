@@ -39,16 +39,20 @@ impl LayoutRules {
 
     /// Detect code fence and return the language tag (may be empty).
     pub fn match_code_fence<'a>(&self, line: &'a str) -> Option<&'a str> {
-        self.code_fence_re.captures(line).map(|caps| {
-            caps.get(1).unwrap().as_str().trim()
-        })
+        self.code_fence_re
+            .captures(line)
+            .map(|caps| caps.get(1).unwrap().as_str().trim())
     }
 
     /// Detect image and return optional caption.
     pub fn match_image<'a>(&self, line: &'a str) -> Option<Option<&'a str>> {
         self.image_re.captures(line).map(|caps| {
             let alt = caps.get(1).unwrap().as_str();
-            if alt.is_empty() { None } else { Some(alt) }
+            if alt.is_empty() {
+                None
+            } else {
+                Some(alt)
+            }
         })
     }
 

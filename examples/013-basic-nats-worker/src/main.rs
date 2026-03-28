@@ -52,11 +52,11 @@
 //   curl http://localhost:8080/api/nats/kv
 // =============================================================================
 
-use vil_server::prelude::*;
 use vil_server::axum::extract::Extension;
+use vil_server::prelude::*;
 
-use vil_mq_nats::{NatsConfig, NatsClient, JetStreamClient, KvStore, NatsBridge};
 use vil_mq_nats::jetstream::StreamConfig;
+use vil_mq_nats::{JetStreamClient, KvStore, NatsBridge, NatsClient, NatsConfig};
 
 use std::sync::Arc;
 
@@ -203,9 +203,7 @@ async fn index() -> &'static str {
 }
 
 /// GET /api/nats/config — NatsConfig pattern with all connection fields.
-async fn nats_config(
-    ctx: ServiceCtx,
-) -> VilResponse<NatsConfigResponse> {
+async fn nats_config(ctx: ServiceCtx) -> VilResponse<NatsConfigResponse> {
     let state = ctx.state::<NatsState>().expect("state type mismatch");
     VilResponse::ok(NatsConfigResponse {
         connection: NatsConnectionInfo {
@@ -254,7 +252,10 @@ async fn nats_publish(
         .map_err(|e| VilError::bad_request(format!("Invalid payload: {}", e)))?;
 
     // Publish via NATS client (in-memory implementation)
-    state.client.publish(&req.subject, &payload_bytes).await
+    state
+        .client
+        .publish(&req.subject, &payload_bytes)
+        .await
         .map_err(|e| VilError::internal(format!("Publish failed: {}", e)))?;
 
     // Also bridge to Tri-Lane SHM
@@ -270,20 +271,34 @@ async fn nats_publish(
 }
 
 /// GET /api/nats/jetstream — JetStream stream configuration and info.
-async fn jetstream_info(
-    ctx: ServiceCtx,
-) -> VilResponse<JetStreamInfoResponse> {
+async fn jetstream_info(ctx: ServiceCtx) -> VilResponse<JetStreamInfoResponse> {
     let state = ctx.state::<NatsState>().expect("state type mismatch");
     let mut api_surface = std::collections::HashMap::new();
-    api_surface.insert("JetStreamClient::create_stream".into(), "Create a persistent stream".into());
-    api_surface.insert("JetStreamClient::create_consumer".into(), "Create a durable consumer on a stream".into());
-    api_surface.insert("JetStreamClient::publish".into(), "Publish to a JetStream subject (returns sequence number)".into());
-    api_surface.insert("JsMessage::ack()".into(), "Acknowledge message (removes from redelivery queue)".into());
-    api_surface.insert("JsMessage::nack()".into(), "Negative-ack (request redelivery)".into());
+    api_surface.insert(
+        "JetStreamClient::create_stream".into(),
+        "Create a persistent stream".into(),
+    );
+    api_surface.insert(
+        "JetStreamClient::create_consumer".into(),
+        "Create a durable consumer on a stream".into(),
+    );
+    api_surface.insert(
+        "JetStreamClient::publish".into(),
+        "Publish to a JetStream subject (returns sequence number)".into(),
+    );
+    api_surface.insert(
+        "JsMessage::ack()".into(),
+        "Acknowledge message (removes from redelivery queue)".into(),
+    );
+    api_surface.insert(
+        "JsMessage::nack()".into(),
+        "Negative-ack (request redelivery)".into(),
+    );
 
     VilResponse::ok(JetStreamInfoResponse {
         jetstream: JetStreamDetail {
-            description: "JetStream provides persistent streaming with at-least-once delivery".into(),
+            description: "JetStream provides persistent streaming with at-least-once delivery"
+                .into(),
             streams: state.jetstream.streams(),
             stream_count: state.jetstream.stream_count(),
             stream_configs: vec![
@@ -317,17 +332,33 @@ async fn jetstream_info(
 }
 
 /// GET /api/nats/kv — KV store demo with a put/get cycle.
-async fn kv_demo(
-    ctx: ServiceCtx,
-) -> VilResponse<KvDemoResponse> {
+async fn kv_demo(ctx: ServiceCtx) -> VilResponse<KvDemoResponse> {
     let state = ctx.state::<NatsState>().expect("state type mismatch");
     // Demonstrate put/get cycle — real-world uses:
     //   feature_flags: toggle checkout flow A/B test
     //   session: track user auth tokens (fast lookup vs DB round-trip)
     //   rate_limit: API key throttling counters
-    let _ = state.kv.put("config:feature_flags", b"{\"dark_mode\":true,\"beta\":false}").await;
-    let _ = state.kv.put("session:user-101", b"{\"token\":\"abc123\",\"expires\":3600}").await;
-    let _ = state.kv.put("rate_limit:api-key-xyz", b"{\"remaining\":98,\"reset\":1700000000}").await;
+    let _ = state
+        .kv
+        .put(
+            "config:feature_flags",
+            b"{\"dark_mode\":true,\"beta\":false}",
+        )
+        .await;
+    let _ = state
+        .kv
+        .put(
+            "session:user-101",
+            b"{\"token\":\"abc123\",\"expires\":3600}",
+        )
+        .await;
+    let _ = state
+        .kv
+        .put(
+            "rate_limit:api-key-xyz",
+            b"{\"remaining\":98,\"reset\":1700000000}",
+        )
+        .await;
 
     // Read back
     let feature_flags = state.kv.get("config:feature_flags").await;
@@ -350,11 +381,23 @@ async fn kv_demo(
     );
 
     let mut api_surface = std::collections::HashMap::new();
-    api_surface.insert("KvStore::put(key, value)".into(), "Store a key-value pair (returns revision)".into());
-    api_surface.insert("KvStore::get(key)".into(), "Get value by key (returns KvEntry with revision)".into());
+    api_surface.insert(
+        "KvStore::put(key, value)".into(),
+        "Store a key-value pair (returns revision)".into(),
+    );
+    api_surface.insert(
+        "KvStore::get(key)".into(),
+        "Get value by key (returns KvEntry with revision)".into(),
+    );
     api_surface.insert("KvStore::delete(key)".into(), "Delete a key".into());
-    api_surface.insert("KvStore::keys()".into(), "List all keys in the bucket".into());
-    api_surface.insert("KvStore::watch()".into(), "Watch for changes (broadcast receiver)".into());
+    api_surface.insert(
+        "KvStore::keys()".into(),
+        "List all keys in the bucket".into(),
+    );
+    api_surface.insert(
+        "KvStore::watch()".into(),
+        "Watch for changes (broadcast receiver)".into(),
+    );
 
     VilResponse::ok(KvDemoResponse {
         kv_store: KvStoreInfo {
@@ -374,34 +417,39 @@ async fn kv_demo(
 #[tokio::main]
 async fn main() {
     // Configure NATS connection
-    let nats_cfg = NatsConfig::new("nats://localhost:4222")
-        .name("vil-nats-worker");
+    let nats_cfg = NatsConfig::new("nats://localhost:4222").name("vil-nats-worker");
 
     // Create NATS client (in-memory implementation — connects without a real server)
-    let client = NatsClient::connect(nats_cfg.clone()).await
+    let client = NatsClient::connect(nats_cfg.clone())
+        .await
         .expect("NATS client creation should succeed (in-memory mode)");
 
     // Create JetStream client and register streams.
     // ORDERS stream: captures all order lifecycle events (created, paid, shipped, delivered).
     // NOTIFICATIONS stream: bounded to 100k msgs to prevent unbounded growth.
     let jetstream = JetStreamClient::new(client.inner());
-    let _ = jetstream.create_stream(StreamConfig {
-        name: "ORDERS".into(),
-        subjects: vec!["events.order.>".into()],
-        retention: "limits".into(),
-        max_msgs: -1,
-        max_bytes: -1,
-    }).await;
-    let _ = jetstream.create_stream(StreamConfig {
-        name: "NOTIFICATIONS".into(),
-        subjects: vec!["notifications.>".into()],
-        retention: "limits".into(),
-        max_msgs: 100000,
-        max_bytes: 104857600,
-    }).await;
+    let _ = jetstream
+        .create_stream(StreamConfig {
+            name: "ORDERS".into(),
+            subjects: vec!["events.order.>".into()],
+            retention: "limits".into(),
+            max_msgs: -1,
+            max_bytes: -1,
+        })
+        .await;
+    let _ = jetstream
+        .create_stream(StreamConfig {
+            name: "NOTIFICATIONS".into(),
+            subjects: vec!["notifications.>".into()],
+            retention: "limits".into(),
+            max_msgs: 100000,
+            max_bytes: 104857600,
+        })
+        .await;
 
     // Create KV store
-    let kv = KvStore::new(jetstream.inner(), "vil-config").await
+    let kv = KvStore::new(jetstream.inner(), "vil-config")
+        .await
         .expect("KV store creation should succeed");
 
     // Create bridge to Tri-Lane SHM
@@ -418,17 +466,16 @@ async fn main() {
     // ── Step 2: Define the NATS service as a Process ─────────────────
     let nats_service = ServiceProcess::new("nats")
         .prefix("/api")
-        .endpoint(Method::GET,  "/nats/config",    get(nats_config))
-        .endpoint(Method::POST, "/nats/publish",   post(nats_publish))
-        .endpoint(Method::GET,  "/nats/jetstream", get(jetstream_info))
-        .endpoint(Method::GET,  "/nats/kv",        get(kv_demo))
+        .endpoint(Method::GET, "/nats/config", get(nats_config))
+        .endpoint(Method::POST, "/nats/publish", post(nats_publish))
+        .endpoint(Method::GET, "/nats/jetstream", get(jetstream_info))
+        .endpoint(Method::GET, "/nats/kv", get(kv_demo))
         .state(state);
 
     // ── Step 3: Assemble into VilApp and run ───────────────────────
     VilApp::new("nats-worker")
         .port(8080)
-        .service(ServiceProcess::new("root")
-            .endpoint(Method::GET, "/", get(index)))
+        .service(ServiceProcess::new("root").endpoint(Method::GET, "/", get(index)))
         .service(nats_service)
         .run()
         .await;

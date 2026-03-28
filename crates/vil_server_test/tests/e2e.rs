@@ -16,13 +16,15 @@ fn build_full_app() -> Router {
 
     Router::new()
         .route("/", get(|| async { "E2E OK" }))
-        .route("/json", get(|| async {
-            axum::Json(serde_json::json!({"e2e": true, "version": "4.0.0"}))
-        }))
+        .route(
+            "/json",
+            get(|| async { axum::Json(serde_json::json!({"e2e": true, "version": "4.0.0"})) }),
+        )
         .route("/echo", post(|body: String| async move { body }))
-        .route("/health", get(|| async {
-            axum::Json(serde_json::json!({"status": "healthy"}))
-        }))
+        .route(
+            "/health",
+            get(|| async { axum::Json(serde_json::json!({"status": "healthy"})) }),
+        )
         .with_state(state)
 }
 
@@ -31,24 +33,30 @@ fn build_full_app() -> Router {
 #[tokio::test]
 async fn e2e_server_hello() {
     let app = build_full_app();
-    let resp = app.oneshot(
-        Request::builder().uri("/").body(Body::empty()).unwrap()
-    ).await.unwrap();
+    let resp = app
+        .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     assert_eq!(&body[..], b"E2E OK");
 }
 
 #[tokio::test]
 async fn e2e_server_json() {
     let app = build_full_app();
-    let resp = app.oneshot(
-        Request::builder().uri("/json").body(Body::empty()).unwrap()
-    ).await.unwrap();
+    let resp = app
+        .oneshot(Request::builder().uri("/json").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["e2e"], true);
     assert_eq!(json["version"], "4.0.0");
@@ -57,29 +65,42 @@ async fn e2e_server_json() {
 #[tokio::test]
 async fn e2e_server_echo() {
     let app = build_full_app();
-    let resp = app.oneshot(
-        Request::builder()
-            .method("POST")
-            .uri("/echo")
-            .header("content-type", "text/plain")
-            .body(Body::from("hello e2e"))
-            .unwrap()
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/echo")
+                .header("content-type", "text/plain")
+                .body(Body::from("hello e2e"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     assert_eq!(&body[..], b"hello e2e");
 }
 
 #[tokio::test]
 async fn e2e_server_health() {
     let app = build_full_app();
-    let resp = app.oneshot(
-        Request::builder().uri("/health").body(Body::empty()).unwrap()
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/health")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "healthy");
 }
@@ -87,9 +108,15 @@ async fn e2e_server_health() {
 #[tokio::test]
 async fn e2e_server_not_found() {
     let app = build_full_app();
-    let resp = app.oneshot(
-        Request::builder().uri("/nonexistent").body(Body::empty()).unwrap()
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/nonexistent")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
@@ -269,12 +296,10 @@ async fn e2e_concurrent_requests() {
     for i in 0..100 {
         let app = app.clone();
         handles.push(tokio::spawn(async move {
-            let resp = app.oneshot(
-                Request::builder()
-                    .uri("/json")
-                    .body(Body::empty())
-                    .unwrap()
-            ).await.unwrap();
+            let resp = app
+                .oneshot(Request::builder().uri("/json").body(Body::empty()).unwrap())
+                .await
+                .unwrap();
             assert_eq!(resp.status(), StatusCode::OK);
             i
         }));

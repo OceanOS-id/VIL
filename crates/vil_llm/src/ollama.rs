@@ -1,6 +1,6 @@
-use async_trait::async_trait;
 use crate::message::*;
 use crate::provider::*;
+use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
 pub struct OllamaConfig {
@@ -20,8 +20,7 @@ impl OllamaConfig {
         Self {
             base_url: std::env::var("OLLAMA_BASE_URL")
                 .unwrap_or_else(|_| "http://localhost:11434".into()),
-            model: std::env::var("OLLAMA_MODEL")
-                .unwrap_or_else(|_| "llama3".into()),
+            model: std::env::var("OLLAMA_MODEL").unwrap_or_else(|_| "llama3".into()),
         }
     }
 
@@ -47,18 +46,21 @@ impl OllamaProvider {
 impl LlmProvider for OllamaProvider {
     async fn chat(&self, messages: &[ChatMessage]) -> Result<ChatResponse, LlmError> {
         let __ai_start = std::time::Instant::now();
-        let api_messages: Vec<serde_json::Value> = messages.iter().map(|msg| {
-            let role = match msg.role {
-                Role::System => "system",
-                Role::User => "user",
-                Role::Assistant => "assistant",
-                Role::Tool => "tool",
-            };
-            serde_json::json!({
-                "role": role,
-                "content": msg.content,
+        let api_messages: Vec<serde_json::Value> = messages
+            .iter()
+            .map(|msg| {
+                let role = match msg.role {
+                    Role::System => "system",
+                    Role::User => "user",
+                    Role::Assistant => "assistant",
+                    Role::Tool => "tool",
+                };
+                serde_json::json!({
+                    "role": role,
+                    "content": msg.content,
+                })
             })
-        }).collect();
+            .collect();
 
         let body = serde_json::json!({
             "model": self.config.model,
@@ -66,7 +68,8 @@ impl LlmProvider for OllamaProvider {
             "stream": false,
         });
 
-        let resp = self.client
+        let resp = self
+            .client
             .post(format!("{}/api/chat", self.config.base_url))
             .header("Content-Type", "application/json")
             .json(&body)
@@ -80,7 +83,9 @@ impl LlmProvider for OllamaProvider {
             return Err(LlmError::RequestFailed(format!("{}: {}", status, text)));
         }
 
-        let json: serde_json::Value = resp.json().await
+        let json: serde_json::Value = resp
+            .json()
+            .await
             .map_err(|e| LlmError::InvalidResponse(e.to_string()))?;
 
         let content = json["message"]["content"]
@@ -96,21 +101,24 @@ impl LlmProvider for OllamaProvider {
         {
             use vil_log::{ai_log, types::AiPayload};
             let __elapsed = __ai_start.elapsed();
-            ai_log!(Info, AiPayload {
-                model_hash: vil_log::dict::register_str(self.model()),
-                provider_hash: vil_log::dict::register_str(self.provider_name()),
-                input_tokens: 0,
-                output_tokens: 0,
-                latency_us: __elapsed.as_micros() as u32,
-                cost_micro_usd: 0,
-                provider_status: 200,
-                op_type: 0,
-                streaming: 0,
-                retries: 0,
-                cache_hit: 0,
-                _pad: [0; 2],
-                meta_bytes: [0; 160],
-            });
+            ai_log!(
+                Info,
+                AiPayload {
+                    model_hash: vil_log::dict::register_str(self.model()),
+                    provider_hash: vil_log::dict::register_str(self.provider_name()),
+                    input_tokens: 0,
+                    output_tokens: 0,
+                    latency_us: __elapsed.as_micros() as u32,
+                    cost_micro_usd: 0,
+                    provider_status: 200,
+                    op_type: 0,
+                    streaming: 0,
+                    retries: 0,
+                    cache_hit: 0,
+                    _pad: [0; 2],
+                    meta_bytes: [0; 160],
+                }
+            );
         }
 
         Ok(ChatResponse {
@@ -122,6 +130,10 @@ impl LlmProvider for OllamaProvider {
         })
     }
 
-    fn model(&self) -> &str { &self.config.model }
-    fn provider_name(&self) -> &str { "ollama" }
+    fn model(&self) -> &str {
+        &self.config.model
+    }
+    fn provider_name(&self) -> &str {
+        "ollama"
+    }
 }

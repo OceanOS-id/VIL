@@ -8,9 +8,9 @@
 //! API is served at `/_vil/api/`
 
 pub mod api;
-pub mod metrics;
 pub mod dashboard;
 pub mod events;
+pub mod metrics;
 pub mod sidecar;
 
 pub use sidecar::sidecar;

@@ -56,8 +56,7 @@ async fn main() {
         .map(|v| v == "1" || v == "true")
         .unwrap_or(false);
 
-    let svc = ServiceProcess::new("gw")
-        .endpoint(Method::POST, "/trigger", post(trigger));
+    let svc = ServiceProcess::new("gw").endpoint(Method::POST, "/trigger", post(trigger));
 
     let app = VilApp::new("ai-gw-bench")
         .port(3081)

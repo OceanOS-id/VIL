@@ -104,15 +104,13 @@ fn configure_source() -> HttpSourceBuilder {
             r["_risk_score"] = serde_json::json!((risk_score * 100.0).round() / 100.0);
 
             // Step 3: Classify — assign risk class based on score thresholds
-            r["_risk_class"] = serde_json::json!(
-                if risk_score > 100.0 {
-                    "HIGH"
-                } else if risk_score > 50.0 {
-                    "MEDIUM"
-                } else {
-                    "LOW"
-                }
-            );
+            r["_risk_class"] = serde_json::json!(if risk_score > 100.0 {
+                "HIGH"
+            } else if risk_score > 50.0 {
+                "MEDIUM"
+            } else {
+                "LOW"
+            });
 
             Some(serde_json::to_vec(&r).unwrap_or_else(|_| line.to_vec()))
         })
@@ -124,8 +122,7 @@ fn configure_source() -> HttpSourceBuilder {
 // ── Main ────────────────────────────────────────────────────────────────
 
 fn main() {
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     let sink_builder = configure_sink();
     let source_builder = configure_source();
@@ -163,7 +160,10 @@ fn main() {
     println!("    cargo run -p fintec01-simulators");
     println!();
     println!("  Test:");
-    println!("  curl -N -X POST http://localhost:{}{} \\", SINK_PORT, SINK_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        SINK_PORT, SINK_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"request\":\"chain-transforms\"}}'");
     println!();

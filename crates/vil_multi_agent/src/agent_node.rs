@@ -1,7 +1,7 @@
 //! AgentNode — wrapper around an agent with a role inside the graph.
 
-use std::sync::Arc;
 use async_trait::async_trait;
+use std::sync::Arc;
 
 /// Trait abstracting what an "agent" can do inside the multi-agent graph.
 ///

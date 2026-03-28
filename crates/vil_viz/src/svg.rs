@@ -22,10 +22,8 @@ pub fn render(graph: &VizGraph, config: &VizConfig) -> Result<String, String> {
         });
 
     match output {
-        Ok(out) if out.status.success() => {
-            String::from_utf8(out.stdout)
-                .map_err(|e| format!("SVG output is not valid UTF-8: {}", e))
-        }
+        Ok(out) if out.status.success() => String::from_utf8(out.stdout)
+            .map_err(|e| format!("SVG output is not valid UTF-8: {}", e)),
         Ok(out) => {
             let stderr = String::from_utf8_lossy(&out.stderr);
             Err(format!("dot command failed: {}", stderr))

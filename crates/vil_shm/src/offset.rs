@@ -124,7 +124,12 @@ impl<T> RelativePtr<T> {
 
 impl<T> std::fmt::Display for RelativePtr<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "RelativePtr<{}>({})", std::any::type_name::<T>(), self.offset)
+        write!(
+            f,
+            "RelativePtr<{}>({})",
+            std::any::type_name::<T>(),
+            self.offset
+        )
     }
 }
 

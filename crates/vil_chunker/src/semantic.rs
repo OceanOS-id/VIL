@@ -1,4 +1,4 @@
-use crate::strategy::{ChunkMeta, ChunkStrategy, ChunkType, TextChunk, estimate_tokens};
+use crate::strategy::{estimate_tokens, ChunkMeta, ChunkStrategy, ChunkType, TextChunk};
 
 /// Sentence-boundary chunker that merges consecutive sentences until a token
 /// budget is reached.
@@ -98,7 +98,9 @@ fn split_sentences(text: &str) -> Vec<(usize, usize, &str)> {
     while i < len {
         let b = bytes[i];
         // Look for sentence-ending punctuation followed by whitespace or end-of-string.
-        if (b == b'.' || b == b'!' || b == b'?') && (i + 1 >= len || bytes[i + 1].is_ascii_whitespace()) {
+        if (b == b'.' || b == b'!' || b == b'?')
+            && (i + 1 >= len || bytes[i + 1].is_ascii_whitespace())
+        {
             let end = i + 1;
             let sentence = text[start..end].trim();
             if !sentence.is_empty() {
@@ -147,7 +149,11 @@ mod tests {
         let chunker = SentenceChunker::new(5);
         let text = "The quick brown fox. Jumps over the lazy dog. And then some more.";
         let chunks = chunker.chunk(text);
-        assert!(chunks.len() >= 2, "expected >= 2 chunks, got {}", chunks.len());
+        assert!(
+            chunks.len() >= 2,
+            "expected >= 2 chunks, got {}",
+            chunks.len()
+        );
     }
 
     #[test]

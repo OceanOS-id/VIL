@@ -36,13 +36,13 @@ pub enum RotationStrategy {
 
 /// Drain that writes JSON Lines to a rolling file.
 pub struct FileDrain {
-    dir:       PathBuf,
-    prefix:    String,
-    rotation:  RotationStrategy,
+    dir: PathBuf,
+    prefix: String,
+    rotation: RotationStrategy,
     max_files: usize,
-    writer:    Option<BufWriter<File>>,
+    writer: Option<BufWriter<File>>,
     current_bytes: u64,
-    current_slot:  u64, // hour-or-day slot for time-based rotation
+    current_slot: u64, // hour-or-day slot for time-based rotation
 }
 
 impl FileDrain {
@@ -83,7 +83,7 @@ impl FileDrain {
             .unwrap_or_default()
             .as_secs();
         match self.rotation {
-            RotationStrategy::Daily  => secs / 86400,
+            RotationStrategy::Daily => secs / 86400,
             RotationStrategy::Hourly => secs / 3600,
             RotationStrategy::Size { .. } => 0,
         }
@@ -91,12 +91,9 @@ impl FileDrain {
 
     fn open_writer(&mut self) -> std::io::Result<()> {
         let path = self.current_path();
-        let file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&path)?;
+        let file = OpenOptions::new().create(true).append(true).open(&path)?;
         self.current_bytes = file.metadata()?.len();
-        self.current_slot  = self.rotation_slot_now();
+        self.current_slot = self.rotation_slot_now();
         self.writer = Some(BufWriter::new(file));
         Ok(())
     }
@@ -167,7 +164,7 @@ impl FileDrain {
     }
 
     fn write_slot(&mut self, slot: &LogSlot) -> std::io::Result<()> {
-        let level    = LogLevel::from(slot.header.level);
+        let level = LogLevel::from(slot.header.level);
         let category = LogCategory::from(slot.header.category);
 
         let mut record = serde_json::json!({
@@ -210,7 +207,10 @@ impl LogDrain for FileDrain {
         "file"
     }
 
-    async fn flush(&mut self, batch: &[LogSlot]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn flush(
+        &mut self,
+        batch: &[LogSlot],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         for slot in batch {
             self.write_slot(slot)?;
         }

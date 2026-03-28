@@ -38,15 +38,24 @@ pub struct TensorFault {
 
 impl TensorFault {
     pub fn buffer_full(msg: impl Into<String>) -> Self {
-        Self { error_type: TensorFaultType::BufferFull, message: msg.into() }
+        Self {
+            error_type: TensorFaultType::BufferFull,
+            message: msg.into(),
+        }
     }
 
     pub fn shape_mismatch(msg: impl Into<String>) -> Self {
-        Self { error_type: TensorFaultType::ShapeMismatch, message: msg.into() }
+        Self {
+            error_type: TensorFaultType::ShapeMismatch,
+            message: msg.into(),
+        }
     }
 
     pub fn invalid_descriptor(msg: impl Into<String>) -> Self {
-        Self { error_type: TensorFaultType::InvalidDescriptor, message: msg.into() }
+        Self {
+            error_type: TensorFaultType::InvalidDescriptor,
+            message: msg.into(),
+        }
     }
 }
 

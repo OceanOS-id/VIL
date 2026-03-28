@@ -8,17 +8,17 @@
 //! Compatible with OpenAI tiktoken and Llama sentencepiece vocabularies.
 
 pub mod bpe;
-pub mod vocab;
 pub mod counter;
-pub mod truncate;
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
+pub mod truncate;
+pub mod vocab;
 
 pub use bpe::BpeTokenizer;
-pub use vocab::{Vocabulary, VocabSource};
 pub use counter::TokenCounter;
-pub use truncate::{truncate_to_tokens, TruncateStrategy};
 pub use plugin::TokenizerPlugin;
 pub use semantic::{TokenizeEvent, TokenizeFault, TokenizerState};
+pub use truncate::{truncate_to_tokens, TruncateStrategy};
+pub use vocab::{VocabSource, Vocabulary};

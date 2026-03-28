@@ -22,21 +22,19 @@ use vil_log::{LogConfig, LogLevel};
 use vil_soap::{SoapClient, SoapConfig};
 
 /// Public demo SOAP endpoint — NumberConversion service.
-const WSDL_URL: &str =
-    "https://www.dataaccess.com/webservicesserver/NumberConversion.wso?wsdl";
-const ENDPOINT: &str =
-    "https://www.dataaccess.com/webservicesserver/NumberConversion.wso";
+const WSDL_URL: &str = "https://www.dataaccess.com/webservicesserver/NumberConversion.wso?wsdl";
+const ENDPOINT: &str = "https://www.dataaccess.com/webservicesserver/NumberConversion.wso";
 const NS: &str = "https://www.dataaccess.com/webservicesserver/";
 
 #[tokio::main]
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -57,7 +55,7 @@ async fn main() {
     let soap_cfg = SoapConfig::new(WSDL_URL, ENDPOINT).with_timeout_ms(10_000);
 
     let client = match SoapClient::new(soap_cfg) {
-        Ok(c)  => c,
+        Ok(c) => c,
         Err(e) => {
             println!("  [SKIP] Cannot build SOAP client: {:?}", e);
             return;
@@ -77,7 +75,10 @@ async fn main() {
             println!("  Body XML:  {}", resp.body_xml.trim());
         }
         Err(e) => {
-            println!("  [SKIP] SOAP call failed (network/service unreachable): {:?}", e);
+            println!(
+                "  [SKIP] SOAP call failed (network/service unreachable): {:?}",
+                e
+            );
             println!();
             println!("  In production, a successful call emits:");
             println!("    db_log! {{ op_type=4(CALL), db_hash=<endpoint>, table_hash=<action> }}");

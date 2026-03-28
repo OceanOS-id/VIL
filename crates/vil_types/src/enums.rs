@@ -285,7 +285,12 @@ impl SemanticKind {
     /// Returns the set of lanes permitted for this semantic type.
     pub fn allowed_lanes(&self) -> &'static [LaneKind] {
         match self {
-            Self::Message => &[LaneKind::Default, LaneKind::Trigger, LaneKind::Data, LaneKind::Control],
+            Self::Message => &[
+                LaneKind::Default,
+                LaneKind::Trigger,
+                LaneKind::Data,
+                LaneKind::Control,
+            ],
             Self::State => &[LaneKind::Data],
             Self::Event => &[LaneKind::Data, LaneKind::Control],
             Self::Fault => &[LaneKind::Control],
@@ -296,7 +301,11 @@ impl SemanticKind {
     /// Returns the set of transfer modes permitted for this semantic type.
     pub fn allowed_transfer_modes(&self) -> &'static [TransferMode] {
         match self {
-            Self::Message => &[TransferMode::LoanWrite, TransferMode::LoanRead, TransferMode::Copy],
+            Self::Message => &[
+                TransferMode::LoanWrite,
+                TransferMode::LoanRead,
+                TransferMode::Copy,
+            ],
             Self::State => &[TransferMode::LoanWrite, TransferMode::LoanRead],
             Self::Event => &[TransferMode::LoanWrite, TransferMode::Copy],
             Self::Fault => &[TransferMode::Copy],
@@ -324,9 +333,9 @@ impl fmt::Display for MemoryClass {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::PagedExchange => write!(f, "paged_exchange"),
-            Self::PinnedRemote  => write!(f, "pinned_remote"),
-            Self::ControlHeap   => write!(f, "control_heap"),
-            Self::LocalScratch  => write!(f, "local_scratch"),
+            Self::PinnedRemote => write!(f, "pinned_remote"),
+            Self::ControlHeap => write!(f, "control_heap"),
+            Self::LocalScratch => write!(f, "local_scratch"),
         }
     }
 }
@@ -343,9 +352,17 @@ impl MemoryClass {
     pub const fn allowed_transfer_modes(&self) -> &'static [TransferMode] {
         match self {
             Self::PagedExchange => &[TransferMode::LoanWrite, TransferMode::LoanRead],
-            Self::PinnedRemote  => &[TransferMode::LoanWrite, TransferMode::LoanRead, TransferMode::PublishOffset],
-            Self::ControlHeap   => &[TransferMode::Copy],
-            Self::LocalScratch  => &[TransferMode::LoanWrite, TransferMode::LoanRead, TransferMode::Copy],
+            Self::PinnedRemote => &[
+                TransferMode::LoanWrite,
+                TransferMode::LoanRead,
+                TransferMode::PublishOffset,
+            ],
+            Self::ControlHeap => &[TransferMode::Copy],
+            Self::LocalScratch => &[
+                TransferMode::LoanWrite,
+                TransferMode::LoanRead,
+                TransferMode::Copy,
+            ],
         }
     }
 
@@ -353,9 +370,9 @@ impl MemoryClass {
     pub const fn description(&self) -> &'static str {
         match self {
             Self::PagedExchange => "Paged exchange heap — zero-copy Data Lane",
-            Self::PinnedRemote  => "Pinned remote-ready memory — RDMA/DMA capable",
-            Self::ControlHeap   => "Control heap — small copy-only control signals",
-            Self::LocalScratch  => "Local scratch arena — temporary per-process",
+            Self::PinnedRemote => "Pinned remote-ready memory — RDMA/DMA capable",
+            Self::ControlHeap => "Control heap — small copy-only control signals",
+            Self::LocalScratch => "Local scratch arena — temporary per-process",
         }
     }
 }
@@ -411,16 +428,21 @@ pub const fn zone_capabilities(zone: TrustZone) -> &'static [ZoneCapability] {
     use ZoneCapability::*;
     match zone {
         TrustZone::NativeCore => &[
-            CanEmitLane, CanReadState, CanUseSecret,
-            CanAccessShm, CanJoinCluster, CanUseRemote,
+            CanEmitLane,
+            CanReadState,
+            CanUseSecret,
+            CanAccessShm,
+            CanJoinCluster,
+            CanUseRemote,
         ],
         TrustZone::NativeTrusted => &[
-            CanEmitLane, CanReadState,
-            CanAccessShm, CanJoinCluster, CanUseRemote,
-        ],
-        TrustZone::WasmCapsule => &[
             CanEmitLane,
+            CanReadState,
+            CanAccessShm,
+            CanJoinCluster,
+            CanUseRemote,
         ],
+        TrustZone::WasmCapsule => &[CanEmitLane],
         TrustZone::ExternalBoundary => &[],
     }
 }

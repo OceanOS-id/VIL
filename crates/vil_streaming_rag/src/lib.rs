@@ -24,20 +24,20 @@
 //! ```
 
 pub mod config;
-pub mod index_writer;
-pub mod processor;
-pub mod stream;
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod index_writer;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod processor;
+pub mod semantic;
+pub mod stream;
 
 pub use config::{StreamConfig, StreamConfigBuilder};
 pub use index_writer::{IndexWriter, IndexedChunk, StreamResult};
-pub use processor::StreamProcessor;
-pub use stream::{StreamingIngester, compute_embedding};
 pub use plugin::StreamingRagPlugin;
+pub use processor::StreamProcessor;
 pub use semantic::{StreamingRagEvent, StreamingRagFault, StreamingRagState};
+pub use stream::{compute_embedding, StreamingIngester};
 
 #[cfg(test)]
 mod tests {

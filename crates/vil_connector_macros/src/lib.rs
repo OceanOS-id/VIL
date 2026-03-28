@@ -12,9 +12,7 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{
-    parse_macro_input, Data, DeriveInput, Fields,
-};
+use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
 // =============================================================================
 // Helper: detect retryable variants by name

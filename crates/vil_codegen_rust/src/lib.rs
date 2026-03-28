@@ -24,7 +24,8 @@ pub fn generate_workflow(ir: &WorkflowIR) -> TokenStream {
     let messages_code = message::generate_messages(ir);
 
     // 2. Generate Process Inits (PortSpecs and ProcessSpecs)
-    let (processes_code, handle_fields, handle_instantiations) = process::generate_processes_and_handles(ir);
+    let (processes_code, handle_fields, handle_instantiations) =
+        process::generate_processes_and_handles(ir);
 
     // 3. Generate Route Wiring
     let routes_code = workflow::generate_routes(ir);
@@ -41,7 +42,7 @@ pub fn generate_workflow(ir: &WorkflowIR) -> TokenStream {
 
         pub fn #fn_ident(world: &vil_rt::VastarRuntimeWorld) -> #struct_ident {
             println!("Initializing Workflow Architecture: {}", #workflow_name_str);
-            
+
             // --- Register Processes ---
             #processes_code
 
@@ -66,8 +67,10 @@ mod tests {
         let ir = WorkflowBuilder::new("TestFlow")
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "Msg").done()
-                    .in_port("rx", "Msg").done()
+                    .out_port("tx", "Msg")
+                    .done()
+                    .in_port("rx", "Msg")
+                    .done()
                     .build(),
             )
             .add_process(ProcessBuilder::new("A", "Iface").build())

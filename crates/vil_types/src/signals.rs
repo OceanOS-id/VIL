@@ -8,7 +8,7 @@
 // so that session termination is never blocked by payload congestion.
 // =============================================================================
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Out-of-band control signal for the reactive session fabric.
 ///
@@ -38,7 +38,10 @@ impl crate::markers::MessageContract for ControlSignal {
     const META: crate::specs::MessageMeta = crate::specs::MessageMeta {
         name: "ControlSignal",
         layout: crate::enums::LayoutProfile::Relative,
-        transfer_caps: &[crate::enums::TransferMode::LoanWrite, crate::enums::TransferMode::LoanRead],
+        transfer_caps: &[
+            crate::enums::TransferMode::LoanWrite,
+            crate::enums::TransferMode::LoanRead,
+        ],
         is_stable: false, // Contains String in Error variant
         semantic_kind: crate::enums::SemanticKind::Event,
         memory_class: crate::enums::MemoryClass::ControlHeap,
@@ -84,8 +87,16 @@ impl std::fmt::Display for ControlSignal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Done { session_id } => write!(f, "DONE(session={})", session_id),
-            Self::Error { session_id, code, reason } => {
-                write!(f, "ERROR(session={}, code={}, reason={})", session_id, code, reason)
+            Self::Error {
+                session_id,
+                code,
+                reason,
+            } => {
+                write!(
+                    f,
+                    "ERROR(session={}, code={}, reason={})",
+                    session_id, code, reason
+                )
             }
             Self::Abort { session_id } => write!(f, "ABORT(session={})", session_id),
         }

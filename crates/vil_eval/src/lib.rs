@@ -30,13 +30,13 @@ pub use report::{CaseResult, EvalReport};
 pub use runner::EvalRunner;
 
 // VIL integration layer
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::EvalPlugin;
-pub use semantic::{EvalRunEvent, EvalFault, EvalState};
+pub use semantic::{EvalFault, EvalRunEvent, EvalState};
 
 #[cfg(test)]
 mod tests {
@@ -190,7 +190,13 @@ mod tests {
         let case_scores: Vec<f32> = report
             .results
             .iter()
-            .map(|r| r.scores.iter().find(|s| s.name == "answer_relevance").unwrap().score)
+            .map(|r| {
+                r.scores
+                    .iter()
+                    .find(|s| s.name == "answer_relevance")
+                    .unwrap()
+                    .score
+            })
             .collect();
         let expected_avg = case_scores.iter().sum::<f32>() / case_scores.len() as f32;
         assert!((relevance_avg - expected_avg).abs() < f32::EPSILON);

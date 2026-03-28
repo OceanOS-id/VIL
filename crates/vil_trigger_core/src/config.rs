@@ -55,6 +55,11 @@ impl TriggerConfig {
     /// Construct a new enabled trigger config.
     #[inline]
     pub fn new(id: u64, kind: TriggerKind, label: &'static str) -> Self {
-        Self { id, kind, enabled: true, label }
+        Self {
+            id,
+            kind,
+            enabled: true,
+            label,
+        }
     }
 }

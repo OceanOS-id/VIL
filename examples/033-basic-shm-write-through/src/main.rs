@@ -68,11 +68,41 @@ struct CatalogResponse {
 // In production, this would be a database query or cache lookup.
 fn mock_catalog() -> Vec<Product> {
     vec![
-        Product { product_id: 1001, name: "Wireless Mouse".into(), category: "electronics".into(), price_cents: 2999, stock_count: 150 },
-        Product { product_id: 1002, name: "USB-C Hub".into(), category: "electronics".into(), price_cents: 4999, stock_count: 80 },
-        Product { product_id: 1003, name: "4K Monitor".into(), category: "electronics".into(), price_cents: 49999, stock_count: 25 },
-        Product { product_id: 2001, name: "Standing Desk".into(), category: "furniture".into(), price_cents: 89999, stock_count: 12 },
-        Product { product_id: 2002, name: "Ergonomic Chair".into(), category: "furniture".into(), price_cents: 69999, stock_count: 30 },
+        Product {
+            product_id: 1001,
+            name: "Wireless Mouse".into(),
+            category: "electronics".into(),
+            price_cents: 2999,
+            stock_count: 150,
+        },
+        Product {
+            product_id: 1002,
+            name: "USB-C Hub".into(),
+            category: "electronics".into(),
+            price_cents: 4999,
+            stock_count: 80,
+        },
+        Product {
+            product_id: 1003,
+            name: "4K Monitor".into(),
+            category: "electronics".into(),
+            price_cents: 49999,
+            stock_count: 25,
+        },
+        Product {
+            product_id: 2001,
+            name: "Standing Desk".into(),
+            category: "furniture".into(),
+            price_cents: 89999,
+            stock_count: 12,
+        },
+        Product {
+            product_id: 2002,
+            name: "Ergonomic Chair".into(),
+            category: "furniture".into(),
+            price_cents: 69999,
+            stock_count: 30,
+        },
     ]
 }
 

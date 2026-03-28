@@ -11,7 +11,7 @@
 //   GET  /admin/wasm/modules          — List WASM FaaS modules
 
 use axum::{
-    extract::{Path, Extension},
+    extract::{Extension, Path},
     response::Json,
     routing::{get, post},
     Router,
@@ -34,9 +34,7 @@ pub fn sidecar_admin_router() -> Router {
 }
 
 /// GET /admin/sidecars — List all sidecars with health status.
-async fn list_sidecars(
-    registry: Option<Extension<Arc<SidecarRegistry>>>,
-) -> Json<Value> {
+async fn list_sidecars(registry: Option<Extension<Arc<SidecarRegistry>>>) -> Json<Value> {
     let Some(Extension(registry)) = registry else {
         return Json(json!({
             "sidecars": [],
@@ -156,9 +154,7 @@ async fn attach_sidecar(
 }
 
 /// GET /admin/sidecars/metrics — Prometheus metrics.
-async fn sidecar_metrics(
-    registry: Option<Extension<Arc<SidecarRegistry>>>,
-) -> String {
+async fn sidecar_metrics(registry: Option<Extension<Arc<SidecarRegistry>>>) -> String {
     match registry {
         Some(Extension(registry)) => registry.prometheus_metrics(),
         None => "# no sidecar registry configured\n".to_string(),

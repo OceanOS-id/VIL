@@ -39,17 +39,17 @@
 //   curl -X POST http://localhost:8080/api/events/publish \
 //     -H 'Content-Type: application/json' -d '{"message":"hello"}'
 
-use vil_server::prelude::*;
-use vil_server::axum;
-use std::sync::Arc;
 use std::convert::Infallible;
+use std::sync::Arc;
+use vil_server::axum;
+use vil_server::prelude::*;
 
 // Auction fault types — typed faults enable automated alerting
 // when bid publishing fails or bidder streams disconnect unexpectedly.
 #[vil_fault]
 pub enum SseFault {
-    PublishFailed,  // Failed to broadcast bid update to subscribers
-    StreamClosed,   // Bidder's SSE connection dropped unexpectedly
+    PublishFailed, // Failed to broadcast bid update to subscribers
+    StreamClosed,  // Bidder's SSE connection dropped unexpectedly
 }
 
 // Result of publishing a bid update. Includes the number of
@@ -76,7 +76,9 @@ async fn publish(ctx: ServiceCtx, body: ShmSlice) -> Result<VilResponse<PublishR
     // ServiceCtx carries shared state injected during service setup.
     // Here it provides access to the SseHub for broadcast fan-out.
     let hub = ctx.state::<Arc<SseHub>>().expect("SseHub");
-    let msg: serde_json::Value = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+    let msg: serde_json::Value = body
+        .json()
+        .map_err(|_| VilError::bad_request("invalid JSON"))?;
     let text = serde_json::to_string(&msg).unwrap_or_default();
 
     // Broadcast to ALL connected bidders on the "events" topic.

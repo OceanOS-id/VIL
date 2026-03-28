@@ -5,8 +5,8 @@
 //! - Return `HandlerResult<VilResponse<T>>` or `VilResponse<T>`
 //! - Use `VilError` for structured error responses
 
-use vil_server::prelude::*;
 use serde::{Deserialize, Serialize};
+use vil_server::prelude::*;
 
 use crate::runtime::QuantizedRuntime;
 use crate::semantic::{QuantizeEvent, QuantizedState};
@@ -58,7 +58,9 @@ pub async fn infer_handler(
     ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<InferResponseBody>> {
-    let svc = ctx.state::<QuantizedServiceState>().expect("QuantizedServiceState");
+    let svc = ctx
+        .state::<QuantizedServiceState>()
+        .expect("QuantizedServiceState");
     let runtime = &svc.runtime;
     let state = &svc.state;
     let req: InferRequest = body.json().expect("invalid JSON");
@@ -66,10 +68,14 @@ pub async fn infer_handler(
         return Err(VilError::bad_request("prompt must not be empty"));
     }
 
-    let rt = runtime.lock().map_err(|e| VilError::internal(e.to_string()))?;
+    let rt = runtime
+        .lock()
+        .map_err(|e| VilError::internal(e.to_string()))?;
 
     if !rt.is_loaded() {
-        return Err(VilError::bad_request("model not loaded — call load() first"));
+        return Err(VilError::bad_request(
+            "model not loaded — call load() first",
+        ));
     }
 
     let text = rt
@@ -97,10 +103,10 @@ pub async fn infer_handler(
 }
 
 /// GET /stats — Get quantized runtime statistics.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<QuantizedStatsBody> {
-    let svc = ctx.state::<QuantizedServiceState>().expect("QuantizedServiceState");
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<QuantizedStatsBody> {
+    let svc = ctx
+        .state::<QuantizedServiceState>()
+        .expect("QuantizedServiceState");
     let s = svc.state.lock().unwrap_or_else(|e| e.into_inner());
     VilResponse::ok(QuantizedStatsBody {
         total_inferences: s.total_inferences,

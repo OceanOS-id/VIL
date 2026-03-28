@@ -24,22 +24,22 @@
 //! # }
 //! ```
 
-pub mod provider;
-pub mod openai;
 pub mod batch;
-pub mod similarity;
 pub mod normalize;
+pub mod openai;
+pub mod provider;
+pub mod similarity;
 
 // Re-exports for convenience.
-pub use provider::{EmbedError, EmbedProvider};
-pub use openai::OpenAiEmbedder;
 pub use batch::BatchEmbedder;
 pub use normalize::{l2_normalize, l2_normalize_batch};
+pub use openai::OpenAiEmbedder;
+pub use provider::{EmbedError, EmbedProvider};
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::EmbedderPlugin;
 pub use semantic::{EmbedEvent, EmbedFault, EmbedderState};

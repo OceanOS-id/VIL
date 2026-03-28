@@ -1,6 +1,6 @@
+use crate::reranker::{RerankCandidate, RerankError, RerankResult, Reranker};
 use async_trait::async_trait;
 use std::collections::HashMap;
-use crate::reranker::{RerankCandidate, RerankError, RerankResult, Reranker};
 
 /// Reciprocal Rank Fusion (RRF) reranker.
 ///
@@ -73,7 +73,11 @@ impl Reranker for RRFReranker {
             })
             .collect();
 
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         results.truncate(top_k);
 
         for (i, r) in results.iter_mut().enumerate() {
@@ -90,9 +94,21 @@ mod tests {
 
     fn make_candidates() -> Vec<RerankCandidate> {
         vec![
-            RerankCandidate { id: "a".into(), text: "Doc A".into(), initial_score: 0.0 },
-            RerankCandidate { id: "b".into(), text: "Doc B".into(), initial_score: 0.0 },
-            RerankCandidate { id: "c".into(), text: "Doc C".into(), initial_score: 0.0 },
+            RerankCandidate {
+                id: "a".into(),
+                text: "Doc A".into(),
+                initial_score: 0.0,
+            },
+            RerankCandidate {
+                id: "b".into(),
+                text: "Doc B".into(),
+                initial_score: 0.0,
+            },
+            RerankCandidate {
+                id: "c".into(),
+                text: "Doc C".into(),
+                initial_score: 0.0,
+            },
         ]
     }
 
@@ -111,7 +127,10 @@ mod tests {
         ];
 
         let reranker = RRFReranker::with_default_k(ranked_lists);
-        let results = reranker.rerank("query", &make_candidates(), 10).await.unwrap();
+        let results = reranker
+            .rerank("query", &make_candidates(), 10)
+            .await
+            .unwrap();
 
         assert_eq!(results[0].id, "a");
         assert_eq!(results[1].id, "c");
@@ -122,7 +141,10 @@ mod tests {
     async fn rrf_top_k() {
         let ranked_lists = vec![vec!["a".into(), "b".into(), "c".into()]];
         let reranker = RRFReranker::with_default_k(ranked_lists);
-        let results = reranker.rerank("query", &make_candidates(), 1).await.unwrap();
+        let results = reranker
+            .rerank("query", &make_candidates(), 1)
+            .await
+            .unwrap();
         assert_eq!(results.len(), 1);
     }
 
@@ -136,11 +158,12 @@ mod tests {
 
     #[tokio::test]
     async fn rrf_score_ordering() {
-        let ranked_lists = vec![
-            vec!["a".into(), "b".into(), "c".into()],
-        ];
+        let ranked_lists = vec![vec!["a".into(), "b".into(), "c".into()]];
         let reranker = RRFReranker::with_default_k(ranked_lists);
-        let results = reranker.rerank("query", &make_candidates(), 10).await.unwrap();
+        let results = reranker
+            .rerank("query", &make_candidates(), 10)
+            .await
+            .unwrap();
         for w in results.windows(2) {
             assert!(w[0].score >= w[1].score);
         }

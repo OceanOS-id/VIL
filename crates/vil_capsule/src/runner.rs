@@ -25,12 +25,16 @@ impl CapsuleRunner {
 
     /// Send a payload to the capsule and process the result.
     /// In production, `payload` is serialized data from the input port.
-    pub fn dispatch(&self, function_name: impl Into<String>, payload: Vec<u8>) -> Result<CapsuleOutput, CapsuleError> {
+    pub fn dispatch(
+        &self,
+        function_name: impl Into<String>,
+        payload: Vec<u8>,
+    ) -> Result<CapsuleOutput, CapsuleError> {
         let input = CapsuleInput {
             function_name: function_name.into(),
             payload,
         };
-        
+
         self.host.call(input)
     }
 }
@@ -38,7 +42,7 @@ impl CapsuleRunner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CapsuleHost, CapsuleConfig};
+    use crate::{CapsuleConfig, CapsuleHost};
 
     #[test]
     fn test_runner_no_wasm_feature() {

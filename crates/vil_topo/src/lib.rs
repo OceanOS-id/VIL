@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use proc_macro2::TokenStream;
-use quote::{quote, format_ident};
+use quote::{format_ident, quote};
+use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod tests;
@@ -71,14 +71,14 @@ pub fn generate_workflow_macro(topo: &TopoDef) -> TokenStream {
         // Expected format: "ProcessA.port_out" -> "ProcessB.port_in"
         let from_parts: Vec<&str> = route.from.split('.').collect();
         let to_parts: Vec<&str> = route.to.split('.').collect();
-        
+
         let src_proc = format_ident!("{}", from_parts[0]);
         let src_port = format_ident!("{}", from_parts[1]);
         let dst_proc = format_ident!("{}", to_parts[0]);
         let dst_port = format_ident!("{}", to_parts[1]);
-        
+
         let t_mode = format_ident!("{}", route.transfer_mode);
-        
+
         if let Some(transport) = &route.transport {
             let transport_id = format_ident!("{}", transport);
             routes_tokens.push(quote! {

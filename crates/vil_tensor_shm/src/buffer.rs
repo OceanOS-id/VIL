@@ -94,11 +94,7 @@ impl ShmTensorBuffer {
         // sound because each writer reserves a unique, non-overlapping slice.
         let ptr = self.data.as_ptr() as *mut f32;
         unsafe {
-            std::ptr::copy_nonoverlapping(
-                tensor.data.as_ptr(),
-                ptr.add(actual_start),
-                len,
-            );
+            std::ptr::copy_nonoverlapping(tensor.data.as_ptr(), ptr.add(actual_start), len);
         }
 
         Ok(BufferSlice {

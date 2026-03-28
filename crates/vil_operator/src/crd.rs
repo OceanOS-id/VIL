@@ -48,10 +48,18 @@ pub struct VilServerSpec {
     pub autoscaling: Option<AutoscalingSpec>,
 }
 
-fn default_image() -> String { "ghcr.io/oceanos-id/vil-server:latest".into() }
-fn default_replicas() -> i32 { 1 }
-fn default_port() -> i32 { 8080 }
-fn default_metrics_port() -> i32 { 9090 }
+fn default_image() -> String {
+    "ghcr.io/oceanos-id/vil-server:latest".into()
+}
+fn default_replicas() -> i32 {
+    1
+}
+fn default_port() -> i32 {
+    8080
+}
+fn default_metrics_port() -> i32 {
+    9090
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -62,12 +70,19 @@ pub struct ShmSpec {
     pub size_limit: String,
 }
 
-fn default_true() -> bool { true }
-fn default_shm_size() -> String { "256Mi".into() }
+fn default_true() -> bool {
+    true
+}
+fn default_shm_size() -> String {
+    "256Mi".into()
+}
 
 impl Default for ShmSpec {
     fn default() -> Self {
-        Self { enabled: true, size_limit: "256Mi".into() }
+        Self {
+            enabled: true,
+            size_limit: "256Mi".into(),
+        }
     }
 }
 
@@ -80,7 +95,9 @@ pub struct ServiceSpec {
     pub prefix: Option<String>,
 }
 
-fn default_public() -> String { "public".into() }
+fn default_public() -> String {
+    "public".into()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]
 pub struct MeshSpec {
@@ -90,7 +107,9 @@ pub struct MeshSpec {
     pub routes: Vec<RouteSpec>,
 }
 
-fn default_unified() -> String { "unified".into() }
+fn default_unified() -> String {
+    "unified".into()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct RouteSpec {
@@ -100,7 +119,9 @@ pub struct RouteSpec {
     pub lane: String,
 }
 
-fn default_lane() -> String { "data".into() }
+fn default_lane() -> String {
+    "data".into()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ResourceSpec {
@@ -126,9 +147,15 @@ pub struct AutoscalingSpec {
     pub target_cpu: i32,
 }
 
-fn default_min() -> i32 { 1 }
-fn default_max() -> i32 { 10 }
-fn default_cpu_target() -> i32 { 80 }
+fn default_min() -> i32 {
+    1
+}
+fn default_max() -> i32 {
+    10
+}
+fn default_cpu_target() -> i32 {
+    80
+}
 
 /// VilServer status (updated by operator).
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]

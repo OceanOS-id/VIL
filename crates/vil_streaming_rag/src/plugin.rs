@@ -17,9 +17,15 @@ impl StreamingRagPlugin {
 }
 
 impl VilPlugin for StreamingRagPlugin {
-    fn id(&self) -> &str { "vil-streaming-rag" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Chunk-by-chunk streaming retrieval-augmented generation" }
+    fn id(&self) -> &str {
+        "vil-streaming-rag"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Chunk-by-chunk streaming retrieval-augmented generation"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -42,5 +48,7 @@ impl VilPlugin for StreamingRagPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

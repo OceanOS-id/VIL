@@ -14,13 +14,19 @@ fn build_test_app() -> Router {
 
     Router::new()
         .route("/", get(|| async { "Hello from test!" }))
-        .route("/json", get(|| async {
-            axum::Json(serde_json::json!({
-                "status": "ok",
-                "service": "test"
-            }))
-        }))
-        .route("/echo", axum::routing::post(|body: String| async move { body }))
+        .route(
+            "/json",
+            get(|| async {
+                axum::Json(serde_json::json!({
+                    "status": "ok",
+                    "service": "test"
+                }))
+            }),
+        )
+        .route(
+            "/echo",
+            axum::routing::post(|body: String| async move { body }),
+        )
         .with_state(state)
 }
 
@@ -74,10 +80,13 @@ async fn test_not_found() {
 fn test_circuit_breaker_states() {
     use vil_server_auth::circuit_breaker::*;
 
-    let cb = CircuitBreaker::new("test-service", CircuitBreakerConfig {
-        failure_threshold: 3,
-        ..Default::default()
-    });
+    let cb = CircuitBreaker::new(
+        "test-service",
+        CircuitBreakerConfig {
+            failure_threshold: 3,
+            ..Default::default()
+        },
+    );
 
     // Initially closed
     assert_eq!(cb.state(), CircuitState::Closed);
@@ -100,8 +109,8 @@ fn test_circuit_breaker_states() {
 
 #[test]
 fn test_rate_limiter() {
-    use vil_server_auth::RateLimit;
     use std::net::{IpAddr, Ipv4Addr};
+    use vil_server_auth::RateLimit;
 
     let limiter = RateLimit::new(5, std::time::Duration::from_secs(60));
     let test_ip = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
@@ -149,7 +158,7 @@ fn test_backpressure_controller() {
     // Currently at 10, need to reach <= 5
     // Each request_exit decrements by 1
     for _ in 0..4 {
-        let _ = controller.request_exit();  // 10→9→8→7→6
+        let _ = controller.request_exit(); // 10→9→8→7→6
     }
     assert!(!controller.is_accepting()); // Still above low watermark
 

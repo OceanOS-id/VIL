@@ -1,10 +1,10 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
 use crate::config::ai_platform_routes;
-use crate::router::SemanticRouter;
 use crate::handlers;
+use crate::router::SemanticRouter;
 use crate::semantic::{RouteEvent, RouteFault, RouterState};
+use std::sync::Arc;
 
 pub struct SemanticRouterPlugin {
     default_target: String,
@@ -12,21 +12,27 @@ pub struct SemanticRouterPlugin {
 
 impl SemanticRouterPlugin {
     pub fn new(default_target: impl Into<String>) -> Self {
-        Self { default_target: default_target.into() }
+        Self {
+            default_target: default_target.into(),
+        }
     }
 }
 
 impl VilPlugin for SemanticRouterPlugin {
-    fn id(&self) -> &str { "vil-semantic-router" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Route queries to specialized models/pipelines based on intent" }
+    fn id(&self) -> &str {
+        "vil-semantic-router"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Route queries to specialized models/pipelines based on intent"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "semantic-router".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/router/routes"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/router/routes")],
         }]
     }
 
@@ -34,7 +40,7 @@ impl VilPlugin for SemanticRouterPlugin {
         let router = Arc::new(
             SemanticRouter::builder(&self.default_target)
                 .routes(ai_platform_routes())
-                .build()
+                .build(),
         );
         ctx.provide::<Arc<SemanticRouter>>("semantic-router", router.clone());
 
@@ -47,5 +53,7 @@ impl VilPlugin for SemanticRouterPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

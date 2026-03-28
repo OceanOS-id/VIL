@@ -25,8 +25,12 @@ pub struct PubSubConfig {
     pub ack_deadline_secs: i32,
 }
 
-fn default_max_msgs() -> i32 { 10 }
-fn default_ack_deadline() -> i32 { 60 }
+fn default_max_msgs() -> i32 {
+    10
+}
+fn default_ack_deadline() -> i32 {
+    60
+}
 
 impl PubSubConfig {
     pub fn new(project_id: &str, topic: &str, subscription: &str) -> Self {

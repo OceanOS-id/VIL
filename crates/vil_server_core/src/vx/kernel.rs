@@ -10,10 +10,10 @@
 //! - Non-blocking: exhaust ready queue before parking
 //! - Control Lane independent from Data Lane (no head-of-line blocking)
 
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::collections::VecDeque;
 use dashmap::DashMap;
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::Arc;
 
 /// Token state for a single in-flight request
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -105,7 +105,9 @@ impl KernelMetrics {
 }
 
 impl Default for KernelMetrics {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Immutable snapshot of kernel metrics
@@ -125,7 +127,11 @@ pub enum ControlSignal {
     /// Request completed successfully
     Done { request_id: u64 },
     /// Request failed with error
-    Error { request_id: u64, code: u16, reason: String },
+    Error {
+        request_id: u64,
+        code: u16,
+        reason: String,
+    },
     /// Abort request immediately
     Abort { request_id: u64 },
     /// Backpressure: pause accepting new requests
@@ -170,10 +176,14 @@ impl VxKernel {
     }
 
     /// Get the service name
-    pub fn service(&self) -> &str { &self.service }
+    pub fn service(&self) -> &str {
+        &self.service
+    }
 
     /// Get metrics reference
-    pub fn metrics(&self) -> &Arc<KernelMetrics> { &self.metrics }
+    pub fn metrics(&self) -> &Arc<KernelMetrics> {
+        &self.metrics
+    }
 
     /// Check if kernel is accepting requests
     pub fn is_accepting(&self) -> bool {
@@ -181,10 +191,14 @@ impl VxKernel {
     }
 
     /// Pause accepting (backpressure)
-    pub fn pause(&self) { self.accepting.store(false, Ordering::Relaxed); }
+    pub fn pause(&self) {
+        self.accepting.store(false, Ordering::Relaxed);
+    }
 
     /// Resume accepting
-    pub fn resume(&self) { self.accepting.store(true, Ordering::Relaxed); }
+    pub fn resume(&self) {
+        self.accepting.store(true, Ordering::Relaxed);
+    }
 
     /// Enqueue a new request token
     pub fn enqueue(&self, request_id: u64, service: String, payload: Vec<u8>) -> bool {
@@ -295,16 +309,12 @@ impl VxKernel {
             ControlSignal::Pause => self.pause(),
             ControlSignal::Resume => self.resume(),
             ControlSignal::HealthDegraded { reason } => {
-                {
-                    use vil_log::app_log;
-                    app_log!(Warn, "vx.health.degraded", { service: self.service.as_str(), reason: reason.as_str() });
-                }
+                use vil_log::app_log;
+                app_log!(Warn, "vx.health.degraded", { service: self.service.as_str(), reason: reason.as_str() });
             }
             ControlSignal::HealthRestored => {
-                {
-                    use vil_log::app_log;
-                    app_log!(Info, "vx.health.restored", { service: self.service.as_str() });
-                }
+                use vil_log::app_log;
+                app_log!(Info, "vx.health.restored", { service: self.service.as_str() });
             }
         }
     }
@@ -454,7 +464,9 @@ mod tests {
         assert!(kernel.is_accepting());
 
         // Health signals (just verify they don't panic)
-        kernel.handle_control(ControlSignal::HealthDegraded { reason: "test".into() });
+        kernel.handle_control(ControlSignal::HealthDegraded {
+            reason: "test".into(),
+        });
         kernel.handle_control(ControlSignal::HealthRestored);
 
         let snap = kernel.metrics().snapshot();

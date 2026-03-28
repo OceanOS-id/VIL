@@ -95,8 +95,7 @@ const AI_JSON_TAP: &str = "choices[0].delta.content";
 // Workflow 2: Credit Ingest
 const CREDIT_SINK_PORT: u16 = 3098;
 const CREDIT_SINK_PATH: &str = "/credit";
-const CREDIT_NDJSON_URL: &str =
-    "http://localhost:18081/api/v1/credits/ndjson?count=100";
+const CREDIT_NDJSON_URL: &str = "http://localhost:18081/api/v1/credits/ndjson?count=100";
 
 // Workflow 3: Inventory Check
 const INVENTORY_SINK_PORT: u16 = 3099;
@@ -172,9 +171,7 @@ fn configure_credit_source() -> HttpSourceBuilder {
             });
             let saldo = record["saldo_outstanding"].as_f64().unwrap_or(0.0);
             let plafon = record["jumlah_kredit"].as_f64().unwrap_or(1.0);
-            record["_ltv_ratio"] = serde_json::json!(
-                ((saldo / plafon * 100.0).round() / 100.0)
-            );
+            record["_ltv_ratio"] = serde_json::json!(((saldo / plafon * 100.0).round() / 100.0));
             Some(serde_json::to_vec(&record).unwrap_or_else(|_| line.to_vec()))
         })
         .in_port("trigger_in")
@@ -201,7 +198,10 @@ fn configure_inventory_source() -> HttpSourceBuilder {
             // REST single-shot: tag with workflow identifier
             let mut record: serde_json::Value = serde_json::from_slice(body).ok()?;
             if let Some(obj) = record.as_object_mut() {
-                obj.insert("_workflow".to_string(), serde_json::json!("INVENTORY_CHECK"));
+                obj.insert(
+                    "_workflow".to_string(),
+                    serde_json::json!("INVENTORY_CHECK"),
+                );
                 obj.insert("_format".to_string(), serde_json::json!("REST_SINGLE_SHOT"));
             }
             Some(serde_json::to_vec(&record).unwrap_or_else(|_| body.to_vec()))
@@ -217,8 +217,7 @@ fn main() {
     // Single shared ExchangeHeap for ALL three workflows.
     // Business advantage: the AI advisor workflow can read credit data enriched
     // by the credit ingest workflow without serialization — zero-copy IPC.
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // ── Workflow 1: AI Gateway (SSE) ────────────────────────────────────
     let ai_sink = configure_ai_sink();
@@ -281,7 +280,14 @@ fn main() {
     println!("╚════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!("  AI Auth: {}", if api_key.is_empty() { "simulator mode (no auth)" } else { "OPENAI_API_KEY (Bearer)" });
+    println!(
+        "  AI Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode (no auth)"
+        } else {
+            "OPENAI_API_KEY (Bearer)"
+        }
+    );
     println!();
     println!("  Requires:");
     println!("    - Core Banking Simulator on port 18081 (credits NDJSON)");
@@ -290,17 +296,26 @@ fn main() {
     println!("    cargo run -p fintec01-simulators");
     println!();
     println!("  Test AI Gateway:");
-    println!("  curl -N -X POST http://localhost:{}{} \\", AI_SINK_PORT, AI_SINK_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        AI_SINK_PORT, AI_SINK_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"prompt\":\"test\"}}'");
     println!();
     println!("  Test Credit Ingest:");
-    println!("  curl -N -X POST http://localhost:{}{} \\", CREDIT_SINK_PORT, CREDIT_SINK_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        CREDIT_SINK_PORT, CREDIT_SINK_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"request\":\"credits\"}}'");
     println!();
     println!("  Test Inventory Check:");
-    println!("  curl -N -X POST http://localhost:{}{} \\", INVENTORY_SINK_PORT, INVENTORY_SINK_PATH);
+    println!(
+        "  curl -N -X POST http://localhost:{}{} \\",
+        INVENTORY_SINK_PORT, INVENTORY_SINK_PATH
+    );
     println!("    -H \"Content-Type: application/json\" \\");
     println!("    -d '{{\"request\":\"products\"}}'");
     println!();

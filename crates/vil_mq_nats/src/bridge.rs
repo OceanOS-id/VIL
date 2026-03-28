@@ -9,7 +9,10 @@ pub struct NatsBridge {
 
 impl NatsBridge {
     pub fn new(target_service: &str) -> Self {
-        Self { bridged: AtomicU64::new(0), target: target_service.into() }
+        Self {
+            bridged: AtomicU64::new(0),
+            target: target_service.into(),
+        }
     }
 
     pub async fn bridge(&self, subject: &str, payload: &[u8]) {
@@ -17,6 +20,10 @@ impl NatsBridge {
         app_log!(Debug, "nats.bridge", { subject: vil_log::dict::register_str(subject) as u64, size: payload.len() as u64 });
     }
 
-    pub fn bridged_count(&self) -> u64 { self.bridged.load(Ordering::Relaxed) }
-    pub fn target(&self) -> &str { &self.target }
+    pub fn bridged_count(&self) -> u64 {
+        self.bridged.load(Ordering::Relaxed)
+    }
+    pub fn target(&self) -> &str {
+        &self.target
+    }
 }

@@ -101,7 +101,8 @@ impl TestResponse {
     /// Assert status code.
     pub fn assert_status(&self, expected: StatusCode) {
         assert_eq!(
-            self.status, expected,
+            self.status,
+            expected,
             "Expected status {}, got {}. Body: {}",
             expected,
             self.status,

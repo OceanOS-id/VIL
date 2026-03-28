@@ -7,7 +7,7 @@
 
 use crate::traits::{Diagnostic, ValidationPass, ValidationReport};
 use vil_ir::core::WorkflowIR;
-use vil_types::{TrustZone, ZoneCapability, zone_capabilities};
+use vil_types::{zone_capabilities, TrustZone, ZoneCapability};
 
 /// Validation pass that enforces capability constraints across Trust Zones.
 pub struct TrustZonePass;
@@ -32,10 +32,14 @@ impl ValidationPass for TrustZonePass {
         let mut report = ValidationReport::new();
 
         for route in &ir.routes {
-            let src_zone = ir.processes.get(&route.from_process)
+            let src_zone = ir
+                .processes
+                .get(&route.from_process)
                 .and_then(|p| p.trust_zone);
 
-            let dst_zone = ir.processes.get(&route.to_process)
+            let dst_zone = ir
+                .processes
+                .get(&route.to_process)
                 .and_then(|p| p.trust_zone);
 
             // Only check cross-zone routes where both zones are known
@@ -76,7 +80,7 @@ impl ValidationPass for TrustZonePass {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use vil_types::{ExecClass, CleanupPolicy, Priority, BoundaryKind, TransferMode};
+    use vil_types::{BoundaryKind, CleanupPolicy, ExecClass, Priority, TransferMode};
 
     fn make_process(name: &str, zone: TrustZone) -> vil_ir::core::ProcessIR {
         vil_ir::core::ProcessIR {
@@ -94,8 +98,14 @@ mod tests {
     #[test]
     fn test_external_cannot_emit_to_trusted() {
         let mut ir = vil_ir::core::WorkflowIR::new("TestWorkflow");
-        ir.processes.insert("Adapter".to_string(), make_process("Adapter", TrustZone::ExternalBoundary));
-        ir.processes.insert("CoreProc".to_string(), make_process("CoreProc", TrustZone::NativeTrusted));
+        ir.processes.insert(
+            "Adapter".to_string(),
+            make_process("Adapter", TrustZone::ExternalBoundary),
+        );
+        ir.processes.insert(
+            "CoreProc".to_string(),
+            make_process("CoreProc", TrustZone::NativeTrusted),
+        );
         ir.routes.push(vil_ir::core::RouteIR {
             from_process: "Adapter".to_string(),
             from_port: "out".to_string(),
@@ -115,8 +125,14 @@ mod tests {
     #[test]
     fn test_trusted_can_emit_to_wasm() {
         let mut ir = vil_ir::core::WorkflowIR::new("TestWorkflow");
-        ir.processes.insert("Trusted".to_string(), make_process("Trusted", TrustZone::NativeTrusted));
-        ir.processes.insert("Plugin".to_string(), make_process("Plugin", TrustZone::WasmCapsule));
+        ir.processes.insert(
+            "Trusted".to_string(),
+            make_process("Trusted", TrustZone::NativeTrusted),
+        );
+        ir.processes.insert(
+            "Plugin".to_string(),
+            make_process("Plugin", TrustZone::WasmCapsule),
+        );
         ir.routes.push(vil_ir::core::RouteIR {
             from_process: "Trusted".to_string(),
             from_port: "output".to_string(),
@@ -130,6 +146,9 @@ mod tests {
 
         let pass = TrustZonePass;
         let report = pass.run(&ir);
-        assert!(!report.has_errors(), "NativeTrusted should be allowed to emit to WasmCapsule");
+        assert!(
+            !report.has_errors(),
+            "NativeTrusted should be allowed to emit to WasmCapsule"
+        );
     }
 }

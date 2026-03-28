@@ -5,8 +5,12 @@
 pub struct DatasourceRef(pub &'static str);
 
 impl DatasourceRef {
-    pub const fn new(name: &'static str) -> Self { Self(name) }
-    pub fn name(&self) -> &'static str { self.0 }
+    pub const fn new(name: &'static str) -> Self {
+        Self(name)
+    }
+    pub fn name(&self) -> &'static str {
+        self.0
+    }
 }
 
 impl std::fmt::Display for DatasourceRef {

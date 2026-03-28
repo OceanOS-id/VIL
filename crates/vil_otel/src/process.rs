@@ -29,7 +29,7 @@ use crate::{
 /// A live OTel bridge handle returned by `create`.
 pub struct OtelBridge {
     metrics: MetricsBridge,
-    traces:  TracesBridge,
+    traces: TracesBridge,
     /// Keeps the meter provider alive for the bridge lifetime.
     _meter_provider: SdkMeterProvider,
 }
@@ -55,7 +55,7 @@ pub async fn create(config: OtelConfig) -> Result<OtelBridge, OtelFault> {
 
     // Log initialisation attempt via vil_log dict.
     let _init_hash = vil_log::dict::register_str("otel.bridge.init");
-    let _svc_hash  = vil_log::dict::register_str(&config.service_name);
+    let _svc_hash = vil_log::dict::register_str(&config.service_name);
 
     if !config.validate() {
         return Err(OtelFault::InvalidEndpoint);
@@ -64,13 +64,11 @@ pub async fn create(config: OtelConfig) -> Result<OtelBridge, OtelFault> {
     // Build the OTLP metrics exporter — protocol branch is cosmetic at this
     // layer; both use tonic since the `tonic` feature is enabled.
     let exporter = match config.protocol {
-        OtelProtocol::Grpc | OtelProtocol::Http => {
-            opentelemetry_otlp::MetricExporter::builder()
-                .with_tonic()
-                .with_endpoint(&config.endpoint)
-                .build()
-                .map_err(|_| OtelFault::InitFailed)?
-        }
+        OtelProtocol::Grpc | OtelProtocol::Http => opentelemetry_otlp::MetricExporter::builder()
+            .with_tonic()
+            .with_endpoint(&config.endpoint)
+            .build()
+            .map_err(|_| OtelFault::InitFailed)?,
     };
 
     // Build the meter provider with a periodic reader.
@@ -79,11 +77,11 @@ pub async fn create(config: OtelConfig) -> Result<OtelBridge, OtelFault> {
         .build();
 
     // Build resource with service name + any extra attributes.
-    let mut resource_builder = opentelemetry_sdk::Resource::builder_empty()
-        .with_service_name(config.service_name.clone());
+    let mut resource_builder =
+        opentelemetry_sdk::Resource::builder_empty().with_service_name(config.service_name.clone());
     for (k, v) in &config.resource_attributes {
-        resource_builder = resource_builder
-            .with_attribute(opentelemetry::KeyValue::new(k.clone(), v.clone()));
+        resource_builder =
+            resource_builder.with_attribute(opentelemetry::KeyValue::new(k.clone(), v.clone()));
     }
     let resource = resource_builder.build();
 
@@ -98,7 +96,7 @@ pub async fn create(config: OtelConfig) -> Result<OtelBridge, OtelFault> {
     let meter = meter_provider.meter(svc);
 
     let metrics = MetricsBridge::with_meter(meter, &config)?;
-    let traces  = TracesBridge::new(&config);
+    let traces = TracesBridge::new(&config);
 
     // Register success hash.
     vil_log::dict::register_str("otel.bridge.ready");

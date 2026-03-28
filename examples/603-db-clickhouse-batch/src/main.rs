@@ -29,27 +29,27 @@ use vil_log::{LogConfig, LogLevel};
 struct EventRow {
     /// Epoch timestamp in seconds.
     #[serde(rename = "ts")]
-    ts:       u64,
+    ts: u64,
     /// Event type (0=click, 1=view, 2=purchase).
     #[serde(rename = "event_type")]
     event_type: u8,
     /// User identifier.
     #[serde(rename = "user_id")]
-    user_id:  u64,
+    user_id: u64,
     /// Associated value (e.g. price in cents).
     #[serde(rename = "value")]
-    value:    u32,
+    value: u32,
 }
 
 #[tokio::main]
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -62,7 +62,7 @@ async fn main() {
     println!();
 
     let ch_cfg = ClickHouseConfig {
-        url:      "http://localhost:8123".into(),
+        url: "http://localhost:8123".into(),
         database: "vil_demo".into(),
         username: Some("default".into()),
         password: None,
@@ -84,7 +84,7 @@ async fn main() {
                ENGINE = MergeTree() ORDER BY ts";
 
     match client.execute(ddl).await {
-        Ok(_)  => println!("  DDL     events table ready"),
+        Ok(_) => println!("  DDL     events table ready"),
         Err(e) => {
             println!("  [SKIP] Cannot connect to ClickHouse: {:?}", e);
             println!("  (All db_log! calls would appear above in resolved format)");
@@ -108,20 +108,23 @@ async fn main() {
     println!("  Pushing 12 rows (auto-flush at 5 rows)...");
     for i in 0u64..12 {
         let row = EventRow {
-            ts:         now + i,
+            ts: now + i,
             event_type: (i % 3) as u8,
-            user_id:    1000 + i,
-            value:      (i as u32) * 100,
+            user_id: 1000 + i,
+            value: (i as u32) * 100,
         };
         match inserter.push(row).await {
-            Ok(_)  => {}
-            Err(e) => { println!("  push error: {:?}", e); return; }
+            Ok(_) => {}
+            Err(e) => {
+                println!("  push error: {:?}", e);
+                return;
+            }
         }
     }
 
     // Flush remaining rows
     match inserter.flush().await {
-        Ok(_)  => println!("  Final flush complete"),
+        Ok(_) => println!("  Final flush complete"),
         Err(e) => println!("  flush error: {:?}", e),
     }
 

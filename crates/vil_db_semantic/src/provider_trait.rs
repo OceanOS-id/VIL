@@ -33,37 +33,41 @@ pub trait DbProvider: Send + Sync {
 
     /// Find one row by primary key.
     async fn find_one(
-        &self, table: &str, key_field: &str, key_value: &ToSqlValue,
+        &self,
+        table: &str,
+        key_field: &str,
+        key_value: &ToSqlValue,
     ) -> DbResult<Option<Vec<u8>>>;
 
     /// Find multiple rows with filter.
     async fn find_many(
-        &self, table: &str, filter: &str, params: &[ToSqlValue],
+        &self,
+        table: &str,
+        filter: &str,
+        params: &[ToSqlValue],
     ) -> DbResult<Vec<Vec<u8>>>;
 
     /// Insert a row. Returns generated ID.
-    async fn insert(
-        &self, table: &str, fields: &[&str], values: &[ToSqlValue],
-    ) -> DbResult<i64>;
+    async fn insert(&self, table: &str, fields: &[&str], values: &[ToSqlValue]) -> DbResult<i64>;
 
     /// Update a row by primary key. Returns rows affected.
     async fn update(
-        &self, table: &str, key_field: &str, key_value: &ToSqlValue,
-        fields: &[&str], values: &[ToSqlValue],
+        &self,
+        table: &str,
+        key_field: &str,
+        key_value: &ToSqlValue,
+        fields: &[&str],
+        values: &[ToSqlValue],
     ) -> DbResult<u64>;
 
     /// Delete a row by primary key.
-    async fn delete(
-        &self, table: &str, key_field: &str, key_value: &ToSqlValue,
-    ) -> DbResult<bool>;
+    async fn delete(&self, table: &str, key_field: &str, key_value: &ToSqlValue) -> DbResult<bool>;
 
     /// Count rows (optional filter).
     async fn count(&self, table: &str, filter: &str, params: &[ToSqlValue]) -> DbResult<u64>;
 
     /// Raw SQL escape hatch (P2 — non-portable).
-    async fn execute_raw(
-        &self, sql: &str, params: &[ToSqlValue],
-    ) -> DbResult<u64>;
+    async fn execute_raw(&self, sql: &str, params: &[ToSqlValue]) -> DbResult<u64>;
 }
 
 /// Query executor — thin wrapper that adds metrics/caching.
@@ -71,24 +75,40 @@ pub trait DbProvider: Send + Sync {
 #[async_trait::async_trait]
 pub trait DbQueryExecutor: Send + Sync {
     async fn execute_find_one(
-        &self, table: &str, key_field: &str, key_value: &ToSqlValue,
+        &self,
+        table: &str,
+        key_field: &str,
+        key_value: &ToSqlValue,
     ) -> DbResult<Option<Vec<u8>>>;
 
     async fn execute_find_many(
-        &self, table: &str, filter: &str, params: &[ToSqlValue],
+        &self,
+        table: &str,
+        filter: &str,
+        params: &[ToSqlValue],
     ) -> DbResult<Vec<Vec<u8>>>;
 
     async fn execute_insert(
-        &self, table: &str, fields: &[&str], values: &[ToSqlValue],
+        &self,
+        table: &str,
+        fields: &[&str],
+        values: &[ToSqlValue],
     ) -> DbResult<i64>;
 
     async fn execute_update(
-        &self, table: &str, key_field: &str, key_value: &ToSqlValue,
-        fields: &[&str], values: &[ToSqlValue],
+        &self,
+        table: &str,
+        key_field: &str,
+        key_value: &ToSqlValue,
+        fields: &[&str],
+        values: &[ToSqlValue],
     ) -> DbResult<u64>;
 
     async fn execute_delete(
-        &self, table: &str, key_field: &str, key_value: &ToSqlValue,
+        &self,
+        table: &str,
+        key_field: &str,
+        key_value: &ToSqlValue,
     ) -> DbResult<bool>;
 }
 
@@ -122,141 +142,179 @@ impl ProviderExecutor {
 #[async_trait::async_trait]
 impl DbQueryExecutor for ProviderExecutor {
     async fn execute_find_one(
-        &self, table: &str, key_field: &str, key_value: &ToSqlValue,
+        &self,
+        table: &str,
+        key_field: &str,
+        key_value: &ToSqlValue,
     ) -> DbResult<Option<Vec<u8>>> {
         let __db_start = std::time::Instant::now();
         let result = self.provider.find_one(table, key_field, key_value).await;
         let __elapsed = __db_start.elapsed();
         {
-            use vil_log::{db_log, types::DbPayload, dict::register_str};
+            use vil_log::{db_log, dict::register_str, types::DbPayload};
             let __table_hash = register_str(table);
             let __query_hash = register_str(key_field);
-            let rows = if matches!(result, Ok(Some(_))) { 1u32 } else { 0u32 };
+            let rows = if matches!(result, Ok(Some(_))) {
+                1u32
+            } else {
+                0u32
+            };
             let err: u8 = if result.is_err() { 1 } else { 0 };
-            db_log!(Info, DbPayload {
-                db_hash: self.db_hash,
-                table_hash: __table_hash,
-                query_hash: __query_hash,
-                duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
-                rows_affected: rows,
-                op_type: 0, // SELECT
-                prepared: 1,
-                tx_state: 0,
-                error_code: err,
-                ..DbPayload::default()
-            });
+            db_log!(
+                Info,
+                DbPayload {
+                    db_hash: self.db_hash,
+                    table_hash: __table_hash,
+                    query_hash: __query_hash,
+                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    rows_affected: rows,
+                    op_type: 0, // SELECT
+                    prepared: 1,
+                    tx_state: 0,
+                    error_code: err,
+                    ..DbPayload::default()
+                }
+            );
         }
         result
     }
 
     async fn execute_find_many(
-        &self, table: &str, filter: &str, params: &[ToSqlValue],
+        &self,
+        table: &str,
+        filter: &str,
+        params: &[ToSqlValue],
     ) -> DbResult<Vec<Vec<u8>>> {
         let __db_start = std::time::Instant::now();
         let result = self.provider.find_many(table, filter, params).await;
         let __elapsed = __db_start.elapsed();
         {
-            use vil_log::{db_log, types::DbPayload, dict::register_str};
+            use vil_log::{db_log, dict::register_str, types::DbPayload};
             let __table_hash = register_str(table);
             let __query_hash = register_str(filter);
             let rows = result.as_ref().map(|v| v.len() as u32).unwrap_or(0);
             let err: u8 = if result.is_err() { 1 } else { 0 };
-            db_log!(Info, DbPayload {
-                db_hash: self.db_hash,
-                table_hash: __table_hash,
-                query_hash: __query_hash,
-                duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
-                rows_affected: rows,
-                op_type: 0, // SELECT
-                prepared: 1,
-                tx_state: 0,
-                error_code: err,
-                ..DbPayload::default()
-            });
+            db_log!(
+                Info,
+                DbPayload {
+                    db_hash: self.db_hash,
+                    table_hash: __table_hash,
+                    query_hash: __query_hash,
+                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    rows_affected: rows,
+                    op_type: 0, // SELECT
+                    prepared: 1,
+                    tx_state: 0,
+                    error_code: err,
+                    ..DbPayload::default()
+                }
+            );
         }
         result
     }
 
     async fn execute_insert(
-        &self, table: &str, fields: &[&str], values: &[ToSqlValue],
+        &self,
+        table: &str,
+        fields: &[&str],
+        values: &[ToSqlValue],
     ) -> DbResult<i64> {
         let __db_start = std::time::Instant::now();
         let result = self.provider.insert(table, fields, values).await;
         let __elapsed = __db_start.elapsed();
         {
-            use vil_log::{db_log, types::DbPayload, dict::register_str};
+            use vil_log::{db_log, dict::register_str, types::DbPayload};
             let __table_hash = register_str(table);
             let rows: u32 = if result.is_ok() { 1 } else { 0 };
             let err: u8 = if result.is_err() { 1 } else { 0 };
-            db_log!(Info, DbPayload {
-                db_hash: self.db_hash,
-                table_hash: __table_hash,
-                query_hash: 0,
-                duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
-                rows_affected: rows,
-                op_type: 1, // INSERT
-                prepared: 1,
-                tx_state: 0,
-                error_code: err,
-                ..DbPayload::default()
-            });
+            db_log!(
+                Info,
+                DbPayload {
+                    db_hash: self.db_hash,
+                    table_hash: __table_hash,
+                    query_hash: 0,
+                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    rows_affected: rows,
+                    op_type: 1, // INSERT
+                    prepared: 1,
+                    tx_state: 0,
+                    error_code: err,
+                    ..DbPayload::default()
+                }
+            );
         }
         result
     }
 
     async fn execute_update(
-        &self, table: &str, key_field: &str, key_value: &ToSqlValue,
-        fields: &[&str], values: &[ToSqlValue],
+        &self,
+        table: &str,
+        key_field: &str,
+        key_value: &ToSqlValue,
+        fields: &[&str],
+        values: &[ToSqlValue],
     ) -> DbResult<u64> {
         let __db_start = std::time::Instant::now();
-        let result = self.provider.update(table, key_field, key_value, fields, values).await;
+        let result = self
+            .provider
+            .update(table, key_field, key_value, fields, values)
+            .await;
         let __elapsed = __db_start.elapsed();
         {
-            use vil_log::{db_log, types::DbPayload, dict::register_str};
+            use vil_log::{db_log, dict::register_str, types::DbPayload};
             let __table_hash = register_str(table);
             let __query_hash = register_str(key_field);
             let rows = result.as_ref().copied().unwrap_or(0).min(u32::MAX as u64) as u32;
             let err: u8 = if result.is_err() { 1 } else { 0 };
-            db_log!(Info, DbPayload {
-                db_hash: self.db_hash,
-                table_hash: __table_hash,
-                query_hash: __query_hash,
-                duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
-                rows_affected: rows,
-                op_type: 2, // UPDATE
-                prepared: 1,
-                tx_state: 0,
-                error_code: err,
-                ..DbPayload::default()
-            });
+            db_log!(
+                Info,
+                DbPayload {
+                    db_hash: self.db_hash,
+                    table_hash: __table_hash,
+                    query_hash: __query_hash,
+                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    rows_affected: rows,
+                    op_type: 2, // UPDATE
+                    prepared: 1,
+                    tx_state: 0,
+                    error_code: err,
+                    ..DbPayload::default()
+                }
+            );
         }
         result
     }
 
     async fn execute_delete(
-        &self, table: &str, key_field: &str, key_value: &ToSqlValue,
+        &self,
+        table: &str,
+        key_field: &str,
+        key_value: &ToSqlValue,
     ) -> DbResult<bool> {
         let __db_start = std::time::Instant::now();
         let result = self.provider.delete(table, key_field, key_value).await;
         let __elapsed = __db_start.elapsed();
         {
-            use vil_log::{db_log, types::DbPayload, dict::register_str};
+            use vil_log::{db_log, dict::register_str, types::DbPayload};
             let __table_hash = register_str(table);
             let __query_hash = register_str(key_field);
             let rows: u32 = if matches!(result, Ok(true)) { 1 } else { 0 };
             let err: u8 = if result.is_err() { 1 } else { 0 };
-            db_log!(Info, DbPayload {
-                db_hash: self.db_hash,
-                table_hash: __table_hash,
-                query_hash: __query_hash,
-                duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
-                rows_affected: rows,
-                op_type: 3, // DELETE
-                prepared: 1,
-                tx_state: 0,
-                error_code: err,
-                ..DbPayload::default()
-            });
+            db_log!(
+                Info,
+                DbPayload {
+                    db_hash: self.db_hash,
+                    table_hash: __table_hash,
+                    query_hash: __query_hash,
+                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    rows_affected: rows,
+                    op_type: 3, // DELETE
+                    prepared: 1,
+                    tx_state: 0,
+                    error_code: err,
+                    ..DbPayload::default()
+                }
+            );
         }
         result
     }

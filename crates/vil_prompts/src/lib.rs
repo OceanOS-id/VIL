@@ -25,20 +25,20 @@
 //!     .unwrap();
 //! ```
 
-pub mod template;
-pub mod registry;
 pub mod builder;
+pub mod registry;
+pub mod template;
 
 // Re-exports
-pub use template::{PromptTemplate, PromptError};
+pub use builder::{code_review_template, rag_qa_template, summarize_template, PromptBuilder};
 pub use registry::PromptRegistry;
-pub use builder::{PromptBuilder, rag_qa_template, summarize_template, code_review_template};
+pub use template::{PromptError, PromptTemplate};
 
 // VIL integration layer
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::PromptsPlugin;
-pub use semantic::{PromptRenderEvent, PromptFault, PromptsState};
+pub use semantic::{PromptFault, PromptRenderEvent, PromptsState};

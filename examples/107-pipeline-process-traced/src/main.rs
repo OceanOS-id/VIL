@@ -128,9 +128,7 @@ fn configure_upstream_source() -> HttpSourceBuilder {
 // ── Main ────────────────────────────────────────────────────────────────
 
 fn main() {
-    let world = Arc::new(
-        VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"),
-    );
+    let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     let sink = configure_tracking_sink();
     let source = configure_upstream_source();
@@ -158,7 +156,10 @@ fn main() {
     println!("║  Each hop auto-records entry/exit timestamps for latency tracking    ║");
     println!("╚════════════════════════════════════════════════════════════════════════╝");
     println!();
-    println!("  Tracking API: http://localhost:{}{}", TRACKING_PORT, TRACKING_PATH);
+    println!(
+        "  Tracking API: http://localhost:{}{}",
+        TRACKING_PORT, TRACKING_PATH
+    );
     println!("  Upstream:     {}", UPSTREAM_URL);
 
     let sink_node = HttpSink::from_builder(sink);

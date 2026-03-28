@@ -112,12 +112,9 @@ mod tests {
 
     #[test]
     fn pipeline_with_format() {
-        let pipe = DataPipeline::new()
-            .add_step(PipelineStep::Format(OutputFormat::Jsonl));
+        let pipe = DataPipeline::new().add_step(PipelineStep::Format(OutputFormat::Jsonl));
 
-        let records = vec![
-            TrainingRecord::new("Do X", "", "Done X"),
-        ];
+        let records = vec![TrainingRecord::new("Do X", "", "Done X")];
         let result = pipe.run(&[], Some(&records));
         assert!(result.formatted.is_some());
         assert!(result.formatted.unwrap().contains("Do X"));

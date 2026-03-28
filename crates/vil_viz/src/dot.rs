@@ -47,9 +47,18 @@ pub fn render(graph: &VizGraph, config: &VizConfig) -> Result<String, String> {
             label_parts.push(mode.clone());
         }
         let label = label_parts.join("\\n");
-        let detach_style = if edge.detach { ", style=dashed, color=gray" } else { "" };
+        let detach_style = if edge.detach {
+            ", style=dashed, color=gray"
+        } else {
+            ""
+        };
         if label.is_empty() {
-            out.push_str(&format!("  \"{}\" -> \"{}\" [{}];\n", edge.from_node, edge.to_node, detach_style.trim_start_matches(", ")));
+            out.push_str(&format!(
+                "  \"{}\" -> \"{}\" [{}];\n",
+                edge.from_node,
+                edge.to_node,
+                detach_style.trim_start_matches(", ")
+            ));
         } else {
             out.push_str(&format!(
                 "  \"{}\" -> \"{}\" [label=\"{}\"{}];\n",
@@ -66,10 +75,16 @@ pub fn render(graph: &VizGraph, config: &VizConfig) -> Result<String, String> {
             out.push_str("    style=dashed;\n");
             out.push_str("    color=\"#666666\";\n");
             for node in &sg.nodes {
-                out.push_str(&format!("    \"{}\" [label=\"{}\", shape=box];\n", node.id, node.label));
+                out.push_str(&format!(
+                    "    \"{}\" [label=\"{}\", shape=box];\n",
+                    node.id, node.label
+                ));
             }
             for edge in &sg.edges {
-                out.push_str(&format!("    \"{}\" -> \"{}\";\n", edge.from_node, edge.to_node));
+                out.push_str(&format!(
+                    "    \"{}\" -> \"{}\";\n",
+                    edge.from_node, edge.to_node
+                ));
             }
             out.push_str("  }\n");
         }

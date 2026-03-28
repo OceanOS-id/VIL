@@ -17,9 +17,15 @@ impl ModelServingPlugin {
 }
 
 impl VilPlugin for ModelServingPlugin {
-    fn id(&self) -> &str { "vil-model-serving" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Model lifecycle management with canary deployment" }
+    fn id(&self) -> &str {
+        "vil-model-serving"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Model lifecycle management with canary deployment"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -43,5 +49,7 @@ impl VilPlugin for ModelServingPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

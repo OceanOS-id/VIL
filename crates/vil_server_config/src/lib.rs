@@ -9,20 +9,19 @@
 // Configuration precedence: Code Default → YAML → Profile → ENV
 // Profiles: dev (fast iteration), staging (validation), prod (P99 optimized)
 
-pub mod sources;
-pub mod profiles;
 pub mod gateway_config;
+pub mod profiles;
 pub mod server_config;
+pub mod sources;
 
 pub use gateway_config::GatewayConfig;
-pub use server_config::FullServerConfig;
 pub use profiles::Profile;
+pub use server_config::FullServerConfig;
 
 // Re-export infrastructure config types for downstream use
 pub use server_config::{
-    ShmSection, PipelineSection,
-    DatabaseSection, PostgresConfig, RedisConfig,
-    MqSection, NatsConfig, KafkaConfig, MqttConfig,
+    DatabaseSection, KafkaConfig, MqSection, MqttConfig, NatsConfig, PipelineSection,
+    PostgresConfig, RedisConfig, ShmSection,
 };
 
 use serde::Deserialize;
@@ -123,17 +122,29 @@ pub struct ShmConfig {
 
 impl Default for ShmConfig {
     fn default() -> Self {
-        Self { capacity_mb: 64, reset_threshold_pct: 85, check_interval: 256 }
+        Self {
+            capacity_mb: 64,
+            reset_threshold_pct: 85,
+            check_interval: 256,
+        }
     }
 }
 
 impl ShmConfig {
     pub fn dev() -> Self {
-        Self { capacity_mb: 8, reset_threshold_pct: 70, check_interval: 64 }
+        Self {
+            capacity_mb: 8,
+            reset_threshold_pct: 70,
+            check_interval: 64,
+        }
     }
 
     pub fn production() -> Self {
-        Self { capacity_mb: 256, reset_threshold_pct: 90, check_interval: 1024 }
+        Self {
+            capacity_mb: 256,
+            reset_threshold_pct: 90,
+            check_interval: 1024,
+        }
     }
 
     /// Capacity in bytes.
@@ -154,7 +165,10 @@ pub struct PipelineConfig {
 
 impl Default for PipelineConfig {
     fn default() -> Self {
-        Self { queue_capacity: 1024, session_timeout_secs: 300 }
+        Self {
+            queue_capacity: 1024,
+            session_timeout_secs: 300,
+        }
     }
 }
 
@@ -226,7 +240,9 @@ impl ServerConfig {
     /// Apply VIL_* environment variable overrides.
     fn apply_env_overrides(&mut self) {
         if let Ok(port) = std::env::var("VIL_SERVER_PORT") {
-            if let Ok(p) = port.parse() { self.server.port = p; }
+            if let Ok(p) = port.parse() {
+                self.server.port = p;
+            }
         }
         if let Ok(host) = std::env::var("VIL_SERVER_HOST") {
             self.server.host = host;
@@ -238,27 +254,41 @@ impl ServerConfig {
             self.profile = profile;
         }
         if let Ok(workers) = std::env::var("VIL_SERVER_WORKERS") {
-            if let Ok(w) = workers.parse() { self.server.workers = w; }
+            if let Ok(w) = workers.parse() {
+                self.server.workers = w;
+            }
         }
         if let Ok(mp) = std::env::var("VIL_METRICS_PORT") {
-            if let Ok(p) = mp.parse() { self.server.metrics_port = Some(p); }
+            if let Ok(p) = mp.parse() {
+                self.server.metrics_port = Some(p);
+            }
         }
         // SHM
         if let Ok(mb) = std::env::var("VIL_SHM_CAPACITY_MB") {
-            if let Ok(v) = mb.parse() { self.shm.capacity_mb = v; }
+            if let Ok(v) = mb.parse() {
+                self.shm.capacity_mb = v;
+            }
         }
         if let Ok(pct) = std::env::var("VIL_SHM_RESET_PCT") {
-            if let Ok(v) = pct.parse::<usize>() { self.shm.reset_threshold_pct = v.min(99); }
+            if let Ok(v) = pct.parse::<usize>() {
+                self.shm.reset_threshold_pct = v.min(99);
+            }
         }
         if let Ok(interval) = std::env::var("VIL_SHM_CHECK_INTERVAL") {
-            if let Ok(v) = interval.parse::<u64>() { self.shm.check_interval = v.max(1); }
+            if let Ok(v) = interval.parse::<u64>() {
+                self.shm.check_interval = v.max(1);
+            }
         }
         // Pipeline
         if let Ok(v) = std::env::var("VIL_PIPELINE_QUEUE_CAPACITY") {
-            if let Ok(c) = v.parse() { self.pipeline.queue_capacity = c; }
+            if let Ok(c) = v.parse() {
+                self.pipeline.queue_capacity = c;
+            }
         }
         if let Ok(v) = std::env::var("VIL_PIPELINE_SESSION_TIMEOUT") {
-            if let Ok(t) = v.parse() { self.pipeline.session_timeout_secs = t; }
+            if let Ok(t) = v.parse() {
+                self.pipeline.session_timeout_secs = t;
+            }
         }
     }
 }

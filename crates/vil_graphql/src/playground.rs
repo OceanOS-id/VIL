@@ -4,7 +4,8 @@ use axum::response::Html;
 
 /// Serve the GraphiQL IDE at /graphql/playground.
 pub async fn graphiql_handler() -> Html<String> {
-    Html(format!(r#"<!DOCTYPE html>
+    Html(format!(
+        r#"<!DOCTYPE html>
 <html>
 <head>
     <title>VIL GraphQL Playground</title>
@@ -23,5 +24,6 @@ pub async fn graphiql_handler() -> Html<String> {
         );
     </script>
 </body>
-</html>"#))
+</html>"#
+    ))
 }

@@ -48,9 +48,7 @@ impl MultimodalSearch {
         let mut scored: Vec<SearchResult> = idx
             .iter()
             .enumerate()
-            .filter(|(_, emb)| {
-                modality_filter.map_or(true, |m| emb.modality == m)
-            })
+            .filter(|(_, emb)| modality_filter.map_or(true, |m| emb.modality == m))
             .filter(|(_, emb)| emb.dim() == query.len())
             .map(|(i, emb)| SearchResult {
                 index: i,
@@ -59,7 +57,11 @@ impl MultimodalSearch {
             })
             .collect();
 
-        scored.sort_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap_or(std::cmp::Ordering::Equal));
+        scored.sort_by(|a, b| {
+            a.distance
+                .partial_cmp(&b.distance)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         scored.truncate(k);
         scored
     }
@@ -88,9 +90,18 @@ mod tests {
     #[test]
     fn search_finds_nearest() {
         let search = MultimodalSearch::new();
-        search.add(MultimodalEmbedding::new(Modality::Text, vec![1.0, 0.0, 0.0]));
-        search.add(MultimodalEmbedding::new(Modality::Image, vec![0.0, 1.0, 0.0]));
-        search.add(MultimodalEmbedding::new(Modality::Text, vec![0.9, 0.1, 0.0]));
+        search.add(MultimodalEmbedding::new(
+            Modality::Text,
+            vec![1.0, 0.0, 0.0],
+        ));
+        search.add(MultimodalEmbedding::new(
+            Modality::Image,
+            vec![0.0, 1.0, 0.0],
+        ));
+        search.add(MultimodalEmbedding::new(
+            Modality::Text,
+            vec![0.9, 0.1, 0.0],
+        ));
 
         let results = search.search(&[1.0, 0.0, 0.0], 2, None);
         assert_eq!(results.len(), 2);

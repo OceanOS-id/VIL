@@ -24,10 +24,10 @@ pub use pool::{PoolDescriptor, TensorPool};
 pub use tensor::{DType, Tensor, TensorError};
 pub use transfer::{TensorDescriptor, TensorTransfer};
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::TensorShmPlugin;
 pub use semantic::{TensorAllocEvent, TensorFault, TensorPoolState};

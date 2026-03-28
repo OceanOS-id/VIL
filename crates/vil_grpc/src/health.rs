@@ -11,7 +11,9 @@ pub struct HealthReporter {
 
 impl HealthReporter {
     pub fn new() -> Self {
-        Self { serving: AtomicBool::new(true) }
+        Self {
+            serving: AtomicBool::new(true),
+        }
     }
 
     pub fn set_serving(&self, serving: bool) {
@@ -24,5 +26,7 @@ impl HealthReporter {
 }
 
 impl Default for HealthReporter {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }

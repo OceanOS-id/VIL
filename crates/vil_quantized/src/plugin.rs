@@ -14,8 +14,8 @@ use vil_server_core::plugin_system::{
 use vil_server_core::vx::service::ServiceProcess;
 
 use crate::config::QuantizedModelConfig;
-use crate::runtime::QuantizedRuntime;
 use crate::handlers::{self, QuantizedServiceState};
+use crate::runtime::QuantizedRuntime;
 use crate::semantic::{QuantizeEvent, QuantizeFault, QuantizedState};
 
 /// Quantized Runtime plugin — model quantization and inference.
@@ -89,10 +89,7 @@ impl VilPlugin for QuantizedPlugin {
         let runtime = Arc::new(Mutex::new(runtime));
         let state = Arc::new(Mutex::new(QuantizedState::default()));
 
-        let svc_state = QuantizedServiceState {
-            runtime,
-            state,
-        };
+        let svc_state = QuantizedServiceState { runtime, state };
 
         let svc = ServiceProcess::new("quantized")
             .prefix("/api/quantized")

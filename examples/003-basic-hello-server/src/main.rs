@@ -117,7 +117,7 @@ async fn echo(body: ShmSlice) -> VilResponse<EchoResponse> {
         echo: json,
         shm_backed: true,
     })
-    }
+}
 
 /// GET /shm-info — Shared memory diagnostics for infrastructure monitoring.
 /// Uses ServiceCtx (auto-extracted) to show VIL process context.
@@ -125,7 +125,7 @@ async fn echo(body: ShmSlice) -> VilResponse<EchoResponse> {
 /// (payroll processing, annual review cycles, benefits enrollment).
 async fn shm_info(
     shm: ShmContext,
-    ctx: ServiceCtx,    // <- auto-extracted by VilApp (TriLaneRouter + ServiceName)
+    ctx: ServiceCtx, // <- auto-extracted by VilApp (TriLaneRouter + ServiceName)
 ) -> VilResponse<ShmInfoResponse> {
     let regions: Vec<RegionStat> = shm
         .region_stats()

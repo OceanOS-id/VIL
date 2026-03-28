@@ -11,12 +11,12 @@
 
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
 use vil_types::{
     ActivityKind, BackpressurePolicy, BoundaryKind, CleanupPolicy, DeliveryGuarantee, ExecClass,
-    LatencyClass, LaneKind, LayoutProfile, PortDirection, Priority, QueueKind,
+    LaneKind, LatencyClass, LayoutProfile, PortDirection, Priority, QueueKind,
     ReactiveInterfaceKind, TransferMode,
 };
-use serde::{Serialize, Deserialize};
 
 /// Root of the Semantic IR. Represents a complete pipeline/graph.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -57,54 +57,82 @@ impl WorkflowIR {
                     found_zone = true;
                 }
                 let caps = zone_capabilities(zone);
-                if caps.contains(&ZoneCapability::CanEmitLane)    { trust_profile.can_emit_lane = true; }
-                if caps.contains(&ZoneCapability::CanReadState)   { trust_profile.can_read_state = true; }
-                if caps.contains(&ZoneCapability::CanUseSecret)   { trust_profile.can_use_secret = true; }
-                if caps.contains(&ZoneCapability::CanAccessShm)   { trust_profile.can_access_shm = true; }
-                if caps.contains(&ZoneCapability::CanJoinCluster) { trust_profile.can_join_cluster = true; }
-                if caps.contains(&ZoneCapability::CanUseRemote)   { trust_profile.can_use_remote = true; }
+                if caps.contains(&ZoneCapability::CanEmitLane) {
+                    trust_profile.can_emit_lane = true;
+                }
+                if caps.contains(&ZoneCapability::CanReadState) {
+                    trust_profile.can_read_state = true;
+                }
+                if caps.contains(&ZoneCapability::CanUseSecret) {
+                    trust_profile.can_use_secret = true;
+                }
+                if caps.contains(&ZoneCapability::CanAccessShm) {
+                    trust_profile.can_access_shm = true;
+                }
+                if caps.contains(&ZoneCapability::CanJoinCluster) {
+                    trust_profile.can_join_cluster = true;
+                }
+                if caps.contains(&ZoneCapability::CanUseRemote) {
+                    trust_profile.can_use_remote = true;
+                }
             }
         }
 
         // --- Lanes: one LaneEntry per route ---
-        let lanes: Vec<LaneEntry> = self.routes.iter().map(|route| {
-            let (lane_kind, memory_class) = self.interfaces.values()
-                .find_map(|iface| {
-                    iface.ports.get(&route.from_port).map(|port| {
-                        let mc = self.messages.get(&port.message_name)
-                            .map(|m| format!("{}", m.memory_class))
-                            .unwrap_or_else(|| "unknown".into());
-                        (format!("{}", port.lane_kind), mc)
+        let lanes: Vec<LaneEntry> = self
+            .routes
+            .iter()
+            .map(|route| {
+                let (lane_kind, memory_class) = self
+                    .interfaces
+                    .values()
+                    .find_map(|iface| {
+                        iface.ports.get(&route.from_port).map(|port| {
+                            let mc = self
+                                .messages
+                                .get(&port.message_name)
+                                .map(|m| format!("{}", m.memory_class))
+                                .unwrap_or_else(|| "unknown".into());
+                            (format!("{}", port.lane_kind), mc)
+                        })
                     })
-                })
-                .unwrap_or_else(|| ("default".into(), "unknown".into()));
+                    .unwrap_or_else(|| ("default".into(), "unknown".into()));
 
-            LaneEntry {
-                route: format!("{}.{} -> {}.{}", route.from_process, route.from_port,
-                                                  route.to_process, route.to_port),
-                lane_kind,
-                transfer: format!("{}", route.transfer_mode),
-                memory_class,
-            }
-        }).collect();
+                LaneEntry {
+                    route: format!(
+                        "{}.{} -> {}.{}",
+                        route.from_process, route.from_port, route.to_process, route.to_port
+                    ),
+                    lane_kind,
+                    transfer: format!("{}", route.transfer_mode),
+                    memory_class,
+                }
+            })
+            .collect();
 
         // --- Hosts ---
         let mut hosts: Vec<String> = self.hosts.values().map(|h| h.address.clone()).collect();
         hosts.sort();
 
         // --- Failovers ---
-        let failover: Vec<FailoverEntry> = self.failovers.iter().map(|f| FailoverEntry {
-            source: f.source.clone(),
-            target: f.target.clone(),
-            condition: f.condition.clone(),
-            strategy: f.strategy.clone(),
-        }).collect();
+        let failover: Vec<FailoverEntry> = self
+            .failovers
+            .iter()
+            .map(|f| FailoverEntry {
+                source: f.source.clone(),
+                target: f.target.clone(),
+                condition: f.condition.clone(),
+                strategy: f.strategy.clone(),
+            })
+            .collect();
 
         // --- Observability: aggregate across processes ---
         let mut trace_hops = false;
         let mut latency_markers: Vec<String> = Vec::new();
         for proc in self.processes.values() {
-            if proc.obs.trace_hop { trace_hops = true; }
+            if proc.obs.trace_hop {
+                trace_hops = true;
+            }
             if let Some(ref label) = proc.obs.latency_label {
                 if !latency_markers.contains(label) {
                     latency_markers.push(label.clone());
@@ -114,17 +142,21 @@ impl WorkflowIR {
         latency_markers.sort();
 
         // --- Process summaries ---
-        let mut processes: Vec<ProcessSummary> = self.processes.values().map(|p| {
-            ProcessSummary {
-                name: p.name.clone(),
-                exec_class: format!("{:?}", p.exec_class).to_lowercase(),
-                trust_zone: p.trust_zone.map(|z| format!("{}", z)),
-                host_affinity: p.host_affinity.clone(),
-                trace_hop: p.obs.trace_hop,
-                latency_label: p.obs.latency_label.clone(),
-                memory_class: None, // future: resolve from output port message
-            }
-        }).collect();
+        let mut processes: Vec<ProcessSummary> = self
+            .processes
+            .values()
+            .map(|p| {
+                ProcessSummary {
+                    name: p.name.clone(),
+                    exec_class: format!("{:?}", p.exec_class).to_lowercase(),
+                    trust_zone: p.trust_zone.map(|z| format!("{}", z)),
+                    host_affinity: p.host_affinity.clone(),
+                    trace_hop: p.obs.trace_hop,
+                    latency_label: p.obs.latency_label.clone(),
+                    memory_class: None, // future: resolve from output port message
+                }
+            })
+            .collect();
         processes.sort_by(|a, b| a.name.cmp(&b.name));
 
         ExecutionContract {
@@ -134,7 +166,10 @@ impl WorkflowIR {
             lanes,
             hosts,
             failover,
-            observability: ObservabilityEntry { trace_hops, latency_markers },
+            observability: ObservabilityEntry {
+                trace_hops,
+                latency_markers,
+            },
             processes,
         }
     }
@@ -306,11 +341,11 @@ pub struct FieldIR {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TypeRefIR {
-    Primitive(String),   // e.g., "u32", "i64"
-    Named(String),       // Other struct name
+    Primitive(String), // e.g., "u32", "i64"
+    Named(String),     // Other struct name
     VSlice(Box<TypeRefIR>),
     VRef(Box<TypeRefIR>),
-    Unknown(String),     // Handled as potential VASI but unverified
+    Unknown(String), // Handled as potential VASI but unverified
 }
 
 #[cfg(feature = "proc-macro")]
@@ -318,9 +353,13 @@ impl quote::ToTokens for TypeRefIR {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         use quote::quote;
         let expanded = match self {
-            TypeRefIR::Primitive(s) => quote! { ::vil_sdk::ir::TypeRefIR::Primitive(#s.to_string()) },
+            TypeRefIR::Primitive(s) => {
+                quote! { ::vil_sdk::ir::TypeRefIR::Primitive(#s.to_string()) }
+            }
             TypeRefIR::Named(s) => quote! { ::vil_sdk::ir::TypeRefIR::Named(#s.to_string()) },
-            TypeRefIR::VSlice(inner) => quote! { ::vil_sdk::ir::TypeRefIR::VSlice(Box::new(#inner)) },
+            TypeRefIR::VSlice(inner) => {
+                quote! { ::vil_sdk::ir::TypeRefIR::VSlice(Box::new(#inner)) }
+            }
             TypeRefIR::VRef(inner) => quote! { ::vil_sdk::ir::TypeRefIR::VRef(Box::new(#inner)) },
             TypeRefIR::Unknown(s) => quote! { ::vil_sdk::ir::TypeRefIR::Unknown(#s.to_string()) },
         };
@@ -477,4 +516,3 @@ impl WorkflowIR {
         serde_json::from_str(json)
     }
 }
-

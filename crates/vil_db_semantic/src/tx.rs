@@ -10,4 +10,8 @@ pub enum TxScope {
     None,
 }
 
-impl Default for TxScope { fn default() -> Self { Self::None } }
+impl Default for TxScope {
+    fn default() -> Self {
+        Self::None
+    }
+}

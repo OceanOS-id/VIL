@@ -24,10 +24,10 @@ pub use rules::{Rule, RuleAction, RuleEngine, RuleMatch};
 pub use toxicity::ToxicityChecker;
 
 // VIL integration layer
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::GuardrailsPlugin;
 pub use semantic::{GuardrailCheckEvent, GuardrailFault, GuardrailsState};
@@ -143,9 +143,7 @@ mod tests {
     #[test]
     fn test_multiple_pii_in_one_text() {
         let detector = PiiDetector::new();
-        let matches = detector.detect(
-            "Email: user@test.com, Phone: 555-123-4567, IP: 10.0.0.1",
-        );
+        let matches = detector.detect("Email: user@test.com, Phone: 555-123-4567, IP: 10.0.0.1");
         let types: Vec<&PiiType> = matches.iter().map(|m| &m.pii_type).collect();
         assert!(types.contains(&&PiiType::Email));
         assert!(types.contains(&&PiiType::Phone));

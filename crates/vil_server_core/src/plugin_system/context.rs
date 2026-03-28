@@ -1,7 +1,7 @@
 //! PluginContext -- passed to plugins during registration.
 
-use crate::vx::service::ServiceProcess;
 use super::resource::ResourceRegistry;
+use crate::vx::service::ServiceProcess;
 
 /// Context passed to VilPlugin::register().
 ///

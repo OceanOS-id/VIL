@@ -11,10 +11,10 @@ pub struct SyntheticStatsBody {
     pub version: String,
 }
 
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<SyntheticStatsBody>> {
-    let gen = ctx.state::<Arc<SyntheticGenerator>>().expect("SyntheticGenerator");
+pub async fn stats_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<SyntheticStatsBody>> {
+    let gen = ctx
+        .state::<Arc<SyntheticGenerator>>()
+        .expect("SyntheticGenerator");
     let templates: Vec<String> = gen.templates.iter().map(|t| t.name.clone()).collect();
     let template_count = templates.len();
     Ok(VilResponse::ok(SyntheticStatsBody {

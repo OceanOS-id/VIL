@@ -13,7 +13,11 @@ pub struct PreferencePair {
 }
 
 impl PreferencePair {
-    pub fn new(prompt: impl Into<String>, chosen: impl Into<String>, rejected: impl Into<String>) -> Self {
+    pub fn new(
+        prompt: impl Into<String>,
+        chosen: impl Into<String>,
+        rejected: impl Into<String>,
+    ) -> Self {
         Self {
             prompt: prompt.into(),
             chosen: chosen.into(),

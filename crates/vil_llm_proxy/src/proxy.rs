@@ -3,12 +3,12 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use vil_llm::{ChatMessage, ChatResponse, LlmProvider};
 use vil_llm::message::LlmError;
+use vil_llm::{ChatMessage, ChatResponse, LlmProvider};
 
 use crate::cache::ResponseCache;
 use crate::metrics::ProxyMetrics;
-use crate::rate_limiter::{RateLimiter, RateLimiterConfig, RateLimitExceeded};
+use crate::rate_limiter::{RateLimitExceeded, RateLimiter, RateLimiterConfig};
 use crate::router::{ModelEndpoint, ModelRouter, RoutingStrategy};
 
 /// Proxy error types.
@@ -87,7 +87,8 @@ impl ProxyConfig {
 
     /// Add a model endpoint.
     pub fn add_model(mut self, provider: &str, model: &str, cost_per_1k_tokens: f64) -> Self {
-        self.endpoints.push(ModelEndpoint::new(provider, model, cost_per_1k_tokens));
+        self.endpoints
+            .push(ModelEndpoint::new(provider, model, cost_per_1k_tokens));
         self
     }
 
@@ -173,12 +174,13 @@ impl LlmProxy {
         self.metrics.record_cache_miss();
 
         // 3. Route to best model
-        let endpoint = self.router.select()
-            .ok_or(ProxyError::NoHealthyEndpoints)?;
+        let endpoint = self.router.select().ok_or(ProxyError::NoHealthyEndpoints)?;
         let model_name = endpoint.model.clone();
 
         // 4. Forward to LLM provider
-        let provider = self.provider.as_ref()
+        let provider = self
+            .provider
+            .as_ref()
             .ok_or_else(|| ProxyError::ProviderNotConfigured(model_name.clone()))?;
 
         let start = Instant::now();
@@ -198,7 +200,8 @@ impl LlmProxy {
                     let cost_cents = ((usage.total_tokens as f64 / 1000.0)
                         * endpoint.cost_per_1k_tokens
                         * 100.0) as u64;
-                    self.metrics.record_usage(usage.total_tokens as u64, cost_cents);
+                    self.metrics
+                        .record_usage(usage.total_tokens as u64, cost_cents);
                 }
                 self.metrics.record_model_request(&model_name);
 
@@ -244,8 +247,12 @@ mod tests {
             })
         }
 
-        fn model(&self) -> &str { "mock-model" }
-        fn provider_name(&self) -> &str { "mock" }
+        fn model(&self) -> &str {
+            "mock-model"
+        }
+        fn provider_name(&self) -> &str {
+            "mock"
+        }
     }
 
     /// Mock provider that always fails.
@@ -257,8 +264,12 @@ mod tests {
             Err(LlmError::RequestFailed("mock failure".into()))
         }
 
-        fn model(&self) -> &str { "fail-model" }
-        fn provider_name(&self) -> &str { "mock" }
+        fn model(&self) -> &str {
+            "fail-model"
+        }
+        fn provider_name(&self) -> &str {
+            "mock"
+        }
     }
 
     fn build_test_proxy(provider: Arc<dyn LlmProvider>) -> LlmProxy {

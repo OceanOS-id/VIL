@@ -5,17 +5,17 @@
 //! Stores model versions with metadata, supports promoting versions to Active,
 //! rolling back to previous versions, and deprecating old versions.
 
-pub mod model;
-pub mod registry;
-pub mod version;
-pub mod semantic;
 pub mod handlers;
-pub mod plugin;
+pub mod model;
 pub mod pipeline_sse;
+pub mod plugin;
+pub mod registry;
+pub mod semantic;
+pub mod version;
 
 pub use model::{ModelEntry, ModelStatus};
-pub use registry::ModelRegistry;
 pub use plugin::ModelRegistryPlugin;
+pub use registry::ModelRegistry;
 pub use semantic::{RegistryEvent, RegistryFault, RegistryFaultType, RegistryState};
 
 #[cfg(test)]

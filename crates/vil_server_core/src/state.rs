@@ -10,7 +10,6 @@ use vil_rt::VastarRuntimeWorld;
 use vil_shm::ExchangeHeap;
 
 use crate::capsule_handler::CapsuleRegistry;
-use crate::shm_pool::ShmPool;
 use crate::custom_metrics::CustomMetrics;
 use crate::error_tracker::ErrorTracker;
 use crate::hot_reload::ConfigReloader;
@@ -18,8 +17,9 @@ use crate::obs_middleware::HandlerMetricsRegistry;
 use crate::otel::SpanCollector;
 use crate::plugin_manager::PluginManager;
 use crate::process::ProcessRegistry;
-use crate::secrets::SecretResolver;
 use crate::profiler::ServerProfiler;
+use crate::secrets::SecretResolver;
+use crate::shm_pool::ShmPool;
 
 /// Shared application state accessible from all handlers via Axum State extractor.
 ///
@@ -103,9 +103,12 @@ impl AppState {
 
         // V6: Plugin manager with secret resolver
         let plugins_dir = dirs_plugin_path();
-        let secrets = Arc::new(SecretResolver::new(
-            Some(&plugins_dir.join("..").join("secrets").join("encryption.key")),
-        ));
+        let secrets = Arc::new(SecretResolver::new(Some(
+            &plugins_dir
+                .join("..")
+                .join("secrets")
+                .join("encryption.key"),
+        )));
         let plugin_manager = Arc::new(PluginManager::new(&plugins_dir, secrets));
 
         Self {
@@ -150,9 +153,12 @@ impl AppState {
         let config_reloader = Arc::new(ConfigReloader::new());
 
         let plugins_dir = dirs_plugin_path();
-        let secrets = Arc::new(SecretResolver::new(
-            Some(&plugins_dir.join("..").join("secrets").join("encryption.key")),
-        ));
+        let secrets = Arc::new(SecretResolver::new(Some(
+            &plugins_dir
+                .join("..")
+                .join("secrets")
+                .join("encryption.key"),
+        )));
         let plugin_manager = Arc::new(PluginManager::new(&plugins_dir, secrets));
 
         Ok(Self {

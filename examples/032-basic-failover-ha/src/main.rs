@@ -89,8 +89,9 @@ async fn primary_health() -> VilResponse<PaymentResult> {
 /// Primary gateway charge endpoint.
 /// If this fails, VIL automatically retries 3 times, then fails over to backup.
 async fn primary_charge(body: ShmSlice) -> Result<VilResponse<PaymentResult>, VilError> {
-    let req: PaymentRequest = body.json()
-        .map_err(|_| VilError::bad_request("Invalid payment JSON — need card_token, amount_cents, currency"))?;
+    let req: PaymentRequest = body.json().map_err(|_| {
+        VilError::bad_request("Invalid payment JSON — need card_token, amount_cents, currency")
+    })?;
 
     // Simulate charge processing (in production: call Stripe API)
     let charge_id = format!("ch_stripe_{}", req.amount_cents);
@@ -125,7 +126,8 @@ async fn backup_health() -> VilResponse<PaymentResult> {
 /// Backup gateway charge endpoint.
 /// Only called after primary fails 3 retries. Processes the same payment.
 async fn backup_charge(body: ShmSlice) -> Result<VilResponse<PaymentResult>, VilError> {
-    let req: PaymentRequest = body.json()
+    let req: PaymentRequest = body
+        .json()
         .map_err(|_| VilError::bad_request("Invalid payment JSON"))?;
 
     let charge_id = format!("ch_adyen_{}", req.amount_cents);
@@ -168,8 +170,7 @@ async fn main() {
         .port(8080)
         .service(primary_gateway)
         .service(backup_gateway)
-        .failover(VxFailoverConfig::new()
-            .backup("primary", "backup", FailoverStrategy::Retry(3)))
+        .failover(VxFailoverConfig::new().backup("primary", "backup", FailoverStrategy::Retry(3)))
         .run()
         .await;
 }

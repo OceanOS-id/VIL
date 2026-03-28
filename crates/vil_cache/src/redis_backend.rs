@@ -1,5 +1,5 @@
-use std::time::Duration;
 use crate::cache_trait::VilCache;
+use std::time::Duration;
 
 /// Redis-backed cache using vil_db_redis.
 pub struct RedisCacheBackend {

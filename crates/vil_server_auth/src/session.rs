@@ -165,9 +165,8 @@ impl SessionManager {
     /// Clean up expired sessions.
     pub fn cleanup_expired(&self) -> usize {
         let before = self.sessions.len();
-        self.sessions.retain(|_, record| {
-            record.last_accessed.elapsed() <= record.ttl
-        });
+        self.sessions
+            .retain(|_, record| record.last_accessed.elapsed() <= record.ttl);
         before - self.sessions.len()
     }
 

@@ -76,8 +76,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_message_with_metadata() {
-        let msg = AgentMessage::new("x", "y", "data")
-            .with_metadata(serde_json::json!({"key": "value"}));
+        let msg =
+            AgentMessage::new("x", "y", "data").with_metadata(serde_json::json!({"key": "value"}));
         assert_eq!(msg.metadata["key"], "value");
     }
 }

@@ -24,7 +24,8 @@ pub fn playground_router() -> Router<AppState> {
 /// Embedded API playground — a simple HTML page for testing endpoints.
 async fn playground_page(State(state): State<AppState>) -> impl IntoResponse {
     let name = state.name();
-    let html = format!(r#"<!DOCTYPE html>
+    let html = format!(
+        r#"<!DOCTYPE html>
 <html>
 <head>
     <title>{name} — API Playground</title>
@@ -94,7 +95,8 @@ async fn playground_page(State(state): State<AppState>) -> impl IntoResponse {
     }}
     </script>
 </body>
-</html>"#);
+</html>"#
+    );
 
     Html(html)
 }
@@ -103,9 +105,21 @@ async fn playground_page(State(state): State<AppState>) -> impl IntoResponse {
 async fn middleware_list(State(_state): State<AppState>) -> impl IntoResponse {
     // Enumerate known middleware
     let middleware = vec![
-        middleware_info("request_tracker", "Request ID + timing + error tracking", true),
-        middleware_info("handler_metrics", "Per-route Prometheus metrics (zero-annotation)", true),
-        middleware_info("tracing_middleware", "Distributed tracing (W3C traceparent)", true),
+        middleware_info(
+            "request_tracker",
+            "Request ID + timing + error tracking",
+            true,
+        ),
+        middleware_info(
+            "handler_metrics",
+            "Per-route Prometheus metrics (zero-annotation)",
+            true,
+        ),
+        middleware_info(
+            "tracing_middleware",
+            "Distributed tracing (W3C traceparent)",
+            true,
+        ),
         middleware_info("cors", "CORS permissive", true),
         middleware_info("trace_layer", "Tower HTTP tracing", true),
         middleware_info("security_headers", "OWASP security headers", false),
@@ -130,7 +144,8 @@ fn middleware_info(name: &str, description: &str, enabled: bool) -> serde_json::
 /// List registered routes.
 async fn routes_list(State(state): State<AppState>) -> impl IntoResponse {
     let handler_keys = state.process_registry().handler_keys();
-    let tracked_routes: Vec<String> = state.handler_metrics()
+    let tracked_routes: Vec<String> = state
+        .handler_metrics()
         .to_prometheus()
         .lines()
         .filter(|l| l.starts_with("vil_handler_requests_total"))

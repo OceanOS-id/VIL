@@ -29,7 +29,7 @@
 use serde::Deserialize;
 use std::path::Path;
 
-use crate::{Lane, MeshConfig, MeshRoute, MeshMode};
+use crate::{Lane, MeshConfig, MeshMode, MeshRoute};
 
 /// Top-level vil-server.yaml configuration.
 #[derive(Debug, Clone, Deserialize)]
@@ -144,29 +144,33 @@ impl VilServerYaml {
 
     /// Parse from a YAML string.
     pub fn from_str(yaml: &str) -> Result<Self, YamlConfigError> {
-        serde_yaml::from_str(yaml)
-            .map_err(|e| YamlConfigError::ParseError(e.to_string()))
+        serde_yaml::from_str(yaml).map_err(|e| YamlConfigError::ParseError(e.to_string()))
     }
 
     /// Convert mesh routes to MeshConfig.
     pub fn to_mesh_config(&self) -> MeshConfig {
-        let routes = self.mesh.routes.iter().map(|r| {
-            let lane = match r.lane.to_lowercase().as_str() {
-                "trigger" => Lane::Trigger,
-                "control" => Lane::Control,
-                _ => Lane::Data,
-            };
-            MeshRoute {
-                from: r.from.clone(),
-                to: r.to.clone(),
-                lane,
-                mode: match lane {
-                    Lane::Data => MeshMode::LoanWrite,
-                    Lane::Control => MeshMode::Copy,
-                    Lane::Trigger => MeshMode::LoanWrite,
-                },
-            }
-        }).collect();
+        let routes = self
+            .mesh
+            .routes
+            .iter()
+            .map(|r| {
+                let lane = match r.lane.to_lowercase().as_str() {
+                    "trigger" => Lane::Trigger,
+                    "control" => Lane::Control,
+                    _ => Lane::Data,
+                };
+                MeshRoute {
+                    from: r.from.clone(),
+                    to: r.to.clone(),
+                    lane,
+                    mode: match lane {
+                        Lane::Data => MeshMode::LoanWrite,
+                        Lane::Control => MeshMode::Copy,
+                        Lane::Trigger => MeshMode::LoanWrite,
+                    },
+                }
+            })
+            .collect();
 
         MeshConfig { routes }
     }
@@ -176,19 +180,20 @@ impl VilServerYaml {
         let mut errors = Vec::new();
 
         // Check that all mesh route services exist in services list
-        let service_names: std::collections::HashSet<&str> = self.services.iter()
-            .map(|s| s.name.as_str())
-            .collect();
+        let service_names: std::collections::HashSet<&str> =
+            self.services.iter().map(|s| s.name.as_str()).collect();
 
         for route in &self.mesh.routes {
             if !service_names.contains(route.from.as_str()) {
                 errors.push(format!(
-                    "Mesh route references unknown service '{}' (from)", route.from
+                    "Mesh route references unknown service '{}' (from)",
+                    route.from
                 ));
             }
             if !service_names.contains(route.to.as_str()) {
                 errors.push(format!(
-                    "Mesh route references unknown service '{}' (to)", route.to
+                    "Mesh route references unknown service '{}' (to)",
+                    route.to
                 ));
             }
         }

@@ -22,8 +22,8 @@
 //     -d '{"prompt": "What is 42 * 13 + 7?"}' \
 //     http://localhost:3120/api/calc
 
-use vil_server::prelude::*;
 use vil_agent::semantic::{AgentCompletionEvent, AgentFault, AgentMemoryState};
+use vil_server::prelude::*;
 
 const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 
@@ -58,7 +58,7 @@ pub enum CalcAgentFault {
 /// Financial calculation request — natural language math question
 #[derive(Debug, Deserialize)]
 struct CalcRequest {
-    prompt: String,   // e.g., "Calculate compound interest on $10K at 5% for 3 years"
+    prompt: String, // e.g., "Calculate compound interest on $10K at 5% for 3 years"
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, VilModel)]
@@ -88,9 +88,7 @@ Always show the expression you evaluated and the result.";
 // the complexity of the question.
 
 /// POST /api/calc — submit a financial calculation question
-async fn calc_handler(
-    body: ShmSlice,
-) -> HandlerResult<VilResponse<CalcResponse>> {
+async fn calc_handler(body: ShmSlice) -> HandlerResult<VilResponse<CalcResponse>> {
     let req: CalcRequest = body.json().expect("invalid JSON body");
     let body = serde_json::json!({
         "model": "gpt-4",
@@ -125,7 +123,9 @@ async fn calc_handler(
     }
 
     // Collect the LLM response — may include calculator tool invocations and results
-    let content = collector.collect_text().await
+    let content = collector
+        .collect_text()
+        .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
     // Semantic type anchors
@@ -152,7 +152,14 @@ async fn main() {
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
     // Display authentication mode (API key vs simulator)
-    println!("  Auth: {}", if api_key.is_empty() { "simulator mode" } else { "OPENAI_API_KEY" });
+    println!(
+        "  Auth: {}",
+        if api_key.is_empty() {
+            "simulator mode"
+        } else {
+            "OPENAI_API_KEY"
+        }
+    );
     println!("  Listening on http://localhost:3120/api/calc");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!();

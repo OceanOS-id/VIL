@@ -38,16 +38,16 @@ pub mod pipeline;
 pub mod query_cache;
 
 // Re-exports for convenience.
+pub use bench::{bench_search, BenchResult};
 pub use config::RealtimeRagConfig;
 pub use index::{DocEntry, RealtimeIndex, RealtimeResult};
 pub use pipeline::{RealtimeQueryResult, RealtimeRagPipeline};
 pub use query_cache::QueryCache;
-pub use bench::{bench_search, BenchResult};
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::RealtimeRagPlugin;
 pub use semantic::{RealtimeRagEvent, RealtimeRagFault, RealtimeRagState};

@@ -14,9 +14,7 @@ use std::sync::Arc;
 use vil_log::app_log;
 
 use vil_rt::{ProcessHandle, VastarRuntimeWorld};
-use vil_types::{
-    CleanupPolicy, ExecClass, PortDirection, PortSpec, ProcessSpec,
-};
+use vil_types::{CleanupPolicy, ExecClass, PortDirection, PortSpec, ProcessSpec};
 
 /// Registry of VIL processes corresponding to HTTP handlers.
 ///
@@ -56,18 +54,21 @@ impl ProcessRegistry {
         let id_str: &'static str = Box::leak(key.clone().into_boxed_str());
         let name_str: &'static str = Box::leak(format!("handler:{}", key).into_boxed_str());
 
-        let ports: &'static [PortSpec] = Box::leak(vec![
-            PortSpec {
-                name: "http_in",
-                direction: PortDirection::In,
-                ..PortSpec::default()
-            },
-            PortSpec {
-                name: "http_out",
-                direction: PortDirection::Out,
-                ..PortSpec::default()
-            },
-        ].into_boxed_slice());
+        let ports: &'static [PortSpec] = Box::leak(
+            vec![
+                PortSpec {
+                    name: "http_in",
+                    direction: PortDirection::In,
+                    ..PortSpec::default()
+                },
+                PortSpec {
+                    name: "http_out",
+                    direction: PortDirection::Out,
+                    ..PortSpec::default()
+                },
+            ]
+            .into_boxed_slice(),
+        );
 
         let spec = ProcessSpec {
             id: id_str,

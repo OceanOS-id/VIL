@@ -13,24 +13,18 @@
 // No println!, tracing, or log crate — COMPLIANCE.md §8.
 // =============================================================================
 
+use std::net::SocketAddr;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
-use std::net::SocketAddr;
 
 use async_trait::async_trait;
-use axum::{
-    Router,
-    extract::State,
-    http::StatusCode,
-    routing::post,
-    body::to_bytes,
-};
+use axum::{body::to_bytes, extract::State, http::StatusCode, routing::post, Router};
 use tokio::sync::mpsc;
 
-use vil_log::{mq_log, types::MqPayload};
 use vil_log::dict::register_str;
+use vil_log::{mq_log, types::MqPayload};
 
-use vil_trigger_core::traits::{TriggerSource, EventCallback};
+use vil_trigger_core::traits::{EventCallback, TriggerSource};
 use vil_trigger_core::types::{TriggerEvent, TriggerFault};
 
 use crate::config::WebhookConfig;
@@ -40,12 +34,12 @@ use crate::verify::verify_hmac;
 /// Shared state passed into the axum handler.
 #[derive(Clone)]
 struct HandlerState {
-    secret:    Vec<u8>,
-    tx:        mpsc::UnboundedSender<(u64, u32)>,
+    secret: Vec<u8>,
+    tx: mpsc::UnboundedSender<(u64, u32)>,
     host_hash: u32,
     path_hash: u32,
     kind_hash: u32,
-    sequence:  Arc<AtomicU64>,
+    sequence: Arc<AtomicU64>,
 }
 
 /// axum handler: reads body, verifies HMAC, emits mq_log!, sends to channel.
@@ -83,22 +77,25 @@ async fn webhook_handler(
     }
 
     let elapsed = start.elapsed();
-    let seq     = state.sequence.fetch_add(1, Ordering::Relaxed);
+    let seq = state.sequence.fetch_add(1, Ordering::Relaxed);
 
     // Emit mq_log! on every successful webhook delivery.
-    mq_log!(Info, MqPayload {
-        broker_hash:    state.host_hash,
-        topic_hash:     state.path_hash,
-        group_hash:     state.kind_hash,
-        offset:         seq,
-        message_bytes:  body_len,
-        e2e_latency_us: elapsed.as_micros() as u32,
-        op_type:        1, // consume
-        partition:      0,
-        retries:        0,
-        compression:    0,
-        ..MqPayload::default()
-    });
+    mq_log!(
+        Info,
+        MqPayload {
+            broker_hash: state.host_hash,
+            topic_hash: state.path_hash,
+            group_hash: state.kind_hash,
+            offset: seq,
+            message_bytes: body_len,
+            e2e_latency_us: elapsed.as_micros() as u32,
+            op_type: 1, // consume
+            partition: 0,
+            retries: 0,
+            compression: 0,
+            ..MqPayload::default()
+        }
+    );
 
     let ts = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -112,9 +109,9 @@ async fn webhook_handler(
 
 /// HTTP webhook receiver trigger.
 pub struct WebhookTrigger {
-    config:    WebhookConfig,
-    paused:    Arc<AtomicBool>,
-    sequence:  Arc<AtomicU64>,
+    config: WebhookConfig,
+    paused: Arc<AtomicBool>,
+    sequence: Arc<AtomicU64>,
     addr_hash: u32,
     path_hash: u32,
     kind_hash: u32,
@@ -147,13 +144,13 @@ impl WebhookTrigger {
         let addr_hash = self.addr_hash;
         let path_hash = self.path_hash;
         let kind_hash = self.kind_hash;
-        let paused    = self.paused.clone();
-        let sequence  = self.sequence.clone();
+        let paused = self.paused.clone();
+        let sequence = self.sequence.clone();
 
         let (tx, mut rx) = mpsc::unbounded_channel::<(u64, u32)>();
 
         let state = HandlerState {
-            secret:    self.config.secret.as_bytes().to_vec(),
+            secret: self.config.secret.as_bytes().to_vec(),
             tx,
             host_hash: addr_hash,
             path_hash,
@@ -162,18 +159,18 @@ impl WebhookTrigger {
         };
 
         let path = self.config.path.clone();
-        let app  = Router::new()
+        let app = Router::new()
             .route(&path, post(webhook_handler))
             .with_state(state);
 
-        let listen_addr: SocketAddr = self
-            .config
-            .listen_addr
-            .parse()
-            .map_err(|_| WebhookFault::BindFailed {
-                addr_hash,
-                os_code: 22,
-            })?;
+        let listen_addr: SocketAddr =
+            self.config
+                .listen_addr
+                .parse()
+                .map_err(|_| WebhookFault::BindFailed {
+                    addr_hash,
+                    os_code: 22,
+                })?;
 
         let listener = tokio::net::TcpListener::bind(listen_addr)
             .await
@@ -198,9 +195,9 @@ impl WebhookTrigger {
                 let seq = sequence.load(Ordering::Relaxed);
                 on_event(TriggerEvent {
                     kind_hash,
-                    source_hash:   path_hash,
-                    sequence:      seq,
-                    timestamp_ns:  ts,
+                    source_hash: path_hash,
+                    sequence: seq,
+                    timestamp_ns: ts,
                     payload_bytes: body_len,
                     op: 0,
                     _pad: [0; 3],

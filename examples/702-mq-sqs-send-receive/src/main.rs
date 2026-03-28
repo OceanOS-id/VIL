@@ -29,11 +29,11 @@ const QUEUE_URL: &str = "http://localhost:4566/000000000000/vil-tasks";
 async fn main() {
     // ── Init vil_log with resolved drain ──
     let config = LogConfig {
-        ring_slots:        4096,
-        level:             LogLevel::Info,
-        batch_size:        64,
+        ring_slots: 4096,
+        level: LogLevel::Info,
+        batch_size: 64,
         flush_interval_ms: 50,
-        threads:           None,
+        threads: None,
         dict_path: None,
         fallback_path: None,
         drain_failure_threshold: 3,
@@ -60,7 +60,7 @@ async fn main() {
     println!();
 
     let client = match SqsClient::from_config(sqs_cfg).await {
-        Ok(c)  => c,
+        Ok(c) => c,
         Err(e) => {
             println!("  [SKIP] Cannot build SQS client: {:?}", e);
             println!("  (All mq_log! calls would appear above in resolved format)");
@@ -72,7 +72,7 @@ async fn main() {
     for i in 1u32..=3 {
         let body = format!(r#"{{"job_id":{},"type":"etl","batch":{i}}}"#, i * 10);
         match client.send_message(body.as_bytes()).await {
-            Ok(_)  => println!("  SEND [{}] {}", i, body),
+            Ok(_) => println!("  SEND [{}] {}", i, body),
             Err(e) => {
                 println!("  SEND error: {:?}", e);
                 println!("  [SKIP] SQS queue not reachable.");
@@ -93,7 +93,7 @@ async fn main() {
 
                 // Delete (acknowledge) the message
                 match client.delete_message(&msg.receipt_handle).await {
-                    Ok(_)  => println!("  DEL   receipt_handle={:.20}...", msg.receipt_handle),
+                    Ok(_) => println!("  DEL   receipt_handle={:.20}...", msg.receipt_handle),
                     Err(e) => println!("  DEL   error: {:?}", e),
                 }
             }

@@ -5,8 +5,8 @@
 //! - Return `HandlerResult<VilResponse<T>>` or `VilResponse<T>`
 //! - Use `VilError` for structured error responses
 
-use vil_server::prelude::*;
 use serde::{Deserialize, Serialize};
+use vil_server::prelude::*;
 
 use crate::detector::PromptShield;
 use crate::result::ScanResult;
@@ -55,7 +55,9 @@ pub async fn scan_handler(
     let svc = ctx.state::<ShieldServiceState>()?;
     let shield = &svc.shield;
     let state = &svc.state;
-    let req: ScanRequest = body.json().map_err(|e| VilError::bad_request(e.to_string()))?;
+    let req: ScanRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(e.to_string()))?;
     if req.text.is_empty() {
         return Err(VilError::bad_request("text must not be empty"));
     }
@@ -84,10 +86,10 @@ pub async fn scan_handler(
 }
 
 /// GET /stats — Get shield scan statistics.
-pub async fn stats_handler(
-    ctx: ServiceCtx,
-) -> VilResponse<ShieldStatsBody> {
-    let svc = ctx.state::<ShieldServiceState>().expect("ShieldServiceState");
+pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<ShieldStatsBody> {
+    let svc = ctx
+        .state::<ShieldServiceState>()
+        .expect("ShieldServiceState");
     let shield = &svc.shield;
     let s = svc.state.lock().unwrap_or_else(|e| e.into_inner());
     VilResponse::ok(ShieldStatsBody {

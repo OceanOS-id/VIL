@@ -11,8 +11,7 @@ use crate::state::AppState;
 
 /// Plugin detail GUI router.
 pub fn plugin_detail_router() -> Router<AppState> {
-    Router::new()
-        .route("/admin/plugins-gui/:name", get(plugin_detail_page))
+    Router::new().route("/admin/plugins-gui/:name", get(plugin_detail_page))
 }
 
 async fn plugin_detail_page(
@@ -24,15 +23,18 @@ async fn plugin_detail_page(
     let plugin_state = mgr.get_state(&name);
     let config = mgr.get_config_masked(&name);
 
-    let manifest_json = manifest.as_ref()
+    let manifest_json = manifest
+        .as_ref()
         .map(|m| serde_json::to_string_pretty(m).unwrap_or_default())
         .unwrap_or_else(|| "Plugin not found".to_string());
 
-    let state_json = plugin_state.as_ref()
+    let state_json = plugin_state
+        .as_ref()
         .map(|s| serde_json::to_string_pretty(s).unwrap_or_default())
         .unwrap_or_default();
 
-    let _config_json = config.as_ref()
+    let _config_json = config
+        .as_ref()
         .map(|c| serde_json::to_string_pretty(c).unwrap_or_default())
         .unwrap_or_else(|| "{}".to_string());
 
@@ -40,30 +42,52 @@ async fn plugin_detail_page(
     let mut form_fields = String::new();
     if let Some(m) = &manifest {
         for (key, field) in &m.config_schema {
-            let value = config.as_ref()
+            let value = config
+                .as_ref()
                 .and_then(|c| c.get(key))
                 .map(|v| v.to_string().trim_matches('"').to_string())
                 .unwrap_or_default();
 
             let input = match field.field_type.as_str() {
                 "enum" => {
-                    let options: String = field.values.iter()
-                        .map(|v| format!(r#"<option value="{v}" {sel}>{v}</option>"#,
-                            v = v,
-                            sel = if *v == value { "selected" } else { "" }
-                        ))
+                    let options: String = field
+                        .values
+                        .iter()
+                        .map(|v| {
+                            format!(
+                                r#"<option value="{v}" {sel}>{v}</option>"#,
+                                v = v,
+                                sel = if *v == value { "selected" } else { "" }
+                            )
+                        })
                         .collect();
-                    format!(r#"<select name="{key}" style="background:#0f3460;color:#e0e0e0;border:1px solid #333;padding:6px;border-radius:4px;width:100%">{options}</select>"#)
+                    format!(
+                        r#"<select name="{key}" style="background:#0f3460;color:#e0e0e0;border:1px solid #333;padding:6px;border-radius:4px;width:100%">{options}</select>"#
+                    )
                 }
                 "integer" => {
-                    let min = field.min.map(|v| format!(r#" min="{}""#, v)).unwrap_or_default();
-                    let max = field.max.map(|v| format!(r#" max="{}""#, v)).unwrap_or_default();
-                    format!(r#"<input type="number" name="{key}" value="{value}"{min}{max} style="background:#0f3460;color:#e0e0e0;border:1px solid #333;padding:6px;border-radius:4px;width:100%">"#)
+                    let min = field
+                        .min
+                        .map(|v| format!(r#" min="{}""#, v))
+                        .unwrap_or_default();
+                    let max = field
+                        .max
+                        .map(|v| format!(r#" max="{}""#, v))
+                        .unwrap_or_default();
+                    format!(
+                        r#"<input type="number" name="{key}" value="{value}"{min}{max} style="background:#0f3460;color:#e0e0e0;border:1px solid #333;padding:6px;border-radius:4px;width:100%">"#
+                    )
                 }
                 _ => {
                     let input_type = if field.secret { "password" } else { "text" };
-                    let ph = if field.placeholder.is_empty() { "" } else { &field.placeholder };
-                    format!(r#"<input type="{input_type}" name="{key}" value="{value}" placeholder="{ph}" style="background:#0f3460;color:#e0e0e0;border:1px solid #333;padding:6px;border-radius:4px;width:100%">"#)
+                    let ph = if field.placeholder.is_empty() {
+                        ""
+                    } else {
+                        &field.placeholder
+                    };
+                    format!(
+                        r#"<input type="{input_type}" name="{key}" value="{value}" placeholder="{ph}" style="background:#0f3460;color:#e0e0e0;border:1px solid #333;padding:6px;border-radius:4px;width:100%">"#
+                    )
                 }
             };
 
@@ -74,7 +98,11 @@ async fn plugin_detail_page(
                     <div style="font-size:11px;color:#888;margin:2px 0">{desc}</div>
                     {input}
                 </div>"#,
-                label = if field.label.is_empty() { key.as_str() } else { &field.label },
+                label = if field.label.is_empty() {
+                    key.as_str()
+                } else {
+                    &field.label
+                },
                 req = required,
                 desc = field.description,
                 input = input,
@@ -82,7 +110,8 @@ async fn plugin_detail_page(
         }
     }
 
-    let html = format!(r#"<!DOCTYPE html>
+    let html = format!(
+        r#"<!DOCTYPE html>
 <html>
 <head>
     <title>{name} — Plugin Config</title>

@@ -150,9 +150,14 @@ impl OpenApiBuilder {
                 required: true,
                 content: {
                     let mut m = BTreeMap::new();
-                    m.insert("application/json".to_string(), MediaType {
-                        schema: SchemaRef { schema_type: "object".to_string() },
-                    });
+                    m.insert(
+                        "application/json".to_string(),
+                        MediaType {
+                            schema: SchemaRef {
+                                schema_type: "object".to_string(),
+                            },
+                        },
+                    );
                     m
                 },
             }),
@@ -174,9 +179,14 @@ impl OpenApiBuilder {
                 required: true,
                 content: {
                     let mut m = BTreeMap::new();
-                    m.insert("application/json".to_string(), MediaType {
-                        schema: SchemaRef { schema_type: "object".to_string() },
-                    });
+                    m.insert(
+                        "application/json".to_string(),
+                        MediaType {
+                            schema: SchemaRef {
+                                schema_type: "object".to_string(),
+                            },
+                        },
+                    );
                     m
                 },
             }),
@@ -214,21 +224,41 @@ impl OpenApiBuilder {
 
 fn default_responses() -> BTreeMap<String, ResponseObj> {
     let mut m = BTreeMap::new();
-    m.insert("200".to_string(), ResponseObj {
-        description: "Successful response".to_string(),
-        content: Some({
-            let mut c = BTreeMap::new();
-            c.insert("application/json".to_string(), MediaType {
-                schema: SchemaRef { schema_type: "object".to_string() },
-            });
-            c
-        }),
-    });
+    m.insert(
+        "200".to_string(),
+        ResponseObj {
+            description: "Successful response".to_string(),
+            content: Some({
+                let mut c = BTreeMap::new();
+                c.insert(
+                    "application/json".to_string(),
+                    MediaType {
+                        schema: SchemaRef {
+                            schema_type: "object".to_string(),
+                        },
+                    },
+                );
+                c
+            }),
+        },
+    );
     m
 }
 
 /// Create an Axum handler that serves the OpenAPI spec.
-pub fn openapi_handler(spec_json: String) -> impl Fn() -> std::pin::Pin<Box<dyn std::future::Future<Output = (axum::http::StatusCode, [(axum::http::header::HeaderName, &'static str); 1], String)> + Send>> + Clone {
+pub fn openapi_handler(
+    spec_json: String,
+) -> impl Fn() -> std::pin::Pin<
+    Box<
+        dyn std::future::Future<
+                Output = (
+                    axum::http::StatusCode,
+                    [(axum::http::header::HeaderName, &'static str); 1],
+                    String,
+                ),
+            > + Send,
+    >,
+> + Clone {
     move || {
         let json = spec_json.clone();
         Box::pin(async move {

@@ -1,24 +1,34 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
-use crate::GuardrailsEngine;
 use crate::handlers;
 use crate::semantic::{GuardrailCheckEvent, GuardrailFault, GuardrailsState};
+use crate::GuardrailsEngine;
+use std::sync::Arc;
 
 pub struct GuardrailsPlugin;
 
 impl GuardrailsPlugin {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl Default for GuardrailsPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for GuardrailsPlugin {
-    fn id(&self) -> &str { "vil-guardrails" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "PII detection, toxicity scoring, and custom rules" }
+    fn id(&self) -> &str {
+        "vil-guardrails"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "PII detection, toxicity scoring, and custom rules"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -30,7 +40,9 @@ impl VilPlugin for GuardrailsPlugin {
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let engine = Arc::new(GuardrailsEngine::new());
@@ -45,5 +57,7 @@ impl VilPlugin for GuardrailsPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

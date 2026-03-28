@@ -25,8 +25,12 @@ pub struct PulsarConfig {
     pub connection_timeout_ms: u64,
 }
 
-fn default_timeout_ms() -> u64 { 30_000 }
-fn default_conn_timeout_ms() -> u64 { 5_000 }
+fn default_timeout_ms() -> u64 {
+    30_000
+}
+fn default_conn_timeout_ms() -> u64 {
+    5_000
+}
 
 impl PulsarConfig {
     pub fn new(url: &str, tenant: &str, namespace: &str) -> Self {

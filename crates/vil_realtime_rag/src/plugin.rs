@@ -1,10 +1,10 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
 use crate::config::RealtimeRagConfig;
-use crate::pipeline::RealtimeRagPipeline;
 use crate::handlers;
+use crate::pipeline::RealtimeRagPipeline;
 use crate::semantic::{RealtimeRagEvent, RealtimeRagFault, RealtimeRagState};
+use std::sync::Arc;
 
 pub struct RealtimeRagPlugin {
     config: RealtimeRagConfig,
@@ -17,9 +17,15 @@ impl RealtimeRagPlugin {
 }
 
 impl VilPlugin for RealtimeRagPlugin {
-    fn id(&self) -> &str { "vil-realtime-rag" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Sub-millisecond RAG pipeline for latency-critical applications" }
+    fn id(&self) -> &str {
+        "vil-realtime-rag"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Sub-millisecond RAG pipeline for latency-critical applications"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -45,5 +51,7 @@ impl VilPlugin for RealtimeRagPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

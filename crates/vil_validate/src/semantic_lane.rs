@@ -41,7 +41,9 @@ impl ValidationPass for SemanticLanePass {
         // is compatible with the destination port's lane.
         for route in &ir.routes {
             // Find the destination port in the interface
-            let dest_port = ir.interfaces.values()
+            let dest_port = ir
+                .interfaces
+                .values()
                 .flat_map(|iface| iface.ports.values())
                 .find(|p| p.name == route.to_port);
 
@@ -51,7 +53,9 @@ impl ValidationPass for SemanticLanePass {
             };
 
             // Also find the source port to determine message name
-            let src_port = ir.interfaces.values()
+            let src_port = ir
+                .interfaces
+                .values()
                 .flat_map(|iface| iface.ports.values())
                 .find(|p| p.name == route.from_port);
 
@@ -74,9 +78,12 @@ impl ValidationPass for SemanticLanePass {
 
             let context = format!(
                 "route {}.{} -> {}.{} (message '{}', kind={})",
-                route.from_process, route.from_port,
-                route.to_process, route.to_port,
-                message.name, message.semantic_kind
+                route.from_process,
+                route.from_port,
+                route.to_process,
+                route.to_port,
+                message.name,
+                message.semantic_kind
             );
 
             // --- Rule 1: Lane compatibility ---
@@ -102,9 +109,7 @@ impl ValidationPass for SemanticLanePass {
                     "E-SEMANTIC-LANE-02",
                     format!(
                         "Transfer mode '{}' is not allowed for semantic kind '{}'. Allowed: {:?}",
-                        route.transfer_mode,
-                        message.semantic_kind,
-                        allowed_modes
+                        route.transfer_mode, message.semantic_kind, allowed_modes
                     ),
                     &context,
                 ));
@@ -166,7 +171,11 @@ fn estimate_message_size(msg: &vil_ir::core::MessageIR) -> usize {
             TypeRefIR::Unknown(_) => 8, // conservative default
         };
     }
-    if total == 0 { 8 } else { total } // minimum 8 bytes
+    if total == 0 {
+        8
+    } else {
+        total
+    } // minimum 8 bytes
 }
 
 #[cfg(test)]
@@ -183,13 +192,19 @@ mod tests {
                 MessageBuilder::new("MyFault")
                     .semantic_kind(SemanticKind::Fault)
                     .memory_class(MemoryClass::ControlHeap)
-                    .build()
+                    .build(),
             )
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "MyFault").lane(LaneKind::Data).queue(QueueKind::Spsc, 10).done()
-                    .in_port("rx", "MyFault").lane(LaneKind::Data).queue(QueueKind::Spsc, 10).done()
-                    .build()
+                    .out_port("tx", "MyFault")
+                    .lane(LaneKind::Data)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .in_port("rx", "MyFault")
+                    .lane(LaneKind::Data)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .build(),
             )
             .add_process(ProcessBuilder::new("A", "Iface").build())
             .add_process(ProcessBuilder::new("B", "Iface").build())
@@ -200,7 +215,10 @@ mod tests {
         let report = pass.run(&ir);
 
         assert!(report.has_errors());
-        assert!(report.diagnostics.iter().any(|d| d.code == "E-SEMANTIC-LANE-01"));
+        assert!(report
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "E-SEMANTIC-LANE-01"));
     }
 
     #[test]
@@ -211,13 +229,19 @@ mod tests {
                 MessageBuilder::new("MyFault")
                     .semantic_kind(SemanticKind::Fault)
                     .memory_class(MemoryClass::ControlHeap)
-                    .build()
+                    .build(),
             )
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "MyFault").lane(LaneKind::Control).queue(QueueKind::Spsc, 10).done()
-                    .in_port("rx", "MyFault").lane(LaneKind::Control).queue(QueueKind::Spsc, 10).done()
-                    .build()
+                    .out_port("tx", "MyFault")
+                    .lane(LaneKind::Control)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .in_port("rx", "MyFault")
+                    .lane(LaneKind::Control)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .build(),
             )
             .add_process(ProcessBuilder::new("A", "Iface").build())
             .add_process(ProcessBuilder::new("B", "Iface").build())
@@ -237,13 +261,19 @@ mod tests {
                 MessageBuilder::new("MyDecision")
                     .semantic_kind(SemanticKind::Decision)
                     .memory_class(MemoryClass::ControlHeap)
-                    .build()
+                    .build(),
             )
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "MyDecision").lane(LaneKind::Trigger).queue(QueueKind::Mpmc, 10).done()
-                    .in_port("rx", "MyDecision").lane(LaneKind::Trigger).queue(QueueKind::Mpmc, 10).done()
-                    .build()
+                    .out_port("tx", "MyDecision")
+                    .lane(LaneKind::Trigger)
+                    .queue(QueueKind::Mpmc, 10)
+                    .done()
+                    .in_port("rx", "MyDecision")
+                    .lane(LaneKind::Trigger)
+                    .queue(QueueKind::Mpmc, 10)
+                    .done()
+                    .build(),
             )
             .add_process(ProcessBuilder::new("A", "Iface").build())
             .add_process(ProcessBuilder::new("B", "Iface").build())
@@ -263,13 +293,19 @@ mod tests {
                 MessageBuilder::new("MyDecision")
                     .semantic_kind(SemanticKind::Decision)
                     .memory_class(MemoryClass::ControlHeap)
-                    .build()
+                    .build(),
             )
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "MyDecision").lane(LaneKind::Data).queue(QueueKind::Spsc, 10).done()
-                    .in_port("rx", "MyDecision").lane(LaneKind::Data).queue(QueueKind::Spsc, 10).done()
-                    .build()
+                    .out_port("tx", "MyDecision")
+                    .lane(LaneKind::Data)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .in_port("rx", "MyDecision")
+                    .lane(LaneKind::Data)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .build(),
             )
             .add_process(ProcessBuilder::new("A", "Iface").build())
             .add_process(ProcessBuilder::new("B", "Iface").build())
@@ -280,7 +316,10 @@ mod tests {
         let report = pass.run(&ir);
 
         assert!(report.has_errors());
-        assert!(report.diagnostics.iter().any(|d| d.code == "E-SEMANTIC-LANE-01"));
+        assert!(report
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "E-SEMANTIC-LANE-01"));
     }
 
     #[test]
@@ -289,13 +328,19 @@ mod tests {
             .add_message(
                 MessageBuilder::new("MyState")
                     .semantic_kind(SemanticKind::State)
-                    .build()
+                    .build(),
             )
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "MyState").lane(LaneKind::Data).queue(QueueKind::Spsc, 10).done()
-                    .in_port("rx", "MyState").lane(LaneKind::Data).queue(QueueKind::Spsc, 10).done()
-                    .build()
+                    .out_port("tx", "MyState")
+                    .lane(LaneKind::Data)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .in_port("rx", "MyState")
+                    .lane(LaneKind::Data)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .build(),
             )
             .add_process(ProcessBuilder::new("A", "Iface").build())
             .add_process(ProcessBuilder::new("B", "Iface").build())
@@ -316,13 +361,19 @@ mod tests {
                 MessageBuilder::new("MyFault")
                     .semantic_kind(SemanticKind::Fault)
                     .memory_class(MemoryClass::ControlHeap)
-                    .build()
+                    .build(),
             )
             .add_interface(
                 InterfaceBuilder::new("Iface")
-                    .out_port("tx", "MyFault").lane(LaneKind::Control).queue(QueueKind::Spsc, 10).done()
-                    .in_port("rx", "MyFault").lane(LaneKind::Control).queue(QueueKind::Spsc, 10).done()
-                    .build()
+                    .out_port("tx", "MyFault")
+                    .lane(LaneKind::Control)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .in_port("rx", "MyFault")
+                    .lane(LaneKind::Control)
+                    .queue(QueueKind::Spsc, 10)
+                    .done()
+                    .build(),
             )
             .add_process(ProcessBuilder::new("A", "Iface").build())
             .add_process(ProcessBuilder::new("B", "Iface").build())
@@ -335,8 +386,14 @@ mod tests {
         assert!(report.has_errors());
         // Should have both E-SEMANTIC-LANE-02 (wrong transfer mode for Fault)
         // and E-SEMANTIC-LANE-03 (ControlHeap via LoanWrite)
-        assert!(report.diagnostics.iter().any(|d| d.code == "E-SEMANTIC-LANE-02"));
-        assert!(report.diagnostics.iter().any(|d| d.code == "E-SEMANTIC-LANE-03"));
+        assert!(report
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "E-SEMANTIC-LANE-02"));
+        assert!(report
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "E-SEMANTIC-LANE-03"));
     }
 
     #[test]
@@ -347,13 +404,19 @@ mod tests {
                 .add_message(
                     MessageBuilder::new("GenericMsg")
                         .semantic_kind(SemanticKind::Message)
-                        .build()
+                        .build(),
                 )
                 .add_interface(
                     InterfaceBuilder::new("Iface")
-                        .out_port("tx", "GenericMsg").lane(*lane).queue(QueueKind::Spsc, 10).done()
-                        .in_port("rx", "GenericMsg").lane(*lane).queue(QueueKind::Spsc, 10).done()
-                        .build()
+                        .out_port("tx", "GenericMsg")
+                        .lane(*lane)
+                        .queue(QueueKind::Spsc, 10)
+                        .done()
+                        .in_port("rx", "GenericMsg")
+                        .lane(*lane)
+                        .queue(QueueKind::Spsc, 10)
+                        .done()
+                        .build(),
                 )
                 .add_process(ProcessBuilder::new("A", "Iface").build())
                 .add_process(ProcessBuilder::new("B", "Iface").build())
@@ -363,7 +426,11 @@ mod tests {
             let pass = SemanticLanePass;
             let report = pass.run(&ir);
 
-            assert!(!report.has_errors(), "Message should be allowed on {:?} lane", lane);
+            assert!(
+                !report.has_errors(),
+                "Message should be allowed on {:?} lane",
+                lane
+            );
         }
     }
 }

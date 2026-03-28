@@ -30,11 +30,11 @@ use crate::error::S3Fault;
 use crate::stream::collect_body;
 
 // op_type constants (reusing DbPayload op_type field semantics)
-const OP_PUT: u8 = 1;    // INSERT — put_object
-const OP_GET: u8 = 0;    // SELECT — get_object
+const OP_PUT: u8 = 1; // INSERT — put_object
+const OP_GET: u8 = 0; // SELECT — get_object
 const OP_DELETE: u8 = 3; // DELETE — delete_object
-const OP_LIST: u8 = 0;   // SELECT — list_objects
-const OP_HEAD: u8 = 0;   // SELECT — head_object
+const OP_LIST: u8 = 0; // SELECT — list_objects
+const OP_HEAD: u8 = 0; // SELECT — head_object
 
 // =============================================================================
 // Result types
@@ -90,17 +90,13 @@ impl S3Client {
     /// Credentials supplied via `S3Config::access_key` / `secret_key` take
     /// precedence over environment variables and instance metadata.
     pub async fn new(config: S3Config) -> Result<Self, S3Fault> {
-        let endpoint_label = config
-            .endpoint
-            .as_deref()
-            .unwrap_or("aws-s3");
+        let endpoint_label = config.endpoint.as_deref().unwrap_or("aws-s3");
         let config_hash = register_str(endpoint_label);
 
         // Build AWS SDK config ------------------------------------------------
         let region = Region::new(config.region.clone());
 
-        let mut loader = aws_config::defaults(BehaviorVersion::latest())
-            .region(region);
+        let mut loader = aws_config::defaults(BehaviorVersion::latest()).region(region);
 
         // Explicit credentials override env / instance metadata
         if let (Some(ak), Some(sk)) = (config.access_key.as_deref(), config.secret_key.as_deref()) {
@@ -157,16 +153,19 @@ impl S3Client {
 
         match result {
             Ok(output) => {
-                db_log!(Info, DbPayload {
-                    db_hash:      self.config_hash,
-                    table_hash:   register_str(&self.bucket),
-                    query_hash:   key_hash,
-                    duration_us:  elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:      OP_PUT,
-                    error_code:   0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_PUT,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(PutResult {
                     e_tag: output.e_tag().map(str::to_owned),
@@ -176,16 +175,19 @@ impl S3Client {
             Err(e) => {
                 let fault = classify_put_error(&e, key_hash, size);
 
-                db_log!(Info, DbPayload {
-                    db_hash:      self.config_hash,
-                    table_hash:   register_str(&self.bucket),
-                    query_hash:   key_hash,
-                    duration_us:  elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:      OP_PUT,
-                    error_code:   1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_PUT,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -218,32 +220,38 @@ impl S3Client {
                 // Collect the body stream — may yield a second error
                 let body = collect_body(output.body).await;
 
-                db_log!(Info, DbPayload {
-                    db_hash:      self.config_hash,
-                    table_hash:   register_str(&self.bucket),
-                    query_hash:   key_hash,
-                    duration_us:  elapsed.as_micros() as u32,
-                    rows_affected: if body.is_ok() { 1 } else { 0 },
-                    op_type:      OP_GET,
-                    error_code:   if body.is_ok() { 0 } else { 1 },
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: if body.is_ok() { 1 } else { 0 },
+                        op_type: OP_GET,
+                        error_code: if body.is_ok() { 0 } else { 1 },
+                        ..Default::default()
+                    }
+                );
 
                 body
             }
             Err(e) => {
                 let fault = classify_get_error(&e, key_hash);
 
-                db_log!(Info, DbPayload {
-                    db_hash:      self.config_hash,
-                    table_hash:   register_str(&self.bucket),
-                    query_hash:   key_hash,
-                    duration_us:  elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:      OP_GET,
-                    error_code:   1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_GET,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -273,32 +281,38 @@ impl S3Client {
 
         match result {
             Ok(_) => {
-                db_log!(Info, DbPayload {
-                    db_hash:      self.config_hash,
-                    table_hash:   register_str(&self.bucket),
-                    query_hash:   key_hash,
-                    duration_us:  elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:      OP_DELETE,
-                    error_code:   0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_DELETE,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(())
             }
             Err(e) => {
                 let fault = classify_delete_error(&e, key_hash);
 
-                db_log!(Info, DbPayload {
-                    db_hash:      self.config_hash,
-                    table_hash:   register_str(&self.bucket),
-                    query_hash:   key_hash,
-                    duration_us:  elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:      OP_DELETE,
-                    error_code:   1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_DELETE,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -336,42 +350,48 @@ impl S3Client {
                     .map(|obj| ObjectMeta {
                         key: obj.key().unwrap_or_default().to_owned(),
                         size: obj.size().unwrap_or(0) as u64,
-                        last_modified: obj
-                            .last_modified()
-                            .map(|dt| dt.fmt(aws_sdk_s3::primitives::DateTimeFormat::DateTime)
-                                .unwrap_or_default()),
+                        last_modified: obj.last_modified().map(|dt| {
+                            dt.fmt(aws_sdk_s3::primitives::DateTimeFormat::DateTime)
+                                .unwrap_or_default()
+                        }),
                         e_tag: obj.e_tag().map(str::to_owned),
                     })
                     .collect();
 
                 let count = objects.len() as u32;
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    prefix_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: count,
-                    op_type:       OP_LIST,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: prefix_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: count,
+                        op_type: OP_LIST,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(objects)
             }
             Err(e) => {
                 let fault = classify_list_error(&e, register_str(&self.bucket));
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    prefix_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_LIST,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: prefix_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_LIST,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -404,39 +424,45 @@ impl S3Client {
                 let meta = ObjectMeta {
                     key: key.to_owned(),
                     size: output.content_length().unwrap_or(0) as u64,
-                    last_modified: output
-                        .last_modified()
-                        .map(|dt| dt.fmt(aws_sdk_s3::primitives::DateTimeFormat::DateTime)
-                            .unwrap_or_default()),
+                    last_modified: output.last_modified().map(|dt| {
+                        dt.fmt(aws_sdk_s3::primitives::DateTimeFormat::DateTime)
+                            .unwrap_or_default()
+                    }),
                     e_tag: output.e_tag().map(str::to_owned),
                 };
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    key_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_HEAD,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_HEAD,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(meta)
             }
             Err(e) => {
                 let fault = classify_head_error(&e, key_hash);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    key_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_HEAD,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_HEAD,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -456,8 +482,8 @@ impl S3Client {
         let key_hash = register_str(key);
 
         let expires = std::time::Duration::from_secs(expires_secs);
-        let presigning_config = PresigningConfig::expires_in(expires)
-            .map_err(|e| S3Fault::Unknown {
+        let presigning_config =
+            PresigningConfig::expires_in(expires).map_err(|e| S3Fault::Unknown {
                 message_hash: register_str(&e.to_string()),
             })?;
 
@@ -473,32 +499,38 @@ impl S3Client {
 
         match result {
             Ok(presigned) => {
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    key_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 1,
-                    op_type:       OP_GET,
-                    error_code:    0,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 1,
+                        op_type: OP_GET,
+                        error_code: 0,
+                        ..Default::default()
+                    }
+                );
 
                 Ok(presigned.uri().to_string())
             }
             Err(e) => {
                 let fault = classify_presign_error(&e, key_hash);
 
-                db_log!(Info, DbPayload {
-                    db_hash:       self.config_hash,
-                    table_hash:    register_str(&self.bucket),
-                    query_hash:    key_hash,
-                    duration_us:   elapsed.as_micros() as u32,
-                    rows_affected: 0,
-                    op_type:       OP_GET,
-                    error_code:    1,
-                    ..Default::default()
-                });
+                db_log!(
+                    Info,
+                    DbPayload {
+                        db_hash: self.config_hash,
+                        table_hash: register_str(&self.bucket),
+                        query_hash: key_hash,
+                        duration_us: elapsed.as_micros() as u32,
+                        rows_affected: 0,
+                        op_type: OP_GET,
+                        error_code: 1,
+                        ..Default::default()
+                    }
+                );
 
                 Err(fault)
             }
@@ -533,9 +565,11 @@ fn classify_put_error<E>(e: &aws_sdk_s3::error::SdkError<E>, key_hash: u32, size
             if let Some(status) = sdk_http_status(e) {
                 match status {
                     403 | 401 => return S3Fault::AccessDenied { key_hash },
-                    404 => return S3Fault::BucketNotFound {
-                        bucket_hash: register_str("bucket"),
-                    },
+                    404 => {
+                        return S3Fault::BucketNotFound {
+                            bucket_hash: register_str("bucket"),
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -589,9 +623,11 @@ fn classify_delete_error<E>(e: &aws_sdk_s3::error::SdkError<E>, key_hash: u32) -
             if let Some(status) = sdk_http_status(e) {
                 match status {
                     403 | 401 => return S3Fault::AccessDenied { key_hash },
-                    404 => return S3Fault::BucketNotFound {
-                        bucket_hash: register_str("bucket"),
-                    },
+                    404 => {
+                        return S3Fault::BucketNotFound {
+                            bucket_hash: register_str("bucket"),
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -618,9 +654,11 @@ fn classify_list_error<E>(e: &aws_sdk_s3::error::SdkError<E>, bucket_hash: u32) 
         _ => {
             if let Some(status) = sdk_http_status(e) {
                 match status {
-                    403 | 401 => return S3Fault::AccessDenied {
-                        key_hash: bucket_hash,
-                    },
+                    403 | 401 => {
+                        return S3Fault::AccessDenied {
+                            key_hash: bucket_hash,
+                        }
+                    }
                     404 => return S3Fault::BucketNotFound { bucket_hash },
                     _ => {}
                 }

@@ -64,8 +64,8 @@
 //   curl http://localhost:8080/api/plugin-db/redis-ping
 // =============================================================================
 
-use vil_server::prelude::*;
 use vil_db_sqlx::{SqlxConfig, SqlxPool};
+use vil_server::prelude::*;
 
 use sqlx::Row;
 use std::sync::Arc;
@@ -263,13 +263,15 @@ async fn index() -> &'static str {
 }
 
 /// GET /api/plugins — list available database plugins with status info.
-async fn list_plugins(
-    ctx: ServiceCtx,
-) -> VilResponse<PluginListResponse> {
+async fn list_plugins(ctx: ServiceCtx) -> VilResponse<PluginListResponse> {
     let state = ctx.state::<DbState>().expect("state type mismatch");
 
     // Check real connectivity for status
-    let pg_status = if state.pg_pool.inner().size() > 0 { "connected" } else { "disconnected" };
+    let pg_status = if state.pg_pool.inner().size() > 0 {
+        "connected"
+    } else {
+        "disconnected"
+    };
 
     let redis_status = match redis::Client::open(state.redis_url.as_str()) {
         Ok(_) => "available",
@@ -327,28 +329,24 @@ async fn list_plugins(
 }
 
 /// GET /api/config — show database configuration patterns with masked secrets.
-async fn show_config(
-    ctx: ServiceCtx,
-) -> VilResponse<ConfigResponse> {
+async fn show_config(ctx: ServiceCtx) -> VilResponse<ConfigResponse> {
     let state = ctx.state::<DbState>().expect("state type mismatch");
 
     // Mask the password in the URL for display
     let masked_url = mask_url(&state.pg_config.url);
     let masked_redis = mask_url(&state.redis_url);
 
-    let configs = vec![
-        DatabaseConfigInfo {
-            pool_name: "primary".to_string(),
-            driver: state.pg_config.driver.clone(),
-            url: masked_url,
-            max_connections: state.pg_config.max_connections,
-            min_connections: state.pg_config.min_connections,
-            connect_timeout_secs: state.pg_config.connect_timeout_secs,
-            idle_timeout_secs: state.pg_config.idle_timeout_secs,
-            ssl_mode: state.pg_config.ssl_mode.clone(),
-            services: state.pg_config.services.clone(),
-        },
-    ];
+    let configs = vec![DatabaseConfigInfo {
+        pool_name: "primary".to_string(),
+        driver: state.pg_config.driver.clone(),
+        url: masked_url,
+        max_connections: state.pg_config.max_connections,
+        min_connections: state.pg_config.min_connections,
+        connect_timeout_secs: state.pg_config.connect_timeout_secs,
+        idle_timeout_secs: state.pg_config.idle_timeout_secs,
+        ssl_mode: state.pg_config.ssl_mode.clone(),
+        services: state.pg_config.services.clone(),
+    }];
 
     VilResponse::ok(ConfigResponse {
         pool_count: configs.len(),
@@ -359,26 +357,27 @@ async fn show_config(
 }
 
 /// GET /api/products — query real products table from PostgreSQL.
-async fn list_products(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<ProductsResponse>> {
+async fn list_products(ctx: ServiceCtx) -> HandlerResult<VilResponse<ProductsResponse>> {
     let state = ctx.state::<DbState>().expect("state type mismatch");
     let pool = state.pg_pool.inner();
 
-    let rows = sqlx::query("SELECT id, name, category, price::float8 as price, stock FROM products ORDER BY id")
-        .fetch_all(pool)
-        .await
-        .map_err(|e| VilError::internal(format!("PostgreSQL query failed: {}", e)))?;
+    let rows = sqlx::query(
+        "SELECT id, name, category, price::float8 as price, stock FROM products ORDER BY id",
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|e| VilError::internal(format!("PostgreSQL query failed: {}", e)))?;
 
-    let products: Vec<ProductRow> = rows.iter().map(|row| {
-        ProductRow {
+    let products: Vec<ProductRow> = rows
+        .iter()
+        .map(|row| ProductRow {
             id: row.get::<i32, _>("id"),
             name: row.get::<String, _>("name"),
             category: row.get::<String, _>("category"),
             price: row.get::<f64, _>("price"),
             stock: row.get::<i32, _>("stock"),
-        }
-    }).collect();
+        })
+        .collect();
 
     let count = products.len();
     Ok(VilResponse::ok(ProductsResponse {
@@ -422,9 +421,7 @@ async fn create_task(
 }
 
 /// GET /api/tasks — list all tasks from PostgreSQL.
-async fn list_tasks(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<TasksResponse>> {
+async fn list_tasks(ctx: ServiceCtx) -> HandlerResult<VilResponse<TasksResponse>> {
     let state = ctx.state::<DbState>().expect("state type mismatch");
     let pool = state.pg_pool.inner();
 
@@ -433,14 +430,15 @@ async fn list_tasks(
         .await
         .map_err(|e| VilError::internal(format!("PostgreSQL query failed: {}", e)))?;
 
-    let tasks: Vec<TaskRow> = rows.iter().map(|row| {
-        TaskRow {
+    let tasks: Vec<TaskRow> = rows
+        .iter()
+        .map(|row| TaskRow {
             id: row.get::<i32, _>("id"),
             title: row.get::<String, _>("title"),
             description: row.get::<String, _>("description"),
             done: row.get::<bool, _>("done"),
-        }
-    }).collect();
+        })
+        .collect();
 
     let count = tasks.len();
     Ok(VilResponse::ok(TasksResponse {
@@ -453,33 +451,34 @@ async fn list_tasks(
 /// GET /api/pool-stats — show REAL connection pool metrics from sqlx.
 /// Business: ops team monitors pool saturation to trigger autoscaling.
 /// If primary.current approaches primary.max, it signals need for more pods.
-async fn pool_stats(
-    ctx: ServiceCtx,
-) -> VilResponse<PoolStatsResponse> {
+async fn pool_stats(ctx: ServiceCtx) -> VilResponse<PoolStatsResponse> {
     let state = ctx.state::<DbState>().expect("state type mismatch");
     let mut pools = std::collections::HashMap::new();
 
     let size_info = state.pg_pool.size_info();
     let metrics_snap = state.pg_pool.metrics().snapshot();
 
-    pools.insert("primary".to_string(), PoolDetail {
-        driver: "postgres".to_string(),
-        size: PoolSize {
-            max: size_info.max,
-            min: size_info.min,
-            current: size_info.current,
-            idle: size_info.idle,
+    pools.insert(
+        "primary".to_string(),
+        PoolDetail {
+            driver: "postgres".to_string(),
+            size: PoolSize {
+                max: size_info.max,
+                min: size_info.min,
+                current: size_info.current,
+                idle: size_info.idle,
+            },
+            metrics: PoolMetricsInfo {
+                queries_total: metrics_snap.queries_total,
+                query_errors: metrics_snap.query_errors,
+                avg_query_us: metrics_snap.avg_query_us,
+                acquires_total: metrics_snap.acquires_total,
+                health_checks_ok: metrics_snap.health_checks_ok,
+                health_checks_fail: metrics_snap.health_checks_fail,
+            },
+            status: "healthy".to_string(),
         },
-        metrics: PoolMetricsInfo {
-            queries_total: metrics_snap.queries_total,
-            query_errors: metrics_snap.query_errors,
-            avg_query_us: metrics_snap.avg_query_us,
-            acquires_total: metrics_snap.acquires_total,
-            health_checks_ok: metrics_snap.health_checks_ok,
-            health_checks_fail: metrics_snap.health_checks_fail,
-        },
-        status: "healthy".to_string(),
-    });
+    );
 
     VilResponse::ok(PoolStatsResponse {
         total_pools: pools.len(),
@@ -490,12 +489,11 @@ async fn pool_stats(
 }
 
 /// GET /api/redis-ping — ping Redis and demonstrate cache set/get.
-async fn redis_ping(
-    ctx: ServiceCtx,
-) -> HandlerResult<VilResponse<RedisPingResponse>> {
+async fn redis_ping(ctx: ServiceCtx) -> HandlerResult<VilResponse<RedisPingResponse>> {
     let state = ctx.state::<DbState>().expect("state type mismatch");
 
-    let mut conn = state.redis_client
+    let mut conn = state
+        .redis_client
         .get_multiplexed_async_connection()
         .await
         .map_err(|e| VilError::internal(format!("Redis connection failed: {}", e)))?;
@@ -566,8 +564,8 @@ async fn main() {
     // Read connection URLs from environment with sensible defaults
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:vilpass@localhost:5432/vil_demo".to_string());
-    let redis_url = std::env::var("REDIS_URL")
-        .unwrap_or_else(|_| "redis://localhost:6380".to_string());
+    let redis_url =
+        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6380".to_string());
 
     println!("Connecting to PostgreSQL: {}", mask_url(&database_url));
     println!("Connecting to Redis: {}", redis_url);
@@ -583,7 +581,9 @@ async fn main() {
         .expect("Failed to connect to PostgreSQL — is it running? (docker compose -f examples/docker-compose.yml up -d)");
 
     // Verify PostgreSQL connectivity
-    pg_pool.execute_raw("SELECT 1").await
+    pg_pool
+        .execute_raw("SELECT 1")
+        .await
         .expect("PostgreSQL health check failed");
     println!("PostgreSQL connected successfully.");
 
@@ -595,7 +595,9 @@ async fn main() {
     {
         let mut conn = redis_client.get_multiplexed_async_connection().await
             .expect("Failed to connect to Redis — is it running? (docker compose -f examples/docker-compose.yml up -d)");
-        let pong: String = redis::cmd("PING").query_async(&mut conn).await
+        let pong: String = redis::cmd("PING")
+            .query_async(&mut conn)
+            .await
             .expect("Redis PING failed");
         println!("Redis connected: {}", pong);
     }

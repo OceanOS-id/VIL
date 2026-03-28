@@ -1,24 +1,34 @@
 use vil_server::prelude::*;
 
-use std::sync::{Arc, RwLock};
-use crate::{PromptRegistry, rag_qa_template, summarize_template, code_review_template};
 use crate::handlers;
-use crate::semantic::{PromptRenderEvent, PromptFault, PromptsState};
+use crate::semantic::{PromptFault, PromptRenderEvent, PromptsState};
+use crate::{code_review_template, rag_qa_template, summarize_template, PromptRegistry};
+use std::sync::{Arc, RwLock};
 
 pub struct PromptsPlugin;
 
 impl PromptsPlugin {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl Default for PromptsPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for PromptsPlugin {
-    fn id(&self) -> &str { "vil-prompts" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Prompt template engine with registry and rendering" }
+    fn id(&self) -> &str {
+        "vil-prompts"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Prompt template engine with registry and rendering"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -30,7 +40,9 @@ impl VilPlugin for PromptsPlugin {
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let mut registry = PromptRegistry::new();
@@ -51,5 +63,7 @@ impl VilPlugin for PromptsPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

@@ -42,10 +42,10 @@
 //     -H 'Content-Type: application/json' \
 //     -d '{"function":"to_uppercase","input":"hello vil"}'
 
-use vil_server::prelude::*;
-use vil_server::axum::extract::Extension;
-use vil_capsule::{WasmFaaSConfig, WasmFaaSRegistry};
 use std::sync::Arc;
+use vil_capsule::{WasmFaaSConfig, WasmFaaSRegistry};
+use vil_server::axum::extract::Extension;
+use vil_server::prelude::*;
 
 // ── Semantic Types ──
 
@@ -96,7 +96,9 @@ struct InvokeResult {
 
 /// GET / — lists available WASM business rule modules
 async fn index(ctx: ServiceCtx) -> VilResponse<ServerInfo> {
-    let registry = ctx.state::<Arc<WasmFaaSRegistry>>().expect("WasmFaaSRegistry");
+    let registry = ctx
+        .state::<Arc<WasmFaaSRegistry>>()
+        .expect("WasmFaaSRegistry");
     VilResponse::ok(ServerInfo {
         name: "WASM FaaS Example — Real Execution".into(),
         description: "Loads real .wasm modules and executes functions via wasmtime".into(),
@@ -106,10 +108,10 @@ async fn index(ctx: ServiceCtx) -> VilResponse<ServerInfo> {
 
 /// GET /wasm/modules — inventory of deployed business rule modules with pool stats.
 /// Shows pool size, memory limits, and timeout per module — useful for ops monitoring.
-async fn list_modules(
-    ctx: ServiceCtx,
-) -> VilResponse<Vec<WasmModuleInfo>> {
-    let registry = ctx.state::<Arc<WasmFaaSRegistry>>().expect("WasmFaaSRegistry");
+async fn list_modules(ctx: ServiceCtx) -> VilResponse<Vec<WasmModuleInfo>> {
+    let registry = ctx
+        .state::<Arc<WasmFaaSRegistry>>()
+        .expect("WasmFaaSRegistry");
     let modules: Vec<WasmModuleInfo> = registry
         .names()
         .into_iter()
@@ -133,7 +135,9 @@ async fn invoke_pricing(
     body: ShmSlice,
 ) -> Result<VilResponse<InvokeResult>, VilError> {
     let req: InvokeArgsRequest = body.json().expect("invalid JSON body");
-    let registry = ctx.state::<Arc<WasmFaaSRegistry>>().expect("WasmFaaSRegistry");
+    let registry = ctx
+        .state::<Arc<WasmFaaSRegistry>>()
+        .expect("WasmFaaSRegistry");
     let pool = registry
         .get("pricing")
         .ok_or_else(|| VilError::not_found("pricing module not loaded"))?;
@@ -141,7 +145,8 @@ async fn invoke_pricing(
     let arg0 = req.args.first().copied().unwrap_or(0);
     let arg1 = req.args.get(1).copied().unwrap_or(0);
 
-    let result = pool.call_i32(&req.function, arg0, arg1)
+    let result = pool
+        .call_i32(&req.function, arg0, arg1)
         .map_err(|e| VilError::internal(format!("WASM execution failed: {}", e)))?;
 
     Ok(VilResponse::ok(InvokeResult {
@@ -159,7 +164,9 @@ async fn invoke_validation(
     body: ShmSlice,
 ) -> Result<VilResponse<InvokeResult>, VilError> {
     let req: InvokeArgsRequest = body.json().expect("invalid JSON body");
-    let registry = ctx.state::<Arc<WasmFaaSRegistry>>().expect("WasmFaaSRegistry");
+    let registry = ctx
+        .state::<Arc<WasmFaaSRegistry>>()
+        .expect("WasmFaaSRegistry");
     let pool = registry
         .get("validation")
         .ok_or_else(|| VilError::not_found("validation module not loaded"))?;
@@ -167,7 +174,8 @@ async fn invoke_validation(
     let arg0 = req.args.first().copied().unwrap_or(0);
     let arg1 = req.args.get(1).copied().unwrap_or(0);
 
-    let result = pool.call_i32(&req.function, arg0, arg1)
+    let result = pool
+        .call_i32(&req.function, arg0, arg1)
         .map_err(|e| VilError::internal(format!("WASM execution failed: {}", e)))?;
 
     Ok(VilResponse::ok(InvokeResult {
@@ -195,14 +203,17 @@ async fn invoke_transform(
     body: ShmSlice,
 ) -> Result<VilResponse<InvokeResult>, VilError> {
     let req: InvokeMemoryRequest = body.json().expect("invalid JSON body");
-    let registry = ctx.state::<Arc<WasmFaaSRegistry>>().expect("WasmFaaSRegistry");
+    let registry = ctx
+        .state::<Arc<WasmFaaSRegistry>>()
+        .expect("WasmFaaSRegistry");
     let pool = registry
         .get("transform")
         .ok_or_else(|| VilError::not_found("transform module not loaded"))?;
 
     // Level 1 zero-copy: input bytes written directly to WASM linear memory
     // via memory.data_mut() slice. Response read as direct slice reference.
-    let output_bytes = pool.call_with_memory(&req.function, req.input.as_bytes())
+    let output_bytes = pool
+        .call_with_memory(&req.function, req.input.as_bytes())
         .map_err(|e| VilError::internal(format!("WASM memory execution failed: {}", e)))?;
 
     let output_str = String::from_utf8_lossy(&output_bytes).to_string();
@@ -213,7 +224,12 @@ async fn invoke_transform(
         result: if req.function == "count_vowels" {
             // count_vowels returns a number, not transformed text
             let count = if output_bytes.len() >= 4 {
-                i32::from_le_bytes([output_bytes[0], output_bytes[1], output_bytes[2], output_bytes[3]])
+                i32::from_le_bytes([
+                    output_bytes[0],
+                    output_bytes[1],
+                    output_bytes[2],
+                    output_bytes[3],
+                ])
             } else {
                 output_bytes.len() as i32
             };
@@ -236,7 +252,12 @@ fn load_wasm_bytes(module_name: &str) -> Vec<u8> {
 
     for path in &paths {
         if let Ok(bytes) = std::fs::read(path) {
-            println!("  Loaded {}.wasm ({} bytes) from {}", module_name, bytes.len(), path);
+            println!(
+                "  Loaded {}.wasm ({} bytes) from {}",
+                module_name,
+                bytes.len(),
+                path
+            );
             return bytes;
         }
     }
@@ -279,7 +300,11 @@ async fn main() {
             .max_memory_pages(512),
     );
 
-    println!("\nRegistered {} WASM modules: {:?}\n", registry.count(), registry.names());
+    println!(
+        "\nRegistered {} WASM modules: {:?}\n",
+        registry.count(),
+        registry.names()
+    );
 
     let wasm_svc = ServiceProcess::new("wasm-faas")
         .endpoint(Method::GET, "/", get(index))

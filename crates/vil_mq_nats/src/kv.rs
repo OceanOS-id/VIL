@@ -23,28 +23,40 @@ pub struct KvStore {
 impl KvStore {
     /// Create or open a KV bucket from a JetStream context.
     pub async fn new(js: &async_nats::jetstream::Context, bucket: &str) -> Result<Self, String> {
-        let store = js.create_key_value(async_nats::jetstream::kv::Config {
-            bucket: bucket.into(),
-            ..Default::default()
-        }).await.map_err(|e| format!("KV bucket '{}' creation failed: {}", bucket, e))?;
+        let store = js
+            .create_key_value(async_nats::jetstream::kv::Config {
+                bucket: bucket.into(),
+                ..Default::default()
+            })
+            .await
+            .map_err(|e| format!("KV bucket '{}' creation failed: {}", bucket, e))?;
 
         let (tx, _) = broadcast::channel(256);
         {
             use vil_log::app_log;
             app_log!(Info, "nats.kv.opened", { bucket: bucket });
         }
-        Ok(Self { bucket: bucket.into(), store, watch_tx: tx })
+        Ok(Self {
+            bucket: bucket.into(),
+            store,
+            watch_tx: tx,
+        })
     }
 
     /// Put a key-value pair.
     pub async fn put(&self, key: &str, value: &[u8]) -> Result<u64, String> {
-        let rev = self.store.put(key, Bytes::copy_from_slice(value)).await
+        let rev = self
+            .store
+            .put(key, Bytes::copy_from_slice(value))
+            .await
             .map_err(|e| format!("KV put failed: {}", e))?;
 
         // Notify local watchers
         let bytes = Bytes::copy_from_slice(value);
         let _ = self.watch_tx.send(KvEntry {
-            key: key.to_string(), value: bytes, revision: rev,
+            key: key.to_string(),
+            value: bytes,
+            revision: rev,
         });
 
         // debug-level: skip vil_log
@@ -106,8 +118,12 @@ impl KvStore {
         self.keys().await.is_empty()
     }
 
-    pub fn bucket(&self) -> &str { &self.bucket }
+    pub fn bucket(&self) -> &str {
+        &self.bucket
+    }
 
     /// Access the underlying async-nats KV store for advanced use cases.
-    pub fn inner(&self) -> &async_nats::jetstream::kv::Store { &self.store }
+    pub fn inner(&self) -> &async_nats::jetstream::kv::Store {
+        &self.store
+    }
 }

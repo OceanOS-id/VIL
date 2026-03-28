@@ -6,17 +6,17 @@
 //! and generates cost breakdown reports.
 
 pub mod budget;
-pub mod report;
-pub mod tracker;
-pub mod semantic;
 pub mod handlers;
-pub mod plugin;
 pub mod pipeline_sse;
+pub mod plugin;
+pub mod report;
+pub mod semantic;
+pub mod tracker;
 
 pub use budget::{Budget, BudgetExceeded, BudgetPeriod};
-pub use tracker::{CostReport, CostTracker, ModelCostEntry, ModelPricing, ModelUsage};
 pub use plugin::CostTrackerPlugin;
 pub use semantic::{CostEvent, CostFault, CostFaultType, CostState};
+pub use tracker::{CostReport, CostTracker, ModelCostEntry, ModelPricing, ModelUsage};
 
 #[cfg(test)]
 mod tests {

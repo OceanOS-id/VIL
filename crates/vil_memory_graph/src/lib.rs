@@ -36,10 +36,10 @@ pub mod prelude {
     pub use crate::store::{from_json, load_from_file, save_to_file, to_json};
 }
 
-pub mod semantic;
-pub mod pipeline_sse;
 pub mod handlers;
+pub mod pipeline_sse;
 pub mod plugin;
+pub mod semantic;
 
 pub use plugin::MemoryGraphPlugin;
 pub use semantic::{MemoryEvent, MemoryFault, MemoryState};
@@ -50,8 +50,16 @@ mod tests {
 
     fn make_graph() -> MemoryGraph {
         let g = MemoryGraph::new();
-        let _alice = g.add_entity("Alice", EntityType::Person, serde_json::json!({"role": "engineer"}));
-        let _bob = g.add_entity("Bob", EntityType::Person, serde_json::json!({"role": "designer"}));
+        let _alice = g.add_entity(
+            "Alice",
+            EntityType::Person,
+            serde_json::json!({"role": "engineer"}),
+        );
+        let _bob = g.add_entity(
+            "Bob",
+            EntityType::Person,
+            serde_json::json!({"role": "designer"}),
+        );
         let _rust = g.add_entity("Rust Language", EntityType::Concept, serde_json::json!({}));
         g
     }
@@ -191,8 +199,16 @@ mod tests {
         // Set importances.
         {
             let mut entities = g.entities_mut().write();
-            entities.iter_mut().find(|e| e.id == id1).unwrap().importance = 0.8;
-            entities.iter_mut().find(|e| e.id == id2).unwrap().importance = 0.01;
+            entities
+                .iter_mut()
+                .find(|e| e.id == id1)
+                .unwrap()
+                .importance = 0.8;
+            entities
+                .iter_mut()
+                .find(|e| e.id == id2)
+                .unwrap()
+                .importance = 0.01;
         }
 
         g.add_relation(id1, id2, RelationType::RelatedTo, 0.5);

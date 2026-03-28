@@ -10,15 +10,15 @@
 
 use std::sync::Arc;
 
+use super::tri_lane::{Lane, TriLaneReceivers, TriLaneRouter};
 use vil_shm::ExchangeHeap;
-use super::tri_lane::{Lane, TriLaneRouter, TriLaneReceivers};
 
+use super::egress::EgressHandle;
+use super::ingress::{HttpIngressConfig, IngressBridge};
+use super::service::ServiceProcess;
+use crate::plugin_system::{PluginInfo, PluginRegistry, VilPlugin};
 use crate::router::Visibility;
 use crate::server::VilServer;
-use crate::plugin_system::{VilPlugin, PluginRegistry, PluginInfo};
-use super::ingress::{HttpIngressConfig, IngressBridge};
-use super::egress::EgressHandle;
-use super::service::ServiceProcess;
 use vil_sidecar::SidecarConfig;
 
 // =============================================================================
@@ -69,12 +69,7 @@ impl VxMeshConfig {
     /// The transfer mode is auto-selected based on the lane:
     /// - Trigger/Control: Copy mode (small messages)
     /// - Data: LoanWrite mode (zero-copy SHM)
-    pub fn route(
-        mut self,
-        from: impl Into<String>,
-        to: impl Into<String>,
-        lane: Lane,
-    ) -> Self {
+    pub fn route(mut self, from: impl Into<String>, to: impl Into<String>, lane: Lane) -> Self {
         self.routes.push(MeshRouteEntry {
             from: from.into(),
             to: to.into(),
@@ -84,11 +79,7 @@ impl VxMeshConfig {
     }
 
     /// Set backpressure limits for a service.
-    pub fn backpressure(
-        mut self,
-        service: impl Into<String>,
-        max_in_flight: usize,
-    ) -> Self {
+    pub fn backpressure(mut self, service: impl Into<String>, max_in_flight: usize) -> Self {
         self.backpressure.push(BackpressureEntry {
             service: service.into(),
             max_in_flight,
@@ -278,9 +269,15 @@ impl VilApp {
     /// Adjusts heap_size based on the profile's SHM capacity.
     pub fn profile(mut self, profile: &str) -> Self {
         match profile {
-            "dev" | "development" => { self.heap_size = 8 * 1024 * 1024; }
-            "staging" | "stage" => { self.heap_size = 64 * 1024 * 1024; }
-            "prod" | "production" => { self.heap_size = 256 * 1024 * 1024; }
+            "dev" | "development" => {
+                self.heap_size = 8 * 1024 * 1024;
+            }
+            "staging" | "stage" => {
+                self.heap_size = 64 * 1024 * 1024;
+            }
+            "prod" | "production" => {
+                self.heap_size = 256 * 1024 * 1024;
+            }
             _ => {}
         }
         self
@@ -668,11 +665,7 @@ impl VilApp {
     ///
     /// Logs all messages for observability. In Phase 2 this will feed into
     /// the service's internal processing pipeline.
-    async fn mesh_receiver_worker(
-        from: String,
-        to: String,
-        mut receivers: TriLaneReceivers,
-    ) {
+    async fn mesh_receiver_worker(from: String, to: String, mut receivers: TriLaneReceivers) {
         {
             use vil_log::app_log;
             app_log!(Info, "vx.mesh.worker.started", { from: from.as_str(), to: to.as_str() });
@@ -817,10 +810,11 @@ mod tests {
                     .route("svc-a", "svc-b", Lane::Data)
                     .backpressure("svc-b", 100),
             )
-            .failover(
-                VxFailoverConfig::new()
-                    .backup("svc-a", "svc-b", FailoverStrategy::Immediate),
-            );
+            .failover(VxFailoverConfig::new().backup(
+                "svc-a",
+                "svc-b",
+                FailoverStrategy::Immediate,
+            ));
 
         assert_eq!(app.name(), "test-app");
         assert_eq!(app.service_count(), 2);
@@ -830,10 +824,7 @@ mod tests {
     fn contract_json_export() {
         let app = VilApp::new("json-test")
             .service(ServiceProcess::new("users"))
-            .mesh(
-                VxMeshConfig::new()
-                    .route("users", "orders", Lane::Trigger),
-            );
+            .mesh(VxMeshConfig::new().route("users", "orders", Lane::Trigger));
 
         let json = app.contract_json();
         assert!(json.contains("json-test"));
@@ -843,8 +834,7 @@ mod tests {
 
     #[test]
     fn failover_config() {
-        let fo = VxFailoverConfig::new()
-            .backup("primary", "backup", FailoverStrategy::Retry(5));
+        let fo = VxFailoverConfig::new().backup("primary", "backup", FailoverStrategy::Retry(5));
 
         assert_eq!(fo.entries().len(), 1);
     }

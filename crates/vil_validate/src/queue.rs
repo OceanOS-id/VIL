@@ -24,7 +24,7 @@ impl ValidationPass for QueueCapabilityPass {
         for route in &ir.routes {
             let from_key = (route.from_process.clone(), route.from_port.clone());
             let to_key = (route.to_process.clone(), route.to_port.clone());
-            
+
             *port_connections.entry(from_key).or_insert(0) += 1;
             *port_connections.entry(to_key).or_insert(0) += 1;
         }

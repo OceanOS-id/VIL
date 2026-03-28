@@ -39,7 +39,10 @@ impl<V> CacheEntry<V> {
 /// LRU + TTL cache.
 ///
 /// Generic over K (key) and V (value). Thread-safe via DashMap.
-pub struct Cache<K: Eq + std::hash::Hash + Clone + Send + Sync + 'static, V: Clone + Send + Sync + 'static> {
+pub struct Cache<
+    K: Eq + std::hash::Hash + Clone + Send + Sync + 'static,
+    V: Clone + Send + Sync + 'static,
+> {
     entries: Arc<DashMap<K, CacheEntry<V>>>,
     default_ttl: Duration,
     max_entries: usize,
@@ -92,13 +95,16 @@ where
         if self.entries.len() >= self.max_entries {
             self.evict_one();
         }
-        self.entries.insert(key, CacheEntry {
-            value,
-            created_at: Instant::now(),
-            last_accessed: Instant::now(),
-            ttl,
-            access_count: 0,
-        });
+        self.entries.insert(
+            key,
+            CacheEntry {
+                value,
+                created_at: Instant::now(),
+                last_accessed: Instant::now(),
+                ttl,
+                access_count: 0,
+            },
+        );
     }
 
     /// Remove a specific key.
@@ -145,7 +151,11 @@ where
             max_entries: self.max_entries,
             hits,
             misses,
-            hit_rate: if total > 0 { hits as f64 / total as f64 } else { 0.0 },
+            hit_rate: if total > 0 {
+                hits as f64 / total as f64
+            } else {
+                0.0
+            },
             evictions: self.evictions.load(Ordering::Relaxed),
         }
     }

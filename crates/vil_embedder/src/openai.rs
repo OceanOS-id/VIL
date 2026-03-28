@@ -93,10 +93,7 @@ impl EmbedProvider for OpenAiEmbedder {
 
         if !resp.status().is_success() {
             let status = resp.status();
-            let body_text = resp
-                .text()
-                .await
-                .unwrap_or_else(|_| "<unreadable>".into());
+            let body_text = resp.text().await.unwrap_or_else(|_| "<unreadable>".into());
             return Err(EmbedError::RequestFailed(format!(
                 "HTTP {status}: {body_text}"
             )));

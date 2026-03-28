@@ -81,10 +81,7 @@ impl ShmMeshChannel {
             region_name,
         };
 
-        let receiver = ShmMeshReceiver {
-            heap,
-            rx,
-        };
+        let receiver = ShmMeshReceiver { heap, rx };
 
         (channel, receiver)
     }
@@ -99,7 +96,8 @@ impl ShmMeshChannel {
         data: &[u8],
     ) -> Result<usize, ShmChannelError> {
         // Allocate space in the SHM region
-        let offset = self.heap
+        let offset = self
+            .heap
             .alloc_bytes(self.region_id, data.len(), 8)
             .ok_or(ShmChannelError::RegionFull)?;
 
@@ -118,7 +116,10 @@ impl ShmMeshChannel {
             len: data.len(),
         };
 
-        self.tx.send(desc).await.map_err(|_| ShmChannelError::ChannelClosed)?;
+        self.tx
+            .send(desc)
+            .await
+            .map_err(|_| ShmChannelError::ChannelClosed)?;
 
         Ok(data.len())
     }
@@ -142,7 +143,9 @@ impl ShmMeshReceiver {
         let desc = self.rx.recv().await?;
 
         // Read data from SHM region
-        let data = self.heap.read_bytes(desc.region_id, desc.offset, desc.len)?;
+        let data = self
+            .heap
+            .read_bytes(desc.region_id, desc.offset, desc.len)?;
 
         Some(ShmMessage {
             from: desc.from,

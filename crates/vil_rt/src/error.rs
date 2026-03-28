@@ -45,7 +45,9 @@ impl fmt::Display for RtError {
                 write!(f, "loan {} was never initialized before publish", id)
             }
             Self::MissingSample(id) => write!(f, "sample {} not found in shared store", id),
-            Self::TypeMismatch(expected) => write!(f, "sample type mismatch, expected {}", expected),
+            Self::TypeMismatch(expected) => {
+                write!(f, "sample type mismatch, expected {}", expected)
+            }
             Self::QueueEmpty(id) => write!(f, "queue for port {} is empty", id),
             Self::HeapFull(id) => write!(f, "shared memory heap {} is full", id),
         }

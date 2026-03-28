@@ -1,25 +1,35 @@
 //! VilPlugin implementation for LLM proxy.
 use vil_server::prelude::*;
 
-use std::sync::Arc;
-use crate::proxy::LlmProxy;
 use crate::handlers::{self, LlmProxyState};
-use crate::semantic::{ProxyRequestEvent, ProxyFault, ProxyState};
+use crate::proxy::LlmProxy;
+use crate::semantic::{ProxyFault, ProxyRequestEvent, ProxyState};
+use std::sync::Arc;
 
 pub struct LlmProxyPlugin;
 
 impl LlmProxyPlugin {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl Default for LlmProxyPlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for LlmProxyPlugin {
-    fn id(&self) -> &str { "vil-llm-proxy" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Rate-limited LLM proxy with caching and routing" }
+    fn id(&self) -> &str {
+        "vil-llm-proxy"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Rate-limited LLM proxy with caching and routing"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -55,5 +65,7 @@ impl VilPlugin for LlmProxyPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

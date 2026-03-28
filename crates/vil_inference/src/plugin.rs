@@ -1,24 +1,34 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
-use crate::registry::ModelRegistry;
 use crate::handlers;
+use crate::registry::ModelRegistry;
 use crate::semantic::{InferEvent, InferFault, InferState};
+use std::sync::Arc;
 
 pub struct InferencePlugin;
 
 impl InferencePlugin {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl Default for InferencePlugin {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VilPlugin for InferencePlugin {
-    fn id(&self) -> &str { "vil-inference" }
-    fn version(&self) -> &str { "0.1.0" }
-    fn description(&self) -> &str { "Model pool, dynamic batching, hot-swap inference" }
+    fn id(&self) -> &str {
+        "vil-inference"
+    }
+    fn version(&self) -> &str {
+        "0.1.0"
+    }
+    fn description(&self) -> &str {
+        "Model pool, dynamic batching, hot-swap inference"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -40,5 +50,7 @@ impl VilPlugin for InferencePlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

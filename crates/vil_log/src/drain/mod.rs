@@ -23,7 +23,7 @@ pub use stdout::{StdoutDrain, StdoutFormat};
 pub use traits::LogDrain;
 
 #[cfg(feature = "clickhouse-drain")]
-pub use clickhouse_drain::{ClickHouseDrain, ClickHouseConfig};
+pub use clickhouse_drain::{ClickHouseConfig, ClickHouseDrain};
 
 #[cfg(feature = "nats-drain")]
-pub use nats_drain::{NatsDrain, NatsConfig};
+pub use nats_drain::{NatsConfig, NatsDrain};

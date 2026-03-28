@@ -19,8 +19,8 @@ use tokio_modbus::client::tcp;
 use tokio_modbus::client::Context;
 use tokio_modbus::prelude::*;
 
-use vil_log::{db_log, types::DbPayload};
 use vil_log::dict::register_str;
+use vil_log::{db_log, types::DbPayload};
 
 use crate::config::ModbusConfig;
 use crate::error::ModbusFault;
@@ -50,12 +50,13 @@ impl ModbusClient {
         let socket_addr_str = config.socket_addr();
         let host_hash = register_str(&socket_addr_str);
 
-        let socket_addr: std::net::SocketAddr = socket_addr_str
-            .parse()
-            .map_err(|_| ModbusFault::ConnectionFailed {
-                host_hash,
-                reason_code: 1,
-            })?;
+        let socket_addr: std::net::SocketAddr =
+            socket_addr_str
+                .parse()
+                .map_err(|_| ModbusFault::ConnectionFailed {
+                    host_hash,
+                    reason_code: 1,
+                })?;
 
         let ctx = tcp::connect_slave(socket_addr, Slave(config.unit_id))
             .await
@@ -64,44 +65,53 @@ impl ModbusClient {
                 reason_code: e.raw_os_error().unwrap_or(0) as u32,
             })?;
 
-        Ok(Self { ctx, host_hash, config })
+        Ok(Self {
+            ctx,
+            host_hash,
+            config,
+        })
     }
 
     /// Read `count` coils starting at `address`.
     ///
     /// Emits `db_log!` (op_type=0 SELECT) with timing.
-    pub async fn read_coils(
-        &mut self,
-        address: u16,
-        count: u16,
-    ) -> Result<Vec<bool>, ModbusFault> {
+    pub async fn read_coils(&mut self, address: u16, count: u16) -> Result<Vec<bool>, ModbusFault> {
         let start = std::time::Instant::now();
         let addr_str = format!("coil:{}", address);
         let addr_hash = register_str(&addr_str);
 
         let raw = self.ctx.read_coils(address, count).await;
         let result: Result<Vec<bool>, ModbusFault> = match raw {
-            Err(_) => Err(ModbusFault::ReadCoilsFailed { address, exception_code: 0 }),
-            Ok(Err(ex)) => Err(ModbusFault::ReadCoilsFailed { address, exception_code: ex as u8 }),
+            Err(_) => Err(ModbusFault::ReadCoilsFailed {
+                address,
+                exception_code: 0,
+            }),
+            Ok(Err(ex)) => Err(ModbusFault::ReadCoilsFailed {
+                address,
+                exception_code: ex as u8,
+            }),
             Ok(Ok(v)) => Ok(v),
         };
 
         let elapsed = start.elapsed();
         let (rows, err_code) = match &result {
-            Ok(v)  => (v.len() as u32, 0u8),
+            Ok(v) => (v.len() as u32, 0u8),
             Err(f) => (0, f.as_error_code()),
         };
 
-        db_log!(Info, DbPayload {
-            db_hash:       self.host_hash,
-            table_hash:    addr_hash,
-            query_hash:    register_str("read_coils"),
-            duration_us:   elapsed.as_micros() as u32,
-            rows_affected: rows,
-            op_type:       0,   // SELECT / read
-            error_code:    err_code,
-            ..DbPayload::default()
-        });
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: self.host_hash,
+                table_hash: addr_hash,
+                query_hash: register_str("read_coils"),
+                duration_us: elapsed.as_micros() as u32,
+                rows_affected: rows,
+                op_type: 0, // SELECT / read
+                error_code: err_code,
+                ..DbPayload::default()
+            }
+        );
 
         result
     }
@@ -120,27 +130,36 @@ impl ModbusClient {
 
         let raw = self.ctx.read_holding_registers(address, count).await;
         let result: Result<Vec<u16>, ModbusFault> = match raw {
-            Err(_) => Err(ModbusFault::ReadRegistersFailed { address, exception_code: 0 }),
-            Ok(Err(ex)) => Err(ModbusFault::ReadRegistersFailed { address, exception_code: ex as u8 }),
+            Err(_) => Err(ModbusFault::ReadRegistersFailed {
+                address,
+                exception_code: 0,
+            }),
+            Ok(Err(ex)) => Err(ModbusFault::ReadRegistersFailed {
+                address,
+                exception_code: ex as u8,
+            }),
             Ok(Ok(v)) => Ok(v),
         };
 
         let elapsed = start.elapsed();
         let (rows, err_code) = match &result {
-            Ok(v)  => (v.len() as u32, 0u8),
+            Ok(v) => (v.len() as u32, 0u8),
             Err(f) => (0, f.as_error_code()),
         };
 
-        db_log!(Info, DbPayload {
-            db_hash:       self.host_hash,
-            table_hash:    addr_hash,
-            query_hash:    register_str("read_registers"),
-            duration_us:   elapsed.as_micros() as u32,
-            rows_affected: rows,
-            op_type:       0,   // SELECT / read
-            error_code:    err_code,
-            ..DbPayload::default()
-        });
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: self.host_hash,
+                table_hash: addr_hash,
+                query_hash: register_str("read_registers"),
+                duration_us: elapsed.as_micros() as u32,
+                rows_affected: rows,
+                op_type: 0, // SELECT / read
+                error_code: err_code,
+                ..DbPayload::default()
+            }
+        );
 
         result
     }
@@ -155,27 +174,36 @@ impl ModbusClient {
 
         let raw = self.ctx.write_single_coil(address, value).await;
         let result: Result<(), ModbusFault> = match raw {
-            Err(_) => Err(ModbusFault::WriteCoilFailed { address, exception_code: 0 }),
-            Ok(Err(ex)) => Err(ModbusFault::WriteCoilFailed { address, exception_code: ex as u8 }),
+            Err(_) => Err(ModbusFault::WriteCoilFailed {
+                address,
+                exception_code: 0,
+            }),
+            Ok(Err(ex)) => Err(ModbusFault::WriteCoilFailed {
+                address,
+                exception_code: ex as u8,
+            }),
             Ok(Ok(())) => Ok(()),
         };
 
         let elapsed = start.elapsed();
         let err_code = match &result {
-            Ok(_)  => 0u8,
+            Ok(_) => 0u8,
             Err(f) => f.as_error_code(),
         };
 
-        db_log!(Info, DbPayload {
-            db_hash:       self.host_hash,
-            table_hash:    addr_hash,
-            query_hash:    register_str("write_coil"),
-            duration_us:   elapsed.as_micros() as u32,
-            rows_affected: 1,
-            op_type:       2,   // UPDATE / write
-            error_code:    err_code,
-            ..DbPayload::default()
-        });
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: self.host_hash,
+                table_hash: addr_hash,
+                query_hash: register_str("write_coil"),
+                duration_us: elapsed.as_micros() as u32,
+                rows_affected: 1,
+                op_type: 2, // UPDATE / write
+                error_code: err_code,
+                ..DbPayload::default()
+            }
+        );
 
         result
     }
@@ -190,27 +218,36 @@ impl ModbusClient {
 
         let raw = self.ctx.write_single_register(address, value).await;
         let result: Result<(), ModbusFault> = match raw {
-            Err(_) => Err(ModbusFault::WriteRegisterFailed { address, exception_code: 0 }),
-            Ok(Err(ex)) => Err(ModbusFault::WriteRegisterFailed { address, exception_code: ex as u8 }),
+            Err(_) => Err(ModbusFault::WriteRegisterFailed {
+                address,
+                exception_code: 0,
+            }),
+            Ok(Err(ex)) => Err(ModbusFault::WriteRegisterFailed {
+                address,
+                exception_code: ex as u8,
+            }),
             Ok(Ok(())) => Ok(()),
         };
 
         let elapsed = start.elapsed();
         let err_code = match &result {
-            Ok(_)  => 0u8,
+            Ok(_) => 0u8,
             Err(f) => f.as_error_code(),
         };
 
-        db_log!(Info, DbPayload {
-            db_hash:       self.host_hash,
-            table_hash:    addr_hash,
-            query_hash:    register_str("write_register"),
-            duration_us:   elapsed.as_micros() as u32,
-            rows_affected: 1,
-            op_type:       2,   // UPDATE / write
-            error_code:    err_code,
-            ..DbPayload::default()
-        });
+        db_log!(
+            Info,
+            DbPayload {
+                db_hash: self.host_hash,
+                table_hash: addr_hash,
+                query_hash: register_str("write_register"),
+                duration_us: elapsed.as_micros() as u32,
+                rows_affected: 1,
+                op_type: 2, // UPDATE / write
+                error_code: err_code,
+                ..DbPayload::default()
+            }
+        );
 
         result
     }

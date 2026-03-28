@@ -1,9 +1,9 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
-use crate::{SemanticCache, CacheConfig};
 use crate::handlers;
-use crate::semantic::{CacheHitEvent, CacheFault, LlmCacheState};
+use crate::semantic::{CacheFault, CacheHitEvent, LlmCacheState};
+use crate::{CacheConfig, SemanticCache};
+use std::sync::Arc;
 
 pub struct LlmCachePlugin {
     config: CacheConfig,
@@ -17,25 +17,33 @@ impl LlmCachePlugin {
 
 impl Default for LlmCachePlugin {
     fn default() -> Self {
-        Self { config: CacheConfig::default() }
+        Self {
+            config: CacheConfig::default(),
+        }
     }
 }
 
 impl VilPlugin for LlmCachePlugin {
-    fn id(&self) -> &str { "vil-llm-cache" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Semantic response cache for LLM responses" }
+    fn id(&self) -> &str {
+        "vil-llm-cache"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Semantic response cache for LLM responses"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
             name: "llm-cache".into(),
-            endpoints: vec![
-                EndpointSpec::get("/api/cache/stats"),
-            ],
+            endpoints: vec![EndpointSpec::get("/api/cache/stats")],
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let cache = Arc::new(SemanticCache::new(self.config.clone()));
@@ -50,5 +58,7 @@ impl VilPlugin for LlmCachePlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }

@@ -12,8 +12,8 @@
 // =============================================================================
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
-use vil_log::emit::ring::init_ring;
 use vil_log::app_log;
+use vil_log::emit::ring::init_ring;
 
 fn setup_ring() {
     // OnceLock — will silently no-op on second call in the same process.

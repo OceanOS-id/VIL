@@ -36,11 +36,7 @@ pub struct WasmShmBridge {
 
 impl WasmShmBridge {
     /// Create a new bridge with a dedicated I/O region.
-    pub fn new(
-        heap: Arc<ExchangeHeap>,
-        handler_name: &str,
-        region_size: usize,
-    ) -> Self {
+    pub fn new(heap: Arc<ExchangeHeap>, handler_name: &str, region_size: usize) -> Self {
         let region_name = format!("vil_wasm_io_{}", handler_name);
         let io_region = heap.create_region(&region_name, region_size);
 
@@ -64,7 +60,8 @@ impl WasmShmBridge {
             });
         }
 
-        let offset = self.heap
+        let offset = self
+            .heap
             .alloc_bytes(self.io_region, data.len(), 8)
             .ok_or(ShmBridgeError::AllocationFailed)?;
 

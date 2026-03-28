@@ -57,13 +57,13 @@ pub struct LogConfig {
 impl Default for LogConfig {
     fn default() -> Self {
         Self {
-            ring_slots:              8192,
-            level:                   LogLevel::Info,
-            batch_size:              256,
-            flush_interval_ms:       10,
-            threads:                 None, // auto-detect
-            dict_path:               None, // default: .vil_log_dict.json
-            fallback_path:           None, // default: .vil_log_fallback.jsonl
+            ring_slots: 8192,
+            level: LogLevel::Info,
+            batch_size: 256,
+            flush_interval_ms: 10,
+            threads: None,       // auto-detect
+            dict_path: None,     // default: .vil_log_dict.json
+            fallback_path: None, // default: .vil_log_fallback.jsonl
             drain_failure_threshold: 3,
         }
     }

@@ -1,9 +1,9 @@
 use vil_server::prelude::*;
 
-use std::sync::Arc;
-use crate::{ChunkStrategy, SentenceChunker};
 use crate::handlers;
 use crate::vil_semantic::{ChunkEvent, ChunkFault, ChunkerState};
+use crate::{ChunkStrategy, SentenceChunker};
+use std::sync::Arc;
 
 pub struct ChunkerPlugin {
     max_tokens: usize,
@@ -22,9 +22,15 @@ impl Default for ChunkerPlugin {
 }
 
 impl VilPlugin for ChunkerPlugin {
-    fn id(&self) -> &str { "vil-chunker" }
-    fn version(&self) -> &str { env!("CARGO_PKG_VERSION") }
-    fn description(&self) -> &str { "Strategy-based text chunking for RAG pipelines" }
+    fn id(&self) -> &str {
+        "vil-chunker"
+    }
+    fn version(&self) -> &str {
+        env!("CARGO_PKG_VERSION")
+    }
+    fn description(&self) -> &str {
+        "Strategy-based text chunking for RAG pipelines"
+    }
 
     fn capabilities(&self) -> Vec<PluginCapability> {
         vec![PluginCapability::Service {
@@ -36,7 +42,9 @@ impl VilPlugin for ChunkerPlugin {
         }]
     }
 
-    fn dependencies(&self) -> Vec<PluginDependency> { vec![] }
+    fn dependencies(&self) -> Vec<PluginDependency> {
+        vec![]
+    }
 
     fn register(&self, ctx: &mut PluginContext) {
         let chunker: Arc<dyn ChunkStrategy> = Arc::new(SentenceChunker::new(self.max_tokens));
@@ -52,5 +60,7 @@ impl VilPlugin for ChunkerPlugin {
         ctx.add_service(svc);
     }
 
-    fn health(&self) -> PluginHealth { PluginHealth::Healthy }
+    fn health(&self) -> PluginHealth {
+        PluginHealth::Healthy
+    }
 }
