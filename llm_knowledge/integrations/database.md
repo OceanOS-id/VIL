@@ -104,4 +104,20 @@ async fn cached_user(ctx: ServiceCtx, Path(id): Path<i64>) -> VilResponse<User> 
 }
 ```
 
+## Additional Database Connectors
+
+For databases beyond PostgreSQL/MySQL/SQLite/Redis, see the native connector crates:
+
+| Database | Connector |
+|----------|-----------|
+| MongoDB | vil_conn_mongo |
+| ClickHouse | vil_conn_clickhouse |
+| DynamoDB | vil_conn_dynamodb |
+| Cassandra | vil_conn_cassandra |
+| Neo4j | vil_conn_neo4j |
+| Elasticsearch | vil_conn_elastic |
+| InfluxDB (time-series) | vil_conn_influxdb |
+
+Full reference: [connectors/databases.md](../connectors/databases.md)
+
 > Reference: docs/vil/006-VIL-Developer_Guide-CLI-Deployment.md

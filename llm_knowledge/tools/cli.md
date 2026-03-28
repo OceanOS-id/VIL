@@ -18,9 +18,10 @@ The `vil` CLI manages project creation, compilation, development, and diagnostic
 
 ```bash
 vil init my-gateway --template ai-inference
+vil init my-service --lang python     # scaffold SDK sidecar (9 langs: rust/python/go/java/typescript/csharp/kotlin/swift/zig)
 ```
 
-### Templates
+### Templates (12 total)
 
 | Template | Description |
 |----------|-------------|
@@ -29,6 +30,13 @@ vil init my-gateway --template ai-inference
 | `load-balancer` | Round-robin load balancer |
 | `stream-filter` | NDJSON filter pipeline |
 | `webhook-forwarder` | HTTP webhook proxy |
+| `cron-worker` | Cron-triggered background job |
+| `cdc-pipeline` | Change data capture to sink |
+| `iot-gateway` | MQTT/AMQP IoT ingestion pipeline |
+| `connector-s3` | S3 upload/download service |
+| `connector-rabbit` | RabbitMQ consumer/producer |
+| `sdk-gateway` | Multi-language SDK gateway |
+| `log-aggregator` | vil_log → ClickHouse aggregator |
 
 ## vil compile
 

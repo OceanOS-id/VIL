@@ -10,7 +10,7 @@ Pick the file matching the user's question. Each file is self-contained.
 ### Quickstart
 | File | Description | Keywords |
 |------|-------------|----------|
-| [quickstart/what-is-vil.md](quickstart/what-is-vil.md) | What VIL is, 101 crates, 49 examples, patterns, key types | overview, introduction, architecture, crates |
+| [quickstart/what-is-vil.md](quickstart/what-is-vil.md) | What VIL is, 130+ crates, 83 examples, 9 SDK languages, patterns, key types | overview, introduction, architecture, crates |
 | [quickstart/hello-server.md](quickstart/hello-server.md) | Minimal VilApp hello server | getting started, first server, hello world |
 | [quickstart/hello-pipeline.md](quickstart/hello-pipeline.md) | Minimal vil_workflow! pipeline | getting started, first pipeline, workflow |
 
@@ -58,6 +58,32 @@ Pick the file matching the user's question. Each file is self-contained.
 | [integrations/grpc.md](integrations/grpc.md) | gRPC gateway, health, protobuf | grpc, protobuf, gateway, health |
 | [integrations/websocket.md](integrations/websocket.md) | WebSocket + SSE server-side | websocket, sse, broadcast, hub, topic |
 | [integrations/auth.md](integrations/auth.md) | JWT, RBAC, rate limiting, OAuth2 | auth, jwt, rbac, rate limit, cors, oauth |
+
+### Logging
+| File | Description | Keywords |
+|------|-------------|----------|
+| [logging/vil-log.md](logging/vil-log.md) | vil_log semantic log system: 7 types, SPSC ring, 4-6x faster | logging, vil_log, app_log, db_log, tracing, benchmark |
+| [logging/drains.md](logging/drains.md) | Drain backends: Stdout, File, ClickHouse, NATS, Multi, Fallback | drain, stdout, file, clickhouse, nats, fallback |
+| [logging/dev-vs-prod.md](logging/dev-vs-prod.md) | Development (tracing fallback) vs Production (SPSC ring) | development, production, tracing, fallback, init_logging |
+
+### Connectors
+| File | Description | Keywords |
+|------|-------------|----------|
+| [connectors/storage.md](connectors/storage.md) | S3, GCS, Azure Blob connectors | s3, gcs, azure, storage, minio, upload, download |
+| [connectors/databases.md](connectors/databases.md) | MongoDB, ClickHouse, DynamoDB, Cassandra, Neo4j, Elastic, TimeSeries | mongo, clickhouse, dynamodb, cassandra, neo4j, elastic, influxdb |
+| [connectors/messaging.md](connectors/messaging.md) | RabbitMQ, SQS/SNS, Pulsar, Pub/Sub connectors | rabbitmq, sqs, sns, pulsar, pubsub, amqp |
+| [connectors/protocols.md](connectors/protocols.md) | SOAP, OPC-UA, Modbus, WebSocket server | soap, opcua, modbus, websocket, industrial, iot |
+| [connectors/macros.md](connectors/macros.md) | #[connector_fault], #[connector_event], #[connector_state] | connector_fault, connector_event, connector_state, macro |
+
+### Triggers
+| File | Description | Keywords |
+|------|-------------|----------|
+| [triggers/overview.md](triggers/overview.md) | TriggerSource trait, 8 trigger types | trigger, cron, filesystem, cdc, email, iot, evm, webhook |
+
+### SDK
+| File | Description | Keywords |
+|------|-------------|----------|
+| [tools/sdk-languages.md](tools/sdk-languages.md) | 9 SDK languages: Rust + Python, Go, Java, TS, C#, Kotlin, Swift, Zig | sdk, transpile, python, go, java, typescript, csharp, kotlin, swift, zig |
 
 ### Tools
 | File | Description | Keywords |

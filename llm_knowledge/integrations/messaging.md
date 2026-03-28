@@ -127,4 +127,17 @@ async fn publish_event(ctx: ServiceCtx, slice: ShmSlice) -> VilResponse<()> {
 }
 ```
 
+## Additional Messaging Connectors
+
+For messaging systems beyond Kafka/NATS/MQTT, see the native connector crates:
+
+| System | Connector |
+|--------|-----------|
+| RabbitMQ (AMQP) | vil_conn_rabbitmq |
+| AWS SQS/SNS | vil_conn_sqs |
+| Apache Pulsar | vil_conn_pulsar |
+| Google Pub/Sub | vil_conn_pubsub |
+
+Full reference: [connectors/messaging.md](../connectors/messaging.md)
+
 > Reference: docs/vil/006-VIL-Developer_Guide-CLI-Deployment.md
