@@ -1,0 +1,22 @@
+[target.'cfg(all())']
+rustflags = [
+    # ── Security & Correctness ──
+    "-Wunsafe_op_in_unsafe_fn",         # require unsafe {} inside unsafe fn
+    "-Wrust_2024_compatibility",
+
+    # ── Clippy Lint Groups ──
+    "-Wclippy::correctness",
+    "-Wclippy::suspicious",
+    "-Wclippy::perf",
+
+    # ── Specific High-Value Lints ──
+    "-Wclippy::cast_possible_truncation",
+    "-Wclippy::cast_sign_loss",
+    "-Wclippy::integer_arithmetic",      # catch overflow-prone code
+    "-Wclippy::undocumented_unsafe_blocks",
+    "-Wclippy::panic_in_result_fn",
+    "-Wclippy::unwrap_used",             # warn (not deny) — too many existing
+    "-Wclippy::dbg_macro",
+    "-Wclippy::print_stderr",
+    "-Wclippy::string_to_string",
+]

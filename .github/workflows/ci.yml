@@ -11,7 +11,6 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: -Dwarnings
 
 jobs:
   check:
@@ -41,7 +40,7 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --workspace -- -D warnings
+      - run: cargo clippy --workspace --all-targets -- -D warnings
 
   fmt:
     name: Format
@@ -53,8 +52,9 @@ jobs:
           components: rustfmt
       - run: cargo fmt --all -- --check
 
+  # ── Security: Rust Advisory DB ──
   audit:
-    name: Security Audit
+    name: Security Audit (RustSec)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +62,18 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+  # ── Security: OSV Scanner (OpenSSF) ──
+  osv-scanner:
+    name: OSV Scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google/osv-scanner-action/osv-scanner-action@v1
+        with:
+          scan-args: |-
+            --lockfile=Cargo.lock
+
+  # ── License & Dependency Policy ──
   deny:
     name: Cargo Deny
     runs-on: ubuntu-latest
