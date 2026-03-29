@@ -1,23 +1,32 @@
 # cargo-deny configuration
 # https://embarkstudios.github.io/cargo-deny/
+#
+# Remaining advisories are all transitive deps locked by upstream.
+# Tracked in docs-dev/dependency-audit-2026-03-29.md
 
 [advisories]
 ignore = [
+    # --- via google-cloud-pubsub 0.25 (vil_mq_pubsub) ---
     "RUSTSEC-2025-0009",   # ring 0.16 — AES panic (overflow-checks=false mitigates)
-    "RUSTSEC-2025-0073",   # alloy-dyn-abi — DoS (transitive, blocked by serde pin)
-    "RUSTSEC-2024-0421",   # idna — punycode (transitive via opcua)
+    "RUSTSEC-2025-0010",   # ring 0.16 — unmaintained
     "RUSTSEC-2023-0071",   # rsa — Marvin attack (transitive)
-    "RUSTSEC-2025-0137",   # ruint — unsound (transitive via alloy)
-    "RUSTSEC-2026-0049",   # rustls-webpki (transitive)
-    "RUSTSEC-2026-0009",   # time (transitive)
-    "RUSTSEC-2025-0012",   # backoff — unmaintained (transitive via kube, neo4rs)
-    "RUSTSEC-2024-0388",   # derivative — unmaintained (transitive via opcua)
-    "RUSTSEC-2025-0057",   # fxhash — unmaintained (transitive)
-    "RUSTSEC-2024-0384",   # instant — unmaintained (transitive via parking_lot)
-    "RUSTSEC-2024-0436",   # paste — unmaintained (transitive)
-    "RUSTSEC-2025-0052",   # async-std — discontinued (transitive via pulsar)
-    "RUSTSEC-2025-0010",   # ring 0.16 — unmaintained (transitive via google-cloud)
-    "RUSTSEC-2025-0134",   # rustls-pemfile — unmaintained (transitive, widespread)
+    "RUSTSEC-2026-0049",   # rustls-webpki 0.100 (transitive)
+
+    # --- via opcua 0.12 (vil_opcua) ---
+    "RUSTSEC-2024-0421",   # idna 0.1 — punycode
+    "RUSTSEC-2024-0388",   # derivative — unmaintained
+
+    # --- via kube/neo4rs (vil_operator, vil_db_neo4j) ---
+    "RUSTSEC-2025-0012",   # backoff — unmaintained
+    "RUSTSEC-2024-0384",   # instant — unmaintained
+
+    # --- via wasmtime 24 (vil_capsule) ---
+    "RUSTSEC-2025-0057",   # fxhash — unmaintained
+    "RUSTSEC-2024-0436",   # paste — unmaintained
+
+    # --- widespread transitive ---
+    "RUSTSEC-2025-0134",   # rustls-pemfile — unmaintained (nats, kube, mqtt, etc)
+    "RUSTSEC-2026-0002",   # lru 0.12 — unsound (aws-sdk-s3 pins it)
 ]
 
 [licenses]
