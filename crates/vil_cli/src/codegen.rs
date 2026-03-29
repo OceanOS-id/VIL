@@ -1609,6 +1609,7 @@ pub fn generate_workflow_rust(manifest: &WorkflowManifest) -> String {
                     name = name
                 ));
                 code.push_str(&format!("        .port({})\n", port));
+                code.push_str("           .ensure_port_free()\n");
                 code.push_str(&format!("        .path(\"{}\")\n", path));
                 // Configure ports — use YAML names or defaults matching HttpSink internals
                 let has_ports = !node.ports.is_empty();

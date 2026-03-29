@@ -266,6 +266,36 @@ impl HttpSinkBuilder {
         self.port = port;
         self
     }
+
+    /// Ensure the port is free before binding — kills any stale process using it.
+    ///
+    /// ```ignore
+    /// HttpSinkBuilder::new("webhook")
+    ///     .port(3080)
+    ///     .ensure_port_free()
+    /// ```
+    #[doc(alias = "vil_keep")]
+    pub fn ensure_port_free(self) -> Self {
+        let port = self.port;
+        if let Ok(listener) = std::net::TcpListener::bind(("0.0.0.0", port)) {
+            drop(listener); // port is free
+        } else {
+            eprintln!("Port {} in use — releasing...", port);
+            #[cfg(unix)]
+            {
+                let _ = std::process::Command::new("sh")
+                    .args(["-c", &format!("kill $(lsof -ti:{}) 2>/dev/null", port)])
+                    .output();
+                std::thread::sleep(std::time::Duration::from_millis(500));
+            }
+            #[cfg(not(unix))]
+            {
+                eprintln!("  Please close the process on port {} manually.", port);
+            }
+        }
+        self
+    }
+
     #[doc(alias = "vil_keep")]
     pub fn path(mut self, path: impl Into<String>) -> Self {
         self.path = path.into();
