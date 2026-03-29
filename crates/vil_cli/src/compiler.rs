@@ -358,11 +358,16 @@ fn write_build_dir(name: &str, rust_src: &str, cargo_toml: &str) -> Result<PathB
 
     // Clean previous build
     if base.exists() {
-        // Only remove src/, keep target/ for incremental builds
+        // Remove src/ and Cargo.lock (force fresh dependency resolution)
+        // Keep target/ for incremental builds
         let src_dir = base.join("src");
         if src_dir.exists() {
             std::fs::remove_dir_all(&src_dir)
                 .map_err(|e| format!("Failed to clean src dir: {}", e))?;
+        }
+        let lock_file = base.join("Cargo.lock");
+        if lock_file.exists() {
+            let _ = std::fs::remove_file(&lock_file);
         }
     }
 
