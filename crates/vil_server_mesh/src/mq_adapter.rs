@@ -154,7 +154,7 @@ impl MqAdapter for NatsAdapter {
         Ok(())
     }
 
-    async fn publish(&self, msg: MqMessage) -> Result<(), Self::Error> {
+    async fn publish(&self, _msg: MqMessage) -> Result<(), Self::Error> {
         if !self.connected {
             return Err(MqError::NotConnected);
         }
