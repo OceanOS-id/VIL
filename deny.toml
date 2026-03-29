@@ -28,9 +28,7 @@ allow = [
     "MPL-2.0",
     "Apache-2.0 WITH LLVM-exception",
     "Unlicense",
-    "Unicode-3.0",
 ]
-unlicensed = "allow"
 confidence-threshold = 0.8
 
 [[licenses.clarify]]
