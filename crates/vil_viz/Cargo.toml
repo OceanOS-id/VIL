@@ -8,7 +8,6 @@ repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"
 documentation = "https://vastar.id/docs/vil"
 readme = "README.md"
-publish = false
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

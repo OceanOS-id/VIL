@@ -1311,13 +1311,24 @@ pub fn generate_cargo_toml(manifest: &WorkflowManifest, crate_prefix: &str) -> S
         manifest.name
     );
 
-    // Helper: only add dep if crate dir exists in crate_prefix
+    // Helper: add dep from local path if available, otherwise from crates.io
+    let use_local = std::path::Path::new(crate_prefix).exists();
     let add_dep = |s: &mut String, name: &str| {
         let path = format!("{}/{}", crate_prefix, name);
-        if std::path::Path::new(&path).join("Cargo.toml").exists() {
+        if use_local && std::path::Path::new(&path).join("Cargo.toml").exists() {
             s.push_str(&format!("{} = {{ path = \"{}\" }}\n", name, path));
+        } else {
+            s.push_str(&format!("{} = \"0.1\"\n", name));
         }
     };
+
+    // Workflow/SDK deps (needed by generate_workflow_rust imports)
+    if manifest.is_workflow() {
+        add_dep(&mut s, "vil_rt");
+        add_dep(&mut s, "vil_sdk");
+        add_dep(&mut s, "vil_macros");
+        add_dep(&mut s, "vil_new_http");
+    }
 
     // Core server deps
     add_dep(&mut s, "vil_server");
@@ -2107,14 +2118,16 @@ pub fn generate_workflow_cargo_toml(manifest: &WorkflowManifest, crate_prefix: &
         "[package]\nname = \"{}\"\nversion = \"0.1.0\"\nedition = \"2021\"\npublish = false\n\n[dependencies]\n",
         manifest.name
     );
-    // Helper: only add dep if the crate directory exists in crate_prefix
+    // Helper: add dep from local path if available, otherwise from crates.io
+    let use_local = std::path::Path::new(crate_prefix).exists();
     let add_dep = |s: &mut String, name: &str| {
         let path = format!("{}/{}", crate_prefix, name);
-        if std::path::Path::new(&path).join("Cargo.toml").exists() {
+        if use_local && std::path::Path::new(&path).join("Cargo.toml").exists() {
             s.push_str(&format!("{} = {{ path = \"{}\" }}\n", name, path));
             true
         } else {
-            false
+            s.push_str(&format!("{} = \"0.1\"\n", name));
+            true
         }
     };
 

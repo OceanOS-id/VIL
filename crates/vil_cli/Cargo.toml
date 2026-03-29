@@ -17,7 +17,7 @@ vil_types = { version = "0.1.0", path = "../vil_types" }
 vil_net = { version = "0.1.0", path = "../vil_net" }
 vil_sdk = { version = "0.1.0", path = "../vil_sdk" }
 vil_obs = { version = "0.1.0", path = "../vil_obs" }
-vil_viz = { version = "0.1.0", path = "../vil_viz" }
+vil_viz = { version = "0.1.2", path = "../vil_viz" }
 
 clap = { version = "4.4", features = ["derive"] }
 tiny_http = "0.12"

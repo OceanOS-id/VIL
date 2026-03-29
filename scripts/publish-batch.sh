@@ -14,7 +14,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 
 BATCH=10
-SKIP="vil_viz vil_script_js vil_script_lua"
+SKIP="vil_script_js vil_script_lua"
 PUBLISHED=0
 RATE_LIMITED=0
 FAILED=0
@@ -118,8 +118,9 @@ CRATES=(
     # L-extra: misc (some have server_core dep)
     vil_operator vil_lsp vil_grpc vil_graphql
 
-    # L-last: viz + CLI (vil_viz is publish=false — skip via SKIP list)
-    vil_viz vil_script_lua vil_script_js
+    # L-last: viz + CLI
+    vil_viz
+    vil_script_lua vil_script_js  # still publish=false — skipped
     vil_cli
 )
 
