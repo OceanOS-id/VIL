@@ -382,9 +382,7 @@ vil_otel          = { version = "0.1.0", path = "crates/vil_otel" }
 vil_edge_deploy   = { version = "0.1.0", path = "crates/vil_edge_deploy" }
 
 # Common dependencies
-# Pin to =1.0.218 — alloy-consensus 0.15.x uses serde::__private which was
-# renamed to serde::__private{PATCH} in serde 1.0.219+.
-serde              = { version = "=1.0.218", features = ["derive"] }
+serde              = { version = "1.0", features = ["derive"] }
 serde_json         = "1.0"
 serde_yaml         = "0.9"
 dashmap            = "5.5"
