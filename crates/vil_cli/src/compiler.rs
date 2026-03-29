@@ -165,6 +165,12 @@ pub fn run_compile(config: CompileConfig) -> Result<(), String> {
 
     println!("\n{} Compiled: {}", "OK".green().bold(), binary.display());
 
+    // Show run instruction
+    println!();
+    println!("  {}", "Run:".green().bold());
+    println!("    {}", binary.display());
+    println!();
+
     // Show usage hints
     if manifest.is_workflow() {
         // Find first sink port for curl example
