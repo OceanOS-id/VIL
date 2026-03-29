@@ -2,9 +2,6 @@
 # https://embarkstudios.github.io/cargo-deny/
 
 [advisories]
-vulnerability = "deny"
-unmaintained = "allow"
-yanked = "allow"
 ignore = [
     "RUSTSEC-2025-0009",   # ring 0.16 — AES panic (overflow-checks=false mitigates)
     "RUSTSEC-2025-0073",   # alloy-dyn-abi — DoS (transitive, blocked by serde pin)
@@ -16,7 +13,6 @@ ignore = [
 ]
 
 [licenses]
-unlicensed = "deny"
 allow = [
     "MIT",
     "Apache-2.0",
@@ -31,7 +27,6 @@ allow = [
     "CC0-1.0",
     "MPL-2.0",
 ]
-copyleft = "deny"
 confidence-threshold = 0.8
 
 [[licenses.clarify]]
@@ -45,11 +40,9 @@ expression = "(Apache-2.0 OR MIT) AND BSD-3-Clause"
 license-files = [{ path = "COPYRIGHT", hash = 0x39f8ad31 }]
 
 [bans]
-multiple-versions = "warn"
-wildcards = "allow"
+multiple-versions = "allow"
 
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-allow-git = []
