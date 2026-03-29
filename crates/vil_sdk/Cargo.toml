@@ -2,7 +2,7 @@
 name = "vil_sdk"
 description = "VIL Official SDK - Public Facade for 3rd Party Developers"
 edition.workspace = true
-version.workspace = true
+version = "0.1.3"
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
@@ -15,7 +15,7 @@ readme = "README.md"
 # We now depend on vil_engine which is built as a staticlib + rlib facade.
 vil_engine = { version = "0.1.0", path = "../vil_engine" }
 vil_types = { version = "0.1.0", path = "../vil_types" }
-vil_new_http = { version = "0.1.0", path = "../vil_new_http" }
+vil_new_http = { version = "0.1.4", path = "../vil_new_http" }
 vil_macros = { version = "0.1.0", path = "../vil_macros" }
 vil_ir = { version = "0.1.0", path = "../vil_ir" }
 vil_validate = { version = "0.1.0", path = "../vil_validate" }
