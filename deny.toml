@@ -2,10 +2,9 @@
 # https://embarkstudios.github.io/cargo-deny/
 
 [advisories]
-vulnerability = "warn"
-unmaintained = "warn"
-yanked = "warn"
-notice = "warn"
+vulnerability = "deny"
+unmaintained = "allow"
+yanked = "allow"
 ignore = [
     "RUSTSEC-2025-0009",   # ring 0.16 — AES panic (overflow-checks=false mitigates)
     "RUSTSEC-2025-0073",   # alloy-dyn-abi — DoS (transitive, blocked by serde pin)
