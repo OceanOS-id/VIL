@@ -15,6 +15,9 @@ ignore = [
     "RUSTSEC-2025-0057",   # fxhash — unmaintained (transitive)
     "RUSTSEC-2024-0384",   # instant — unmaintained (transitive via parking_lot)
     "RUSTSEC-2024-0436",   # paste — unmaintained (transitive)
+    "RUSTSEC-2025-0052",   # async-std — discontinued (transitive via pulsar)
+    "RUSTSEC-2025-0010",   # ring 0.16 — unmaintained (transitive via google-cloud)
+    "RUSTSEC-2025-0134",   # rustls-pemfile — unmaintained (transitive, widespread)
 ]
 
 [licenses]
