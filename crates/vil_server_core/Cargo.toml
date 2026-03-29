@@ -1,6 +1,6 @@
 [package]
 name = "vil_server_core"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 description = "VIL Server Core — Axum-based HTTP engine with zero-copy SHM bridge"
 repository = "https://github.com/OceanOS-id/VIL"

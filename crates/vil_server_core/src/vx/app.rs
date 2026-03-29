@@ -235,6 +235,28 @@ impl VilApp {
         self
     }
 
+    /// Ensure the port is free before starting — kills any stale process.
+    ///
+    /// ```ignore
+    /// VilApp::new("my-app")
+    ///     .port(3080)
+    ///     .ensure_port_free()
+    /// ```
+    pub fn ensure_port_free(self) -> Self {
+        let port = self.ingress.port;
+        if std::net::TcpListener::bind(("0.0.0.0", port)).is_err() {
+            eprintln!("Port {} in use — releasing...", port);
+            #[cfg(unix)]
+            {
+                let _ = std::process::Command::new("sh")
+                    .args(["-c", &format!("kill $(lsof -ti:{}) 2>/dev/null", port)])
+                    .output();
+                std::thread::sleep(std::time::Duration::from_millis(500));
+            }
+        }
+        self
+    }
+
     /// Set a separate metrics/health port.
     pub fn metrics_port(mut self, port: u16) -> Self {
         self.ingress.metrics_port = Some(port);

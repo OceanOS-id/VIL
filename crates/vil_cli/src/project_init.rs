@@ -1944,6 +1944,7 @@ async fn main() {{
 
     let app = VilApp::new("{name}")
         .port({port})
+        .ensure_port_free()
         .observer(true)
         .service(svc);
 
