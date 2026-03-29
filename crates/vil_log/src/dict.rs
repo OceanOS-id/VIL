@@ -3,15 +3,20 @@
 // =============================================================================
 //
 // Maps (category: u8, hash: u32) → String for reverse lookup.
-// Uses fxhash::hash64 internally for collision detection, truncated to u32
+// Uses rustc-hash (FxHasher) internally for collision detection, truncated to u32
 // for the wire format.
 // Thread-safe via std::sync::Mutex (simple, v0.1).
 // =============================================================================
 
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::sync::Mutex;
 
-use fxhash::hash64;
+fn hash64(bytes: &[u8]) -> u64 {
+    let mut hasher = rustc_hash::FxHasher::default();
+    bytes.hash(&mut hasher);
+    hasher.finish()
+}
 
 /// Dictionary entry storing the original string and full 64-bit hash
 /// for collision detection.

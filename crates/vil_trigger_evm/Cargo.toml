@@ -1,6 +1,6 @@
 [package]
 name = "vil_trigger_evm"
-description = "VIL Phase 3 — Blockchain EVM log event trigger via Ethereum JSON-RPC (alloy)"
+description = "VIL Phase 3 — Blockchain EVM log event trigger via Ethereum JSON-RPC"
 edition.workspace = true
 version.workspace = true
 license.workspace = true
@@ -16,8 +16,8 @@ tracing = { workspace = true }
 vil_connector_macros = { workspace = true }
 vil_trigger_core = { version = "0.1.0", path = "../vil_trigger_core" }
 tokio            = { workspace = true }
-# alloy 0.15 — cannot upgrade to 1.x until serde pin (=1.0.218) is removed.
-# ring 0.16.20 advisory (RUSTSEC-2025-0009) is acknowledged — only affects overflow-checked builds.
-alloy            = { version = "0.15", features = ["providers", "transports", "rpc-types", "pubsub", "provider-ws"] }
+tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
 futures-util     = { workspace = true }
 async-trait      = { workspace = true }
+serde            = { workspace = true }
+serde_json       = { workspace = true }

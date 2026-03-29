@@ -2,7 +2,8 @@
 // vil_trigger_evm::source — EvmTrigger
 // =============================================================================
 //
-// Ethereum JSON-RPC log subscription trigger using alloy.
+// Ethereum JSON-RPC log subscription trigger via WebSocket (eth_subscribe).
+// Uses tokio-tungstenite for WS + manual JSON-RPC. No alloy dependency.
 //
 // On every matching contract log:
 //   1. Times the subscription poll.
@@ -17,13 +18,8 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use futures_util::StreamExt;
-
-use alloy::network::Ethereum;
-use alloy::primitives::Address;
-use alloy::providers::{Provider, ProviderBuilder};
-use alloy::rpc::types::Filter;
-use alloy::transports::ws::WsConnect;
+use futures_util::{SinkExt, StreamExt};
+use tokio_tungstenite::tungstenite::Message;
 
 use vil_log::dict::register_str;
 use vil_log::{mq_log, types::MqPayload};
@@ -76,41 +72,49 @@ impl EvmTrigger {
         let sig_hash = self.sig_hash;
         let kind_hash = self.kind_hash;
 
-        // Parse contract address.
-        let addr: Address =
-            self.config
-                .contract_address
-                .parse()
-                .map_err(|_| EvmFault::InvalidAddress {
-                    addr_hash: contract_hash,
-                })?;
+        // Validate contract address format (0x + 40 hex chars)
+        let addr = &self.config.contract_address;
+        if !addr.starts_with("0x") || addr.len() != 42 {
+            return Err(EvmFault::InvalidAddress {
+                addr_hash: contract_hash,
+            });
+        }
 
-        // Connect via WebSocket using the pubsub-capable RootProvider.
-        let ws = WsConnect::new(self.config.rpc_url.clone());
-        let provider = ProviderBuilder::new()
-            .network::<Ethereum>()
-            .connect_ws(ws)
+        // Connect via WebSocket
+        let (mut ws, _) = tokio_tungstenite::connect_async(&self.config.rpc_url)
             .await
             .map_err(|_| EvmFault::ConnectionFailed {
                 url_hash,
                 reason_code: 1,
             })?;
 
-        // Build log filter for the contract address.
-        let filter = Filter::new().address(addr);
+        // Send eth_subscribe for logs
+        let subscribe_req = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "eth_subscribe",
+            "params": ["logs", {"address": addr}]
+        });
+        ws.send(Message::Text(subscribe_req.to_string()))
+            .await
+            .map_err(|_| EvmFault::SubscribeFailed {
+                sig_hash,
+                rpc_code: -1,
+            })?;
 
-        // Subscribe to matching logs (GetSubscription implements IntoFuture).
-        let sub =
-            provider
-                .subscribe_logs(&filter)
-                .await
-                .map_err(|_| EvmFault::SubscribeFailed {
-                    sig_hash,
-                    rpc_code: -1,
-                })?;
+        // Read subscription confirmation
+        let confirm = ws.next().await.ok_or(EvmFault::StreamClosed { url_hash })?;
+        let confirm = confirm.map_err(|_| EvmFault::StreamClosed { url_hash })?;
+        let confirm_json: serde_json::Value =
+            serde_json::from_str(&confirm.to_string()).unwrap_or_default();
+        if confirm_json.get("error").is_some() {
+            return Err(EvmFault::SubscribeFailed {
+                sig_hash,
+                rpc_code: confirm_json["error"]["code"].as_i64().unwrap_or(-1) as i32,
+            });
+        }
 
-        let mut log_stream = sub.into_stream();
-
+        // Listen for log events
         loop {
             if self.paused.load(Ordering::Relaxed) {
                 tokio::time::sleep(std::time::Duration::from_millis(50)).await;
@@ -119,14 +123,18 @@ impl EvmTrigger {
 
             let start = std::time::Instant::now();
 
-            match log_stream.next().await {
+            match ws.next().await {
                 None => {
                     return Err(EvmFault::StreamClosed { url_hash });
                 }
-                Some(log) => {
+                Some(Err(_)) => {
+                    return Err(EvmFault::StreamClosed { url_hash });
+                }
+                Some(Ok(msg)) => {
                     let elapsed = start.elapsed();
+                    let text = msg.to_string();
+                    let data_len = text.len() as u32;
                     let seq = self.sequence.fetch_add(1, Ordering::Relaxed);
-                    let data_len = log.data().data.len() as u32;
 
                     // Emit mq_log! on every matching EVM log.
                     mq_log!(

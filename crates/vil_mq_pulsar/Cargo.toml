@@ -15,7 +15,7 @@ vil_log              = { workspace = true }
 tracing = { workspace = true }
 vil_connector_macros = { workspace = true }
 tokio       = { version = "1", features = ["full"] }
-pulsar      = "6.3"
+pulsar      = { version = "6.7", default-features = false, features = ["tokio-runtime", "compression"] }
 async-trait = "0.1"
 serde       = { version = "1.0", features = ["derive"] }
 bytes       = "1.0"
