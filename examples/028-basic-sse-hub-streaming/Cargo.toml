@@ -2,6 +2,7 @@
 name = "vil-basic-sse-hub-streaming"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 vil_server = { path = "../../crates/vil_server" }

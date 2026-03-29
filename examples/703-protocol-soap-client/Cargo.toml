@@ -1,6 +1,7 @@
 [package]
 name = "example-703-protocol-soap-client"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

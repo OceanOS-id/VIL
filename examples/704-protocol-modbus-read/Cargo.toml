@@ -1,6 +1,7 @@
 [package]
 name = "example-704-protocol-modbus-read"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

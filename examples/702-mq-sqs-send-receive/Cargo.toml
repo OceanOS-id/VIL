@@ -1,6 +1,7 @@
 [package]
 name = "example-702-mq-sqs-send-receive"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

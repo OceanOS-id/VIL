@@ -1,6 +1,7 @@
 [package]
 name = "example-603-db-clickhouse-batch"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

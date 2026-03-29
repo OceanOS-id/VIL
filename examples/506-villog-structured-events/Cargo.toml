@@ -1,6 +1,7 @@
 [package]
 name = "example-506-villog-structured-events"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

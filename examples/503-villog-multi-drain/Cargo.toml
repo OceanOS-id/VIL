@@ -1,6 +1,7 @@
 [package]
 name = "example-503-villog-multi-drain"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

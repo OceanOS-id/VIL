@@ -1,6 +1,7 @@
 [package]
 name = "example-802-trigger-fs-watcher"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

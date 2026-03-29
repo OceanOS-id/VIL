@@ -1,6 +1,7 @@
 [package]
 name = "example-039-basic-observer-dashboard"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

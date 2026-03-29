@@ -1,6 +1,7 @@
 [package]
 name = "example-502-villog-file-rolling"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

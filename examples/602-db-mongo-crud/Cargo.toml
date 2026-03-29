@@ -1,6 +1,7 @@
 [package]
 name = "example-602-db-mongo-crud"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

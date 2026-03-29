@@ -1,6 +1,7 @@
 [package]
 name = "example-504-villog-benchmark-comparison"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

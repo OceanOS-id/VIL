@@ -1,6 +1,7 @@
 [package]
 name = "example-601-storage-s3-basic"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 

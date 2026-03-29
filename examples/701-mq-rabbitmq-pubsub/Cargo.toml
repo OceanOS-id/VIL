@@ -1,6 +1,7 @@
 [package]
 name = "example-701-mq-rabbitmq-pubsub"
 edition.workspace = true
+license.workspace = true
 version.workspace = true
 publish = false
 
