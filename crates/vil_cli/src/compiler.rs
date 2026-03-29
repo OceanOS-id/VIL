@@ -168,7 +168,7 @@ pub fn run_compile(config: CompileConfig) -> Result<(), String> {
     // Show run instruction
     println!();
     println!("  {}", "Run:".green().bold());
-    println!("    {}", binary.display());
+    println!("    {} &", binary.display());
     println!();
 
     // Show usage hints
