@@ -1,6 +1,6 @@
 [package]
 name = "vil_llm_proxy"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL LLM Proxy — streaming proxy with routing, caching, rate limiting"

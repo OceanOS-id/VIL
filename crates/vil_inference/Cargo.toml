@@ -1,6 +1,6 @@
 [package]
 name = "vil_inference"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "VIL Inference Server — model pool, dynamic batching, hot-swap"
 repository = "https://github.com/OceanOS-id/VIL"

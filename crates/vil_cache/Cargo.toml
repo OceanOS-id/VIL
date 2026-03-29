@@ -1,6 +1,6 @@
 [package]
 name = "vil_cache"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "VIL Cache Abstraction — SHM + Redis backends, separated from DB semantic"
 repository = "https://github.com/OceanOS-id/VIL"

@@ -1,6 +1,6 @@
 [package]
 name = "vil_server_db"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "VIL Server DB — Database connection pooling and transaction support"
 repository = "https://github.com/OceanOS-id/VIL"

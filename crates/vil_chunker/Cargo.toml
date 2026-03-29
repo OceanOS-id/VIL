@@ -1,6 +1,6 @@
 [package]
 name = "vil_chunker"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL Advanced Semantic Chunker — SIMD-optimized, zero-alloc text chunking with sentence-boundary, sliding-window, code-aware, and table strategies"

@@ -1,6 +1,6 @@
 [package]
 name = "vil_audio"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL Audio Transcription — infrastructure and traits for audio-to-text (I03)"

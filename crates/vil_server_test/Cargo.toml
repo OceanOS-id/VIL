@@ -1,6 +1,6 @@
 [package]
 name = "vil_server_test"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "VIL Server Test — Integration test harness and benchmark suite"
 repository = "https://github.com/OceanOS-id/VIL"

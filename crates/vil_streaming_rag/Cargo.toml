@@ -1,6 +1,6 @@
 [package]
 name = "vil_streaming_rag"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL Streaming RAG (D17) — chunk, embed, and index documents as they stream in real-time"

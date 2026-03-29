@@ -1,6 +1,6 @@
 [package]
 name = "vil_grpc"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "VIL gRPC — tonic-based gRPC server for vil pipeline and vil-server"
 repository = "https://github.com/OceanOS-id/VIL"

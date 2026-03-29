@@ -1,6 +1,6 @@
 [package]
 name = "vil_server_auth"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "VIL Server Auth — JWT validation, rate limiting, security middleware"
 repository = "https://github.com/OceanOS-id/VIL"
