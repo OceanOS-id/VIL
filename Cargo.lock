@@ -668,6 +668,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-recursion"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b43422f69d8ff38f95f1b2bb76517c91589a924d1559a0e935d7c8ce0274c11"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "async-stream"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -760,8 +771,8 @@ dependencies = [
  "aws-sdk-ssooidc",
  "aws-sdk-sts",
  "aws-smithy-async",
- "aws-smithy-http 0.63.6",
- "aws-smithy-json 0.62.5",
+ "aws-smithy-http",
+ "aws-smithy-json",
  "aws-smithy-runtime",
  "aws-smithy-runtime-api",
  "aws-smithy-types",
@@ -821,8 +832,7 @@ dependencies = [
  "aws-credential-types",
  "aws-sigv4",
  "aws-smithy-async",
- "aws-smithy-eventstream",
- "aws-smithy-http 0.63.6",
+ "aws-smithy-http",
  "aws-smithy-runtime",
  "aws-smithy-runtime-api",
  "aws-smithy-types",
@@ -830,9 +840,7 @@ dependencies = [
  "bytes",
  "bytes-utils",
  "fastrand 2.3.0",
- "http 0.2.12",
  "http 1.4.0",
- "http-body 0.4.6",
  "http-body 1.0.1",
  "percent-encoding 2.3.2",
  "pin-project-lite",
@@ -849,8 +857,8 @@ dependencies = [
  "aws-credential-types",
  "aws-runtime",
  "aws-smithy-async",
- "aws-smithy-http 0.63.6",
- "aws-smithy-json 0.62.5",
+ "aws-smithy-http",
+ "aws-smithy-json",
  "aws-smithy-observability",
  "aws-smithy-runtime",
  "aws-smithy-runtime-api",
@@ -865,40 +873,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aws-sdk-s3"
-version = "1.119.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d65fddc3844f902dfe1864acb8494db5f9342015ee3ab7890270d36fbd2e01c"
-dependencies = [
- "aws-credential-types",
- "aws-runtime",
- "aws-sigv4",
- "aws-smithy-async",
- "aws-smithy-checksums",
- "aws-smithy-eventstream",
- "aws-smithy-http 0.62.6",
- "aws-smithy-json 0.61.9",
- "aws-smithy-runtime",
- "aws-smithy-runtime-api",
- "aws-smithy-types",
- "aws-smithy-xml",
- "aws-types",
- "bytes",
- "fastrand 2.3.0",
- "hex",
- "hmac",
- "http 0.2.12",
- "http 1.4.0",
- "http-body 0.4.6",
- "lru",
- "percent-encoding 2.3.2",
- "regex-lite",
- "sha2",
- "tracing",
- "url 2.5.8",
-]
-
-[[package]]
 name = "aws-sdk-sns"
 version = "1.98.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -907,8 +881,8 @@ dependencies = [
  "aws-credential-types",
  "aws-runtime",
  "aws-smithy-async",
- "aws-smithy-http 0.63.6",
- "aws-smithy-json 0.62.5",
+ "aws-smithy-http",
+ "aws-smithy-json",
  "aws-smithy-observability",
  "aws-smithy-query",
  "aws-smithy-runtime",
@@ -932,8 +906,8 @@ dependencies = [
  "aws-credential-types",
  "aws-runtime",
  "aws-smithy-async",
- "aws-smithy-http 0.63.6",
- "aws-smithy-json 0.62.5",
+ "aws-smithy-http",
+ "aws-smithy-json",
  "aws-smithy-observability",
  "aws-smithy-runtime",
  "aws-smithy-runtime-api",
@@ -956,8 +930,8 @@ dependencies = [
  "aws-credential-types",
  "aws-runtime",
  "aws-smithy-async",
- "aws-smithy-http 0.63.6",
- "aws-smithy-json 0.62.5",
+ "aws-smithy-http",
+ "aws-smithy-json",
  "aws-smithy-observability",
  "aws-smithy-runtime",
  "aws-smithy-runtime-api",
@@ -980,8 +954,8 @@ dependencies = [
  "aws-credential-types",
  "aws-runtime",
  "aws-smithy-async",
- "aws-smithy-http 0.63.6",
- "aws-smithy-json 0.62.5",
+ "aws-smithy-http",
+ "aws-smithy-json",
  "aws-smithy-observability",
  "aws-smithy-runtime",
  "aws-smithy-runtime-api",
@@ -1004,8 +978,8 @@ dependencies = [
  "aws-credential-types",
  "aws-runtime",
  "aws-smithy-async",
- "aws-smithy-http 0.63.6",
- "aws-smithy-json 0.62.5",
+ "aws-smithy-http",
+ "aws-smithy-json",
  "aws-smithy-observability",
  "aws-smithy-query",
  "aws-smithy-runtime",
@@ -1027,25 +1001,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0b660013a6683ab23797778e21f1f854744fdf05f68204b4cca4c8c04b5d1f4"
 dependencies = [
  "aws-credential-types",
- "aws-smithy-eventstream",
- "aws-smithy-http 0.63.6",
+ "aws-smithy-http",
  "aws-smithy-runtime-api",
  "aws-smithy-types",
  "bytes",
- "crypto-bigint 0.5.5",
  "form_urlencoded",
  "hex",
  "hmac",
  "http 0.2.12",
  "http 1.4.0",
- "p256",
  "percent-encoding 2.3.2",
- "ring 0.17.14",
  "sha2",
- "subtle",
  "time",
  "tracing",
- "zeroize",
 ]
 
 [[package]]
@@ -1057,59 +1025,6 @@ dependencies = [
  "futures-util",
  "pin-project-lite",
  "tokio",
-]
-
-[[package]]
-name = "aws-smithy-checksums"
-version = "0.63.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87294a084b43d649d967efe58aa1f9e0adc260e13a6938eb904c0ae9b45824ae"
-dependencies = [
- "aws-smithy-http 0.62.6",
- "aws-smithy-types",
- "bytes",
- "crc-fast",
- "hex",
- "http 0.2.12",
- "http-body 0.4.6",
- "md-5",
- "pin-project-lite",
- "sha1",
- "sha2",
- "tracing",
-]
-
-[[package]]
-name = "aws-smithy-eventstream"
-version = "0.60.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "faf09d74e5e32f76b8762da505a3cd59303e367a664ca67295387baa8c1d7548"
-dependencies = [
- "aws-smithy-types",
- "bytes",
- "crc32fast",
-]
-
-[[package]]
-name = "aws-smithy-http"
-version = "0.62.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "826141069295752372f8203c17f28e30c464d22899a43a0c9fd9c458d469c88b"
-dependencies = [
- "aws-smithy-eventstream",
- "aws-smithy-runtime-api",
- "aws-smithy-types",
- "bytes",
- "bytes-utils",
- "futures-core",
- "futures-util",
- "http 0.2.12",
- "http 1.4.0",
- "http-body 0.4.6",
- "percent-encoding 2.3.2",
- "pin-project-lite",
- "pin-utils",
- "tracing",
 ]
 
 [[package]]
@@ -1165,15 +1080,6 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-json"
-version = "0.61.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49fa1213db31ac95288d981476f78d05d9cbb0353d22cdf3472cc05bb02f6551"
-dependencies = [
- "aws-smithy-types",
-]
-
-[[package]]
-name = "aws-smithy-json"
 version = "0.62.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9648b0bb82a2eedd844052c6ad2a1a822d1f8e3adee5fbf668366717e428856a"
@@ -1207,7 +1113,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "028999056d2d2fd58a697232f9eec4a643cf73a71cf327690a7edad1d2af2110"
 dependencies = [
  "aws-smithy-async",
- "aws-smithy-http 0.63.6",
+ "aws-smithy-http",
  "aws-smithy-http-client",
  "aws-smithy-observability",
  "aws-smithy-runtime-api",
@@ -1569,12 +1475,6 @@ checksum = "cffb0e931875b666fc4fcb20fee52e9bbd1ef836fd9e9e04ec21555f9f85f7ef"
 dependencies = [
  "fastrand 2.3.0",
 ]
-
-[[package]]
-name = "base16ct"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "349a06037c7bf932dd7e7d1f653678b2038b9ad46a74102f1fc7bd7872678cce"
 
 [[package]]
 name = "base64"
@@ -2258,8 +2158,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b77c319abfd5219629c45c34c89ba945ed3c5e49fcde9d16b6c3885f118a730"
 dependencies = [
  "const-oid",
- "der 0.7.10",
- "spki 0.7.3",
+ "der",
+ "spki",
  "x509-cert",
 ]
 
@@ -2285,7 +2185,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "117725a109d387c937a1533ce01b450cbde6b88abceea8473c4d7a85853cda3c"
 dependencies = [
  "lazy_static",
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2560,19 +2460,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19d374276b40fb8bbdee95aef7c7fa6b5316ec764510eb64b8dd0e2ed0d7e7f5"
 
 [[package]]
-name = "crc-fast"
-version = "1.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ddc2d09feefeee8bd78101665bd8645637828fa9317f9f292496dbbd8c65ff3"
-dependencies = [
- "crc",
- "digest",
- "rand 0.9.2",
- "regex",
- "rustversion",
-]
-
-[[package]]
 name = "crc32fast"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2682,28 +2569,6 @@ name = "crunchy"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
-
-[[package]]
-name = "crypto-bigint"
-version = "0.4.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef2b4b23cddf68b89b8f8069890e8c270d54e2d5fe1b143820234805e4cb17ef"
-dependencies = [
- "generic-array",
- "rand_core 0.6.4",
- "subtle",
- "zeroize",
-]
-
-[[package]]
-name = "crypto-bigint"
-version = "0.5.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0dc92fb57ca44df6db8059111ab3af99a63d5d0f8375d9972e319a379c6bab76"
-dependencies = [
- "rand_core 0.6.4",
- "subtle",
-]
 
 [[package]]
 name = "crypto-common"
@@ -2911,16 +2776,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "der"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1a467a65c5e759bce6e65eaf91cc29f466cdc57cb65777bd646872a8a1fd4de"
-dependencies = [
- "const-oid",
- "zeroize",
 ]
 
 [[package]]
@@ -3177,24 +3032,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 
 [[package]]
-name = "ecdsa"
-version = "0.14.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413301934810f597c1d19ca71c8710e99a3f1ba28a0d2ebc01551a2daeea3c5c"
-dependencies = [
- "der 0.6.1",
- "elliptic-curve",
- "rfc6979",
- "signature 1.6.4",
-]
-
-[[package]]
 name = "ed25519"
 version = "2.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
 dependencies = [
- "signature 2.2.0",
+ "signature",
 ]
 
 [[package]]
@@ -3206,7 +3049,7 @@ dependencies = [
  "curve25519-dalek",
  "ed25519",
  "sha2",
- "signature 2.2.0",
+ "signature",
  "subtle",
 ]
 
@@ -3250,26 +3093,6 @@ dependencies = [
  "tokio",
  "url 2.5.8",
  "void",
-]
-
-[[package]]
-name = "elliptic-curve"
-version = "0.12.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7bb888ab5300a19b8e5bceef25ac745ad065f3c9f7efc6de1b91958110891d3"
-dependencies = [
- "base16ct",
- "crypto-bigint 0.4.9",
- "der 0.6.1",
- "digest",
- "ff",
- "generic-array",
- "group",
- "pkcs8 0.9.0",
- "rand_core 0.6.4",
- "sec1",
- "subtle",
- "zeroize",
 ]
 
 [[package]]
@@ -3323,6 +3146,29 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "env_filter"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32e90c2accc4b07a8456ea0debdc2e7587bdd890680d71173a15d4ae604f6eef"
+dependencies = [
+ "log",
+ "regex",
+]
+
+[[package]]
+name = "env_logger"
+version = "0.11.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0621c04f2196ac3f488dd583365b9c09be011a4ab8b9f37248ffcc8f6198b56a"
+dependencies = [
+ "anstream",
+ "anstyle",
+ "env_filter",
+ "jiff",
+ "log",
 ]
 
 [[package]]
@@ -3392,7 +3238,7 @@ dependencies = [
 
 [[package]]
 name = "example-039-basic-observer-dashboard"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -3404,7 +3250,7 @@ dependencies = [
 
 [[package]]
 name = "example-501-villog-stdout-dev"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3415,7 +3261,7 @@ dependencies = [
 
 [[package]]
 name = "example-502-villog-file-rolling"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3426,7 +3272,7 @@ dependencies = [
 
 [[package]]
 name = "example-503-villog-multi-drain"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3437,7 +3283,7 @@ dependencies = [
 
 [[package]]
 name = "example-504-villog-benchmark-comparison"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3450,7 +3296,7 @@ dependencies = [
 
 [[package]]
 name = "example-505-villog-tracing-bridge"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3462,7 +3308,7 @@ dependencies = [
 
 [[package]]
 name = "example-506-villog-structured-events"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3473,7 +3319,7 @@ dependencies = [
 
 [[package]]
 name = "example-507-villog-bench-file-drain"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3487,7 +3333,7 @@ dependencies = [
 
 [[package]]
 name = "example-508-villog-bench-multithread"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3500,7 +3346,7 @@ dependencies = [
 
 [[package]]
 name = "example-509-villog-phase1-integration"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "rmp-serde",
@@ -3512,7 +3358,7 @@ dependencies = [
 
 [[package]]
 name = "example-601-storage-s3-basic"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "tokio",
@@ -3523,7 +3369,7 @@ dependencies = [
 
 [[package]]
 name = "example-602-db-mongo-crud"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bson",
  "serde",
@@ -3536,7 +3382,7 @@ dependencies = [
 
 [[package]]
 name = "example-603-db-clickhouse-batch"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "clickhouse",
  "serde",
@@ -3548,7 +3394,7 @@ dependencies = [
 
 [[package]]
 name = "example-604-db-elastic-search"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde_json",
  "tokio",
@@ -3559,7 +3405,7 @@ dependencies = [
 
 [[package]]
 name = "example-701-mq-rabbitmq-pubsub"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "tokio",
  "tracing",
@@ -3569,7 +3415,7 @@ dependencies = [
 
 [[package]]
 name = "example-702-mq-sqs-send-receive"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "tokio",
  "tracing",
@@ -3579,7 +3425,7 @@ dependencies = [
 
 [[package]]
 name = "example-703-protocol-soap-client"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "tokio",
  "tracing",
@@ -3589,7 +3435,7 @@ dependencies = [
 
 [[package]]
 name = "example-704-protocol-modbus-read"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "tokio",
  "tracing",
@@ -3599,7 +3445,7 @@ dependencies = [
 
 [[package]]
 name = "example-801-trigger-cron-basic"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "tokio",
  "tracing",
@@ -3610,7 +3456,7 @@ dependencies = [
 
 [[package]]
 name = "example-802-trigger-fs-watcher"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "tokio",
  "tracing",
@@ -3621,7 +3467,7 @@ dependencies = [
 
 [[package]]
 name = "example-803-trigger-webhook-receiver"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "reqwest 0.12.28",
  "serde_json",
@@ -3634,7 +3480,7 @@ dependencies = [
 
 [[package]]
 name = "example-804-trigger-cdc-postgres"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "tokio",
  "tracing",
@@ -3715,16 +3561,6 @@ dependencies = [
  "cfg-if",
  "rustix 1.1.4",
  "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "ff"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d013fc25338cc558c5c2cfbad646908fb23591e2404481826742b651c9af7160"
-dependencies = [
- "rand_core 0.6.4",
- "subtle",
 ]
 
 [[package]]
@@ -4320,7 +4156,7 @@ dependencies = [
  "hex",
  "once_cell",
  "percent-encoding 2.3.2",
- "pkcs8 0.10.2",
+ "pkcs8",
  "regex",
  "reqwest 0.12.28",
  "reqwest-middleware",
@@ -4342,17 +4178,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f49c12ba8b21d128a2ce8585955246977fbce4415f680ebf9199b6f9d6d725f"
 dependencies = [
  "async-trait",
-]
-
-[[package]]
-name = "group"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dfbfb3a6cfbd390d5c9564ab283a0349b9b9fcd46a706c1eb10e0db70bfbac7"
-dependencies = [
- "ff",
- "rand_core 0.6.4",
- "subtle",
 ]
 
 [[package]]
@@ -4899,7 +4724,7 @@ dependencies = [
  "libc",
  "percent-encoding 2.3.2",
  "pin-project-lite",
- "socket2 0.5.10",
+ "socket2 0.6.3",
  "system-configuration 0.7.0",
  "tokio",
  "tower-service",
@@ -5456,6 +5281,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "jiff"
+version = "0.2.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a3546dc96b6d42c5f24902af9e2538e82e39ad350b0c766eb3fbf2d8f3d8359"
+dependencies = [
+ "jiff-static",
+ "log",
+ "portable-atomic",
+ "portable-atomic-util",
+ "serde_core",
+]
+
+[[package]]
+name = "jiff-static"
+version = "0.2.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a8c8b344124222efd714b73bb41f8b5120b27a7cc1c75593a6ff768d9d05aa4"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "jobserver"
 version = "0.1.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5821,15 +5670,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
-name = "lru"
-version = "0.12.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "234cf4f4a04dc1f57e24b96cc0cd600cf2af460d4161ac5ecdd0af8e1f3b2a38"
-dependencies = [
- "hashbrown 0.15.5",
-]
-
-[[package]]
 name = "lru-slab"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5977,6 +5817,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "md5"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "490cc448043f947bae3cbee9c203358d62dbee0db12107a74be5c30ccfd09771"
+
+[[package]]
 name = "memchr"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6030,6 +5876,46 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
+name = "minio"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3824101357fa899d01c729e4a245776e20a03f2f6645979e86b9d3d5d9c42741"
+dependencies = [
+ "async-recursion",
+ "async-trait",
+ "base64 0.22.1",
+ "byteorder",
+ "bytes",
+ "chrono",
+ "crc",
+ "dashmap 6.1.0",
+ "derivative",
+ "env_logger",
+ "futures",
+ "futures-util",
+ "hex",
+ "hmac",
+ "http 1.4.0",
+ "hyper 1.8.1",
+ "lazy_static",
+ "log",
+ "md5",
+ "multimap",
+ "percent-encoding 2.3.2",
+ "rand 0.8.5",
+ "regex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "urlencoding",
+ "xmltree",
+]
 
 [[package]]
 name = "miniz_oxide"
@@ -6197,6 +6083,9 @@ name = "multimap"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d87ecb2933e8aeadb3e3a02b828fed80a7528047e68b4f424523a0981a3a084"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "munge"
@@ -6791,7 +6680,7 @@ checksum = "3cae83056e7cb770211494a0ecf66d9fa7eba7d00977e5bb91f0e925b40b937f"
 dependencies = [
  "cbc",
  "cms",
- "der 0.7.10",
+ "der",
  "des",
  "hex",
  "hmac",
@@ -6803,17 +6692,6 @@ dependencies = [
  "sha2",
  "thiserror 2.0.18",
  "x509-parser",
-]
-
-[[package]]
-name = "p256"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51f44edd08f51e2ade572f141051021c5af22677e42b7dd28a88155151c33594"
-dependencies = [
- "ecdsa",
- "elliptic-curve",
- "sha2",
 ]
 
 [[package]]
@@ -7129,9 +7007,9 @@ version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8ffb9f10fa047879315e6625af03c164b16962a5368d724ed16323b68ace47f"
 dependencies = [
- "der 0.7.10",
- "pkcs8 0.10.2",
- "spki 0.7.3",
+ "der",
+ "pkcs8",
+ "spki",
 ]
 
 [[package]]
@@ -7142,9 +7020,9 @@ checksum = "695b3df3d3cc1015f12d70235e35b6b79befc5fa7a9b95b951eab1dd07c9efc2"
 dependencies = [
  "cms",
  "const-oid",
- "der 0.7.10",
+ "der",
  "digest",
- "spki 0.7.3",
+ "spki",
  "x509-cert",
  "zeroize",
 ]
@@ -7157,21 +7035,11 @@ checksum = "e847e2c91a18bfa887dd028ec33f2fe6f25db77db3619024764914affe8b69a6"
 dependencies = [
  "aes",
  "cbc",
- "der 0.7.10",
+ "der",
  "pbkdf2",
  "scrypt",
  "sha2",
- "spki 0.7.3",
-]
-
-[[package]]
-name = "pkcs8"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9eca2c590a5f85da82668fa685c09ce2888b9430e83299debf1f34b65fd4a4ba"
-dependencies = [
- "der 0.6.1",
- "spki 0.6.0",
+ "spki",
 ]
 
 [[package]]
@@ -7180,8 +7048,8 @@ version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
 dependencies = [
- "der 0.7.10",
- "spki 0.7.3",
+ "der",
+ "spki",
 ]
 
 [[package]]
@@ -7277,6 +7145,15 @@ name = "portable-atomic"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c33a9471896f1c69cecef8d20cbe2f7accd12527ce60845ff44c153bb2a21b49"
+
+[[package]]
+name = "portable-atomic-util"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "091397be61a01d4be58e7841595bd4bfedb15f1cd54977d79b8271e94ed799a3"
+dependencies = [
+ "portable-atomic",
+]
 
 [[package]]
 name = "postcard"
@@ -7444,7 +7321,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools 0.14.0",
  "log",
  "multimap",
@@ -7654,7 +7531,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash 2.1.2",
  "rustls 0.23.37",
- "socket2 0.5.10",
+ "socket2 0.6.3",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -7691,7 +7568,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.5.10",
+ "socket2 0.6.3",
  "tracing",
  "windows-sys 0.60.2",
 ]
@@ -8220,17 +8097,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4389f1d5789befaf6029ebd9f7dac4af7f7e3d61b69d4f30e2ac02b57e7712b0"
 
 [[package]]
-name = "rfc6979"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7743f17af12fa0b03b803ba12cd6a8d9483a587e89c69445e3909655c0b9fabb"
-dependencies = [
- "crypto-bigint 0.4.9",
- "hmac",
- "zeroize",
-]
-
-[[package]]
 name = "ring"
 version = "0.16.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8348,10 +8214,10 @@ dependencies = [
  "num-integer",
  "num-traits",
  "pkcs1",
- "pkcs8 0.10.2",
+ "pkcs8",
  "rand_core 0.6.4",
- "signature 2.2.0",
- "spki 0.7.3",
+ "signature",
+ "spki",
  "subtle",
  "zeroize",
 ]
@@ -8926,20 +8792,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sec1"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3be24c1842290c45df0a7bf069e0c268a747ad05a192f2fd7dcfdbc1cba40928"
-dependencies = [
- "base16ct",
- "der 0.6.1",
- "generic-array",
- "pkcs8 0.9.0",
- "subtle",
- "zeroize",
-]
-
-[[package]]
 name = "secrecy"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9259,20 +9111,10 @@ version = "0.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1e303f8205714074f6068773f0e29527e0453937fe837c9717d066635b65f31"
 dependencies = [
- "pkcs8 0.10.2",
+ "pkcs8",
  "rand_core 0.6.4",
- "signature 2.2.0",
+ "signature",
  "zeroize",
-]
-
-[[package]]
-name = "signature"
-version = "1.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74233d3b3b2f6d4b006dc19dee745e73e2a6bfb6f93607cd3b02bd5b00797d7c"
-dependencies = [
- "digest",
- "rand_core 0.6.4",
 ]
 
 [[package]]
@@ -9448,22 +9290,12 @@ dependencies = [
 
 [[package]]
 name = "spki"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67cf02bbac7a337dc36e4f5a693db6c21e7863f45070f7064577eb4367a3212b"
-dependencies = [
- "base64ct",
- "der 0.6.1",
-]
-
-[[package]]
-name = "spki"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
 dependencies = [
  "base64ct",
- "der 0.7.10",
+ "der",
 ]
 
 [[package]]
@@ -11783,7 +11615,7 @@ dependencies = [
 
 [[package]]
 name = "vil_ab_test"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -11799,7 +11631,7 @@ dependencies = [
 
 [[package]]
 name = "vil_agent"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -11821,7 +11653,7 @@ dependencies = [
 
 [[package]]
 name = "vil_ai_compiler"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "rmp-serde",
@@ -11838,7 +11670,7 @@ dependencies = [
 
 [[package]]
 name = "vil_ai_gateway"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -11859,7 +11691,7 @@ dependencies = [
 
 [[package]]
 name = "vil_ai_trace"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -11874,7 +11706,7 @@ dependencies = [
 
 [[package]]
 name = "vil_audio"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -11889,7 +11721,7 @@ dependencies = [
 
 [[package]]
 name = "vil_bench_llm"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -11904,7 +11736,7 @@ dependencies = [
 
 [[package]]
 name = "vil_cache"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "serde",
@@ -11916,7 +11748,7 @@ dependencies = [
 
 [[package]]
 name = "vil_capsule"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "dashmap 5.5.3",
  "vil_ir",
@@ -11927,7 +11759,7 @@ dependencies = [
 
 [[package]]
 name = "vil_chunker"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "regex",
@@ -11942,7 +11774,7 @@ dependencies = [
 
 [[package]]
 name = "vil_cli"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "clap",
@@ -11968,7 +11800,7 @@ dependencies = [
 
 [[package]]
 name = "vil_codegen_c"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -11978,7 +11810,7 @@ dependencies = [
 
 [[package]]
 name = "vil_codegen_rust"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11988,7 +11820,7 @@ dependencies = [
 
 [[package]]
 name = "vil_connector_macros"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11997,7 +11829,7 @@ dependencies = [
 
 [[package]]
 name = "vil_consensus"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12016,7 +11848,7 @@ dependencies = [
 
 [[package]]
 name = "vil_context_optimizer"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -12031,7 +11863,7 @@ dependencies = [
 
 [[package]]
 name = "vil_cost_tracker"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -12046,7 +11878,7 @@ dependencies = [
 
 [[package]]
 name = "vil_crawler"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12067,7 +11899,7 @@ dependencies = [
 
 [[package]]
 name = "vil_data_prep"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "regex",
@@ -12082,7 +11914,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_cassandra"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "scylla",
  "serde",
@@ -12094,7 +11926,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_clickhouse"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "clickhouse",
  "serde",
@@ -12106,7 +11938,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_dynamodb"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "aws-config",
  "aws-sdk-dynamodb",
@@ -12119,7 +11951,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_elastic"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "elasticsearch",
@@ -12133,7 +11965,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_macros"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12142,7 +11974,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_mongo"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bson",
  "futures-util",
@@ -12157,7 +11989,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_neo4j"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "neo4rs",
  "serde",
@@ -12169,7 +12001,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_redis"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12183,7 +12015,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_sea_orm"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12197,7 +12029,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_semantic"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12212,7 +12044,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_sqlx"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12226,7 +12058,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_timeseries"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "futures",
  "influxdb2",
@@ -12239,11 +12071,11 @@ dependencies = [
 
 [[package]]
 name = "vil_diag"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "vil_doc_extract"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "regex",
@@ -12257,7 +12089,7 @@ dependencies = [
 
 [[package]]
 name = "vil_doc_layout"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "regex",
@@ -12271,7 +12103,7 @@ dependencies = [
 
 [[package]]
 name = "vil_doc_parser"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "regex",
@@ -12285,7 +12117,7 @@ dependencies = [
 
 [[package]]
 name = "vil_edge"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -12299,7 +12131,7 @@ dependencies = [
 
 [[package]]
 name = "vil_edge_deploy"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_yaml",
@@ -12309,7 +12141,7 @@ dependencies = [
 
 [[package]]
 name = "vil_embedder"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12326,7 +12158,7 @@ dependencies = [
 
 [[package]]
 name = "vil_engine"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "vil_obs",
  "vil_queue",
@@ -12338,7 +12170,7 @@ dependencies = [
 
 [[package]]
 name = "vil_eval"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12354,7 +12186,7 @@ dependencies = [
 
 [[package]]
 name = "vil_feature_store"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -12369,7 +12201,7 @@ dependencies = [
 
 [[package]]
 name = "vil_federated_rag"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12384,7 +12216,7 @@ dependencies = [
 
 [[package]]
 name = "vil_graphql"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-graphql",
  "async-graphql-axum",
@@ -12400,7 +12232,7 @@ dependencies = [
 
 [[package]]
 name = "vil_graphrag"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12418,7 +12250,7 @@ dependencies = [
 
 [[package]]
 name = "vil_grpc"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "dashmap 5.5.3",
  "prost 0.13.5",
@@ -12431,7 +12263,7 @@ dependencies = [
 
 [[package]]
 name = "vil_guardrails"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "aho-corasick",
  "axum 0.7.9",
@@ -12447,7 +12279,7 @@ dependencies = [
 
 [[package]]
 name = "vil_index_updater"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
@@ -12461,7 +12293,7 @@ dependencies = [
 
 [[package]]
 name = "vil_inference"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12480,7 +12312,7 @@ dependencies = [
 
 [[package]]
 name = "vil_ir"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12492,7 +12324,7 @@ dependencies = [
 
 [[package]]
 name = "vil_json"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "serde",
@@ -12502,7 +12334,7 @@ dependencies = [
 
 [[package]]
 name = "vil_llm"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12524,7 +12356,7 @@ dependencies = [
 
 [[package]]
 name = "vil_llm_cache"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -12540,7 +12372,7 @@ dependencies = [
 
 [[package]]
 name = "vil_llm_proxy"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12558,7 +12390,7 @@ dependencies = [
 
 [[package]]
 name = "vil_log"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-nats 0.38.0",
  "async-trait",
@@ -12578,7 +12410,7 @@ dependencies = [
 
 [[package]]
 name = "vil_lsp"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "regex",
  "serde",
@@ -12591,7 +12423,7 @@ dependencies = [
 
 [[package]]
 name = "vil_macros"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "proc-macro2",
@@ -12608,7 +12440,7 @@ dependencies = [
 
 [[package]]
 name = "vil_memory_graph"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -12623,7 +12455,7 @@ dependencies = [
 
 [[package]]
 name = "vil_modbus"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "tokio",
  "tokio-modbus",
@@ -12634,7 +12466,7 @@ dependencies = [
 
 [[package]]
 name = "vil_model_registry"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -12648,7 +12480,7 @@ dependencies = [
 
 [[package]]
 name = "vil_model_serving"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12669,7 +12501,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_kafka"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -12685,7 +12517,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_mqtt"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -12699,7 +12531,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_nats"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-nats 0.37.0",
  "async-trait",
@@ -12716,7 +12548,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_pubsub"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -12732,7 +12564,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_pulsar"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -12747,7 +12579,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_rabbitmq"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -12762,7 +12594,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_sqs"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "aws-config",
@@ -12777,7 +12609,7 @@ dependencies = [
 
 [[package]]
 name = "vil_multi_agent"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12798,7 +12630,7 @@ dependencies = [
 
 [[package]]
 name = "vil_multimodal"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
@@ -12813,7 +12645,7 @@ dependencies = [
 
 [[package]]
 name = "vil_net"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "dashmap 5.5.3",
@@ -12828,7 +12660,7 @@ dependencies = [
 
 [[package]]
 name = "vil_new_http"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "async-stream",
  "axum 0.7.9",
@@ -12852,7 +12684,7 @@ dependencies = [
 
 [[package]]
 name = "vil_obs"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "vil_types",
@@ -12860,7 +12692,7 @@ dependencies = [
 
 [[package]]
 name = "vil_observer"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -12875,7 +12707,7 @@ dependencies = [
 
 [[package]]
 name = "vil_opcua"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "opcua",
  "tokio",
@@ -12886,7 +12718,7 @@ dependencies = [
 
 [[package]]
 name = "vil_operator"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "futures",
  "k8s-openapi",
@@ -12902,7 +12734,7 @@ dependencies = [
 
 [[package]]
 name = "vil_otel"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "opentelemetry",
  "opentelemetry-otlp",
@@ -12914,7 +12746,7 @@ dependencies = [
 
 [[package]]
 name = "vil_output_parser"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "regex",
@@ -12938,7 +12770,7 @@ dependencies = [
 
 [[package]]
 name = "vil_private_rag"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "regex",
@@ -12952,7 +12784,7 @@ dependencies = [
 
 [[package]]
 name = "vil_prompt_optimizer"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12967,7 +12799,7 @@ dependencies = [
 
 [[package]]
 name = "vil_prompt_shield"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "aho-corasick",
  "axum 0.7.9",
@@ -12983,7 +12815,7 @@ dependencies = [
 
 [[package]]
 name = "vil_prompts"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -12996,7 +12828,7 @@ dependencies = [
 
 [[package]]
 name = "vil_quantized"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "rmp-serde",
@@ -13012,7 +12844,7 @@ dependencies = [
 
 [[package]]
 name = "vil_queue"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "crossbeam-queue",
  "nix",
@@ -13021,7 +12853,7 @@ dependencies = [
 
 [[package]]
 name = "vil_rag"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13040,7 +12872,7 @@ dependencies = [
 
 [[package]]
 name = "vil_realtime_rag"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
@@ -13056,7 +12888,7 @@ dependencies = [
 
 [[package]]
 name = "vil_registry"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "dashmap 5.5.3",
  "vil_obs",
@@ -13066,7 +12898,7 @@ dependencies = [
 
 [[package]]
 name = "vil_reranker"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13083,7 +12915,7 @@ dependencies = [
 
 [[package]]
 name = "vil_rlhf_data"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -13096,7 +12928,7 @@ dependencies = [
 
 [[package]]
 name = "vil_rt"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "dashmap 5.5.3",
  "tokio",
@@ -13112,7 +12944,7 @@ dependencies = [
 
 [[package]]
 name = "vil_script_js"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "boa_engine",
  "serde",
@@ -13121,7 +12953,7 @@ dependencies = [
 
 [[package]]
 name = "vil_script_lua"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "mlua",
  "serde",
@@ -13130,7 +12962,7 @@ dependencies = [
 
 [[package]]
 name = "vil_sdk"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "serde",
@@ -13145,7 +12977,7 @@ dependencies = [
 
 [[package]]
 name = "vil_semantic_router"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13162,7 +12994,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -13186,7 +13018,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_auth"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -13208,7 +13040,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_config"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -13219,7 +13051,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_core"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "aes-gcm",
  "axum 0.7.9",
@@ -13256,7 +13088,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_db"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "rmp-serde",
@@ -13270,7 +13102,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_format"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "bytes",
@@ -13281,7 +13113,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_macros"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "proc-macro2",
@@ -13296,7 +13128,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_mesh"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -13316,7 +13148,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_test"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "bytes",
@@ -13338,7 +13170,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_web"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "http 1.4.0",
@@ -13353,7 +13185,7 @@ dependencies = [
 
 [[package]]
 name = "vil_shm"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "dashmap 5.5.3",
  "memmap2",
@@ -13363,7 +13195,7 @@ dependencies = [
 
 [[package]]
 name = "vil_sidecar"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "dashmap 5.5.3",
@@ -13381,7 +13213,7 @@ dependencies = [
 
 [[package]]
 name = "vil_soap"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "quick-xml 0.36.2",
  "reqwest 0.12.28",
@@ -13393,7 +13225,7 @@ dependencies = [
 
 [[package]]
 name = "vil_speculative"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13412,7 +13244,7 @@ dependencies = [
 
 [[package]]
 name = "vil_sql_agent"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "regex",
@@ -13426,7 +13258,7 @@ dependencies = [
 
 [[package]]
 name = "vil_storage_azure"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "azure_core",
  "azure_storage",
@@ -13442,7 +13274,7 @@ dependencies = [
 
 [[package]]
 name = "vil_storage_gcs"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "google-cloud-storage",
@@ -13455,14 +13287,14 @@ dependencies = [
 
 [[package]]
 name = "vil_storage_s3"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
- "aws-config",
- "aws-credential-types",
- "aws-sdk-s3",
  "bytes",
+ "http 1.4.0",
+ "minio",
  "serde",
  "tokio",
+ "tokio-stream",
  "tracing",
  "vil_connector_macros",
  "vil_log",
@@ -13470,7 +13302,7 @@ dependencies = [
 
 [[package]]
 name = "vil_streaming_rag"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13487,7 +13319,7 @@ dependencies = [
 
 [[package]]
 name = "vil_synthetic"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13502,7 +13334,7 @@ dependencies = [
 
 [[package]]
 name = "vil_tensor_shm"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
@@ -13516,7 +13348,7 @@ dependencies = [
 
 [[package]]
 name = "vil_tokenizer"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "base64 0.22.1",
@@ -13531,7 +13363,7 @@ dependencies = [
 
 [[package]]
 name = "vil_topo"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -13542,7 +13374,7 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_cdc"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "tokio",
@@ -13555,7 +13387,7 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "tokio",
@@ -13565,7 +13397,7 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_cron"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -13579,7 +13411,7 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_email"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-imap",
  "async-native-tls",
@@ -13595,7 +13427,7 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_evm"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "futures-util",
@@ -13611,7 +13443,7 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_fs"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "notify",
@@ -13624,7 +13456,7 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_iot"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "rumqttc",
@@ -13637,7 +13469,7 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_webhook"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13652,7 +13484,7 @@ dependencies = [
 
 [[package]]
 name = "vil_types"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "serde",
@@ -13661,7 +13493,7 @@ dependencies = [
 
 [[package]]
 name = "vil_validate"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "vil_ir",
  "vil_types",
@@ -13669,7 +13501,7 @@ dependencies = [
 
 [[package]]
 name = "vil_vectordb"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -13686,7 +13518,7 @@ dependencies = [
 
 [[package]]
 name = "vil_vision"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13701,7 +13533,7 @@ dependencies = [
 
 [[package]]
 name = "vil_viz"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -13709,7 +13541,7 @@ dependencies = [
 
 [[package]]
 name = "vil_workflow_v2"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13725,7 +13557,7 @@ dependencies = [
 
 [[package]]
 name = "vil_ws"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "dashmap 5.5.3",
  "futures-util",
@@ -14449,7 +14281,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -14966,8 +14798,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1301e935010a701ae5f8655edc0ad17c44bad3ac5ce8c39185f75453b720ae94"
 dependencies = [
  "const-oid",
- "der 0.7.10",
- "spki 0.7.3",
+ "der",
+ "spki",
 ]
 
 [[package]]
@@ -14988,10 +14820,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "xml-rs"
+version = "0.8.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ae8337f8a065cfc972643663ea4279e04e7256de865aa66fe25cec5fb912d3f"
+
+[[package]]
 name = "xmlparser"
 version = "0.13.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "66fee0b777b0f5ac1c69bb06d361268faafa61cd4682ae064a171c16c433e9e4"
+
+[[package]]
+name = "xmltree"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b619f8c85654798007fb10afa5125590b43b088c225a25fc2fec100a9fad0fc6"
+dependencies = [
+ "xml-rs",
+]
 
 [[package]]
 name = "yansi"

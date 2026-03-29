@@ -26,7 +26,6 @@ ignore = [
 
     # --- widespread transitive ---
     "RUSTSEC-2025-0134",   # rustls-pemfile — unmaintained (nats, kube, mqtt, etc)
-    "RUSTSEC-2026-0002",   # lru 0.12 — unsound (aws-sdk-s3 pins it)
 ]
 
 [licenses]

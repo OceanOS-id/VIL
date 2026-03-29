@@ -1,29 +1,23 @@
 // =============================================================================
-// vil_storage_s3::stream — Streaming helpers
+// vil_storage_s3::stream — Streaming helpers (MinIO SDK)
 // =============================================================================
 //
-// Utilities for collecting a streaming S3 response body into `bytes::Bytes`.
-//
-// The AWS SDK returns object bodies as `aws_sdk_s3::primitives::ByteStream`.
-// `collect_body` drains the stream into a single contiguous `Bytes` buffer.
-// For very large objects, callers that need true streaming should work with
-// the `ByteStream` directly; this helper is provided for convenience.
+// MinIO SDK returns GetObjectResponse with ObjectContent that can be consumed
+// via to_segmented_bytes(). This module provides a convenience wrapper.
 // =============================================================================
 
-use aws_sdk_s3::primitives::ByteStream;
 use bytes::Bytes;
+use minio::s3::builders::ObjectContent;
 
 use crate::error::S3Fault;
 use vil_log::dict::register_str;
 
-/// Collect an S3 `ByteStream` response body into a single `Bytes` buffer.
-///
-/// Returns `S3Fault::Unknown` if the body cannot be read.
-pub async fn collect_body(stream: ByteStream) -> Result<Bytes, S3Fault> {
-    stream
-        .collect()
+/// Collect an ObjectContent response into a single Bytes buffer.
+pub async fn collect_content(content: ObjectContent) -> Result<Bytes, S3Fault> {
+    content
+        .to_segmented_bytes()
         .await
-        .map(|aggregated| aggregated.into_bytes())
+        .map(|sb| sb.to_bytes())
         .map_err(|e| S3Fault::Unknown {
             message_hash: register_str(&e.to_string()),
         })

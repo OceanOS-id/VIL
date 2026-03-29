@@ -1,6 +1,6 @@
 [package]
 name = "vil_storage_s3"
-description = "VIL Storage Plugin — S3-compatible object storage (MinIO, AWS S3)"
+description = "VIL Storage Plugin — S3-compatible object storage (MinIO, AWS S3, R2, Spaces)"
 edition.workspace = true
 version.workspace = true
 license.workspace = true
@@ -12,11 +12,11 @@ readme = "README.md"
 
 [dependencies]
 vil_log              = { workspace = true }
-tracing = { workspace = true }
+tracing              = { workspace = true }
 vil_connector_macros = { workspace = true }
-aws-sdk-s3     = "1"
-aws-config     = { version = "1", features = ["behavior-version-latest"] }
-aws-credential-types = "1"
-tokio          = { workspace = true }
-serde          = { workspace = true }
-bytes          = "1"
+minio                = "0.3"
+tokio                = { workspace = true }
+tokio-stream         = "0.1"
+serde                = { workspace = true }
+bytes                = "1"
+http                 = "1"
