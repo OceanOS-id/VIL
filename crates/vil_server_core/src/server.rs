@@ -315,6 +315,21 @@ impl VilServer {
             });
         }
 
+        // Ensure port is free — auto-kill stale process
+        {
+            let port = addr.port();
+            if std::net::TcpListener::bind(addr).is_err() {
+                eprintln!("Port {} in use — releasing...", port);
+                #[cfg(unix)]
+                {
+                    let _ = std::process::Command::new("sh")
+                        .args(["-c", &format!("kill $(lsof -ti:{}) 2>/dev/null", port)])
+                        .output();
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                }
+            }
+        }
+
         // Start main server
         let listener = tokio::net::TcpListener::bind(addr)
             .await
