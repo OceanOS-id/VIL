@@ -188,6 +188,28 @@ struct TemplateEntry {
     files: Vec<String>,
 }
 
+/// `vil templates` — list available templates.
+pub fn list_templates() -> Result<(), String> {
+    println!("{}", "VIL Templates".cyan().bold());
+    println!();
+
+    let index = fetch_template_index()
+        .map_err(|e| format!("Cannot fetch template list: {}", e))?;
+
+    println!("  {:<22} {:<30} {}", "ID", "TITLE", "DESCRIPTION");
+    println!("  {}", "-".repeat(80));
+    for tmpl in &index.templates {
+        println!("  {:<22} {:<30} {}", tmpl.id, tmpl.title, tmpl.description);
+    }
+
+    println!();
+    println!("  Usage: vil init <name> --template <ID>");
+    println!("  Sync:  vil sync  (download for offline use)");
+    println!();
+
+    Ok(())
+}
+
 /// `vil sync` — download all templates from GitHub to VASTAR_HOME for offline use.
 pub fn sync_templates() -> Result<(), String> {
     println!("{}", "VIL Template Sync".cyan().bold());
