@@ -373,31 +373,11 @@ fn generate_project(
     println!("  Next steps:");
     match config.lang.as_str() {
         "rust" if template.id == "ai-gateway" => {
-            let vastar_home = project_dir.parent().unwrap_or(project_dir);
-            println!("    cd {}", vastar_home.display());
-            println!("    docker compose up -d --build            # start everything");
+            println!("    ai-endpoint-simulator &");
+            println!("    cd {}", project_dir.display());
+            println!("    cargo run --release");
             println!();
-            println!("  1. Test single request:");
-            println!("     curl -s -X POST http://localhost:{}/api/gw/trigger \\", config.port);
-            println!("       -H 'Content-Type: application/json' \\");
-            println!("       -d '{{\"prompt\":\"hello\"}}'");
-            println!();
-            println!("  2. Benchmark upstream baseline (10s):");
-            println!("     oha -m POST -H 'Content-Type: application/json' \\");
-            println!("       -d '{{\"model\":\"gpt-4\",\"messages\":[{{\"role\":\"user\",\"content\":\"bench\"}}]}}' \\");
-            println!("       -z 10s -c 200 http://localhost:4545/v1/chat/completions");
-            println!();
-            println!("  3. Open dashboard, then benchmark gateway:");
-            println!("     http://localhost:{}/_vil/dashboard/", config.port);
-            println!();
-            println!("     oha -m POST -H 'Content-Type: application/json' \\");
-            println!("       -d '{{\"prompt\":\"bench\"}}' \\");
-            println!("       -z 30s -c 200 \\");
-            println!("       http://localhost:{}/api/gw/trigger", config.port);
-            println!();
-            println!("     Compare req/s between step 2 vs 3 to measure gateway overhead.");
-            println!("     -z 30s  = duration (change to 60s, 120s, etc.)");
-            println!("     -c 200  = concurrency (lower if laptop slow, raise if server)");
+            println!("  Server will show curl/oha/dashboard instructions after startup.");
         }
         "rust" => {
             println!("    cd {}", config.name);
