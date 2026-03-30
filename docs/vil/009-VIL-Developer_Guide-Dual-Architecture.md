@@ -1,6 +1,7 @@
 # VIL Developer Guide — Part 9: Dual Architecture — VilApp vs ShmToken Pipeline
 
-**Series:** VIL Developer Guide (9 of 9)
+**Series:** VIL Developer Guide (9 of 10)
+**Next:** [Part 10 — Observer Dashboard & Observability](./010-VIL-Developer_Guide-Observer-Dashboard.md)
 **Previous:** [Part 8 — Connectors & Semantic Types](./008-VIL-Developer_Guide-Connectors.md)
 **Last updated:** 2026-03-28
 

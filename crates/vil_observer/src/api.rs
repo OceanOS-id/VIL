@@ -286,6 +286,259 @@ async fn upstreams(Extension(data): Extension<UpstreamData>) -> Json<Vec<serde_j
     Json(snapshots)
 }
 
+// ── Prometheus Export ──────────────────────────────────────────────────────
+//
+// Exposes `/_vil/metrics` in Prometheus text format.
+// Central dashboard / Prometheus server scrapes this endpoint from each node.
+
+async fn prometheus_metrics(
+    Extension(collector): Extension<Arc<MetricsCollector>>,
+) -> axum::response::Response {
+    use axum::response::IntoResponse;
+
+    let snapshots = collector.all_snapshots();
+    let uptime = collector.uptime_secs();
+    let total_reqs = collector.total_requests();
+    let total_errors: u64 = snapshots.iter().map(|s| s.errors).sum();
+
+    let mut out = String::with_capacity(4096);
+
+    // Global metrics
+    out.push_str("# HELP vil_uptime_seconds Server uptime in seconds.\n");
+    out.push_str("# TYPE vil_uptime_seconds gauge\n");
+    out.push_str(&format!("vil_uptime_seconds {}\n", uptime));
+
+    out.push_str("# HELP vil_requests_total Total HTTP requests.\n");
+    out.push_str("# TYPE vil_requests_total counter\n");
+    out.push_str(&format!("vil_requests_total {}\n", total_reqs));
+
+    out.push_str("# HELP vil_errors_total Total HTTP errors.\n");
+    out.push_str("# TYPE vil_errors_total counter\n");
+    out.push_str(&format!("vil_errors_total {}\n", total_errors));
+
+    // Per-route metrics
+    out.push_str("# HELP vil_route_requests_total Requests per route.\n");
+    out.push_str("# TYPE vil_route_requests_total counter\n");
+    out.push_str("# HELP vil_route_errors_total Errors per route.\n");
+    out.push_str("# TYPE vil_route_errors_total counter\n");
+    out.push_str("# HELP vil_route_latency_avg_us Average latency per route.\n");
+    out.push_str("# TYPE vil_route_latency_avg_us gauge\n");
+    out.push_str("# HELP vil_route_latency_p95_us P95 latency per route.\n");
+    out.push_str("# TYPE vil_route_latency_p95_us gauge\n");
+    out.push_str("# HELP vil_route_latency_p99_us P99 latency per route.\n");
+    out.push_str("# TYPE vil_route_latency_p99_us gauge\n");
+    out.push_str("# HELP vil_route_latency_p999_us P99.9 latency per route.\n");
+    out.push_str("# TYPE vil_route_latency_p999_us gauge\n");
+
+    for snap in &snapshots {
+        let labels = format!(
+            "method=\"{}\",path=\"{}\"",
+            snap.method, snap.path
+        );
+        out.push_str(&format!("vil_route_requests_total{{{}}} {}\n", labels, snap.requests));
+        out.push_str(&format!("vil_route_errors_total{{{}}} {}\n", labels, snap.errors));
+        out.push_str(&format!("vil_route_latency_avg_us{{{}}} {}\n", labels, snap.avg_latency_us));
+        out.push_str(&format!("vil_route_latency_p95_us{{{}}} {}\n", labels, snap.p95_us));
+        out.push_str(&format!("vil_route_latency_p99_us{{{}}} {}\n", labels, snap.p99_us));
+        out.push_str(&format!("vil_route_latency_p999_us{{{}}} {}\n", labels, snap.p999_us));
+    }
+
+    // System metrics (if available via procfs)
+    if let Ok(rss_kb) = get_rss_kb() {
+        out.push_str("# HELP vil_memory_rss_bytes Resident set size in bytes.\n");
+        out.push_str("# TYPE vil_memory_rss_bytes gauge\n");
+        out.push_str(&format!("vil_memory_rss_bytes {}\n", rss_kb * 1024));
+    }
+
+    (
+        [(axum::http::header::CONTENT_TYPE, "text/plain; version=0.0.4; charset=utf-8")],
+        out,
+    ).into_response()
+}
+
+fn get_rss_kb() -> Result<u64, ()> {
+    // Linux: read /proc/self/status for VmRSS
+    let status = std::fs::read_to_string("/proc/self/status").map_err(|_| ())?;
+    for line in status.lines() {
+        if line.starts_with("VmRSS:") {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 2 {
+                return parts[1].parse::<u64>().map_err(|_| ());
+            }
+        }
+    }
+    Err(())
+}
+
+// ── SLO Budget ────────────────────────────────────────────────────────────
+//
+// Per-node SLO tracking. Default target: 99.9% success rate.
+// Returns current budget status, burn rate, and time-to-exhaustion.
+
+#[derive(Serialize)]
+struct SloBudget {
+    target_pct: f64,
+    current_pct: f64,
+    total_requests: u64,
+    total_errors: u64,
+    budget_total: f64,
+    budget_remaining: f64,
+    budget_consumed_pct: f64,
+    burn_rate: f64,
+    status: &'static str,
+}
+
+async fn slo_budget(
+    Extension(collector): Extension<Arc<MetricsCollector>>,
+) -> Json<SloBudget> {
+    let target = 99.9; // default SLO target
+    let total_reqs = collector.total_requests();
+    let snapshots = collector.all_snapshots();
+    let total_errors: u64 = snapshots.iter().map(|s| s.errors).sum();
+    let uptime = collector.uptime_secs().max(1);
+
+    let current_pct = if total_reqs > 0 {
+        ((total_reqs - total_errors) as f64 / total_reqs as f64) * 100.0
+    } else {
+        100.0
+    };
+
+    // Error budget: allowed errors = total_requests * (1 - target/100)
+    let budget_total = total_reqs as f64 * (1.0 - target / 100.0);
+    let budget_remaining = budget_total - total_errors as f64;
+    let budget_consumed_pct = if budget_total > 0.0 {
+        (total_errors as f64 / budget_total) * 100.0
+    } else {
+        0.0
+    };
+
+    // Burn rate: errors per minute
+    let burn_rate = if uptime > 0 {
+        total_errors as f64 / uptime as f64 * 60.0
+    } else {
+        0.0
+    };
+
+    let status = if total_reqs == 0 {
+        "healthy"
+    } else if budget_remaining > budget_total * 0.5 {
+        "healthy"
+    } else if budget_remaining > 0.0 {
+        "warning"
+    } else {
+        "exhausted"
+    };
+
+    Json(SloBudget {
+        target_pct: target,
+        current_pct,
+        total_requests: total_reqs,
+        total_errors,
+        budget_total,
+        budget_remaining,
+        budget_consumed_pct,
+        burn_rate,
+        status,
+    })
+}
+
+// ── Alerting ──────────────────────────────────────────────────────────────
+//
+// Per-node threshold checks. Returns current alert state.
+// Alerts are also logged to stdout when triggered.
+
+#[derive(Serialize)]
+struct AlertStatus {
+    alerts: Vec<Alert>,
+}
+
+#[derive(Serialize)]
+struct Alert {
+    level: &'static str,
+    metric: String,
+    message: String,
+    value: String,
+    threshold: String,
+}
+
+async fn alert_status(
+    Extension(collector): Extension<Arc<MetricsCollector>>,
+) -> Json<AlertStatus> {
+    let snapshots = collector.all_snapshots();
+    let total_reqs = collector.total_requests();
+    let total_errors: u64 = snapshots.iter().map(|s| s.errors).sum();
+    let mut alerts = Vec::new();
+
+    // Error rate alert
+    let error_rate = if total_reqs > 0 {
+        total_errors as f64 / total_reqs as f64
+    } else { 0.0 };
+
+    if error_rate > 0.05 {
+        let msg = format!("Error rate {:.2}% exceeds 5% threshold", error_rate * 100.0);
+        eprintln!("[VIL ALERT] CRITICAL: {}", msg);
+        alerts.push(Alert {
+            level: "critical",
+            metric: "error_rate".into(),
+            message: msg,
+            value: format!("{:.2}%", error_rate * 100.0),
+            threshold: "5%".into(),
+        });
+    } else if error_rate > 0.01 {
+        let msg = format!("Error rate {:.2}% exceeds 1% threshold", error_rate * 100.0);
+        eprintln!("[VIL ALERT] WARNING: {}", msg);
+        alerts.push(Alert {
+            level: "warning",
+            metric: "error_rate".into(),
+            message: msg,
+            value: format!("{:.2}%", error_rate * 100.0),
+            threshold: "1%".into(),
+        });
+    }
+
+    // P99 latency alert per route
+    for snap in &snapshots {
+        if snap.requests < 10 { continue; } // skip low-traffic routes
+        if snap.p99_us > 5_000_000 { // > 5 seconds
+            let msg = format!("{} {} p99={:.0}ms exceeds 5000ms", snap.method, snap.path, snap.p99_us as f64 / 1000.0);
+            eprintln!("[VIL ALERT] CRITICAL: {}", msg);
+            alerts.push(Alert {
+                level: "critical",
+                metric: format!("p99_latency:{}:{}", snap.method, snap.path),
+                message: msg,
+                value: format!("{:.0}ms", snap.p99_us as f64 / 1000.0),
+                threshold: "5000ms".into(),
+            });
+        } else if snap.p99_us > 1_000_000 { // > 1 second
+            let msg = format!("{} {} p99={:.0}ms exceeds 1000ms", snap.method, snap.path, snap.p99_us as f64 / 1000.0);
+            eprintln!("[VIL ALERT] WARNING: {}", msg);
+            alerts.push(Alert {
+                level: "warning",
+                metric: format!("p99_latency:{}:{}", snap.method, snap.path),
+                message: msg,
+                value: format!("{:.0}ms", snap.p99_us as f64 / 1000.0),
+                threshold: "1000ms".into(),
+            });
+        }
+
+        // Spread alert: p99/p50 > 10x
+        if snap.avg_latency_us > 0 && snap.p99_us > snap.avg_latency_us * 10 {
+            let spread = snap.p99_us as f64 / snap.avg_latency_us as f64;
+            let msg = format!("{} {} spread p99/avg={:.1}x — high variance", snap.method, snap.path, spread);
+            eprintln!("[VIL ALERT] WARNING: {}", msg);
+            alerts.push(Alert {
+                level: "warning",
+                metric: format!("latency_spread:{}:{}", snap.method, snap.path),
+                message: msg,
+                value: format!("{:.1}x", spread),
+                threshold: "10x".into(),
+            });
+        }
+    }
+
+    Json(AlertStatus { alerts })
+}
+
 // ── Router ─────────────────────────────────────────────────────────────────
 
 pub fn api_routes() -> Router {
@@ -299,4 +552,7 @@ pub fn api_routes() -> Router {
         .route("/_vil/api/logs/recent", get(recent_logs))
         .route("/_vil/api/system", get(system_info))
         .route("/_vil/api/config", get(running_config))
+        .route("/_vil/metrics", get(prometheus_metrics))
+        .route("/_vil/api/slo", get(slo_budget))
+        .route("/_vil/api/alerts", get(alert_status))
 }

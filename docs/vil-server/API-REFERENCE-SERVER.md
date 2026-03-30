@@ -444,21 +444,39 @@ Single dependency for community plugin authors: `vil_plugin_sdk = "0.6"`
 
 ## vil_observer
 
-Embedded monitoring dashboard and JSON API. Enable via `.observer(true)`.
+Embedded monitoring dashboard and JSON API. Enable via `.observer(true)` or `OBSERVER=1`.
+
+See **[Observer Dashboard Guide](../vil/010-VIL-Developer_Guide-Observer-Dashboard.md)** for full documentation.
 
 ### Observer API Endpoints
 
 | Endpoint | Method | Response |
 |----------|--------|----------|
+| `/_vil/dashboard/` | GET | Embedded SPA dashboard (HTML) |
+| `/_vil/metrics` | GET | Prometheus text format (scrape target for Grafana) |
 | `/_vil/api/topology` | GET | `TopologyResponse { app_name, services[], uptime_secs, total_requests }` |
 | `/_vil/api/metrics` | GET | `{ endpoints[], uptime_secs, total_requests }` |
-| `/_vil/api/health` | GET | `{ status, timestamp }` |
-| `/_vil/api/routes` | GET | `RouteInfo[] { method, path, exec_class, request_count, avg_latency_us, error_rate }` |
-| `/_vil/api/shm` | GET | `ShmStats { configured_mb, ring_stripes, ring_total_capacity, ring_total_used, ring_total_drops }` |
-| `/_vil/api/logs/recent` | GET | `LogEntry[]` |
+| `/_vil/api/routes` | GET | `RouteInfo[] { method, path, exec_class, request_count, avg/p95/p99/p999_us, error_rate }` |
+| `/_vil/api/upstreams` | GET | `UpstreamSnapshot[] { url, requests, in_flight, avg/p95/p99/p999_us, error_rate, last_status }` |
+| `/_vil/api/slo` | GET | `SloBudget { target_pct, current_pct, budget_total, budget_remaining, budget_consumed_pct, burn_rate, status }` |
+| `/_vil/api/alerts` | GET | `AlertStatus { alerts[] { level, metric, message, value, threshold } }` |
 | `/_vil/api/system` | GET | `SystemInfo { pid, uptime_secs, rust_version, vil_version, os, arch, cpu_count, memory_rss_kb, fd_count, thread_count }` |
 | `/_vil/api/config` | GET | `{ profile, log_level, shm_size_mb }` |
-| `/_vil/dashboard/` | GET | Embedded SPA dashboard (HTML) |
+| `/_vil/api/shm` | GET | `ShmStats { configured_mb, ring_stripes, ring_total_capacity, ring_total_used, ring_total_drops }` |
+| `/_vil/api/logs/recent` | GET | `LogEntry[]` |
+| `/_vil/api/health` | GET | `{ status, timestamp }` |
+
+### Dashboard Features
+
+| Feature | Description |
+|---------|-------------|
+| Live Metrics | Throughput gauges, RPS chart, latency percentiles |
+| Routes Table | Per-route metrics with execution class, error rate |
+| Upstreams Table | Per-upstream latency, status, error rate |
+| SLO Budget | Error budget tracking with burn rate and visual bar |
+| Alerts | Threshold alerts (error rate, P99, spread) with stdout logging |
+| Topology | Auto-discovered service graph (Client → Gateway → Routes → Upstream) |
+| Prometheus | Standard scrape endpoint for Grafana/Prometheus integration |
 
 ### Core Types
 

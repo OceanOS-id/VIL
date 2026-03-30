@@ -18,7 +18,7 @@
 //   k8s ref:    url: "${K8S_SECRET:db-creds/url}"
 //   vault ref:  url: "${VAULT:secret/data/db#url}"
 
-use aes_gcm::aead::{Aead, KeyInit, OsRng};
+use aes_gcm::aead::{Aead, KeyInit};
 use aes_gcm::{Aes256Gcm, Nonce};
 use std::path::Path;
 use vil_log::app_log;

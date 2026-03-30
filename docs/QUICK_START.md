@@ -39,14 +39,18 @@ cargo run
 
 ## Testing the Gateway
 
-### Install oha (HTTP load testing tool)
+### Install hey (HTTP load testing tool)
 
 ```bash
-# Install oha (HTTP load tester)
-cargo install oha
+# Install hey (HTTP load tester)
+# Linux
+wget -O hey https://storage.googleapis.com/hey-releases/hey_linux_amd64 && chmod +x hey && sudo mv hey /usr/local/bin/
 
-# Or on macOS
-brew install oha
+# macOS
+brew install hey
+
+# Alternative: vastar (faster, with SLO insight + colored histogram)
+# cargo install vastar
 ```
 
 ### Install AI Endpoint Simulator (for full AI inference demo)
@@ -73,17 +77,23 @@ curl http://localhost:3080/trigger \
   -d '{"prompt":"Hello AI!"}'
 ```
 
-### 2. Load test with oha (3000 requests, 300 concurrent)
+### 2. Load test with hey (3000 requests, 300 concurrent)
 
 ```bash
 # Basic load test
-oha -n 3000 -c 300 http://localhost:3080/trigger
+hey -n 3000 -c 300 http://localhost:3080/trigger
 
 # With POST data
-oha -n 3000 -c 300 -m POST \
-  -H "Content-Type: application/json" \
+hey -n 3000 -c 300 -m POST \
+  -T "application/json" \
   -d '{"prompt":"test"}' \
   http://localhost:3080/trigger
+
+# Alternative: vastar (faster, with SLO insight)
+# vastar -n 3000 -c 300 -m POST \
+#   -T "application/json" \
+#   -d '{"prompt":"test"}' \
+#   http://localhost:3080/trigger
 ```
 
 Expected output:
@@ -115,7 +125,7 @@ vil run
 curl http://localhost:3080/trigger -X POST -d '{"prompt":"What is Rust?"}'
 
 # Terminal 3: Load test
-oha -n 3000 -c 300 http://localhost:3080/trigger
+hey -n 3000 -c 300 http://localhost:3080/trigger
 ```
 
 ---

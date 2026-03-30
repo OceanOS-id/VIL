@@ -114,13 +114,80 @@
   }
 
   /* ── Layout ──────────────────────────────────────────────────────────── */
-  main {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 28px 24px 48px;
+  .app-layout {
+    display: flex;
+    height: calc(100vh - 49px); /* below header */
+    overflow: hidden;
+  }
+
+  .nav-sidebar {
+    width: 50px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    align-items: center;
+    padding-top: 16px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .nav-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-btn:hover { background: var(--surface); color: var(--text); }
+  .nav-btn.active { background: rgba(6,182,212,0.12); color: var(--cyan); }
+
+  .right-sidebar {
+    width: 340px;
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .right-sidebar .panel {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
+
+  .right-sidebar .panel-header {
+    padding: 8px 12px;
+  }
+
+  .right-sidebar .info-row {
+    padding: 4px 12px;
+  }
+
+  .right-sidebar .log-stream {
+    padding: 10px 12px;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 20px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
   /* ── Section label ───────────────────────────────────────────────────── */
@@ -375,8 +442,6 @@
 
   /* ── Footer ──────────────────────────────────────────────────────────── */
   footer {
-    max-width: 1300px;
-    margin: 0 auto;
     padding: 0 24px 24px;
     font-size: 11px;
     color: var(--text-faint);
@@ -403,6 +468,8 @@
     .info-grid { grid-template-columns: 1fr; }
     header { padding: 12px 16px; }
     .header-meta { display: none; }
+    .right-sidebar { display: none; }
+    .nav-sidebar { display: none; }
   }
   @media (max-width: 480px) {
     .gauges { grid-template-columns: minmax(0, 1fr); }
@@ -430,7 +497,17 @@
   </div>
 </header>
 
-<main>
+<div class="app-layout">
+  <nav class="nav-sidebar">
+    <button class="nav-btn active" title="Dashboard" onclick="showPage('dashboard')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="nav-btn" title="Topology" onclick="showPage('topology')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><line x1="8.5" y1="7.5" x2="10.5" y2="16"/><line x1="15.5" y1="7.5" x2="13.5" y2="16"/></svg>
+    </button>
+  </nav>
+
+  <main id="page-dashboard">
 
   <!-- ── Throughput ─────────────────────────────────────────────────── -->
   <div>
@@ -505,63 +582,26 @@
     </div>
   </div>
 
-  <!-- ── Chart + System + Config ──────────────────────────────────── -->
-  <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:14px;">
-    <!-- Req/s Live Chart (LEFT) -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">Req/s (Live)</span>
-        <span class="panel-badge" id="chart-peak">peak: —</span>
-      </div>
-      <div style="padding:8px 14px 6px;">
-        <canvas id="rps-chart" style="width:100%;height:150px;"></canvas>
-        <div style="display:flex;justify-content:space-between;margin-top:6px;">
-          <span style="font-size:10px;color:var(--text-faint);font-family:var(--mono);" id="chart-time-label">— samples</span>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:10px;color:var(--text-faint);">Refresh:</span>
-            <select id="refresh-rate" style="font-size:10px;font-family:var(--mono);background:var(--surface);color:var(--text-dim);border:1px solid var(--border);border-radius:4px;padding:1px 4px;">
-              <option value="1000">1s</option>
-              <option value="2000">2s</option>
-              <option value="3000" selected>3s</option>
-              <option value="5000">5s</option>
-              <option value="10000">10s</option>
-            </select>
-          </div>
+  <!-- ── Req/s Live Chart ───────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Req/s (Live)</span>
+      <span class="panel-badge" id="chart-peak">peak: —</span>
+    </div>
+    <div style="padding:8px 14px 6px;">
+      <canvas id="rps-chart" style="width:100%;height:150px;"></canvas>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;">
+        <span style="font-size:10px;color:var(--text-faint);font-family:var(--mono);" id="chart-time-label">— samples</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;color:var(--text-faint);">Refresh:</span>
+          <select id="refresh-rate" style="font-size:10px;font-family:var(--mono);background:var(--surface);color:var(--text-dim);border:1px solid var(--border);border-radius:4px;padding:1px 4px;">
+            <option value="1000">1s</option>
+            <option value="2000">2s</option>
+            <option value="3000" selected>3s</option>
+            <option value="5000">5s</option>
+            <option value="10000">10s</option>
+          </select>
         </div>
-      </div>
-    </div>
-
-    <!-- System -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">System</span>
-        <span class="panel-badge" id="sys-os-arch">—</span>
-      </div>
-      <div class="info-list" id="system-list">
-        <div class="info-row"><span class="info-key">PID</span><span class="info-val" id="s-pid">—</span></div>
-        <div class="info-row"><span class="info-key">CPU Cores</span><span class="info-val" id="s-cpu">—</span></div>
-        <div class="info-row"><span class="info-key">Threads</span><span class="info-val" id="s-threads">—</span></div>
-        <div class="info-row"><span class="info-key">File Descriptors</span><span class="info-val" id="s-fds">—</span></div>
-        <div class="info-row"><span class="info-key">Memory RSS</span><span class="info-val" id="s-rss">—</span></div>
-        <div class="info-row"><span class="info-key">OS / Arch</span><span class="info-val" id="s-osarch">—</span></div>
-        <div class="info-row"><span class="info-key">Uptime</span><span class="info-val" id="s-uptime">—</span></div>
-      </div>
-    </div>
-
-    <!-- Config -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">Config</span>
-        <span class="panel-badge" id="cfg-profile">—</span>
-      </div>
-      <div class="info-list">
-        <div class="info-row"><span class="info-key">Profile</span><span class="info-val" id="c-profile">—</span></div>
-        <div class="info-row"><span class="info-key">Log Level</span><span class="info-val" id="c-loglevel">—</span></div>
-        <div class="info-row"><span class="info-key">SHM Size</span><span class="info-val" id="c-shm">—</span></div>
-        <div class="info-row"><span class="info-key">Rust Version</span><span class="info-val" id="c-rust">—</span></div>
-        <div class="info-row"><span class="info-key">VIL Version</span><span class="info-val" id="c-vil">—</span></div>
-        <div class="info-row"><span class="info-key">SHM Ring Drops</span><span class="info-val" id="c-drops">—</span></div>
-        <div class="info-row"><span class="info-key">Health</span><span class="info-val" style="color:var(--green)" id="c-health">healthy</span></div>
       </div>
     </div>
   </div>
@@ -621,7 +661,107 @@
     </table>
   </div>
 
-  <!-- ── Recent Logs ────────────────────────────────────────────────── -->
+  <footer>
+    <span>VIL <span id="f-vil-ver">0.2.0</span></span>
+    <span class="sep">·</span>
+    <span>vil_observer</span>
+    <span class="sep">·</span>
+    <a href="/_vil/api/topology">topology</a>
+    <span class="sep">·</span>
+    <a href="/_vil/metrics">prometheus</a>
+    <span class="sep">·</span>
+    <a href="/_vil/api/slo">slo</a>
+    <span class="sep">·</span>
+    <a href="/_vil/api/alerts">alerts</a>
+    <span class="sep">·</span>
+    <a href="/_vil/api/routes">routes</a>
+    <span class="sep">·</span>
+    <a href="/_vil/api/system">system</a>
+    <span class="sep">·</span>
+    <a href="/_vil/api/health">health</a>
+  </footer>
+
+</main>
+
+<main id="page-topology" style="display:none;flex:1;overflow-y:auto;padding:20px 20px 48px;">
+  <div class="section-label">Service Topology</div>
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Topology</span>
+      <span class="panel-badge" id="topo-badge">loading...</span>
+    </div>
+    <canvas id="topo-canvas" style="width:100%;height:500px;"></canvas>
+  </div>
+</main>
+
+<aside class="right-sidebar">
+  <!-- SLO Budget -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">SLO Budget</span>
+      <span class="panel-badge" id="slo-status">—</span>
+    </div>
+    <div class="info-list">
+      <div class="info-row"><span class="info-key">Target</span><span class="info-val" id="slo-target">99.9%</span></div>
+      <div class="info-row"><span class="info-key">Current</span><span class="info-val" id="slo-current">—</span></div>
+      <div class="info-row"><span class="info-key">Budget</span><span class="info-val" id="slo-budget-total">—</span></div>
+      <div class="info-row"><span class="info-key">Remaining</span><span class="info-val" id="slo-budget-remaining">—</span></div>
+      <div class="info-row"><span class="info-key">Consumed</span><span class="info-val" id="slo-consumed">—</span></div>
+      <div class="info-row"><span class="info-key">Burn Rate</span><span class="info-val" id="slo-burn-rate">—</span></div>
+    </div>
+    <div style="padding:6px 12px 10px;">
+      <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden;">
+        <div id="slo-bar" style="height:100%;border-radius:3px;background:var(--green);transition:width 0.5s,background 0.5s;width:0%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Alerts</span>
+      <span class="panel-badge" id="alert-count">0</span>
+    </div>
+    <div id="alert-list" style="padding:8px 12px;min-height:40px;">
+      <div style="color:var(--text-faint);font-size:11px;font-family:var(--mono);">No alerts</div>
+    </div>
+  </div>
+
+  <!-- System -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">System</span>
+      <span class="panel-badge" id="sys-os-arch">—</span>
+    </div>
+    <div class="info-list" id="system-list">
+      <div class="info-row"><span class="info-key">PID</span><span class="info-val" id="s-pid">—</span></div>
+      <div class="info-row"><span class="info-key">CPU Cores</span><span class="info-val" id="s-cpu">—</span></div>
+      <div class="info-row"><span class="info-key">Threads</span><span class="info-val" id="s-threads">—</span></div>
+      <div class="info-row"><span class="info-key">File Descriptors</span><span class="info-val" id="s-fds">—</span></div>
+      <div class="info-row"><span class="info-key">Memory RSS</span><span class="info-val" id="s-rss">—</span></div>
+      <div class="info-row"><span class="info-key">OS / Arch</span><span class="info-val" id="s-osarch">—</span></div>
+      <div class="info-row"><span class="info-key">Uptime</span><span class="info-val" id="s-uptime">—</span></div>
+    </div>
+  </div>
+
+  <!-- Config -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Config</span>
+      <span class="panel-badge" id="cfg-profile">—</span>
+    </div>
+    <div class="info-list">
+      <div class="info-row"><span class="info-key">Profile</span><span class="info-val" id="c-profile">—</span></div>
+      <div class="info-row"><span class="info-key">Log Level</span><span class="info-val" id="c-loglevel">—</span></div>
+      <div class="info-row"><span class="info-key">SHM Size</span><span class="info-val" id="c-shm">—</span></div>
+      <div class="info-row"><span class="info-key">Rust Version</span><span class="info-val" id="c-rust">—</span></div>
+      <div class="info-row"><span class="info-key">VIL Version</span><span class="info-val" id="c-vil">—</span></div>
+      <div class="info-row"><span class="info-key">SHM Ring Drops</span><span class="info-val" id="c-drops">—</span></div>
+      <div class="info-row"><span class="info-key">Health</span><span class="info-val" style="color:var(--green)" id="c-health">healthy</span></div>
+    </div>
+  </div>
+
+  <!-- Recent Logs -->
   <div class="panel">
     <div class="panel-header">
       <span class="panel-title">Recent Logs</span>
@@ -634,28 +774,9 @@
       </div>
     </div>
   </div>
+</aside>
 
-</main>
-
-<footer>
-  <span>VIL <span id="f-vil-ver">0.2.0</span></span>
-  <span class="sep">·</span>
-  <span>vil_observer</span>
-  <span class="sep">·</span>
-  <a href="/_vil/api/topology">topology</a>
-  <span class="sep">·</span>
-  <a href="/_vil/api/metrics">metrics</a>
-  <span class="sep">·</span>
-  <a href="/_vil/api/routes">routes</a>
-  <span class="sep">·</span>
-  <a href="/_vil/api/system">system</a>
-  <span class="sep">·</span>
-  <a href="/_vil/api/config">config</a>
-  <span class="sep">·</span>
-  <a href="/_vil/api/shm">shm</a>
-  <span class="sep">·</span>
-  <a href="/_vil/api/health">health</a>
-</footer>
+</div><!-- /.app-layout -->
 
 <script>
 (function() {
@@ -798,6 +919,9 @@ async function refresh() {
     if (config)   renderConfig(config, shm);
     if (logs)     renderLogs(logs);
     if (isSidecar && counters) renderPipelineCounters(counters);
+
+    // SLO + Alerts (fire-and-forget, don't block main refresh)
+    fetchSloAndAlerts();
 
     // Footer VIL version from system
     if (system && system.vil_version) setText('f-vil-ver', system.vil_version);
@@ -1379,6 +1503,247 @@ if (rateSelect) {
     startRefreshLoop();
   });
 }
+
+// ── SLO + Alerts ──────────────────────────────────────────────────────
+async function fetchSloAndAlerts() {
+  try {
+    var [sloResp, alertResp] = await Promise.all([
+      fetch('/_vil/api/slo').then(function(r) { return r.json(); }).catch(function() { return null; }),
+      fetch('/_vil/api/alerts').then(function(r) { return r.json(); }).catch(function() { return null; }),
+    ]);
+
+    // SLO Budget
+    if (sloResp) {
+      setText('slo-target', sloResp.target_pct + '%');
+      setText('slo-current', sloResp.current_pct.toFixed(3) + '%');
+
+      var currentEl = document.getElementById('slo-current');
+      if (currentEl) currentEl.style.color = sloResp.current_pct >= sloResp.target_pct ? 'var(--green)' : 'var(--red)';
+
+      setText('slo-budget-total', sloResp.budget_total.toFixed(1) + ' errors allowed');
+      var remEl = document.getElementById('slo-budget-remaining');
+      if (remEl) {
+        remEl.textContent = sloResp.budget_remaining.toFixed(1);
+        remEl.style.color = sloResp.budget_remaining > 0 ? 'var(--green)' : 'var(--red)';
+      }
+      setText('slo-consumed', sloResp.budget_consumed_pct.toFixed(1) + '%');
+      setText('slo-burn-rate', sloResp.burn_rate.toFixed(2) + ' err/min');
+
+      var statusEl = document.getElementById('slo-status');
+      if (statusEl) {
+        statusEl.textContent = sloResp.status;
+        statusEl.style.color = sloResp.status === 'healthy' ? 'var(--green)' :
+                               sloResp.status === 'warning' ? 'var(--yellow)' : 'var(--red)';
+      }
+
+      // Budget bar
+      var bar = document.getElementById('slo-bar');
+      if (bar) {
+        var pct = Math.min(100, Math.max(0, sloResp.budget_consumed_pct));
+        bar.style.width = pct + '%';
+        bar.style.background = pct < 50 ? 'var(--green)' : pct < 80 ? 'var(--yellow)' : 'var(--red)';
+      }
+    }
+
+    // Alerts
+    if (alertResp) {
+      var countEl = document.getElementById('alert-count');
+      var listEl = document.getElementById('alert-list');
+      if (countEl) {
+        countEl.textContent = alertResp.alerts.length;
+        countEl.style.color = alertResp.alerts.length === 0 ? 'var(--green)' : 'var(--red)';
+      }
+      if (listEl) {
+        if (alertResp.alerts.length === 0) {
+          listEl.innerHTML = '<div style="color:var(--green);font-size:12px;font-family:var(--mono);">All clear — no alerts</div>';
+        } else {
+          listEl.innerHTML = alertResp.alerts.map(function(a) {
+            var color = a.level === 'critical' ? 'var(--red)' : 'var(--yellow)';
+            var icon = a.level === 'critical' ? '!!' : '!';
+            return '<div style="display:flex;gap:8px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;">'
+              + '<span style="color:' + color + ';font-weight:700;font-family:var(--mono);flex-shrink:0;">[' + icon + ']</span>'
+              + '<span style="color:var(--text-dim);font-family:var(--mono);">' + esc(a.message) + '</span>'
+              + '</div>';
+          }).join('');
+        }
+      }
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// Page navigation
+function showPage(page) {
+  document.getElementById('page-dashboard').style.display = page === 'dashboard' ? '' : 'none';
+  document.getElementById('page-topology').style.display = page === 'topology' ? '' : 'none';
+  document.querySelectorAll('.nav-btn').forEach(function(btn) { btn.classList.remove('active'); });
+  event.currentTarget.classList.add('active');
+  if (page === 'topology') renderTopology();
+}
+window.showPage = showPage;
+
+// ── Topology Renderer ─────────────────────────────────────────────────
+async function renderTopology() {
+  var badge = document.getElementById('topo-badge');
+  var canvas = document.getElementById('topo-canvas');
+  if (!canvas) return;
+
+  try {
+    var [topology, routes, upstreams] = await Promise.all([
+      fetch('/_vil/api/topology').then(function(r) { return r.json(); }).catch(function() { return null; }),
+      fetch('/_vil/api/routes').then(function(r) { return r.json(); }).catch(function() { return []; }),
+      fetch('/_vil/api/upstreams').then(function(r) { return r.json(); }).catch(function() { return []; }),
+    ]);
+
+    // Build nodes
+    var nodes = [];
+    var edges = [];
+    var appName = topology ? topology.app_name : 'vil-app';
+    var port = location.port || '80';
+
+    // Client node
+    nodes.push({ id: 'client', label: 'Client', type: 'client', x: 0, y: 0 });
+
+    // Gateway node
+    nodes.push({ id: 'gateway', label: appName + '\n:' + port, type: 'gateway', x: 0, y: 0 });
+    edges.push({ from: 'client', to: 'gateway' });
+
+    // Route nodes
+    var routeEndpoints = (routes || []).filter(function(r) {
+      return r.path && !r.path.startsWith('/_vil') && r.path !== '/favicon.ico';
+    });
+    routeEndpoints.forEach(function(r, i) {
+      var id = 'route-' + i;
+      var rps = topology && topology.uptime_secs > 0 ? ((r.request_count || 0) / topology.uptime_secs).toFixed(0) : '0';
+      nodes.push({ id: id, label: r.method + ' ' + r.path + '\n' + rps + ' rps', type: 'route', x: 0, y: 0 });
+      edges.push({ from: 'gateway', to: id });
+    });
+
+    // Upstream nodes
+    (upstreams || []).forEach(function(u, i) {
+      var id = 'upstream-' + i;
+      var url = u.url || '—';
+      // Shorten URL for display
+      var short = url.replace('http://', '').replace('https://', '');
+      if (short.length > 40) short = short.slice(0, 37) + '...';
+      var rps = topology && topology.uptime_secs > 0 ? ((u.requests || 0) / topology.uptime_secs).toFixed(0) : '0';
+      nodes.push({ id: id, label: short + '\n' + rps + ' rps', type: 'upstream', x: 0, y: 0, status: u.last_status });
+      // Connect routes to upstream
+      routeEndpoints.forEach(function(r, ri) {
+        edges.push({ from: 'route-' + ri, to: id });
+      });
+    });
+
+    if (badge) badge.textContent = nodes.length + ' nodes, ' + edges.length + ' edges';
+
+    // Layout: left-to-right columns
+    var ctx = canvas.getContext('2d');
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    var W = rect.width, H = rect.height;
+
+    // Assign positions by type (columns)
+    var cols = { client: 0.1, gateway: 0.3, route: 0.55, upstream: 0.85 };
+    var typeGroups = {};
+    nodes.forEach(function(n) {
+      if (!typeGroups[n.type]) typeGroups[n.type] = [];
+      typeGroups[n.type].push(n);
+    });
+    for (var type in typeGroups) {
+      var group = typeGroups[type];
+      var cx = cols[type] * W;
+      var spacing = H / (group.length + 1);
+      group.forEach(function(n, i) {
+        n.x = cx;
+        n.y = spacing * (i + 1);
+      });
+    }
+
+    // Lookup map
+    var nodeMap = {};
+    nodes.forEach(function(n) { nodeMap[n.id] = n; });
+
+    // Clear
+    ctx.clearRect(0, 0, W, H);
+
+    // Draw edges
+    edges.forEach(function(e) {
+      var from = nodeMap[e.from];
+      var to = nodeMap[e.to];
+      if (!from || !to) return;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      // Bezier curve
+      var mx = (from.x + to.x) / 2;
+      ctx.bezierCurveTo(mx, from.y, mx, to.y, to.x, to.y);
+      ctx.strokeStyle = 'rgba(6,182,212,0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    // Draw nodes
+    var colors = {
+      client: { bg: '#1e293b', border: '#64748b', text: '#e2e8f0' },
+      gateway: { bg: '#0c4a6e', border: '#06b6d4', text: '#06b6d4' },
+      route: { bg: '#14532d', border: '#22c55e', text: '#22c55e' },
+      upstream: { bg: '#451a03', border: '#f59e0b', text: '#fbbf24' },
+    };
+
+    // First pass: measure text widths to size boxes
+    ctx.font = '11px monospace';
+    nodes.forEach(function(n) {
+      var lines = n.label.split('\n');
+      var maxTextW = 0;
+      lines.forEach(function(line) {
+        var w = ctx.measureText(line).width;
+        if (w > maxTextW) maxTextW = w;
+      });
+      n._boxW = Math.max(140, maxTextW + 30);
+      n._boxH = 20 + lines.length * 16;
+      n._lines = lines;
+    });
+
+    // Second pass: draw nodes
+    nodes.forEach(function(n) {
+      var c = colors[n.type] || colors.client;
+      var boxW = n._boxW, boxH = n._boxH;
+
+      // Box
+      ctx.fillStyle = c.bg;
+      ctx.strokeStyle = c.border;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      var r = 8;
+      var x = n.x - boxW/2, y = n.y - boxH/2;
+      ctx.moveTo(x+r, y);
+      ctx.lineTo(x+boxW-r, y); ctx.arcTo(x+boxW, y, x+boxW, y+r, r);
+      ctx.lineTo(x+boxW, y+boxH-r); ctx.arcTo(x+boxW, y+boxH, x+boxW-r, y+boxH, r);
+      ctx.lineTo(x+r, y+boxH); ctx.arcTo(x, y+boxH, x, y+boxH-r, r);
+      ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+      ctx.fill();
+      ctx.stroke();
+
+      // Type badge
+      ctx.font = '9px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.textAlign = 'center';
+      ctx.fillText(n.type.toUpperCase(), n.x, y + 13);
+
+      // Label lines
+      ctx.font = '11px monospace';
+      ctx.fillStyle = c.text;
+      n._lines.forEach(function(line, li) {
+        ctx.fillText(line, n.x, y + 26 + li * 15);
+      });
+    });
+
+  } catch (err) {
+    if (badge) badge.textContent = 'error: ' + err.message;
+  }
+}
+window.renderTopology = renderTopology;
 
 })();
 </script>

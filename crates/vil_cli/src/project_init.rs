@@ -377,7 +377,7 @@ fn generate_project(
             println!("    cd {}", project_dir.display());
             println!("    cargo run --release");
             println!();
-            println!("  Server will show curl/oha/dashboard instructions after startup.");
+            println!("  Server will show curl/hey/vastar/dashboard instructions after startup.");
         }
         "rust" => {
             println!("    cd {}", config.name);

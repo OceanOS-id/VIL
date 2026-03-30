@@ -49,6 +49,9 @@ VIL Source Code
 3. [Tri-Lane Deep Dive](./tutorials/tutorial-03-trilane.md)
 4. [Production Deployment](./tutorials/tutorial-04-production.md)
 
+### Observability
+- **[Observer Dashboard](./vil/010-VIL-Developer_Guide-Observer-Dashboard.md)** — embedded dashboard, SLO budget, alerting, Prometheus export
+
 ### Reference
 - [SDK Integration](./vil/SDK-Integration-Guide.md) — embedding VIL
 - [Changelog](./CHANGELOG.md) — release history

@@ -103,7 +103,7 @@ pub fn spawn_cleanup_task(
 
         loop {
             interval.tick().await;
-            let report = cleanup_kernel(&kernel, &config);
+            let _report = cleanup_kernel(&kernel, &config);
             let _ = cleanup_stale_pending(&bridge, 10_000);
 
             // debug-level: skip vil_log

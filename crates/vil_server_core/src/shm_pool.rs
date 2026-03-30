@@ -183,7 +183,7 @@ impl ShmPool {
         Some((self.region_id, offset))
     }
 
-    fn do_reset(&self, utilization: usize) {
+    fn do_reset(&self, _utilization: usize) {
         if self
             .resetting
             .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)

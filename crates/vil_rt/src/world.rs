@@ -570,7 +570,7 @@ impl VastarRuntimeWorld {
                 queues,
                 store,
                 registry,
-                heap,
+                heap: _,
                 host_id,
                 ..
             } => {

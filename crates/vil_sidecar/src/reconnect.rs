@@ -96,7 +96,7 @@ pub async fn reconnect_with_backoff(
                         }
                         return Ok(conn);
                     }
-                    Ok(Message::HandshakeAck(ack)) => {
+                    Ok(Message::HandshakeAck(_ack)) => {
                         {
                             use vil_log::app_log;
                             app_log!(Warn, "sidecar.reconnect.rejected", { sidecar: name });

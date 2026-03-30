@@ -46,23 +46,23 @@ pub async fn request_logger(
     let start = Instant::now();
     let method = request.method().to_string();
     let path = request.uri().path().to_string();
-    let query = request.uri().query().map(|q| q.to_string());
+    let _query = request.uri().query().map(|q| q.to_string());
 
-    let request_id = request
+    let _request_id = request
         .headers()
         .get("x-request-id")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("-")
         .to_string();
 
-    let content_length = request
+    let _content_length = request
         .headers()
         .get("content-length")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("0")
         .to_string();
 
-    let user_agent = request
+    let _user_agent = request
         .headers()
         .get("user-agent")
         .and_then(|v| v.to_str().ok())

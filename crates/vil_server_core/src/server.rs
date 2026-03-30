@@ -336,7 +336,12 @@ impl VilServer {
         println!();
         let us = step - 1;
         println!("     Compare Requests/sec between step {} vs {} to measure overhead.", us, step);
-        println!("     For dashboard view, use: -z 30s instead of -n 3000", );
+        println!("     For dashboard view, use: -z 30s instead of -n 3000");
+        println!();
+        println!("  Alternative: vastar (faster, with SLO insight):");
+        println!("     vastar -m POST -H 'Content-Type: application/json' \\");
+        println!("       -d '{{\"prompt\":\"bench\"}}' -c 300 -n 3000 \\");
+        println!("       http://localhost:{}{}", port, example_path);
         println!();
         println!("  ────────────────────────────────────────────────────────────");
         println!();

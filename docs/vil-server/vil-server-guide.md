@@ -322,6 +322,50 @@ No `@Timed` annotation. No manual instrumentation. Automatic.
 | `GET /metrics` | Prometheus text format |
 | `GET /info` | Server metadata, SHM stats, handler count |
 
+### VIL Observer Dashboard
+
+Enable the embedded observability dashboard with `.observer(true)` or `OBSERVER=1`:
+
+```rust
+let app = VilApp::new("my-service")
+    .port(3081)
+    .observer(true)
+    .service(svc);
+```
+
+This adds a full dashboard at `/_vil/dashboard/` with:
+
+| Feature | Description |
+|---------|-------------|
+| **Live Metrics** | Throughput gauges, RPS chart, latency percentiles, success rate |
+| **Routes Table** | Per-route RPS, avg/P95/P99/P99.9 latency, error rate |
+| **Upstreams Table** | Per-upstream metrics with status codes |
+| **SLO Budget** | Error budget tracking (99.9% target), burn rate, visual bar |
+| **Alerts** | Threshold-based alerts (error rate, P99, latency spread) with stdout logging |
+| **Topology** | Visual service graph: Client → Gateway → Routes → Upstreams |
+| **Prometheus Export** | `/_vil/metrics` — standard scrape endpoint for Grafana integration |
+
+All `/_vil/api/*` endpoints return JSON — designed for central dashboard scraping in multi-node deployments.
+
+See **[Observer Dashboard Guide](../vil/010-VIL-Developer_Guide-Observer-Dashboard.md)** for full documentation including SLO budget, alerting thresholds, Prometheus/Grafana integration, and architecture roadmap.
+
+### Load Testing
+
+Use [vastar](https://crates.io/crates/vastar) or [hey](https://github.com/rakyll/hey) for benchmarking:
+
+```bash
+# vastar (recommended — SLO insight, colored histogram)
+cargo install vastar
+vastar -n 3000 -c 300 -m POST -T "application/json" \
+  -d '{"prompt":"bench"}' http://localhost:3081/api/gw/trigger
+
+# hey (widely used)
+hey -n 3000 -c 300 -m POST -T "application/json" \
+  -d '{"prompt":"bench"}' http://localhost:3081/api/gw/trigger
+```
+
+While load test runs, open `/_vil/dashboard/` to see live metrics, SLO budget consumption, and alerts in real-time.
+
 ---
 
 ## Security
