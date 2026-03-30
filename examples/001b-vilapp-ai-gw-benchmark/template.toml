@@ -1,0 +1,11 @@
+[template]
+id = "ai-gateway"
+title = "AI Gateway"
+description = "SSE streaming pipeline (webhook -> upstream SSE -> streaming response)"
+default_port = 3081
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.replace]
+package_name = "vil-vilapp-ai-gw-benchmark"
+port = "3081"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"

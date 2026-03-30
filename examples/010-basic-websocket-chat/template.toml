@@ -1,0 +1,10 @@
+[template]
+id = "websocket-chat"
+title = "WebSocket Chat"
+description = "Real-time WebSocket chat with broadcast hub"
+default_port = 8080
+default_upstream = ""
+
+[template.replace]
+package_name = "vil-basic-websocket-chat"
+port = "8080"

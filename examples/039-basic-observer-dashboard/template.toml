@@ -1,0 +1,10 @@
+[template]
+id = "observer-demo"
+title = "Observer Dashboard Demo"
+description = "VilApp with embedded observer dashboard, SLO budget, and alerting"
+default_port = 8080
+default_upstream = ""
+
+[template.replace]
+package_name = "vil-basic-observer-dashboard"
+port = "8080"

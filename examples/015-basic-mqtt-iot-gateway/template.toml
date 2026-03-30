@@ -1,0 +1,10 @@
+[template]
+id = "iot-gateway"
+title = "IoT Gateway"
+description = "MQTT device gateway with telemetry processing"
+default_port = 8080
+default_upstream = ""
+
+[template.replace]
+package_name = "vil-basic-mqtt-iot-gateway"
+port = "8080"

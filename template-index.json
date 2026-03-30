@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "ai-gateway",
+      "title": "AI Gateway",
+      "description": "SSE streaming pipeline (webhook -> upstream SSE -> streaming response)",
+      "default_port": 3081,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "example_dir": "001b-vilapp-ai-gw-benchmark",
+      "replace": {
+        "package_name": "vil-vilapp-ai-gw-benchmark",
+        "port": "3081",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "blank",
+      "title": "Blank Project",
+      "description": "Minimal VilApp hello world \u2014 start from scratch",
+      "default_port": 8080,
+      "default_upstream": "",
+      "example_dir": "003-basic-hello-server",
+      "replace": {
+        "package_name": "vil-basic-hello-server",
+        "port": "8080"
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "rest-crud",
+      "title": "REST CRUD API",
+      "description": "REST API with GET/POST/PUT/DELETE endpoints and in-memory store",
+      "default_port": 8080,
+      "default_upstream": "",
+      "example_dir": "004-basic-rest-crud",
+      "replace": {
+        "package_name": "vil-basic-rest-crud",
+        "port": "8080"
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "websocket-chat",
+      "title": "WebSocket Chat",
+      "description": "Real-time WebSocket chat with broadcast hub",
+      "default_port": 8080,
+      "default_upstream": "",
+      "example_dir": "010-basic-websocket-chat",
+      "replace": {
+        "package_name": "vil-basic-websocket-chat",
+        "port": "8080"
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "iot-gateway",
+      "title": "IoT Gateway",
+      "description": "MQTT device gateway with telemetry processing",
+      "default_port": 8080,
+      "default_upstream": "",
+      "example_dir": "015-basic-mqtt-iot-gateway",
+      "replace": {
+        "package_name": "vil-basic-mqtt-iot-gateway",
+        "port": "8080"
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "multi-model-router",
+      "title": "Multi-Model Router",
+      "description": "Route requests to different AI model providers",
+      "default_port": 8080,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "example_dir": "018-basic-ai-multi-model-router",
+      "replace": {
+        "package_name": "vil-basic-ai-multi-model-router",
+        "port": "8080",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs",
+        "vil.yaml"
+      ]
+    },
+    {
+      "id": "wasm-faas",
+      "title": "WASM FaaS",
+      "description": "WebAssembly functions with pre-warmed instance pool",
+      "default_port": 8080,
+      "default_upstream": "",
+      "example_dir": "021-basic-wasm-faas",
+      "replace": {
+        "package_name": "vil-basic-wasm-faas",
+        "port": "8080"
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "rag-pipeline",
+      "title": "RAG Pipeline",
+      "description": "Retrieval-Augmented Generation: embed -> search -> generate",
+      "default_port": 8080,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "example_dir": "025-basic-rag-service",
+      "replace": {
+        "package_name": "vil-basic-rag-service",
+        "port": "8080",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "agent",
+      "title": "AI Agent",
+      "description": "ReAct agent with tool calling for IT operations",
+      "default_port": 8080,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "example_dir": "026-basic-ai-agent",
+      "replace": {
+        "package_name": "vil-basic-ai-agent",
+        "port": "8080",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "observer-demo",
+      "title": "Observer Dashboard Demo",
+      "description": "VilApp with embedded observer dashboard, SLO budget, and alerting",
+      "default_port": 8080,
+      "default_upstream": "",
+      "example_dir": "039-basic-observer-dashboard",
+      "replace": {
+        "package_name": "vil-basic-observer-dashboard",
+        "port": "8080"
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    }
+  ]
+}

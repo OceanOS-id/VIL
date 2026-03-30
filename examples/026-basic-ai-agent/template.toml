@@ -1,0 +1,11 @@
+[template]
+id = "agent"
+title = "AI Agent"
+description = "ReAct agent with tool calling for IT operations"
+default_port = 8080
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.replace]
+package_name = "vil-basic-ai-agent"
+port = "8080"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"

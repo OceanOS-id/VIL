@@ -1,0 +1,11 @@
+[template]
+id = "multi-model-router"
+title = "Multi-Model Router"
+description = "Route requests to different AI model providers"
+default_port = 8080
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.replace]
+package_name = "vil-basic-ai-multi-model-router"
+port = "8080"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"

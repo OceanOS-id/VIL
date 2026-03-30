@@ -1,6 +1,8 @@
 //! vil init — project initializer with templates and wizard.
 //!
-//! Generates: app.vil.yaml + src/main.rs + Cargo.toml + handlers/ + README.md
+//! Templates are sourced from examples/ in the VIL repo. The CLI fetches
+//! template-index.json from GitHub, then downloads the specific template files.
+//! Falls back to local examples/ if available (for VIL developers).
 //!
 //! Two modes:
 //!   vil init my-app --template ai-gateway --port 3080    (arguments)
@@ -11,6 +13,199 @@ use crate::manifest::WorkflowManifest;
 use colored::*;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+
+const GITHUB_RAW_BASE: &str = "https://raw.githubusercontent.com/OceanOS-id/VIL/main";
+const GITHUB_INDEX_URL: &str = "https://raw.githubusercontent.com/OceanOS-id/VIL/main/template-index.json";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Example-based init: fetch from GitHub or local examples/
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Try to init from example templates. Returns Some(result) if handled, None to fallback.
+fn try_init_from_example(args: &InitArgs) -> Option<Result<(), String>> {
+    let name = args.name.as_ref()?;
+    let template_id = args.template.as_deref().unwrap_or("ai-gateway");
+
+    // Fetch template index
+    let index = match fetch_template_index() {
+        Ok(idx) => idx,
+        Err(e) => {
+            println!("  {} Could not fetch template index: {}", "NOTE".yellow(), e);
+            println!("  Falling back to built-in templates.");
+            println!();
+            return None;
+        }
+    };
+
+    // Find matching template
+    let tmpl = match index.templates.iter().find(|t| t.id == template_id) {
+        Some(t) => t,
+        None => {
+            println!("  {} Template '{}' not found in remote index.", "NOTE".yellow(), template_id);
+            println!("  Available: {}", index.templates.iter().map(|t| t.id.as_str()).collect::<Vec<_>>().join(", "));
+            println!("  Falling back to built-in templates.");
+            println!();
+            return None;
+        }
+    };
+
+    let port = args.port.unwrap_or(tmpl.default_port);
+    let upstream = args.upstream.clone().unwrap_or(tmpl.default_upstream.clone());
+
+    println!("  {} {} ({})", "TEMPLATE".cyan().bold(), tmpl.title, tmpl.id);
+    println!("  {} {}", "DESC".dimmed(), tmpl.description);
+    println!("  {} {} files from examples/{}", "SOURCE".dimmed(), tmpl.files.len(), tmpl.example_dir);
+    println!();
+
+    // Resolve output directory
+    let vastar_home = std::env::var("VASTAR_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            dirs::home_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join("vastar")
+        });
+
+    let is_vilapp = tmpl.id == "ai-gateway" || tmpl.id == "observer-demo";
+    let project_dir = if is_vilapp {
+        if !vastar_home.exists() {
+            let _ = std::fs::create_dir_all(&vastar_home);
+            println!("  {} VASTAR_HOME: {}", "HOME".green(), vastar_home.display());
+        }
+        vastar_home.join(name)
+    } else {
+        PathBuf::from(name)
+    };
+
+    if project_dir.exists() {
+        println!("  {} Directory '{}' already exists. Remove it first.", "ERROR".red().bold(), project_dir.display());
+        return Some(Err(format!("Directory {} exists", project_dir.display())));
+    }
+
+    // Download and write files
+    println!("  {} Downloading template files...", "FETCH".cyan());
+    for file_path in &tmpl.files {
+        let url = format!("{}/examples/{}/{}", GITHUB_RAW_BASE, tmpl.example_dir, file_path);
+        let dest = project_dir.join(file_path);
+
+        // Create parent dirs
+        if let Some(parent) = dest.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+
+        // Try local first (for VIL developers)
+        let content = try_read_local_example(&tmpl.example_dir, file_path)
+            .or_else(|| fetch_url(&url).ok());
+
+        match content {
+            Some(mut text) => {
+                // Apply replacements
+                if let Some(pkg) = tmpl.replace.get("package_name") {
+                    text = text.replace(pkg, name);
+                }
+                if let Some(old_port) = tmpl.replace.get("port") {
+                    text = text.replace(old_port, &port.to_string());
+                }
+                if let Some(old_upstream) = tmpl.replace.get("upstream") {
+                    if !upstream.is_empty() {
+                        text = text.replace(old_upstream, &upstream);
+                    }
+                }
+                std::fs::write(&dest, &text)
+                    .map_err(|e| format!("Failed to write {}: {}", dest.display(), e))
+                    .ok()?;
+                println!("    {} {}", "+".green(), file_path);
+            }
+            None => {
+                println!("    {} {} (download failed)", "!".yellow(), file_path);
+            }
+        }
+    }
+
+    // Write .gitignore
+    let gitignore = "/target\n*.swp\n*.swo\n.DS_Store\n";
+    let _ = std::fs::write(project_dir.join(".gitignore"), gitignore);
+
+    // Summary
+    println!();
+    println!("{} Project '{}' created!", "DONE".green().bold(), name);
+    println!();
+    println!("  Next steps:");
+    if is_vilapp {
+        println!("    ai-endpoint-simulator &");
+        println!("    cd {}", project_dir.display());
+        println!("    cargo run --release");
+        println!();
+        println!("  Server will show curl/hey/vastar/dashboard instructions after startup.");
+    } else {
+        println!("    cd {}", name);
+        println!("    cargo run --release");
+    }
+    println!();
+
+    Some(Ok(()))
+}
+
+fn try_read_local_example(example_dir: &str, file_path: &str) -> Option<String> {
+    // Check relative to current dir (VIL workspace)
+    let local = PathBuf::from("examples").join(example_dir).join(file_path);
+    if local.exists() {
+        return std::fs::read_to_string(&local).ok();
+    }
+    // Check relative to binary location
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            let workspace = parent.join("../../examples").join(example_dir).join(file_path);
+            if workspace.exists() {
+                return std::fs::read_to_string(&workspace).ok();
+            }
+        }
+    }
+    None
+}
+
+fn fetch_url(url: &str) -> Result<String, String> {
+    reqwest::blocking::get(url)
+        .and_then(|r| r.error_for_status())
+        .and_then(|r| r.text())
+        .map_err(|e| format!("HTTP error: {}", e))
+}
+
+#[derive(serde::Deserialize)]
+struct TemplateIndex {
+    #[allow(dead_code)]
+    version: u32,
+    templates: Vec<TemplateEntry>,
+}
+
+#[derive(serde::Deserialize)]
+struct TemplateEntry {
+    id: String,
+    title: String,
+    description: String,
+    default_port: u16,
+    #[serde(default)]
+    default_upstream: String,
+    example_dir: String,
+    #[serde(default)]
+    replace: std::collections::HashMap<String, String>,
+    files: Vec<String>,
+}
+
+fn fetch_template_index() -> Result<TemplateIndex, String> {
+    // Try local first
+    let local = PathBuf::from("template-index.json");
+    if local.exists() {
+        let text = std::fs::read_to_string(&local)
+            .map_err(|e| format!("Read error: {}", e))?;
+        return serde_json::from_str(&text)
+            .map_err(|e| format!("Parse error: {}", e));
+    }
+    // Fetch from GitHub
+    let text = fetch_url(GITHUB_INDEX_URL)?;
+    serde_json::from_str(&text)
+        .map_err(|e| format!("Parse error: {}", e))
+}
 
 pub struct InitArgs {
     pub name: Option<String>,
@@ -188,6 +383,15 @@ const TEMPLATES: &[Template] = &[
 pub fn run_init(args: InitArgs) -> Result<(), String> {
     println!("{}", "VIL Project Initializer".cyan().bold());
     println!();
+
+    // Try example-based init first (Rust only, if examples/ found)
+    let lang = args.lang.clone().unwrap_or("rust".into());
+    if lang == "rust" {
+        if let Some(result) = try_init_from_example(&args) {
+            return result;
+        }
+        // Fall through to legacy codegen if example not found
+    }
 
     let (name, template_id, lang, token, port, upstream) = if args.wizard {
         run_wizard(&args)?

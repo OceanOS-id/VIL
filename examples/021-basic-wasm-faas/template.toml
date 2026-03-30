@@ -1,0 +1,10 @@
+[template]
+id = "wasm-faas"
+title = "WASM FaaS"
+description = "WebAssembly functions with pre-warmed instance pool"
+default_port = 8080
+default_upstream = ""
+
+[template.replace]
+package_name = "vil-basic-wasm-faas"
+port = "8080"

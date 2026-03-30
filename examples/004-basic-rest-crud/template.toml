@@ -1,0 +1,10 @@
+[template]
+id = "rest-crud"
+title = "REST CRUD API"
+description = "REST API with GET/POST/PUT/DELETE endpoints and in-memory store"
+default_port = 8080
+default_upstream = ""
+
+[template.replace]
+package_name = "vil-basic-rest-crud"
+port = "8080"

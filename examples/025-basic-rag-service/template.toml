@@ -1,0 +1,11 @@
+[template]
+id = "rag-pipeline"
+title = "RAG Pipeline"
+description = "Retrieval-Augmented Generation: embed -> search -> generate"
+default_port = 8080
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.replace]
+package_name = "vil-basic-rag-service"
+port = "8080"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"

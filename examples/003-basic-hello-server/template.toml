@@ -1,0 +1,10 @@
+[template]
+id = "blank"
+title = "Blank Project"
+description = "Minimal VilApp hello world — start from scratch"
+default_port = 8080
+default_upstream = ""
+
+[template.replace]
+package_name = "vil-basic-hello-server"
+port = "8080"
