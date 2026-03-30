@@ -553,6 +553,7 @@ pub fn find_node_type(type_name: &str) -> Option<&'static NodeTypeEntry> {
 }
 
 /// Get all unique categories.
+#[allow(dead_code)]
 pub fn categories() -> Vec<&'static str> {
     let mut cats: Vec<&str> = NODE_TYPES.iter().map(|e| e.category).collect();
     cats.sort();

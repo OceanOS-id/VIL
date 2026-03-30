@@ -7,6 +7,7 @@
 
 use std::path::Path;
 
+#[allow(dead_code)]
 pub fn init_pipeline(pipeline_type: &str) -> Result<(), String> {
     // Check Cargo.toml exists
     if !Path::new("Cargo.toml").exists() {
@@ -38,6 +39,7 @@ pub fn init_pipeline(pipeline_type: &str) -> Result<(), String> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn generate_rest() -> String {
     r#"use vil_sdk::prelude::*;
 
@@ -51,6 +53,7 @@ fn main() {
     .into()
 }
 
+#[allow(dead_code)]
 fn generate_sse() -> String {
     r#"use vil_sdk::prelude::*;
 
@@ -63,6 +66,7 @@ fn main() {
 "#.into()
 }
 
+#[allow(dead_code)]
 fn generate_websocket() -> String {
     r#"// VIL WebSocket Pipeline
 // Add vil_sdk to Cargo.toml dependencies
@@ -75,6 +79,7 @@ fn main() {
     .into()
 }
 
+#[allow(dead_code)]
 fn generate_grpc() -> String {
     r#"// VIL gRPC Pipeline
 // Add vil_grpc to Cargo.toml dependencies

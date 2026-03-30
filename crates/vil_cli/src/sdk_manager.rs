@@ -29,6 +29,7 @@ pub fn is_sdk_installed() -> bool {
 }
 
 /// Get the SDK libs directory.
+#[allow(dead_code)]
 pub fn sdk_libs_path() -> Option<PathBuf> {
     let p = sdk_current_path().join("libs");
     if p.exists() {
@@ -39,6 +40,7 @@ pub fn sdk_libs_path() -> Option<PathBuf> {
 }
 
 /// Get the SDK internal crates directory.
+#[allow(dead_code)]
 pub fn sdk_internal_path() -> Option<PathBuf> {
     let p = sdk_current_path().join("internal");
     if p.exists() {

@@ -4,9 +4,9 @@
 //! `vil wasm build <manifest>` → compiles all declared WASM modules
 //! `vil wasm list <manifest>` → lists registered modules + functions
 
-use crate::manifest::{WasmModuleManifest, WorkflowManifest};
+use crate::manifest::WorkflowManifest;
 use colored::*;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 const WASM_OUT_DIR: &str = "wasm-out";
 

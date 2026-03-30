@@ -7,6 +7,7 @@ use colored::*;
 use std::time::Instant;
 
 /// Test fixture format.
+#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 pub struct TestFixture {
     pub input: serde_json::Value,

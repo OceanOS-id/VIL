@@ -19,6 +19,7 @@ pub struct TransformBuilder {
     pub capacity: usize,
 }
 
+#[allow(dead_code)]
 impl TransformBuilder {
     pub fn new(name: impl Into<String>) -> Self {
         Self {

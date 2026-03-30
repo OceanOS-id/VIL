@@ -12,6 +12,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 /// A watched file entry.
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct WatchEntry {
     pub path: PathBuf,
@@ -19,6 +20,7 @@ pub struct WatchEntry {
     pub last_modified: u64,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum WatchKind {
     Script { runtime: String, node_name: String },
@@ -88,16 +90,19 @@ impl FileWatcher {
     }
 
     /// Stop the watcher.
+    #[allow(dead_code)]
     pub fn stop(&self) {
         self.running.store(false, Ordering::SeqCst);
     }
 
+    #[allow(dead_code)]
     pub fn reload_count(&self) -> u64 {
         self.reload_count.load(Ordering::SeqCst)
     }
 }
 
 /// Collect all hot-reloadable script paths from a manifest.
+#[allow(dead_code)]
 pub fn collect_hot_reload_paths(
     manifest: &crate::manifest::WorkflowManifest,
 ) -> Vec<(PathBuf, String, String)> {

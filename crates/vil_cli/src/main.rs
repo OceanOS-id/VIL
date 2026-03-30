@@ -809,10 +809,10 @@ fn main() {
             call_graph,
             expand_calls,
             watch,
-            theme,
-            show_failover,
-            show_transport,
-            node,
+            theme: _,
+            show_failover: _,
+            show_transport: _,
+            node: _,
         } => {
             let viz_args = viz_bridge::VizArgs {
                 input: input.clone(),
@@ -1306,7 +1306,7 @@ fn main() {
         }
 
         Commands::Check { manifest } => {
-            if let Err(e) = checker::run_check(manifest) {
+            if let Err(_e) = checker::run_check(manifest) {
                 std::process::exit(1);
             }
         }

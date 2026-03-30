@@ -106,8 +106,8 @@ pub fn generate_rust(manifest: &WorkflowManifest) -> String {
         );
         for entity in &manifest.entities {
             let default_table = entity.name.to_lowercase();
-            let table = entity.table.as_deref().unwrap_or(&default_table);
-            let source = entity.source.as_deref().unwrap_or("default");
+            let _table = entity.table.as_deref().unwrap_or(&default_table);
+            let _source = entity.source.as_deref().unwrap_or("default");
             code.push_str(&format!(
                 "#[derive(Clone, Debug, Serialize, Deserialize)]\n"
             ));

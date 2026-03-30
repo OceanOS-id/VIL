@@ -1028,7 +1028,7 @@ func main() {{
 }
 
 fn generate_java_sdk(config: &ProjectConfig, template: &Template) -> String {
-    let class_name = config
+    let _class_name = config
         .name
         .chars()
         .enumerate()

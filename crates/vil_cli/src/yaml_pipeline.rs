@@ -46,6 +46,7 @@ pub struct PipelineConfig {
     pub observability: Option<ObservabilityConfig>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct NodeConfig {
     #[serde(rename = "type")]
@@ -354,7 +355,7 @@ pub fn run_yaml_pipeline(path: &str, port_override: Option<u16>) -> Result<()> {
     }
 
     // Print test curl
-    if let Some((name, node)) = sinks.first() {
+    if let Some((_name, node)) = sinks.first() {
         let port = if sinks.len() == 1 {
             port_override.unwrap_or(node.port)
         } else {

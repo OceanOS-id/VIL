@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 /// Resolved call target — a parsed workflow with its file path.
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ResolvedCall {
     pub path: PathBuf,
