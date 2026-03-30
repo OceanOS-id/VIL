@@ -10,7 +10,7 @@ use crate::codegen;
 use crate::manifest::WorkflowManifest;
 use colored::*;
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub struct InitArgs {
     pub name: Option<String>,
@@ -205,7 +205,25 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
     };
 
     let template = find_template(&template_id)?;
-    let project_dir = Path::new(&name);
+
+    // Resolve VASTAR_HOME workspace
+    let vastar_home = std::env::var("VASTAR_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            dirs::home_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join("vastar")
+        });
+
+    let is_vilapp = template.id == "ai-gateway";
+
+    // Project lives inside VASTAR_HOME for VilApp templates
+    let project_dir_owned = if is_vilapp {
+        vastar_home.join(&name)
+    } else {
+        PathBuf::from(&name)
+    };
+    let project_dir = project_dir_owned.as_path();
     let project_name = project_dir
         .file_name()
         .and_then(|n| n.to_str())
@@ -219,6 +237,16 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
         token: token.clone(),
         observer: false,
     };
+
+    // Setup VASTAR_HOME if VilApp template
+    if is_vilapp && !vastar_home.exists() {
+        std::fs::create_dir_all(&vastar_home)
+            .map_err(|e| format!("Failed to create VASTAR_HOME at {}: {}", vastar_home.display(), e))?;
+        println!("  {} VASTAR_HOME: {}", "HOME".green(), vastar_home.display());
+    } else if is_vilapp {
+        println!("  {} VASTAR_HOME: {}", "HOME".dimmed(), vastar_home.display());
+    }
+
     if project_dir.exists() {
         println!();
         println!(
@@ -343,9 +371,36 @@ fn generate_project(
     );
     println!();
     println!("  Next steps:");
-    println!("    cd {}", config.name);
     match config.lang.as_str() {
+        "rust" if template.id == "ai-gateway" => {
+            let vastar_home = project_dir.parent().unwrap_or(project_dir);
+            println!("    cd {}", vastar_home.display());
+            println!("    docker compose up -d --build            # start everything");
+            println!();
+            println!("  1. Test single request:");
+            println!("     curl -s -X POST http://localhost:{}/api/gw/trigger \\", config.port);
+            println!("       -H 'Content-Type: application/json' \\");
+            println!("       -d '{{\"prompt\":\"hello\"}}'");
+            println!();
+            println!("  2. Benchmark upstream baseline (10s):");
+            println!("     oha -m POST -H 'Content-Type: application/json' \\");
+            println!("       -d '{{\"model\":\"gpt-4\",\"messages\":[{{\"role\":\"user\",\"content\":\"bench\"}}]}}' \\");
+            println!("       -z 10s -c 200 http://localhost:4545/v1/chat/completions");
+            println!();
+            println!("  3. Open dashboard, then benchmark gateway:");
+            println!("     http://localhost:{}/_vil/dashboard/", config.port);
+            println!();
+            println!("     oha -m POST -H 'Content-Type: application/json' \\");
+            println!("       -d '{{\"prompt\":\"bench\"}}' \\");
+            println!("       -z 30s -c 200 \\");
+            println!("       http://localhost:{}/api/gw/trigger", config.port);
+            println!();
+            println!("     Compare req/s between step 2 vs 3 to measure gateway overhead.");
+            println!("     -z 30s  = duration (change to 60s, 120s, etc.)");
+            println!("     -c 200  = concurrency (lower if laptop slow, raise if server)");
+        }
         "rust" => {
+            println!("    cd {}", config.name);
             println!("    vil viz app.vil.yaml --open           # visualize");
             println!("    vil check app.vil.yaml                # validate");
             println!("    vil compile --from yaml --input app.vil.yaml --release  # build");
@@ -444,6 +499,20 @@ fn generate_rust_project(
     std::fs::write(project_dir.join("Cargo.toml"), &cargo_toml)
         .map_err(|e| format!("Failed to write Cargo.toml: {}", e))?;
     println!("  {} Cargo.toml", "TOML".green());
+
+    // Generate Dockerfile per project + shared docker-compose.yaml at VASTAR_HOME
+    if is_vilapp_template {
+        let dockerfile = generate_gateway_dockerfile(config);
+        std::fs::write(project_dir.join("Dockerfile"), &dockerfile)
+            .map_err(|e| format!("Failed to write Dockerfile: {}", e))?;
+        println!("  {} Dockerfile", "DOCK".cyan());
+
+        // Shared docker-compose.yaml at VASTAR_HOME
+        let vastar_home = project_dir.parent().unwrap_or(project_dir);
+        let compose_path = vastar_home.join("docker-compose.yaml");
+        update_docker_compose(&compose_path, config)?;
+        println!("  {} {}/docker-compose.yaml", "DOCK".cyan(), vastar_home.display());
+    }
 
     if template.has_handler && !template.handler_name.is_empty() {
         let handler_content = generate_handler_stub(template.handler_name, config);
@@ -1872,6 +1941,94 @@ logging:
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
+// Docker Compose generator (upstream simulators with built-in Redis)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+fn update_docker_compose(compose_path: &Path, config: &ProjectConfig) -> Result<(), String> {
+    let project_service = format!(
+        r#"
+  {name}:
+    build: ./{name}
+    ports:
+      - "{port}:{port}"
+    depends_on:
+      - ai-simulator
+    environment:
+      - UPSTREAM_URL=http://ai-simulator:4545/v1/chat/completions
+      - RUST_LOG=info
+"#,
+        name = config.name,
+        port = config.port,
+    );
+
+    if compose_path.exists() {
+        // Append project to existing docker-compose.yaml
+        let existing = std::fs::read_to_string(compose_path)
+            .map_err(|e| format!("Failed to read docker-compose.yaml: {}", e))?;
+
+        if existing.contains(&format!("  {}:", config.name)) {
+            // Project already in compose — skip
+            return Ok(());
+        }
+
+        let mut content = existing.trim_end().to_string();
+        content.push_str(&project_service);
+        std::fs::write(compose_path, content)
+            .map_err(|e| format!("Failed to update docker-compose.yaml: {}", e))?;
+    } else {
+        // Create new docker-compose.yaml with shared infra + this project
+        let content = format!(
+            r#"# VASTAR_HOME — Shared infrastructure + applications
+# Start:  docker compose up -d --build
+# Stop:   docker compose down
+# Logs:   docker compose logs -f
+# Rebuild after code change:  docker compose up -d --build
+
+services:
+  redis:
+    image: redis:7-alpine
+
+  ai-simulator:
+    image: cxlsilicondev/ai-endpoint-simulator
+    ports:
+      - "4545:4545"
+    depends_on:
+      - redis
+
+  # credit-data-simulator:
+  #   image: cxlsilicondev/credit-data-simulator
+  #   ports:
+  #     - "18081:18081"
+{project}"#,
+            project = project_service,
+        );
+        std::fs::write(compose_path, content)
+            .map_err(|e| format!("Failed to write docker-compose.yaml: {}", e))?;
+    }
+    Ok(())
+}
+
+fn generate_gateway_dockerfile(config: &ProjectConfig) -> String {
+    format!(
+        r#"FROM rust:1.93-slim AS builder
+WORKDIR /app
+RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+COPY Cargo.toml Cargo.lock* ./
+COPY src ./src
+RUN cargo build --release
+
+FROM rust:1.93-slim
+WORKDIR /app
+COPY --from=builder /app/target/release/{name} ./
+EXPOSE {port}
+CMD ["./{name}"]
+"#,
+        name = config.name,
+        port = config.port,
+    )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // VilApp pattern generator (ai-gateway template)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1897,7 +2054,9 @@ fn generate_vilapp_rust(manifest: &crate::manifest::WorkflowManifest, config: &P
 
 use vil_server::prelude::*;
 
-const UPSTREAM_URL: &str = "{upstream_url}";
+fn upstream_url() -> String {{
+    std::env::var("UPSTREAM_URL").unwrap_or_else(|_| "{upstream_url}".into())
+}}
 
 #[derive(Deserialize)]
 struct TriggerRequest {{
@@ -1914,7 +2073,7 @@ async fn trigger(body: ShmSlice) -> impl IntoResponse {{
         prompt: default_prompt(),
     }});
 
-    let result = SseCollect::post_to(UPSTREAM_URL)
+    let result = SseCollect::post_to(&upstream_url())
         .body(serde_json::json!({{
             "model": "gpt-4",
             "messages": [{{"role": "user", "content": req.prompt}}],
