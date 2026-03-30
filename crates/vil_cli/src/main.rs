@@ -204,11 +204,12 @@ enum Commands {
         wizard: bool,
     },
 
-    /// Sync templates from GitHub to VASTAR_HOME for offline use
-    Sync,
-
-    /// List available project templates
-    Templates,
+    /// List available project templates (--sync to download for offline use)
+    Templates {
+        /// Download all templates from GitHub to VASTAR_HOME
+        #[arg(long)]
+        sync: bool,
+    },
 
     /// Build a VIL service into a deployable artifact
     Build {
@@ -737,17 +738,17 @@ fn main() {
             }
         }
 
-        Commands::Sync => {
-            if let Err(e) = project_init::sync_templates() {
-                eprintln!("{} {}", "Error:".red().bold(), e);
-                std::process::exit(1);
-            }
-        }
-
-        Commands::Templates => {
-            if let Err(e) = project_init::list_templates() {
-                eprintln!("{} {}", "Error:".red().bold(), e);
-                std::process::exit(1);
+        Commands::Templates { sync } => {
+            if *sync {
+                if let Err(e) = project_init::sync_templates() {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
+                }
+            } else {
+                if let Err(e) = project_init::list_templates() {
+                    eprintln!("{} {}", "Error:".red().bold(), e);
+                    std::process::exit(1);
+                }
             }
         }
 
