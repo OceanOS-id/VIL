@@ -20,8 +20,8 @@
     },
     {
       "id": "blank",
-      "title": "Blank Project",
-      "description": "Minimal VilApp hello world \u2014 start from scratch",
+      "title": "REST API Service",
+      "description": "REST API with JSON transform, echo, and health check",
       "default_port": 8080,
       "default_upstream": "",
       "example_dir": "003-basic-hello-server",

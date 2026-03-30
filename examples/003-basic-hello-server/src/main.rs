@@ -1,11 +1,11 @@
 // ╔════════════════════════════════════════════════════════════╗
-// ║  003 — REST Gateway with Transform                        ║
+// ║  003 — REST API Service with Transform                     ║
 // ╠════════════════════════════════════════════════════════════╣
 // ║  Pattern:  VX_APP (VilApp + ServiceProcess)               ║
 // ║  Features: Zero-copy body, JSON transform, SHM context    ║
 // ╚════════════════════════════════════════════════════════════╝
 //
-// Minimal REST gateway that receives JSON, transforms it, and returns.
+// Minimal REST API service that receives JSON, transforms it, and returns.
 // Use as a starting point — extend with your own endpoints.
 //
 // Run:
@@ -91,7 +91,7 @@ async fn echo(body: ShmSlice) -> VilResponse<EchoResponse> {
 async fn health(shm: ShmContext) -> VilResponse<HealthResponse> {
     VilResponse::ok(HealthResponse {
         status: "healthy",
-        service: "vil-gateway",
+        service: "vil-api",
         shm: shm.available,
     })
 }

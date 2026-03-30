@@ -1,7 +1,7 @@
 [template]
 id = "blank"
-title = "Blank Project"
-description = "REST gateway with JSON transform, echo, and health check"
+title = "REST API Service"
+description = "REST API with JSON transform, echo, and health check"
 default_port = 8080
 default_upstream = ""
 
