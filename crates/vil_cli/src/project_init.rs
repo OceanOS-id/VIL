@@ -99,9 +99,15 @@ fn try_init_from_example(args: &InitArgs) -> Option<Result<(), String>> {
 
         match content {
             Some(mut text) => {
+                // Extract just the directory name (not full path)
+                let project_name = Path::new(name)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or(name);
+
                 // Apply replacements
                 if let Some(pkg) = tmpl.replace.get("package_name") {
-                    text = text.replace(pkg, name);
+                    text = text.replace(pkg, project_name);
                 }
                 if let Some(old_port) = tmpl.replace.get("port") {
                     text = text.replace(old_port, &port.to_string());
