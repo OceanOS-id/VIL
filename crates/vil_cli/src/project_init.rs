@@ -523,15 +523,6 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
     println!("{}", "VIL Project Initializer".cyan().bold());
     println!();
 
-    // Try example-based init first (Rust only, if examples/ found)
-    let lang = args.lang.clone().unwrap_or("rust".into());
-    if lang == "rust" {
-        if let Some(result) = try_init_from_example(&args) {
-            return result;
-        }
-        // Fall through to legacy codegen if example not found
-    }
-
     let (name, template_id, lang, token, port, upstream) = if args.wizard {
         run_wizard(&args)?
     } else {
@@ -539,13 +530,45 @@ pub fn run_init(args: InitArgs) -> Result<(), String> {
             .name
             .ok_or("Project name is required. Usage: vil init <name> --template <template>")?;
         let tmpl = args.template.unwrap_or("ai-gateway".into());
-        let template = find_template(&tmpl)?;
         let lang = validate_lang(&args.lang.unwrap_or("rust".into()))?;
+
+        // Try example-based init for non-wizard Rust (before resolving legacy template)
+        if lang == "rust" {
+            let example_args = InitArgs {
+                name: Some(name.clone()),
+                template: Some(tmpl.clone()),
+                lang: Some(lang.clone()),
+                port: args.port,
+                upstream: args.upstream.clone(),
+                ..InitArgs { name: None, template: None, lang: None, token: None, port: None, upstream: None, wizard: false }
+            };
+            if let Some(result) = try_init_from_example(&example_args) {
+                return result;
+            }
+        }
+
+        let template = find_template(&tmpl)?;
         let token = args.token.unwrap_or("shm".into());
         let port = args.port.unwrap_or(template.default_port);
         let upstream = args.upstream.unwrap_or(template.default_upstream.into());
         (name, tmpl, lang, token, port, upstream)
     };
+
+    // For wizard + Rust: try example-based init with resolved values
+    if lang == "rust" {
+        let example_args = InitArgs {
+            name: Some(name.clone()),
+            template: Some(template_id.clone()),
+            lang: Some(lang.clone()),
+            port: Some(port),
+            upstream: Some(upstream.clone()),
+            token: None,
+            wizard: false,
+        };
+        if let Some(result) = try_init_from_example(&example_args) {
+            return result;
+        }
+    }
 
     let template = find_template(&template_id)?;
 
@@ -1520,17 +1543,46 @@ fn run_wizard(args: &InitArgs) -> Result<(String, String, String, String, u16, S
     };
     let lang = resolve_lang(&lang_input)?;
 
-    // Template selection
+    // Template selection — fetch from GitHub (dynamic)
     println!();
-    println!("  {} Available templates:", "TEMPLATES".cyan());
-    for (i, t) in TEMPLATES.iter().enumerate() {
-        println!("    {}. {:25} {}", i + 1, t.title.green(), t.description);
-    }
-    println!();
-    let tmpl_input = prompt("Template (number or name)", "1")?;
-    let template_id = resolve_template(&tmpl_input)?;
+    println!("  {} Fetching templates...", "TEMPLATES".cyan());
+    let remote_templates = fetch_template_index().ok();
 
-    let template = find_template(&template_id)?;
+    let (template_id, default_port, default_upstream) = if let Some(ref idx) = remote_templates {
+        println!("  {} Available templates (from GitHub):", "TEMPLATES".cyan());
+        for (i, t) in idx.templates.iter().enumerate() {
+            println!("    {}. {:25} {}", i + 1, t.title.green(), t.description);
+        }
+        println!();
+        println!("  Tip: run `vil templates` to see sync status.");
+        println!();
+        let tmpl_input = prompt("Template (number or name)", "1")?;
+
+        // Resolve by number or id
+        let tmpl = if let Ok(n) = tmpl_input.parse::<usize>() {
+            if n >= 1 && n <= idx.templates.len() {
+                &idx.templates[n - 1]
+            } else {
+                return Err(format!("Invalid template number: {}", n));
+            }
+        } else {
+            idx.templates.iter().find(|t| t.id == tmpl_input)
+                .ok_or_else(|| format!("Template '{}' not found", tmpl_input))?
+        };
+        (tmpl.id.clone(), tmpl.default_port, tmpl.default_upstream.clone())
+    } else {
+        // Fallback to hardcoded if GitHub unreachable
+        println!("  {} Could not fetch remote templates, using built-in list.", "NOTE".yellow());
+        println!("  {} Available templates:", "TEMPLATES".cyan());
+        for (i, t) in TEMPLATES.iter().enumerate() {
+            println!("    {}. {:25} {}", i + 1, t.title.green(), t.description);
+        }
+        println!();
+        let tmpl_input = prompt("Template (number or name)", "1")?;
+        let tid = resolve_template(&tmpl_input)?;
+        let t = find_template(&tid)?;
+        (tid, t.default_port, t.default_upstream.to_string())
+    };
 
     // Token type (only for Rust)
     let token = if lang == "rust" {
@@ -1552,12 +1604,12 @@ fn run_wizard(args: &InitArgs) -> Result<(String, String, String, String, u16, S
     };
 
     // Port
-    let port_str = prompt(&format!("Port"), &template.default_port.to_string())?;
-    let port: u16 = port_str.parse().unwrap_or(template.default_port);
+    let port_str = prompt("Port", &default_port.to_string())?;
+    let port: u16 = port_str.parse().unwrap_or(default_port);
 
     // Upstream (only for pipeline templates)
-    let upstream = if !template.default_upstream.is_empty() {
-        prompt("Upstream URL", template.default_upstream)?
+    let upstream = if !default_upstream.is_empty() {
+        prompt("Upstream URL", &default_upstream)?
     } else {
         String::new()
     };
