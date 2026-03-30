@@ -86,15 +86,8 @@ macro_rules! app_log {
             }
 
             let _ = striped.try_push(slot);
-        } else {
-            // Fallback: ring not initialized — emit via tracing
-            tracing::event!(
-                tracing::Level::INFO,
-                code = $code,
-                $( $key = %$val, )*
-                "vil_log fallback (ring not initialized)"
-            );
         }
+        // Ring not initialized — silently skip
         } // level_enabled
     }};
 }
@@ -198,15 +191,8 @@ macro_rules! _emit_typed_log {
             slot.payload[..copy_len].copy_from_slice(&payload_bytes[..copy_len]);
 
             let _ = striped.try_push(slot);
-        } else {
-            // Fallback: ring not initialized — emit via tracing
-            tracing::event!(
-                tracing::Level::INFO,
-                category = format!("{:?}", $category).as_str(),
-                level = stringify!($level),
-                "vil_log fallback (ring not initialized)"
-            );
         }
+        // Ring not initialized — silently skip
         } // level_enabled
     }};
 }

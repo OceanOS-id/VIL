@@ -40,6 +40,7 @@ pub struct VilServer {
     metrics_port: Option<u16>,
     app_router: Router<AppState>,
     services: Vec<ServiceDef>,
+    nested_prefixes: Vec<String>,
     cors: bool,
     observer: bool,
 }
@@ -53,6 +54,7 @@ impl VilServer {
             metrics_port: None,
             app_router: Router::new(),
             services: Vec::new(),
+            nested_prefixes: Vec::new(),
             cors: false,
             observer: false,
         }
@@ -93,6 +95,7 @@ impl VilServer {
 
     /// Nest a sub-router under a path prefix.
     pub fn nest(mut self, path: &str, router: Router<AppState>) -> Self {
+        self.nested_prefixes.push(path.to_string());
         self.app_router = self.app_router.nest(path, router);
         self
     }
@@ -234,6 +237,9 @@ impl VilServer {
 
         let name = self.name.clone();
         let observer_enabled = self.observer;
+        let first_prefix = self.nested_prefixes.first().cloned()
+            .or_else(|| self.services.first().map(|s| format!("/api/{}", s.name)))
+            .unwrap_or_else(|| "".into());
         let (app, state, port, metrics_port, observer_collector) = self.build();
 
         let addr = SocketAddr::from(([0, 0, 0, 0], port));
@@ -292,6 +298,30 @@ impl VilServer {
         }
         println!();
         println!("  Press Ctrl+C to stop");
+        println!();
+
+        // Show usage guide with actual service endpoint
+        let example_path = format!("{}/trigger", first_prefix);
+
+        println!("  ─── Open another terminal ─────────────────────────────────");
+        println!();
+        if observer_enabled {
+            println!("  1. Dashboard:  http://localhost:{}/_vil/dashboard/", port);
+            println!();
+            println!("  2. Test:");
+        } else {
+            println!("  1. Test:");
+        }
+        println!("     curl -s -X POST http://localhost:{}{} \\", port, example_path);
+        println!("       -H 'Content-Type: application/json' \\");
+        println!("       -d '{{\"prompt\":\"hello\"}}'");
+        println!();
+        println!("  {}. Benchmark:", if observer_enabled { "3" } else { "2" });
+        println!("     oha -m POST -H 'Content-Type: application/json' \\");
+        println!("       -d '{{\"prompt\":\"bench\"}}' -z 30s -c 200 \\");
+        println!("       http://localhost:{}{}", port, example_path);
+        println!();
+        println!("  ────────────────────────────────────────────────────────────");
         println!();
 
         // Start metrics server on separate port if configured
