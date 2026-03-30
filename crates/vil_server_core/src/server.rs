@@ -305,21 +305,36 @@ impl VilServer {
 
         println!("  ─── Open another terminal ─────────────────────────────────");
         println!();
+        let mut step = 1;
         if observer_enabled {
-            println!("  1. Dashboard:  http://localhost:{}/_vil/dashboard/", port);
+            println!("  {}. Dashboard:  http://localhost:{}/_vil/dashboard/", step, port);
             println!();
-            println!("  2. Test:");
-        } else {
-            println!("  1. Test:");
+            step += 1;
         }
+        println!("  {}. Test:", step);
         println!("     curl -s -X POST http://localhost:{}{} \\", port, example_path);
         println!("       -H 'Content-Type: application/json' \\");
         println!("       -d '{{\"prompt\":\"hello\"}}'");
+        step += 1;
         println!();
-        println!("  {}. Benchmark:", if observer_enabled { "3" } else { "2" });
+        println!("  {}. Warmup (required before benchmark):", step);
+        println!("     oha -m POST -H 'Content-Type: application/json' \\");
+        println!("       -d '{{\"prompt\":\"bench\"}}' -z 3s -c 200 \\");
+        println!("       http://localhost:{}{}", port, example_path);
+        step += 1;
+        println!();
+        println!("  {}. Upstream baseline:", step);
+        println!("     oha -m POST -H 'Content-Type: application/json' \\");
+        println!("       -d '{{\"model\":\"gpt-4\",\"messages\":[{{\"role\":\"user\",\"content\":\"bench\"}}]}}' \\");
+        println!("       -z 10s -c 200 http://localhost:4545/v1/chat/completions");
+        step += 1;
+        println!();
+        println!("  {}. Gateway benchmark:", step);
         println!("     oha -m POST -H 'Content-Type: application/json' \\");
         println!("       -d '{{\"prompt\":\"bench\"}}' -z 30s -c 200 \\");
         println!("       http://localhost:{}{}", port, example_path);
+        println!();
+        println!("     Compare req/s between step {} vs {} to measure overhead.", step - 1, step);
         println!();
         println!("  ────────────────────────────────────────────────────────────");
         println!();

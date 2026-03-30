@@ -1,6 +1,6 @@
 [package]
 name = "vil_server"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 description = "VIL Server — Process-oriented modular server for Rust. Zero-copy SHM, Tri-Lane protocol, built on Axum."
 repository = "https://github.com/OceanOS-id/VIL"
@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 # VIL Server crates
-vil_server_core = { version = "0.1.8", path = "../vil_server_core" }
+vil_server_core = { version = "0.1.9", path = "../vil_server_core" }
 vil_server_web = { version = "0.1.0", path = "../vil_server_web" }
 vil_server_config = { version = "0.1.0", path = "../vil_server_config" }
 vil_server_mesh = { version = "0.1.0", path = "../vil_server_mesh" }
