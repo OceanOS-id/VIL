@@ -188,7 +188,7 @@ struct TemplateEntry {
     files: Vec<String>,
 }
 
-/// `vil templates` — list available templates.
+/// `vil templates` — list available templates with sync status.
 pub fn list_templates() -> Result<(), String> {
     println!("{}", "VIL Templates".cyan().bold());
     println!();
@@ -196,15 +196,32 @@ pub fn list_templates() -> Result<(), String> {
     let index = fetch_template_index()
         .map_err(|e| format!("Cannot fetch template list: {}", e))?;
 
-    println!("  {:<22} {:<30} {}", "ID", "TITLE", "DESCRIPTION");
-    println!("  {}", "-".repeat(80));
+    let vastar_home = std::env::var("VASTAR_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            dirs::home_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join("vastar")
+        });
+
+    let mut synced = 0;
+    println!("  {:<4} {:<22} {:<26} {}", "", "ID", "TITLE", "DESCRIPTION");
+    println!("  {}", "-".repeat(85));
     for tmpl in &index.templates {
-        println!("  {:<22} {:<30} {}", tmpl.id, tmpl.title, tmpl.description);
+        let local_dir = vastar_home.join("vil/examples").join(&tmpl.example_dir);
+        let is_synced = local_dir.exists() && local_dir.join("src/main.rs").exists();
+        let marker = if is_synced { "OK".green().to_string() } else { "--".dimmed().to_string() };
+        if is_synced { synced += 1; }
+        println!("  {:<4} {:<22} {:<26} {}", marker, tmpl.id, tmpl.title, tmpl.description);
     }
 
     println!();
+    println!("  {} synced / {} total", synced, index.templates.len());
+    if synced < index.templates.len() {
+        println!("  Run `vil sync` to download all templates for offline use.");
+    }
+    println!();
     println!("  Usage: vil init <name> --template <ID>");
-    println!("  Sync:  vil sync  (download for offline use)");
     println!();
 
     Ok(())
