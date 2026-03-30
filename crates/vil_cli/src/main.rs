@@ -204,6 +204,9 @@ enum Commands {
         wizard: bool,
     },
 
+    /// Sync templates from GitHub to VASTAR_HOME for offline use
+    Sync,
+
     /// Build a VIL service into a deployable artifact
     Build {
         /// Build target (vlb for vflow-server provisioning)
@@ -726,6 +729,13 @@ fn main() {
                 upstream: upstream.clone(),
                 wizard: *wizard || template.is_none(),
             }) {
+                eprintln!("{} {}", "Error:".red().bold(), e);
+                std::process::exit(1);
+            }
+        }
+
+        Commands::Sync => {
+            if let Err(e) = project_init::sync_templates() {
                 eprintln!("{} {}", "Error:".red().bold(), e);
                 std::process::exit(1);
             }

@@ -188,6 +188,90 @@ struct TemplateEntry {
     files: Vec<String>,
 }
 
+/// `vil sync` — download all templates from GitHub to VASTAR_HOME for offline use.
+pub fn sync_templates() -> Result<(), String> {
+    println!("{}", "VIL Template Sync".cyan().bold());
+    println!();
+
+    let vastar_home = std::env::var("VASTAR_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            dirs::home_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join("vastar")
+        });
+
+    // Fetch index from GitHub
+    println!("  {} Fetching template index from GitHub...", "FETCH".cyan());
+    let index_text = fetch_url(GITHUB_INDEX_URL)
+        .map_err(|e| format!("Cannot reach GitHub: {}. Check your internet connection.", e))?;
+    let index: TemplateIndex = serde_json::from_str(&index_text)
+        .map_err(|e| format!("Invalid template index: {}", e))?;
+
+    println!("  {} {} templates found", "OK".green(), index.templates.len());
+    println!();
+
+    // Save index locally
+    let index_path = vastar_home.join("vil/template-index.json");
+    if let Some(parent) = index_path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    std::fs::write(&index_path, &index_text)
+        .map_err(|e| format!("Failed to write {}: {}", index_path.display(), e))?;
+    println!("  {} {}", "+".green(), index_path.display());
+
+    // Download each template's files
+    let mut total_files = 0;
+    for tmpl in &index.templates {
+        println!();
+        println!("  {} {} ({})", "SYNC".cyan(), tmpl.title, tmpl.id);
+
+        let example_dir = vastar_home.join("vil/examples").join(&tmpl.example_dir);
+
+        // Save template.toml
+        let toml_url = format!("{}/examples/{}/template.toml", GITHUB_RAW_BASE, tmpl.example_dir);
+        if let Ok(toml_text) = fetch_url(&toml_url) {
+            let _ = std::fs::create_dir_all(&example_dir);
+            let _ = std::fs::write(example_dir.join("template.toml"), &toml_text);
+        }
+
+        for file_path in &tmpl.files {
+            let url = format!("{}/examples/{}/{}", GITHUB_RAW_BASE, tmpl.example_dir, file_path);
+            let dest = example_dir.join(file_path);
+
+            if let Some(parent) = dest.parent() {
+                let _ = std::fs::create_dir_all(parent);
+            }
+
+            match fetch_url(&url) {
+                Ok(text) => {
+                    std::fs::write(&dest, &text)
+                        .map_err(|e| format!("Write error: {}", e))?;
+                    println!("    {} {}", "+".green(), file_path);
+                    total_files += 1;
+                }
+                Err(e) => {
+                    println!("    {} {} ({})", "!".yellow(), file_path, e);
+                }
+            }
+        }
+    }
+
+    println!();
+    println!(
+        "{} Synced {} templates, {} files to {}",
+        "DONE".green().bold(),
+        index.templates.len(),
+        total_files,
+        vastar_home.join("vil/examples").display()
+    );
+    println!();
+    println!("  Templates are now available offline via `vil init`.");
+    println!();
+
+    Ok(())
+}
+
 fn fetch_template_index() -> Result<TemplateIndex, String> {
     // GitHub first (always up-to-date)
     if let Ok(text) = fetch_url(GITHUB_INDEX_URL) {
