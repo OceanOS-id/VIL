@@ -93,9 +93,9 @@ fn try_init_from_example(args: &InitArgs) -> Option<Result<(), String>> {
             let _ = std::fs::create_dir_all(parent);
         }
 
-        // Try local first (for VIL developers)
-        let content = try_read_local_example(&tmpl.example_dir, file_path)
-            .or_else(|| fetch_url(&url).ok());
+        // GitHub first, VASTAR_HOME local as offline fallback
+        let content = fetch_url(&url).ok()
+            .or_else(|| try_read_local_example(&vastar_home, &tmpl.example_dir, file_path));
 
         match content {
             Some(mut text) => {
@@ -146,20 +146,16 @@ fn try_init_from_example(args: &InitArgs) -> Option<Result<(), String>> {
     Some(Ok(()))
 }
 
-fn try_read_local_example(example_dir: &str, file_path: &str) -> Option<String> {
-    // Check relative to current dir (VIL workspace)
-    let local = PathBuf::from("examples").join(example_dir).join(file_path);
-    if local.exists() {
-        return std::fs::read_to_string(&local).ok();
+fn try_read_local_example(vastar_home: &Path, example_dir: &str, file_path: &str) -> Option<String> {
+    // Check VASTAR_HOME/vil/examples/ (cloned VIL repo)
+    let vil_examples = vastar_home.join("vil/examples").join(example_dir).join(file_path);
+    if vil_examples.exists() {
+        return std::fs::read_to_string(&vil_examples).ok();
     }
-    // Check relative to binary location
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(parent) = exe.parent() {
-            let workspace = parent.join("../../examples").join(example_dir).join(file_path);
-            if workspace.exists() {
-                return std::fs::read_to_string(&workspace).ok();
-            }
-        }
+    // Check VASTAR_HOME/examples/ (flat layout)
+    let flat = vastar_home.join("examples").join(example_dir).join(file_path);
+    if flat.exists() {
+        return std::fs::read_to_string(&flat).ok();
     }
     None
 }
@@ -193,18 +189,32 @@ struct TemplateEntry {
 }
 
 fn fetch_template_index() -> Result<TemplateIndex, String> {
-    // Try local first
-    let local = PathBuf::from("template-index.json");
-    if local.exists() {
-        let text = std::fs::read_to_string(&local)
-            .map_err(|e| format!("Read error: {}", e))?;
-        return serde_json::from_str(&text)
-            .map_err(|e| format!("Parse error: {}", e));
+    // GitHub first (always up-to-date)
+    if let Ok(text) = fetch_url(GITHUB_INDEX_URL) {
+        if let Ok(index) = serde_json::from_str(&text) {
+            return Ok(index);
+        }
     }
-    // Fetch from GitHub
-    let text = fetch_url(GITHUB_INDEX_URL)?;
-    serde_json::from_str(&text)
-        .map_err(|e| format!("Parse error: {}", e))
+    // Offline fallback: VASTAR_HOME/template-index.json or VASTAR_HOME/vil/template-index.json
+    let vastar_home = std::env::var("VASTAR_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            dirs::home_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join("vastar")
+        });
+    for path in &[
+        vastar_home.join("vil/template-index.json"),
+        vastar_home.join("template-index.json"),
+    ] {
+        if path.exists() {
+            let text = std::fs::read_to_string(path)
+                .map_err(|e| format!("Read error: {}", e))?;
+            return serde_json::from_str(&text)
+                .map_err(|e| format!("Parse error: {}", e));
+        }
+    }
+    Err("Could not fetch template index from GitHub or local VASTAR_HOME".into())
 }
 
 pub struct InitArgs {
