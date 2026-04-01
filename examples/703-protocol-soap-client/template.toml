@@ -1,0 +1,18 @@
+[template]
+id = "703-protocol-soap-client"
+title = "Protocol Soap Client"
+description = "Protocol Soap Client"
+default_port = 8080
+default_upstream = ""
+category = "messaging"
+
+[template.replace]
+package_name = "example-703-protocol-soap-client"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

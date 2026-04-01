@@ -1,0 +1,19 @@
+[template]
+id = "101b-multi-pipeline-benchmark"
+title = "Multi Pipeline Benchmark"
+description = "Multi Pipeline Benchmark"
+default_port = 8080
+default_upstream = ""
+category = "pipeline"
+
+[template.replace]
+package_name = "vil-multi-pipeline-benchmark"
+port = "8080"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

@@ -1,0 +1,18 @@
+[template]
+id = "101-pipeline-3node-transform-chain"
+title = "Pipeline 3Node Transform Chain"
+description = "ETL Data Pipeline (Extract-Transform-Load)"
+default_port = 8080
+default_upstream = ""
+category = "pipeline"
+
+[template.replace]
+package_name = "vil-pipeline-3node-transform-chain"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

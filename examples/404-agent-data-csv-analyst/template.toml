@@ -1,0 +1,21 @@
+[template]
+id = "404-agent-data-csv-analyst"
+title = "Agent Data Csv Analyst"
+description = "Business Intelligence Analyst"
+default_port = 3123
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "agent"
+
+[template.replace]
+package_name = "vil-agent-data-csv-analyst"
+port = "3123"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3123
+method = "POST"
+path = "/csv-analyze"
+body = '{"prompt":"test"}'
+expect_status = 200

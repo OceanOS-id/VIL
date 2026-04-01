@@ -1,0 +1,19 @@
+[template]
+id = "702-mq-sqs-send-receive"
+title = "Mq Sqs Send Receive"
+description = "Mq Sqs Send Receive"
+default_port = 8080
+default_upstream = ""
+category = "messaging"
+
+[template.replace]
+package_name = "example-702-mq-sqs-send-receive"
+port = "8080"
+
+[template.test]
+type = "external:sqs"
+prereq = "# Requires sqs at http://localhost:4566"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

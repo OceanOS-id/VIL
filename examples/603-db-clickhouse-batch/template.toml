@@ -1,0 +1,19 @@
+[template]
+id = "603-db-clickhouse-batch"
+title = "Db Clickhouse Batch"
+description = "Db Clickhouse Batch"
+default_port = 8080
+default_upstream = ""
+category = "storage"
+
+[template.replace]
+package_name = "example-603-db-clickhouse-batch"
+port = "8080"
+
+[template.test]
+type = "external:clickhouse"
+prereq = "# Requires clickhouse at http://localhost:8123"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

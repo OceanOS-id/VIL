@@ -1,0 +1,19 @@
+[template]
+id = "037-basic-vilmodel-derive"
+title = "Vilmodel Derive"
+description = "Insurance Claim Processing (#[derive(VilModel)])"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-vilmodel-derive"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "POST"
+path = "/claims/submit"
+body = '{"test":true}'
+expect_status = 200

@@ -1,0 +1,21 @@
+[template]
+id = "402-agent-http-researcher"
+title = "Agent Http Researcher"
+description = "Market Research Agent"
+default_port = 3121
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "agent"
+
+[template.replace]
+package_name = "vil-agent-http-researcher"
+port = "3121"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3121
+method = "POST"
+path = "/research"
+body = '{"prompt":"test"}'
+expect_status = 200

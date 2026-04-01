@@ -1,0 +1,19 @@
+[template]
+id = "202-llm-multi-model-routing"
+title = "Llm Multi Model Routing"
+description = "Translation Service Pipeline"
+default_port = 8080
+default_upstream = ""
+category = "llm"
+
+[template.replace]
+package_name = "vil-llm-multi-model-routing"
+port = "8080"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

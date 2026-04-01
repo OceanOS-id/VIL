@@ -1,0 +1,21 @@
+[template]
+id = "303-rag-hybrid-exact-semantic"
+title = "Rag Hybrid Exact Semantic"
+description = "FAQ + Knowledge Base Hybrid Search"
+default_port = 3112
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "rag"
+
+[template.replace]
+package_name = "vil-rag-hybrid-exact-semantic"
+port = "3112"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3112
+method = "POST"
+path = "/hybrid"
+body = '{"prompt":"test"}'
+expect_status = 200

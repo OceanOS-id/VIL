@@ -1,0 +1,19 @@
+[template]
+id = "602-db-mongo-crud"
+title = "Db Mongo Crud"
+description = "Db Mongo Crud"
+default_port = 8080
+default_upstream = ""
+category = "storage"
+
+[template.replace]
+package_name = "example-602-db-mongo-crud"
+port = "8080"
+
+[template.test]
+type = "external:mongo"
+prereq = "# Requires mongo at mongodb://localhost:27017"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

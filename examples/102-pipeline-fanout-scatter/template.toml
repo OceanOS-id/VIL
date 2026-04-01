@@ -1,0 +1,18 @@
+[template]
+id = "102-pipeline-fanout-scatter"
+title = "Pipeline Fanout Scatter"
+description = "Loan Portfolio Risk Segmentation (Fan-Out)"
+default_port = 8080
+default_upstream = ""
+category = "pipeline"
+
+[template.replace]
+package_name = "vil-pipeline-fanout-scatter"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

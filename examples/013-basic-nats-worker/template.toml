@@ -1,0 +1,19 @@
+[template]
+id = "013-basic-nats-worker"
+title = "Nats Worker"
+description = "Event-Driven Order Processing (NATS)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-nats-worker"
+port = "8080"
+
+[template.test]
+type = "external:nats"
+prereq = "# Requires nats at nats://localhost:4222"
+port = 8080
+method = "GET"
+path = "/nats/config"
+expect_status = 200

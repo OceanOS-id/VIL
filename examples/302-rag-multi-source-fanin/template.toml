@@ -1,0 +1,21 @@
+[template]
+id = "302-rag-multi-source-fanin"
+title = "Rag Multi Source Fanin"
+description = "Legal Compliance Search Engine"
+default_port = 3111
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "rag"
+
+[template.replace]
+package_name = "vil-rag-multi-source-fanin"
+port = "3111"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3111
+method = "POST"
+path = "/multi-rag"
+body = '{"prompt":"test"}'
+expect_status = 200

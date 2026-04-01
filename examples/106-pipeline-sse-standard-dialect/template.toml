@@ -1,0 +1,19 @@
+[template]
+id = "106-pipeline-sse-standard-dialect"
+title = "Pipeline Sse Standard Dialect"
+description = "IoT Sensor Dashboard (Pipeline SSE Standard Dialect)"
+default_port = 8080
+default_upstream = ""
+category = "pipeline"
+
+[template.replace]
+package_name = "vil-pipeline-sse-standard-dialect"
+port = "8080"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

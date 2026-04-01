@@ -1,0 +1,19 @@
+[template]
+id = "107-pipeline-process-traced"
+title = "Pipeline Process Traced"
+description = "Supply Chain Tracking (Pipeline Process Traced)"
+default_port = 8080
+default_upstream = "http://localhost:18081/api/v1/credits/stream"
+category = "pipeline"
+
+[template.replace]
+package_name = "vil-pipeline-process-traced"
+port = "8080"
+upstream = "http://localhost:18081/api/v1/credits/stream"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

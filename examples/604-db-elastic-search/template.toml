@@ -1,0 +1,19 @@
+[template]
+id = "604-db-elastic-search"
+title = "Db Elastic Search"
+description = "Db Elastic Search"
+default_port = 8080
+default_upstream = ""
+category = "storage"
+
+[template.replace]
+package_name = "example-604-db-elastic-search"
+port = "8080"
+
+[template.test]
+type = "external:elastic"
+prereq = "# Requires elastic at http://localhost:9200"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

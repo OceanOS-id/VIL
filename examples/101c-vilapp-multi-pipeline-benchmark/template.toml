@@ -1,0 +1,21 @@
+[template]
+id = "101c-vilapp-multi-pipeline-benchmark"
+title = "Vilapp Multi Pipeline Benchmark"
+description = "Vilapp Multi Pipeline Benchmark"
+default_port = 3090
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "pipeline"
+
+[template.replace]
+package_name = "vil-vilapp-multi-pipeline-benchmark"
+port = "3090"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3090
+method = "POST"
+path = "/api/pipeline/trigger"
+body = '{"prompt":"test"}'
+expect_status = 200

@@ -1,0 +1,18 @@
+[template]
+id = "022-basic-sidecar-python"
+title = "Sidecar Python"
+description = "ML Fraud Scoring Sidecar"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-sidecar-python"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/status"
+expect_status = 200

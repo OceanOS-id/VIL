@@ -1,0 +1,18 @@
+[template]
+id = "103-pipeline-fanin-gather"
+title = "Pipeline Fanin Gather"
+description = "Multi-Source Financial Data Aggregator (Fan-In)"
+default_port = 8080
+default_upstream = ""
+category = "pipeline"
+
+[template.replace]
+package_name = "vil-pipeline-fanin-gather"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

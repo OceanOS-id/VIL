@@ -1,0 +1,18 @@
+[template]
+id = "017-basic-production-fullstack"
+title = "Production Fullstack"
+description = "Enterprise Platform (Full Stack)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-production-fullstack"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/api/fullstack/stack"
+expect_status = 200

@@ -1,0 +1,19 @@
+[template]
+id = "034-basic-blocking-task"
+title = "Blocking Task"
+description = "Credit Risk Scoring Engine (Blocking Task)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-blocking-task"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "POST"
+path = "/risk/assess"
+body = '{"title":"test","done":false}'
+expect_status = 200

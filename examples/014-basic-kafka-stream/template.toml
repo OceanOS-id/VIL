@@ -1,0 +1,19 @@
+[template]
+id = "014-basic-kafka-stream"
+title = "Kafka Stream"
+description = "Transaction Event Stream (Kafka)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-kafka-stream"
+port = "8080"
+
+[template.test]
+type = "external:kafka"
+prereq = "# Requires kafka at localhost:9092"
+port = 8080
+method = "GET"
+path = "/kafka/config"
+expect_status = 200

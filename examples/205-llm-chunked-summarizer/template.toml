@@ -1,0 +1,19 @@
+[template]
+id = "205-llm-chunked-summarizer"
+title = "Llm Chunked Summarizer"
+description = "Legal Document Summarization Pipeline"
+default_port = 8080
+default_upstream = ""
+category = "llm"
+
+[template.replace]
+package_name = "vil-llm-chunked-summarizer"
+port = "8080"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

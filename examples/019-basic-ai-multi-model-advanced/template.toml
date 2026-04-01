@@ -1,0 +1,19 @@
+[template]
+id = "019-basic-ai-multi-model-advanced"
+title = "Ai Multi Model Advanced"
+description = "Multi-Provider AI Aggregator"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-ai-multi-model-advanced"
+port = "8080"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

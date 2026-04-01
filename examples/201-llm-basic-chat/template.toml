@@ -1,0 +1,21 @@
+[template]
+id = "201-llm-basic-chat"
+title = "Llm Basic Chat"
+description = "Medical Triage Chatbot"
+default_port = 3100
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "llm"
+
+[template.replace]
+package_name = "vil-llm-basic-chat"
+port = "3100"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3100
+method = "POST"
+path = "/chat"
+body = '{"prompt":"test"}'
+expect_status = 200

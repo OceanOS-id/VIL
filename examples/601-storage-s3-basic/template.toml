@@ -1,0 +1,19 @@
+[template]
+id = "601-storage-s3-basic"
+title = "Storage S3 Basic"
+description = "Storage S3 Basic"
+default_port = 8080
+default_upstream = ""
+category = "storage"
+
+[template.replace]
+package_name = "example-601-storage-s3-basic"
+port = "8080"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

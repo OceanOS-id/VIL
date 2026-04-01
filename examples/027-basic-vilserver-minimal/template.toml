@@ -1,0 +1,18 @@
+[template]
+id = "027-basic-vilserver-minimal"
+title = "Vilserver Minimal"
+description = "Health Check Microservice"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-vilserver-minimal"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/hello"
+expect_status = 200

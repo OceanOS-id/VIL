@@ -1,0 +1,21 @@
+[template]
+id = "403-agent-code-file-reviewer"
+title = "Agent Code File Reviewer"
+description = "DevOps Incident Responder"
+default_port = 3122
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "agent"
+
+[template.replace]
+package_name = "vil-agent-code-file-reviewer"
+port = "3122"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3122
+method = "POST"
+path = "/code-review"
+body = '{"prompt":"test"}'
+expect_status = 200

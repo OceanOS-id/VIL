@@ -1,0 +1,20 @@
+[template]
+id = "020-basic-ai-ab-testing"
+title = "Ai Ab Testing"
+description = "Marketing Campaign A/B Testing Gateway"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-ai-ab-testing"
+port = "8080"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 8080
+method = "POST"
+path = "/infer"
+body = '{"prompt":"test"}'
+expect_status = 200

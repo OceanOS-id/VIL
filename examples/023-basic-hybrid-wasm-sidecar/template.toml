@@ -1,0 +1,18 @@
+[template]
+id = "023-basic-hybrid-wasm-sidecar"
+title = "Hybrid Wasm Sidecar"
+description = "Order Validation + ML Pricing Pipeline"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-hybrid-wasm-sidecar"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/api/pipeline/"
+expect_status = 200

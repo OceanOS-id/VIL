@@ -1,0 +1,18 @@
+[template]
+id = "031-basic-mesh-routing"
+title = "Mesh Routing"
+description = "Banking Transaction Mesh (Multi-Service Mesh Routing)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-mesh-routing"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/api/teller/ping"
+expect_status = 200

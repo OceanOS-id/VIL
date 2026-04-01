@@ -1,0 +1,18 @@
+[template]
+id = "011-basic-graphql-api"
+title = "Graphql Api"
+description = "Product Catalog API (GraphQL)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-graphql-api"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/api/graphql/"
+expect_status = 200

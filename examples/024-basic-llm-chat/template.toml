@@ -1,0 +1,21 @@
+[template]
+id = "024-basic-llm-chat"
+title = "Llm Chat"
+description = "Customer Support Chatbot"
+default_port = 3090
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-llm-chat"
+port = "3090"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3090
+method = "POST"
+path = "/chat"
+body = '{"prompt":"test"}'
+expect_status = 200

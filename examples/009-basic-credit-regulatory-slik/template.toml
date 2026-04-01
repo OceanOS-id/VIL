@@ -1,0 +1,19 @@
+[template]
+id = "009-basic-credit-regulatory-slik"
+title = "Credit Regulatory Slik"
+description = "OJK SLIK Regulatory Reporting Pipeline"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-credit-regulatory-slik"
+port = "8080"
+
+[template.test]
+type = "credit-simulator"
+prereq = "cargo install credit-data-simulator && credit-data-simulator &"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

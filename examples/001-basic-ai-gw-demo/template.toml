@@ -1,0 +1,19 @@
+[template]
+id = "001-basic-ai-gw-demo"
+title = "Ai Gw Demo"
+description = "AI Inference Gateway (Production LLM Proxy)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-ai-gw-demo"
+port = "8080"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

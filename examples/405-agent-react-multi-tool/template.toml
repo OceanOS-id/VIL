@@ -1,0 +1,21 @@
+[template]
+id = "405-agent-react-multi-tool"
+title = "Agent React Multi Tool"
+description = "Autonomous Research Agent"
+default_port = 3124
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "agent"
+
+[template.replace]
+package_name = "vil-agent-react-multi-tool"
+port = "3124"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3124
+method = "POST"
+path = "/react"
+body = '{"prompt":"test"}'
+expect_status = 200

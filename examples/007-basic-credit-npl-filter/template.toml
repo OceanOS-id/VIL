@@ -1,0 +1,19 @@
+[template]
+id = "007-basic-credit-npl-filter"
+title = "Credit Npl Filter"
+description = "Non-Performing Loan Detection System"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-credit-npl-filter"
+port = "8080"
+
+[template.test]
+type = "credit-simulator"
+prereq = "cargo install credit-data-simulator && credit-data-simulator &"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

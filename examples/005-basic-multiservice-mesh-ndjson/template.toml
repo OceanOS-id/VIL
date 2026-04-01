@@ -1,0 +1,18 @@
+[template]
+id = "005-basic-multiservice-mesh-ndjson"
+title = "Multiservice Mesh Ndjson"
+description = "Core Banking Data Ingestion Pipeline"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-multiservice-mesh-ndjson"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

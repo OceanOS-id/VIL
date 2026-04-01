@@ -1,0 +1,19 @@
+[template]
+id = "033-basic-shm-write-through"
+title = "Shm Write Through"
+description = "Real-time Analytics Dashboard (SHM Write-Through)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-shm-write-through"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "POST"
+path = "/catalog/search"
+body = '{"test":true}'
+expect_status = 200

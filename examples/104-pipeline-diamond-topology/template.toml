@@ -1,0 +1,18 @@
+[template]
+id = "104-pipeline-diamond-topology"
+title = "Pipeline Diamond Topology"
+description = "Credit Report: Summary + Detail Views (Diamond)"
+default_port = 8080
+default_upstream = ""
+category = "pipeline"
+
+[template.replace]
+package_name = "vil-pipeline-diamond-topology"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

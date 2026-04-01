@@ -1,0 +1,20 @@
+[template]
+id = "306-rag-ai-event-tracking"
+title = "Rag Ai Event Tracking"
+description = "Customer Support RAG (AI Event Tracking)"
+default_port = 3116
+default_upstream = ""
+category = "rag"
+
+[template.replace]
+package_name = "vil-rag-ai-event-tracking"
+port = "3116"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3116
+method = "POST"
+path = "/support/ask"
+body = '{"test":true}'
+expect_status = 200

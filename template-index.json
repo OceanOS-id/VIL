@@ -1,20 +1,80 @@
 {
-  "version": 1,
+  "version": 2,
   "templates": [
+    {
+      "id": "001-basic-ai-gw-demo",
+      "title": "Ai Gw Demo",
+      "description": "AI Inference Gateway (Production LLM Proxy)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "001-basic-ai-gw-demo",
+      "replace": {
+        "package_name": "vil-basic-ai-gw-demo",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "PERFORMANCE_REPORT.md",
+        "README.md",
+        "build.sh",
+        "pipeline.vil.yaml",
+        "run.sh",
+        "src/main.rs",
+        "vil.yaml"
+      ]
+    },
     {
       "id": "ai-gateway",
       "title": "AI Gateway",
       "description": "SSE streaming pipeline (webhook -> upstream SSE -> streaming response)",
       "default_port": 3081,
       "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "basic",
       "example_dir": "001b-vilapp-ai-gw-benchmark",
       "replace": {
         "package_name": "vil-vilapp-ai-gw-benchmark",
         "port": "3081",
         "upstream": "http://127.0.0.1:4545/v1/chat/completions"
       },
+      "test": {},
       "files": [
         "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "002-basic-vilapp-gateway",
+      "title": "Vilapp Gateway",
+      "description": "API Gateway for Microservices",
+      "default_port": 3081,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "basic",
+      "example_dir": "002-basic-vilapp-gateway",
+      "replace": {
+        "package_name": "vil-basic-vilapp-gateway",
+        "port": "3081",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 3081,
+        "method": "POST",
+        "path": "/api/gw/trigger",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
         "src/main.rs"
       ]
     },
@@ -24,11 +84,13 @@
       "description": "REST API with JSON transform, echo, and health check",
       "default_port": 8080,
       "default_upstream": "",
+      "category": "basic",
       "example_dir": "003-basic-hello-server",
       "replace": {
         "package_name": "vil-basic-hello-server",
         "port": "8080"
       },
+      "test": {},
       "files": [
         "Cargo.toml",
         "README.md",
@@ -43,10 +105,68 @@
       "description": "REST API with GET/POST/PUT/DELETE endpoints and in-memory store",
       "default_port": 8080,
       "default_upstream": "",
+      "category": "basic",
       "example_dir": "004-basic-rest-crud",
       "replace": {
         "package_name": "vil-basic-rest-crud",
         "port": "8080"
+      },
+      "test": {},
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "005-basic-multiservice-mesh-ndjson",
+      "title": "Multiservice Mesh Ndjson",
+      "description": "Core Banking Data Ingestion Pipeline",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "005-basic-multiservice-mesh-ndjson",
+      "replace": {
+        "package_name": "vil-basic-multiservice-mesh-ndjson",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "multiservice-mesh",
+        "pipeline.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "006-basic-shm-extractor",
+      "title": "Shm Extractor",
+      "description": "High-Frequency Trading Data Processor",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "006-basic-shm-extractor",
+      "replace": {
+        "package_name": "vil-basic-shm-extractor",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "POST",
+        "path": "/ingest",
+        "body": "{\"test\":true}",
+        "expect_status": 200
       },
       "files": [
         "Cargo.toml",
@@ -57,15 +177,217 @@
       ]
     },
     {
+      "id": "007-basic-credit-npl-filter",
+      "title": "Credit Npl Filter",
+      "description": "Non-Performing Loan Detection System",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "007-basic-credit-npl-filter",
+      "replace": {
+        "package_name": "vil-basic-credit-npl-filter",
+        "port": "8080"
+      },
+      "test": {
+        "type": "credit-simulator",
+        "prereq": "cargo install credit-data-simulator && credit-data-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "ai-stream-filter",
+        "pipeline.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml",
+        "vil.yaml"
+      ]
+    },
+    {
+      "id": "008-basic-credit-quality-monitor",
+      "title": "Credit Quality Monitor",
+      "description": "Credit Data Quality Assurance Pipeline",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "008-basic-credit-quality-monitor",
+      "replace": {
+        "package_name": "vil-basic-credit-quality-monitor",
+        "port": "8080"
+      },
+      "test": {
+        "type": "credit-simulator",
+        "prereq": "cargo install credit-data-simulator && credit-data-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "ai-content-moderator",
+        "pipeline.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml",
+        "vil.yaml"
+      ]
+    },
+    {
+      "id": "009-basic-credit-regulatory-slik",
+      "title": "Credit Regulatory Slik",
+      "description": "OJK SLIK Regulatory Reporting Pipeline",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "009-basic-credit-regulatory-slik",
+      "replace": {
+        "package_name": "vil-basic-credit-regulatory-slik",
+        "port": "8080"
+      },
+      "test": {
+        "type": "credit-simulator",
+        "prereq": "cargo install credit-data-simulator && credit-data-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "ai-summarizer",
+        "pipeline.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml",
+        "vil.yaml"
+      ]
+    },
+    {
       "id": "websocket-chat",
       "title": "WebSocket Chat",
       "description": "Real-time WebSocket chat with broadcast hub",
       "default_port": 8080,
       "default_upstream": "",
+      "category": "basic",
       "example_dir": "010-basic-websocket-chat",
       "replace": {
         "package_name": "vil-basic-websocket-chat",
         "port": "8080"
+      },
+      "test": {},
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "011-basic-graphql-api",
+      "title": "Graphql Api",
+      "description": "Product Catalog API (GraphQL)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "011-basic-graphql-api",
+      "replace": {
+        "package_name": "vil-basic-graphql-api",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/api/graphql/",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "012-basic-plugin-database",
+      "title": "Plugin Database",
+      "description": "Multi-tenant SaaS Database Plugin",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "012-basic-plugin-database",
+      "replace": {
+        "package_name": "vil-basic-plugin-database",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "013-basic-nats-worker",
+      "title": "Nats Worker",
+      "description": "Event-Driven Order Processing (NATS)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "013-basic-nats-worker",
+      "replace": {
+        "package_name": "vil-basic-nats-worker",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:nats",
+        "prereq": "# Requires nats at nats://localhost:4222",
+        "port": 8080,
+        "method": "GET",
+        "path": "/nats/config",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "014-basic-kafka-stream",
+      "title": "Kafka Stream",
+      "description": "Transaction Event Stream (Kafka)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "014-basic-kafka-stream",
+      "replace": {
+        "package_name": "vil-basic-kafka-stream",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:kafka",
+        "prereq": "# Requires kafka at localhost:9092",
+        "port": 8080,
+        "method": "GET",
+        "path": "/kafka/config",
+        "expect_status": 200
       },
       "files": [
         "Cargo.toml",
@@ -81,10 +403,66 @@
       "description": "MQTT device gateway with telemetry processing",
       "default_port": 8080,
       "default_upstream": "",
+      "category": "basic",
       "example_dir": "015-basic-mqtt-iot-gateway",
       "replace": {
         "package_name": "vil-basic-mqtt-iot-gateway",
         "port": "8080"
+      },
+      "test": {},
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs",
+        "vil-server.yaml"
+      ]
+    },
+    {
+      "id": "016-basic-ai-rag-gateway",
+      "title": "Ai Rag Gateway",
+      "description": "Enterprise Knowledge Search Gateway",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "016-basic-ai-rag-gateway",
+      "replace": {
+        "package_name": "vil-basic-ai-rag-gateway",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs",
+        "vil.yaml"
+      ]
+    },
+    {
+      "id": "017-basic-production-fullstack",
+      "title": "Production Fullstack",
+      "description": "Enterprise Platform (Full Stack)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "017-basic-production-fullstack",
+      "replace": {
+        "package_name": "vil-basic-production-fullstack",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/api/fullstack/stack",
+        "expect_status": 200
       },
       "files": [
         "Cargo.toml",
@@ -100,11 +478,40 @@
       "description": "Route requests to different AI model providers",
       "default_port": 8080,
       "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "basic",
       "example_dir": "018-basic-ai-multi-model-router",
       "replace": {
         "package_name": "vil-basic-ai-multi-model-router",
         "port": "8080",
         "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {},
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs",
+        "vil.yaml"
+      ]
+    },
+    {
+      "id": "019-basic-ai-multi-model-advanced",
+      "title": "Ai Multi Model Advanced",
+      "description": "Multi-Provider AI Aggregator",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "019-basic-ai-multi-model-advanced",
+      "replace": {
+        "package_name": "vil-basic-ai-multi-model-advanced",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
       },
       "files": [
         "Cargo.toml",
@@ -114,15 +521,126 @@
       ]
     },
     {
+      "id": "020-basic-ai-ab-testing",
+      "title": "Ai Ab Testing",
+      "description": "Marketing Campaign A/B Testing Gateway",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "020-basic-ai-ab-testing",
+      "replace": {
+        "package_name": "vil-basic-ai-ab-testing",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 8080,
+        "method": "POST",
+        "path": "/infer",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
       "id": "wasm-faas",
       "title": "WASM FaaS",
       "description": "WebAssembly functions with pre-warmed instance pool",
       "default_port": 8080,
       "default_upstream": "",
+      "category": "basic",
       "example_dir": "021-basic-wasm-faas",
       "replace": {
         "package_name": "vil-basic-wasm-faas",
         "port": "8080"
+      },
+      "test": {},
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "022-basic-sidecar-python",
+      "title": "Sidecar Python",
+      "description": "ML Fraud Scoring Sidecar",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "022-basic-sidecar-python",
+      "replace": {
+        "package_name": "vil-basic-sidecar-python",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/status",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "023-basic-hybrid-wasm-sidecar",
+      "title": "Hybrid Wasm Sidecar",
+      "description": "Order Validation + ML Pricing Pipeline",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "023-basic-hybrid-wasm-sidecar",
+      "replace": {
+        "package_name": "vil-basic-hybrid-wasm-sidecar",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/api/pipeline/",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "024-basic-llm-chat",
+      "title": "Llm Chat",
+      "description": "Customer Support Chatbot",
+      "default_port": 3090,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "basic",
+      "example_dir": "024-basic-llm-chat",
+      "replace": {
+        "package_name": "vil-basic-llm-chat",
+        "port": "3090",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3090,
+        "method": "POST",
+        "path": "/chat",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
       },
       "files": [
         "Cargo.toml",
@@ -137,12 +655,14 @@
       "description": "Retrieval-Augmented Generation: embed -> search -> generate",
       "default_port": 8080,
       "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "basic",
       "example_dir": "025-basic-rag-service",
       "replace": {
         "package_name": "vil-basic-rag-service",
         "port": "8080",
         "upstream": "http://127.0.0.1:4545/v1/chat/completions"
       },
+      "test": {},
       "files": [
         "Cargo.toml",
         "README.md",
@@ -156,16 +676,311 @@
       "description": "ReAct agent with tool calling for IT operations",
       "default_port": 8080,
       "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "basic",
       "example_dir": "026-basic-ai-agent",
       "replace": {
         "package_name": "vil-basic-ai-agent",
         "port": "8080",
         "upstream": "http://127.0.0.1:4545/v1/chat/completions"
       },
+      "test": {},
       "files": [
         "Cargo.toml",
         "README.md",
         "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "027-basic-vilserver-minimal",
+      "title": "Vilserver Minimal",
+      "description": "Health Check Microservice",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "027-basic-vilserver-minimal",
+      "replace": {
+        "package_name": "vil-basic-vilserver-minimal",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/hello",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "028-basic-sse-hub-streaming",
+      "title": "Sse Hub Streaming",
+      "description": "Live Auction Platform (SSE Streaming)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "028-basic-sse-hub-streaming",
+      "replace": {
+        "package_name": "vil-basic-sse-hub-streaming",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "POST",
+        "path": "/api/events/publish",
+        "body": "{\"test\":true}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "029-basic-vil-handler-endpoint",
+      "title": "Vil Handler Endpoint",
+      "description": "Developer API Playground",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "029-basic-vil-handler-endpoint",
+      "replace": {
+        "package_name": "vil-basic-vil-handler-endpoint",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/api/demo/plain",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "030-basic-trilane-messaging",
+      "title": "Trilane Messaging",
+      "description": "E-Commerce Order Pipeline (Tri-Lane Messaging)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "030-basic-trilane-messaging",
+      "replace": {
+        "package_name": "vil-basic-trilane-messaging",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "POST",
+        "path": "/api/gateway/orders/place",
+        "body": "{\"test\":true}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "031-basic-mesh-routing",
+      "title": "Mesh Routing",
+      "description": "Banking Transaction Mesh (Multi-Service Mesh Routing)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "031-basic-mesh-routing",
+      "replace": {
+        "package_name": "vil-basic-mesh-routing",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/api/teller/ping",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "032-basic-failover-ha",
+      "title": "Failover Ha",
+      "description": "Payment Gateway HA (Failover + Retry Strategy)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "032-basic-failover-ha",
+      "replace": {
+        "package_name": "vil-basic-failover-ha",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/api/primary/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "033-basic-shm-write-through",
+      "title": "Shm Write Through",
+      "description": "Real-time Analytics Dashboard (SHM Write-Through)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "033-basic-shm-write-through",
+      "replace": {
+        "package_name": "vil-basic-shm-write-through",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "POST",
+        "path": "/catalog/search",
+        "body": "{\"test\":true}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "034-basic-blocking-task",
+      "title": "Blocking Task",
+      "description": "Credit Risk Scoring Engine (Blocking Task)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "034-basic-blocking-task",
+      "replace": {
+        "package_name": "vil-basic-blocking-task",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "POST",
+        "path": "/risk/assess",
+        "body": "{\"title\":\"test\",\"done\":false}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "035-basic-vil-service-module",
+      "title": "Vil Service Module",
+      "description": "Hospital Appointment System (VIL Service Module)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "035-basic-vil-service-module",
+      "replace": {
+        "package_name": "vil-basic-vil-service-module",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "036-basic-sse-event-builder",
+      "title": "Sse Event Builder",
+      "description": "Stock Market Ticker (SSE Event Builder)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "036-basic-sse-event-builder",
+      "replace": {
+        "package_name": "vil-basic-sse-event-builder",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/stream",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "037-basic-vilmodel-derive",
+      "title": "Vilmodel Derive",
+      "description": "Insurance Claim Processing (#[derive(VilModel)])",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "037-basic-vilmodel-derive",
+      "replace": {
+        "package_name": "vil-basic-vilmodel-derive",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "POST",
+        "path": "/claims/submit",
+        "body": "{\"test\":true}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "038-basic-vil-app-dsl",
+      "title": "Vil App Dsl",
+      "description": "Restaurant Order System (vil_app! Declarative Macro)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "038-basic-vil-app-dsl",
+      "replace": {
+        "package_name": "vil-basic-vil-app-dsl",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
         "src/main.rs"
       ]
     },
@@ -175,13 +990,1285 @@
       "description": "VilApp with embedded observer dashboard, SLO budget, and alerting",
       "default_port": 8080,
       "default_upstream": "",
+      "category": "basic",
       "example_dir": "039-basic-observer-dashboard",
       "replace": {
         "package_name": "vil-basic-observer-dashboard",
         "port": "8080"
       },
+      "test": {},
       "files": [
         "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "101-pipeline-3node-transform-chain",
+      "title": "Pipeline 3Node Transform Chain",
+      "description": "ETL Data Pipeline (Extract-Transform-Load)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "pipeline",
+      "example_dir": "101-pipeline-3node-transform-chain",
+      "replace": {
+        "package_name": "vil-pipeline-3node-transform-chain",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "101b-multi-pipeline-benchmark",
+      "title": "Multi Pipeline Benchmark",
+      "description": "Multi Pipeline Benchmark",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "pipeline",
+      "example_dir": "101b-multi-pipeline-benchmark",
+      "replace": {
+        "package_name": "vil-multi-pipeline-benchmark",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "101c-vilapp-multi-pipeline-benchmark",
+      "title": "Vilapp Multi Pipeline Benchmark",
+      "description": "Vilapp Multi Pipeline Benchmark",
+      "default_port": 3090,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "pipeline",
+      "example_dir": "101c-vilapp-multi-pipeline-benchmark",
+      "replace": {
+        "package_name": "vil-vilapp-multi-pipeline-benchmark",
+        "port": "3090",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3090,
+        "method": "POST",
+        "path": "/api/pipeline/trigger",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "102-pipeline-fanout-scatter",
+      "title": "Pipeline Fanout Scatter",
+      "description": "Loan Portfolio Risk Segmentation (Fan-Out)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "pipeline",
+      "example_dir": "102-pipeline-fanout-scatter",
+      "replace": {
+        "package_name": "vil-pipeline-fanout-scatter",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "103-pipeline-fanin-gather",
+      "title": "Pipeline Fanin Gather",
+      "description": "Multi-Source Financial Data Aggregator (Fan-In)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "pipeline",
+      "example_dir": "103-pipeline-fanin-gather",
+      "replace": {
+        "package_name": "vil-pipeline-fanin-gather",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "104-pipeline-diamond-topology",
+      "title": "Pipeline Diamond Topology",
+      "description": "Credit Report: Summary + Detail Views (Diamond)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "pipeline",
+      "example_dir": "104-pipeline-diamond-topology",
+      "replace": {
+        "package_name": "vil-pipeline-diamond-topology",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "105-pipeline-multi-workflow",
+      "title": "Pipeline Multi Workflow",
+      "description": "Financial Data Hub (Multi-Workflow)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "pipeline",
+      "example_dir": "105-pipeline-multi-workflow",
+      "replace": {
+        "package_name": "vil-pipeline-multi-workflow",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "106-pipeline-sse-standard-dialect",
+      "title": "Pipeline Sse Standard Dialect",
+      "description": "IoT Sensor Dashboard (Pipeline SSE Standard Dialect)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "pipeline",
+      "example_dir": "106-pipeline-sse-standard-dialect",
+      "replace": {
+        "package_name": "vil-pipeline-sse-standard-dialect",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "107-pipeline-process-traced",
+      "title": "Pipeline Process Traced",
+      "description": "Supply Chain Tracking (Pipeline Process Traced)",
+      "default_port": 8080,
+      "default_upstream": "http://localhost:18081/api/v1/credits/stream",
+      "category": "pipeline",
+      "example_dir": "107-pipeline-process-traced",
+      "replace": {
+        "package_name": "vil-pipeline-process-traced",
+        "port": "8080",
+        "upstream": "http://localhost:18081/api/v1/credits/stream"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "201-llm-basic-chat",
+      "title": "Llm Basic Chat",
+      "description": "Medical Triage Chatbot",
+      "default_port": 3100,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "llm",
+      "example_dir": "201-llm-basic-chat",
+      "replace": {
+        "package_name": "vil-llm-basic-chat",
+        "port": "3100",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3100,
+        "method": "POST",
+        "path": "/chat",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "202-llm-multi-model-routing",
+      "title": "Llm Multi Model Routing",
+      "description": "Translation Service Pipeline",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "llm",
+      "example_dir": "202-llm-multi-model-routing",
+      "replace": {
+        "package_name": "vil-llm-multi-model-routing",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "203-llm-code-review-with-tools",
+      "title": "Llm Code Review With Tools",
+      "description": "Automated Code Review Assistant",
+      "default_port": 3102,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "llm",
+      "example_dir": "203-llm-code-review-with-tools",
+      "replace": {
+        "package_name": "vil-llm-code-review-with-tools",
+        "port": "3102",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3102,
+        "method": "POST",
+        "path": "/code/review",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "204-llm-streaming-translator",
+      "title": "Llm Streaming Translator",
+      "description": "Real-time Document Translation Service",
+      "default_port": 3103,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "llm",
+      "example_dir": "204-llm-streaming-translator",
+      "replace": {
+        "package_name": "vil-llm-streaming-translator",
+        "port": "3103",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3103,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "205-llm-chunked-summarizer",
+      "title": "Llm Chunked Summarizer",
+      "description": "Legal Document Summarization Pipeline",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "llm",
+      "example_dir": "205-llm-chunked-summarizer",
+      "replace": {
+        "package_name": "vil-llm-chunked-summarizer",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "206-llm-decision-routing",
+      "title": "Llm Decision Routing",
+      "description": "Insurance Underwriting AI (LLM Decision Routing)",
+      "default_port": 3116,
+      "default_upstream": "",
+      "category": "llm",
+      "example_dir": "206-llm-decision-routing",
+      "replace": {
+        "package_name": "vil-llm-decision-routing",
+        "port": "3116"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3116,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "301-rag-basic-vector-search",
+      "title": "Rag Basic Vector Search",
+      "description": "Internal Wiki Search Engine",
+      "default_port": 3110,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "rag",
+      "example_dir": "301-rag-basic-vector-search",
+      "replace": {
+        "package_name": "vil-rag-basic-vector-search",
+        "port": "3110",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3110,
+        "method": "POST",
+        "path": "/rag",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "302-rag-multi-source-fanin",
+      "title": "Rag Multi Source Fanin",
+      "description": "Legal Compliance Search Engine",
+      "default_port": 3111,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "rag",
+      "example_dir": "302-rag-multi-source-fanin",
+      "replace": {
+        "package_name": "vil-rag-multi-source-fanin",
+        "port": "3111",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3111,
+        "method": "POST",
+        "path": "/multi-rag",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "303-rag-hybrid-exact-semantic",
+      "title": "Rag Hybrid Exact Semantic",
+      "description": "FAQ + Knowledge Base Hybrid Search",
+      "default_port": 3112,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "rag",
+      "example_dir": "303-rag-hybrid-exact-semantic",
+      "replace": {
+        "package_name": "vil-rag-hybrid-exact-semantic",
+        "port": "3112",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3112,
+        "method": "POST",
+        "path": "/hybrid",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "304-rag-citation-extraction",
+      "title": "Rag Citation Extraction",
+      "description": "Academic Research Assistant",
+      "default_port": 3113,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "rag",
+      "example_dir": "304-rag-citation-extraction",
+      "replace": {
+        "package_name": "vil-rag-citation-extraction",
+        "port": "3113",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3113,
+        "method": "POST",
+        "path": "/cited-rag",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "305-rag-guardrail-pipeline",
+      "title": "Rag Guardrail Pipeline",
+      "description": "Healthcare AI with Safety Guardrails",
+      "default_port": 3114,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "rag",
+      "example_dir": "305-rag-guardrail-pipeline",
+      "replace": {
+        "package_name": "vil-rag-guardrail-pipeline",
+        "port": "3114",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3114,
+        "method": "POST",
+        "path": "/safe-rag",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "306-rag-ai-event-tracking",
+      "title": "Rag Ai Event Tracking",
+      "description": "Customer Support RAG (AI Event Tracking)",
+      "default_port": 3116,
+      "default_upstream": "",
+      "category": "rag",
+      "example_dir": "306-rag-ai-event-tracking",
+      "replace": {
+        "package_name": "vil-rag-ai-event-tracking",
+        "port": "3116"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3116,
+        "method": "POST",
+        "path": "/support/ask",
+        "body": "{\"test\":true}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "401-agent-calculator",
+      "title": "Agent Calculator",
+      "description": "Financial Calculator Agent",
+      "default_port": 3120,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "agent",
+      "example_dir": "401-agent-calculator",
+      "replace": {
+        "package_name": "vil-agent-calculator",
+        "port": "3120",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3120,
+        "method": "POST",
+        "path": "/calc",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "402-agent-http-researcher",
+      "title": "Agent Http Researcher",
+      "description": "Market Research Agent",
+      "default_port": 3121,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "agent",
+      "example_dir": "402-agent-http-researcher",
+      "replace": {
+        "package_name": "vil-agent-http-researcher",
+        "port": "3121",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3121,
+        "method": "POST",
+        "path": "/research",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "403-agent-code-file-reviewer",
+      "title": "Agent Code File Reviewer",
+      "description": "DevOps Incident Responder",
+      "default_port": 3122,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "agent",
+      "example_dir": "403-agent-code-file-reviewer",
+      "replace": {
+        "package_name": "vil-agent-code-file-reviewer",
+        "port": "3122",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3122,
+        "method": "POST",
+        "path": "/code-review",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "404-agent-data-csv-analyst",
+      "title": "Agent Data Csv Analyst",
+      "description": "Business Intelligence Analyst",
+      "default_port": 3123,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "agent",
+      "example_dir": "404-agent-data-csv-analyst",
+      "replace": {
+        "package_name": "vil-agent-data-csv-analyst",
+        "port": "3123",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3123,
+        "method": "POST",
+        "path": "/csv-analyze",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "405-agent-react-multi-tool",
+      "title": "Agent React Multi Tool",
+      "description": "Autonomous Research Agent",
+      "default_port": 3124,
+      "default_upstream": "http://127.0.0.1:4545/v1/chat/completions",
+      "category": "agent",
+      "example_dir": "405-agent-react-multi-tool",
+      "replace": {
+        "package_name": "vil-agent-react-multi-tool",
+        "port": "3124",
+        "upstream": "http://127.0.0.1:4545/v1/chat/completions"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3124,
+        "method": "POST",
+        "path": "/react",
+        "body": "{\"prompt\":\"test\"}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "app.vil.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "406-agent-vil-handler-shm",
+      "title": "Agent Vil Handler Shm",
+      "description": "Fraud Detection Agent (#[vil_handler(shm)] SHM Mode)",
+      "default_port": 3126,
+      "default_upstream": "",
+      "category": "agent",
+      "example_dir": "406-agent-vil-handler-shm",
+      "replace": {
+        "package_name": "vil-agent-vil-handler-shm",
+        "port": "3126"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 3126,
+        "method": "POST",
+        "path": "/detect",
+        "body": "{\"test\":true}",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "501-villog-stdout-dev",
+      "title": "Villog Stdout Dev",
+      "description": "Villog Stdout Dev",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "villog",
+      "example_dir": "501-villog-stdout-dev",
+      "replace": {
+        "package_name": "example-501-villog-stdout-dev",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# No server needed \u2014 run binary directly",
+        "port": 8080,
+        "method": "RUN",
+        "expect_exit": 0
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "502-villog-file-rolling",
+      "title": "Villog File Rolling",
+      "description": "Villog File Rolling",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "villog",
+      "example_dir": "502-villog-file-rolling",
+      "replace": {
+        "package_name": "example-502-villog-file-rolling",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# No server needed \u2014 run binary directly",
+        "port": 8080,
+        "method": "RUN",
+        "expect_exit": 0
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "503-villog-multi-drain",
+      "title": "Villog Multi Drain",
+      "description": "Villog Multi Drain",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "villog",
+      "example_dir": "503-villog-multi-drain",
+      "replace": {
+        "package_name": "example-503-villog-multi-drain",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# No server needed \u2014 run binary directly",
+        "port": 8080,
+        "method": "RUN",
+        "expect_exit": 0
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "504-villog-benchmark-comparison",
+      "title": "Villog Benchmark Comparison",
+      "description": "Villog Benchmark Comparison",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "villog",
+      "example_dir": "504-villog-benchmark-comparison",
+      "replace": {
+        "package_name": "example-504-villog-benchmark-comparison",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# No server needed \u2014 run binary directly",
+        "port": 8080,
+        "method": "RUN",
+        "expect_exit": 0
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "505-villog-tracing-bridge",
+      "title": "Villog Tracing Bridge",
+      "description": "Villog Tracing Bridge",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "villog",
+      "example_dir": "505-villog-tracing-bridge",
+      "replace": {
+        "package_name": "example-505-villog-tracing-bridge",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# No server needed \u2014 run binary directly",
+        "port": 8080,
+        "method": "RUN",
+        "expect_exit": 0
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "506-villog-structured-events",
+      "title": "Villog Structured Events",
+      "description": "Villog Structured Events",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "villog",
+      "example_dir": "506-villog-structured-events",
+      "replace": {
+        "package_name": "example-506-villog-structured-events",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# No server needed \u2014 run binary directly",
+        "port": 8080,
+        "method": "RUN",
+        "expect_exit": 0
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "507-villog-bench-file-drain",
+      "title": "Villog Bench File Drain",
+      "description": "Villog Bench File Drain",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "villog",
+      "example_dir": "507-villog-bench-file-drain",
+      "replace": {
+        "package_name": "example-507-villog-bench-file-drain",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# No server needed \u2014 run binary directly",
+        "port": 8080,
+        "method": "RUN",
+        "expect_exit": 0
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "508-villog-bench-multithread",
+      "title": "Villog Bench Multithread",
+      "description": "Villog Bench Multithread",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "villog",
+      "example_dir": "508-villog-bench-multithread",
+      "replace": {
+        "package_name": "example-508-villog-bench-multithread",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# No server needed \u2014 run binary directly",
+        "port": 8080,
+        "method": "RUN",
+        "expect_exit": 0
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "509-villog-phase1-integration",
+      "title": "Villog Phase1 Integration",
+      "description": "Villog Phase1 Integration",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "villog",
+      "example_dir": "509-villog-phase1-integration",
+      "replace": {
+        "package_name": "example-509-villog-phase1-integration",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# No server needed \u2014 run binary directly",
+        "port": 8080,
+        "method": "RUN",
+        "expect_exit": 0
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "601-storage-s3-basic",
+      "title": "Storage S3 Basic",
+      "description": "Storage S3 Basic",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "storage",
+      "example_dir": "601-storage-s3-basic",
+      "replace": {
+        "package_name": "example-601-storage-s3-basic",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "prereq": "ai-endpoint-simulator &",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "602-db-mongo-crud",
+      "title": "Db Mongo Crud",
+      "description": "Db Mongo Crud",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "storage",
+      "example_dir": "602-db-mongo-crud",
+      "replace": {
+        "package_name": "example-602-db-mongo-crud",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:mongo",
+        "prereq": "# Requires mongo at mongodb://localhost:27017",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "603-db-clickhouse-batch",
+      "title": "Db Clickhouse Batch",
+      "description": "Db Clickhouse Batch",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "storage",
+      "example_dir": "603-db-clickhouse-batch",
+      "replace": {
+        "package_name": "example-603-db-clickhouse-batch",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:clickhouse",
+        "prereq": "# Requires clickhouse at http://localhost:8123",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "604-db-elastic-search",
+      "title": "Db Elastic Search",
+      "description": "Db Elastic Search",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "storage",
+      "example_dir": "604-db-elastic-search",
+      "replace": {
+        "package_name": "example-604-db-elastic-search",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:elastic",
+        "prereq": "# Requires elastic at http://localhost:9200",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "701-mq-rabbitmq-pubsub",
+      "title": "Mq Rabbitmq Pubsub",
+      "description": "Mq Rabbitmq Pubsub",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "messaging",
+      "example_dir": "701-mq-rabbitmq-pubsub",
+      "replace": {
+        "package_name": "example-701-mq-rabbitmq-pubsub",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:rabbitmq",
+        "prereq": "# Requires rabbitmq at amqp://localhost:5672",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "702-mq-sqs-send-receive",
+      "title": "Mq Sqs Send Receive",
+      "description": "Mq Sqs Send Receive",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "messaging",
+      "example_dir": "702-mq-sqs-send-receive",
+      "replace": {
+        "package_name": "example-702-mq-sqs-send-receive",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:sqs",
+        "prereq": "# Requires sqs at http://localhost:4566",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "703-protocol-soap-client",
+      "title": "Protocol Soap Client",
+      "description": "Protocol Soap Client",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "messaging",
+      "example_dir": "703-protocol-soap-client",
+      "replace": {
+        "package_name": "example-703-protocol-soap-client",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "704-protocol-modbus-read",
+      "title": "Protocol Modbus Read",
+      "description": "Protocol Modbus Read",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "messaging",
+      "example_dir": "704-protocol-modbus-read",
+      "replace": {
+        "package_name": "example-704-protocol-modbus-read",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:modbus",
+        "prereq": "# Requires modbus at localhost:502",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "801-trigger-cron-basic",
+      "title": "Trigger Cron Basic",
+      "description": "Trigger Cron Basic",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "trigger",
+      "example_dir": "801-trigger-cron-basic",
+      "replace": {
+        "package_name": "example-801-trigger-cron-basic",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# Trigger-based \u2014 run binary directly",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "802-trigger-fs-watcher",
+      "title": "Trigger Fs Watcher",
+      "description": "Trigger Fs Watcher",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "trigger",
+      "example_dir": "802-trigger-fs-watcher",
+      "replace": {
+        "package_name": "example-802-trigger-fs-watcher",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# Trigger-based \u2014 run binary directly",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "803-trigger-webhook-receiver",
+      "title": "Trigger Webhook Receiver",
+      "description": "Trigger Webhook Receiver",
+      "default_port": 8090,
+      "default_upstream": "",
+      "category": "trigger",
+      "example_dir": "803-trigger-webhook-receiver",
+      "replace": {
+        "package_name": "example-803-trigger-webhook-receiver",
+        "port": "8090"
+      },
+      "test": {
+        "type": "standalone",
+        "prereq": "# Trigger-based \u2014 run binary directly",
+        "port": 8090,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "804-trigger-cdc-postgres",
+      "title": "Trigger Cdc Postgres",
+      "description": "Trigger Cdc Postgres",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "trigger",
+      "example_dir": "804-trigger-cdc-postgres",
+      "replace": {
+        "package_name": "example-804-trigger-cdc-postgres",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:postgres",
+        "prereq": "# Requires postgres at postgres://localhost:5432",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "README.md",
         "src/main.rs"
       ]
     }

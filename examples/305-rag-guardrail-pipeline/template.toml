@@ -1,0 +1,21 @@
+[template]
+id = "305-rag-guardrail-pipeline"
+title = "Rag Guardrail Pipeline"
+description = "Healthcare AI with Safety Guardrails"
+default_port = 3114
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "rag"
+
+[template.replace]
+package_name = "vil-rag-guardrail-pipeline"
+port = "3114"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3114
+method = "POST"
+path = "/safe-rag"
+body = '{"prompt":"test"}'
+expect_status = 200

@@ -1,0 +1,19 @@
+[template]
+id = "028-basic-sse-hub-streaming"
+title = "Sse Hub Streaming"
+description = "Live Auction Platform (SSE Streaming)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-sse-hub-streaming"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "POST"
+path = "/api/events/publish"
+body = '{"test":true}'
+expect_status = 200

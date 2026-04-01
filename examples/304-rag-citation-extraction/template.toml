@@ -1,0 +1,21 @@
+[template]
+id = "304-rag-citation-extraction"
+title = "Rag Citation Extraction"
+description = "Academic Research Assistant"
+default_port = 3113
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "rag"
+
+[template.replace]
+package_name = "vil-rag-citation-extraction"
+port = "3113"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3113
+method = "POST"
+path = "/cited-rag"
+body = '{"prompt":"test"}'
+expect_status = 200

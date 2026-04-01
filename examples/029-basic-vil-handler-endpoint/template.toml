@@ -1,0 +1,18 @@
+[template]
+id = "029-basic-vil-handler-endpoint"
+title = "Vil Handler Endpoint"
+description = "Developer API Playground"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-vil-handler-endpoint"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/api/demo/plain"
+expect_status = 200

@@ -1,0 +1,19 @@
+[template]
+id = "701-mq-rabbitmq-pubsub"
+title = "Mq Rabbitmq Pubsub"
+description = "Mq Rabbitmq Pubsub"
+default_port = 8080
+default_upstream = ""
+category = "messaging"
+
+[template.replace]
+package_name = "example-701-mq-rabbitmq-pubsub"
+port = "8080"
+
+[template.test]
+type = "external:rabbitmq"
+prereq = "# Requires rabbitmq at amqp://localhost:5672"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

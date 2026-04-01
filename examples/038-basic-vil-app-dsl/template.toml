@@ -1,0 +1,18 @@
+[template]
+id = "038-basic-vil-app-dsl"
+title = "Vil App Dsl"
+description = "Restaurant Order System (vil_app! Declarative Macro)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-vil-app-dsl"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

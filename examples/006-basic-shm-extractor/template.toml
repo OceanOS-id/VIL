@@ -1,0 +1,19 @@
+[template]
+id = "006-basic-shm-extractor"
+title = "Shm Extractor"
+description = "High-Frequency Trading Data Processor"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-shm-extractor"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "POST"
+path = "/ingest"
+body = '{"test":true}'
+expect_status = 200

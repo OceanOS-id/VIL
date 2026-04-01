@@ -1,0 +1,18 @@
+[template]
+id = "036-basic-sse-event-builder"
+title = "Sse Event Builder"
+description = "Stock Market Ticker (SSE Event Builder)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-sse-event-builder"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/stream"
+expect_status = 200

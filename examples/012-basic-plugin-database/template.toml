@@ -1,0 +1,18 @@
+[template]
+id = "012-basic-plugin-database"
+title = "Plugin Database"
+description = "Multi-tenant SaaS Database Plugin"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-plugin-database"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/"
+expect_status = 200

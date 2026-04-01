@@ -1,0 +1,18 @@
+[template]
+id = "509-villog-phase1-integration"
+title = "Villog Phase1 Integration"
+description = "Villog Phase1 Integration"
+default_port = 8080
+default_upstream = ""
+category = "villog"
+
+[template.replace]
+package_name = "example-509-villog-phase1-integration"
+port = "8080"
+
+[template.test]
+type = "standalone"
+prereq = "# No server needed — run binary directly"
+port = 8080
+method = "RUN"
+expect_exit = 0

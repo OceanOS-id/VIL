@@ -1,0 +1,21 @@
+[template]
+id = "203-llm-code-review-with-tools"
+title = "Llm Code Review With Tools"
+description = "Automated Code Review Assistant"
+default_port = 3102
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "llm"
+
+[template.replace]
+package_name = "vil-llm-code-review-with-tools"
+port = "3102"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3102
+method = "POST"
+path = "/code/review"
+body = '{"prompt":"test"}'
+expect_status = 200

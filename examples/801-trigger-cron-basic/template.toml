@@ -1,0 +1,19 @@
+[template]
+id = "801-trigger-cron-basic"
+title = "Trigger Cron Basic"
+description = "Trigger Cron Basic"
+default_port = 8080
+default_upstream = ""
+category = "trigger"
+
+[template.replace]
+package_name = "example-801-trigger-cron-basic"
+port = "8080"
+
+[template.test]
+type = "standalone"
+prereq = "# Trigger-based — run binary directly"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

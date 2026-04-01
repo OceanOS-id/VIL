@@ -1,0 +1,18 @@
+[template]
+id = "506-villog-structured-events"
+title = "Villog Structured Events"
+description = "Villog Structured Events"
+default_port = 8080
+default_upstream = ""
+category = "villog"
+
+[template.replace]
+package_name = "example-506-villog-structured-events"
+port = "8080"
+
+[template.test]
+type = "standalone"
+prereq = "# No server needed — run binary directly"
+port = 8080
+method = "RUN"
+expect_exit = 0

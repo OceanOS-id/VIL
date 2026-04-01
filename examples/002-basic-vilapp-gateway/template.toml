@@ -1,0 +1,20 @@
+[template]
+id = "002-basic-vilapp-gateway"
+title = "Vilapp Gateway"
+description = "API Gateway for Microservices"
+default_port = 3081
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-vilapp-gateway"
+port = "3081"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "standalone"
+port = 3081
+method = "POST"
+path = "/api/gw/trigger"
+body = '{"prompt":"test"}'
+expect_status = 200

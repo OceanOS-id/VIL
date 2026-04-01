@@ -1,0 +1,19 @@
+[template]
+id = "030-basic-trilane-messaging"
+title = "Trilane Messaging"
+description = "E-Commerce Order Pipeline (Tri-Lane Messaging)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-trilane-messaging"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "POST"
+path = "/api/gateway/orders/place"
+body = '{"test":true}'
+expect_status = 200

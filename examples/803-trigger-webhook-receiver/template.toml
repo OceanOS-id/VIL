@@ -1,0 +1,19 @@
+[template]
+id = "803-trigger-webhook-receiver"
+title = "Trigger Webhook Receiver"
+description = "Trigger Webhook Receiver"
+default_port = 8090
+default_upstream = ""
+category = "trigger"
+
+[template.replace]
+package_name = "example-803-trigger-webhook-receiver"
+port = "8090"
+
+[template.test]
+type = "standalone"
+prereq = "# Trigger-based — run binary directly"
+port = 8090
+method = "GET"
+path = "/health"
+expect_status = 200

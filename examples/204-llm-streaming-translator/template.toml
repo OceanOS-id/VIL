@@ -1,0 +1,20 @@
+[template]
+id = "204-llm-streaming-translator"
+title = "Llm Streaming Translator"
+description = "Real-time Document Translation Service"
+default_port = 3103
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "llm"
+
+[template.replace]
+package_name = "vil-llm-streaming-translator"
+port = "3103"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3103
+method = "GET"
+path = "/health"
+expect_status = 200

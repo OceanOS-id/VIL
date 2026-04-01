@@ -1,0 +1,19 @@
+[template]
+id = "802-trigger-fs-watcher"
+title = "Trigger Fs Watcher"
+description = "Trigger Fs Watcher"
+default_port = 8080
+default_upstream = ""
+category = "trigger"
+
+[template.replace]
+package_name = "example-802-trigger-fs-watcher"
+port = "8080"
+
+[template.test]
+type = "standalone"
+prereq = "# Trigger-based — run binary directly"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

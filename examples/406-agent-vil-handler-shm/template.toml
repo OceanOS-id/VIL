@@ -1,0 +1,20 @@
+[template]
+id = "406-agent-vil-handler-shm"
+title = "Agent Vil Handler Shm"
+description = "Fraud Detection Agent (#[vil_handler(shm)] SHM Mode)"
+default_port = 3126
+default_upstream = ""
+category = "agent"
+
+[template.replace]
+package_name = "vil-agent-vil-handler-shm"
+port = "3126"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3126
+method = "POST"
+path = "/detect"
+body = '{"test":true}'
+expect_status = 200

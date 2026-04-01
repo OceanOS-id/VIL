@@ -1,0 +1,18 @@
+[template]
+id = "032-basic-failover-ha"
+title = "Failover Ha"
+description = "Payment Gateway HA (Failover + Retry Strategy)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-failover-ha"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/api/primary/health"
+expect_status = 200

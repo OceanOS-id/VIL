@@ -1,0 +1,19 @@
+[template]
+id = "804-trigger-cdc-postgres"
+title = "Trigger Cdc Postgres"
+description = "Trigger Cdc Postgres"
+default_port = 8080
+default_upstream = ""
+category = "trigger"
+
+[template.replace]
+package_name = "example-804-trigger-cdc-postgres"
+port = "8080"
+
+[template.test]
+type = "external:postgres"
+prereq = "# Requires postgres at postgres://localhost:5432"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

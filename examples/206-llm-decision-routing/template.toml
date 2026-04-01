@@ -1,0 +1,19 @@
+[template]
+id = "206-llm-decision-routing"
+title = "Llm Decision Routing"
+description = "Insurance Underwriting AI (LLM Decision Routing)"
+default_port = 3116
+default_upstream = ""
+category = "llm"
+
+[template.replace]
+package_name = "vil-llm-decision-routing"
+port = "3116"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3116
+method = "GET"
+path = "/health"
+expect_status = 200

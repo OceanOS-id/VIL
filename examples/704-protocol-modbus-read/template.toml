@@ -1,0 +1,19 @@
+[template]
+id = "704-protocol-modbus-read"
+title = "Protocol Modbus Read"
+description = "Protocol Modbus Read"
+default_port = 8080
+default_upstream = ""
+category = "messaging"
+
+[template.replace]
+package_name = "example-704-protocol-modbus-read"
+port = "8080"
+
+[template.test]
+type = "external:modbus"
+prereq = "# Requires modbus at localhost:502"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200

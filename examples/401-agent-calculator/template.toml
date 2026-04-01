@@ -1,0 +1,21 @@
+[template]
+id = "401-agent-calculator"
+title = "Agent Calculator"
+description = "Financial Calculator Agent"
+default_port = 3120
+default_upstream = "http://127.0.0.1:4545/v1/chat/completions"
+category = "agent"
+
+[template.replace]
+package_name = "vil-agent-calculator"
+port = "3120"
+upstream = "http://127.0.0.1:4545/v1/chat/completions"
+
+[template.test]
+type = "simulator"
+prereq = "ai-endpoint-simulator &"
+port = 3120
+method = "POST"
+path = "/calc"
+body = '{"prompt":"test"}'
+expect_status = 200

@@ -1,0 +1,18 @@
+[template]
+id = "035-basic-vil-service-module"
+title = "Vil Service Module"
+description = "Hospital Appointment System (VIL Service Module)"
+default_port = 8080
+default_upstream = ""
+category = "basic"
+
+[template.replace]
+package_name = "vil-basic-vil-service-module"
+port = "8080"
+
+[template.test]
+type = "standalone"
+port = 8080
+method = "GET"
+path = "/health"
+expect_status = 200
