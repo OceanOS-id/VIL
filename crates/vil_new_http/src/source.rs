@@ -448,6 +448,8 @@ impl HttpSource {
                             Ok(loan) => {
                                 spins = 0;
                                 let session_id = loan.get().session_id();
+                                // Extract trigger payload from SHM for transform
+                                let trigger_payload = loan.get().resolve_payload(&world_clone);
                                 let b = builder.clone();
                                 let w = world_clone.clone();
                                 let h = handle_clone.clone();
@@ -455,7 +457,7 @@ impl HttpSource {
                                 let permit = semaphore.clone().acquire_owned().await.unwrap();
                                 tokio::spawn(async move {
                                     let _permit = permit;
-                                    execute_http_request::<T>(&b, w, &h, c, session_id).await;
+                                    execute_http_request::<T>(&b, w, &h, c, session_id, trigger_payload).await;
                                 });
                             }
                             Err(vil_rt::RtError::QueueEmpty(_)) => {
@@ -476,7 +478,7 @@ impl HttpSource {
                         }
                     }
                 } else {
-                    execute_http_request::<T>(&builder, world_clone, &handle_clone, client, 0)
+                    execute_http_request::<T>(&builder, world_clone, &handle_clone, client, 0, None)
                         .await;
                 }
             });
@@ -490,6 +492,7 @@ async fn execute_http_request<T: crate::sink::StreamTokenLike>(
     runtime_process: &vil_rt::ProcessHandle,
     client: Arc<Client>,
     session_id: u64,
+    trigger_payload: Option<bytes::Bytes>,
 ) {
     let url = builder.url.clone();
     let format = builder.format;
@@ -513,7 +516,18 @@ async fn execute_http_request<T: crate::sink::StreamTokenLike>(
         _ => client.get(&url),
     };
 
-    if let Some(body) = json_body {
+    // If transform_fn exists and we have a trigger payload, use the transform
+    // to build the request body from the trigger data (e.g. chunk splitting).
+    // Otherwise fall back to the hardcoded json_body.
+    if let (Some(ref tf), Some(ref payload)) = (&transform_fn, &trigger_payload) {
+        if let Some(transformed) = tf(payload) {
+            req = req
+                .header("content-type", "application/json")
+                .body(transformed);
+        } else if let Some(body) = json_body {
+            req = req.json(&body);
+        }
+    } else if let Some(body) = json_body {
         req = req.json(&body);
     }
 
@@ -587,8 +601,10 @@ async fn execute_http_request<T: crate::sink::StreamTokenLike>(
                                     };
 
                                     if !final_data.is_empty() {
-                                        let emit_data = if let Some(ref tf) = transform_fn {
-                                            tf(&final_data).map(bytes::Bytes::from)
+                                        // Only apply transform to response if it wasn't
+                                        // already used for request body transformation
+                                        let emit_data = if transform_fn.is_some() && trigger_payload.is_none() {
+                                            transform_fn.as_ref().unwrap()(&final_data).map(bytes::Bytes::from)
                                         } else {
                                             Some(final_data)
                                         };
@@ -656,9 +672,8 @@ async fn execute_http_request<T: crate::sink::StreamTokenLike>(
                                 };
 
                                 if !final_data.is_empty() {
-                                    // Apply user transform if set
-                                    let emit_data = if let Some(ref tf) = transform_fn {
-                                        tf(&final_data).map(|v| bytes::Bytes::from(v))
+                                    let emit_data = if transform_fn.is_some() && trigger_payload.is_none() {
+                                        transform_fn.as_ref().unwrap()(&final_data).map(bytes::Bytes::from)
                                     } else {
                                         Some(final_data)
                                     };

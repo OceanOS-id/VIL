@@ -603,20 +603,27 @@ impl VilApp {
         }
 
         // Add public services as nested routers (owned — applies Extension layers)
-        // Each service gets IngressBridge + TriLaneRouter as Extension layers
+        // Each service gets IngressBridge + TriLaneRouter + State as Extension layers
         for svc in self.services {
             if svc.visibility_level() == Visibility::Public {
                 let prefix = svc.prefix_path().to_owned();
                 let svc_name = super::ctx::ServiceName(svc.name().to_string());
+                let svc_state: Option<Arc<dyn std::any::Any + Send + Sync>> =
+                    svc.get_state().cloned();
                 let router = svc.build_router_owned();
 
                 // Apply VIL Extension layers so handlers can extract:
-                // - ServiceCtx (via TriLaneRouter + ServiceName)
+                // - ServiceCtx (via TriLaneRouter + ServiceName + State)
                 // - IngressBridge (for Phase 2 rendezvous)
-                let router = router
+                let mut router = router
                     .layer(axum::extract::Extension(bridge.clone()))
                     .layer(axum::extract::Extension(tri_lane.clone()))
                     .layer(axum::extract::Extension(svc_name));
+
+                // Inject service-specific state for ServiceCtx::state::<T>()
+                if let Some(state) = svc_state {
+                    router = router.layer(axum::extract::Extension(state));
+                }
 
                 server = server.nest(&prefix, router);
             }
