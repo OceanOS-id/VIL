@@ -4,7 +4,54 @@
 **From:** Engineering
 **To:** SQA Team
 **Priority:** High
-**Scope:** VIL CLI (v0.1.18), vil init templates, website quickstart flow, Vastar Bench integration
+**Scope:** VIL CLI (v0.1.18), 88 examples, vil init templates, website quickstart, Vastar Bench
+
+---
+
+## 0. Test Suite Setup
+
+Clone the automated test suite first:
+
+```bash
+git clone https://github.com/OceanOS-id/vil-testsuite.git
+cd vil-testsuite
+```
+
+Run all automated tests:
+
+```bash
+# Run everything
+./run.sh
+
+# Run specific spec
+./run.sh cli          # CLI commands only
+./run.sh init         # All 88 template init tests
+./run.sh bench        # Vastar Bench output format
+./run.sh observer     # Observer API endpoints
+./run.sh runtime      # Build + run + curl all examples
+./run.sh edge_cases   # Edge case scenarios
+
+# List available specs
+./run.sh --list
+
+# Run runtime tests including simulator-dependent examples
+RUNTIME_ALL=1 ./run.sh runtime
+```
+
+Test suite auto-discovers all 88 examples from `template-index.json`. When new examples are added, pull latest and re-run — no test code changes needed.
+
+**Update test suite:**
+```bash
+cd vil-testsuite
+git pull
+```
+
+**Update template index (after new examples added to VIL):**
+```bash
+cd vil  # VIL repo
+python3 scripts/generate-all-templates.py         # generate template.toml for new examples
+python3 scripts/generate-all-templates.py --index > template-index.json  # regenerate index
+```
 
 ---
 
