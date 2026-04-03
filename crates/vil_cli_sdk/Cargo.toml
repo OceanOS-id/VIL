@@ -1,0 +1,18 @@
+[package]
+name = "vil_cli_sdk"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "VIL CLI SDK — SDK build, install, sidecar, WASM modules"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+
+[dependencies]
+vil_cli_core = { version = "0.1.0", path = "../vil_cli_core" }
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+colored = "2.0"
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+dirs = "5.0"

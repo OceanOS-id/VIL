@@ -44,6 +44,11 @@ members = [
     "crates/vil_script_js",
     # --- Tooling ---
     "crates/vil_cli",
+    "crates/vil_cli_core",
+    "crates/vil_cli_compile",
+    "crates/vil_cli_sdk",
+    "crates/vil_cli_pipeline",
+    "crates/vil_cli_server",
     "crates/vil_new_http",
 
     # --- Connector Macros ---
