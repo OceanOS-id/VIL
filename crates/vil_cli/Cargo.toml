@@ -1,6 +1,6 @@
 [package]
 name = "vil_cli"
-version = "0.1.20"
+version = "0.1.21"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL CLI - Vastar Intermediate Language zero-copy streaming pipelines for Rust"
@@ -25,6 +25,11 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 colored = "2.0"
+notify = { version = "7", features = ["macos_kqueue"] }
+dotenvy = "0.15"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 tokio = { version = "1", features = ["full"] }
 reqwest = { version = "0.11", features = ["json", "blocking"] }
 anyhow = "1.0"

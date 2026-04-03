@@ -226,14 +226,15 @@ impl VilServer {
     /// - Request metrics tracking
     /// - Graceful shutdown on SIGTERM/SIGINT
     pub async fn run(self) {
-        // Initialize tracing
-        tracing_subscriber::fmt()
+        // Initialize tracing (try_init to avoid panic if already initialized
+        // by vil_log::init() or VIL_DEV_MODE hot-reload)
+        let _ = tracing_subscriber::fmt()
             .with_env_filter(
                 tracing_subscriber::EnvFilter::try_from_default_env()
                     .unwrap_or_else(|_| "info,tower_http=info".into()),
             )
             .with_target(false)
-            .init();
+            .try_init();
 
         let name = self.name.clone();
         let observer_enabled = self.observer;
