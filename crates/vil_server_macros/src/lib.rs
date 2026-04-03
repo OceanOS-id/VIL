@@ -291,7 +291,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         // Handler already wraps response with VilResponse — don't re-wrap.
         // This preserves custom HTTP status codes (201 Created, 204 No Content, etc.)
         quote! {
-            let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
+            let __vil_span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid);
             let __vil_start = ::std::time::Instant::now();
             let __vil_resp = match #inner_name(#(#param_names),*).await {
                 Ok(data) => {
@@ -311,7 +311,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
     } else if returns_vil_response {
         // ── Passthrough mode (VilResponse<T> directly, no Result) ──
         quote! {
-            let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
+            let __vil_span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid);
             let __vil_start = ::std::time::Instant::now();
             let data = #inner_name(#(#param_names),*).await;
             let __vil_resp = ::vil_server::__private::axum::response::IntoResponse::into_response(data);
@@ -324,7 +324,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         // ── Standard mode (Result<T: Serialize, E>) ──
         // Wrap Ok(data) with VilResponse::ok() (always 200)
         quote! {
-            let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
+            let __vil_span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid);
             let __vil_start = ::std::time::Instant::now();
             let __vil_resp = match #inner_name(#(#param_names),*).await {
                 Ok(data) => {
@@ -346,7 +346,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         // ── Standard mode (plain T: Serialize) ──
         // Wrap with VilResponse::ok() (always 200)
         quote! {
-            let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
+            let __vil_span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid);
             let __vil_start = ::std::time::Instant::now();
             let data = #inner_name(#(#param_names),*).await;
             let __vil_resp = ::vil_server::__private::axum::response::IntoResponse::into_response(
@@ -366,12 +366,18 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         // Inner function preserves the user's original signature
         #asyncness fn #inner_name(#original_inputs) #return_type #body
 
-        // Public wrapper with RequestId + (optional ServiceCtx in shm mode) injection
+        // Public wrapper — same param count as original (no extra RequestId param).
+        // RequestId generated inside body to preserve Handler<T, S> compatibility.
+        // Tracing span created but NOT entered (Entered guard is !Send across .await).
         #vis async fn #name(
-            __vil_rid: ::vil_server::__private::RequestId,
             #extra_wrapper_params
             #(#wrapper_params),*
         ) -> ::vil_server::__private::axum::response::Response {
+            let __vil_rid = ::vil_server::__private::RequestId({
+                use ::std::time::{SystemTime, UNIX_EPOCH};
+                let t = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
+                format!("{:x}", t)
+            });
             #wrapper_body
         }
     };
