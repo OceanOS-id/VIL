@@ -167,23 +167,23 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         (input.sig.inputs.clone(), quote! {})
     };
 
-    // Collect parameter names for call forwarding (from ORIGINAL inputs)
-    let param_names: Vec<_> = input
+    // Collect parameter patterns for call forwarding (from ORIGINAL inputs).
+    // Handles both simple idents (`ctx`) and destructuring patterns (`Query(filter)`, `Path(id)`).
+    let param_pats: Vec<proc_macro2::TokenStream> = input
         .sig
         .inputs
         .iter()
         .filter_map(|arg| {
             if let FnArg::Typed(pat_type) = arg {
-                if let Pat::Ident(pat_ident) = &*pat_type.pat {
-                    Some(pat_ident.ident.clone())
-                } else {
-                    None
-                }
+                let pat = &pat_type.pat;
+                Some(quote! { #pat })
             } else {
                 None
             }
         })
         .collect();
+    // Alias for backward compatibility in quote! blocks below
+    let param_names = &param_pats;
 
     // Collect rewritten parameter names+types for wrapper signature
     let wrapper_params: Vec<_> = inputs
@@ -214,6 +214,19 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
         ReturnType::Default => false,
+    };
+
+    // Detect if return type already contains VilResponse (passthrough mode).
+    // Handles: VilResponse<T>, Result<VilResponse<T>, E>, Result<impl IntoResponse, E>
+    // In passthrough mode, the macro does NOT re-wrap with VilResponse::ok() —
+    // it calls .into_response() directly, preserving the handler's HTTP status code.
+    let returns_vil_response = {
+        let ty_str = quote!(#return_type).to_string().replace(' ', "");
+        ty_str.contains("VilResponse")
+            || ty_str.contains("IntoResponse")
+            || ty_str.contains("axum::response::Response")
+            || ty_str.contains("AxumResponse")
+            || ty_str.contains("Response<")
     };
 
     // Inline access log emission block — avoids depending on macro_export path resolution.
@@ -273,7 +286,43 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    let wrapper_body = if is_result {
+    let wrapper_body = if returns_vil_response && is_result {
+        // ── Passthrough mode (Result<VilResponse<T>, E>) ──
+        // Handler already wraps response with VilResponse — don't re-wrap.
+        // This preserves custom HTTP status codes (201 Created, 204 No Content, etc.)
+        quote! {
+            let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
+            let __vil_start = ::std::time::Instant::now();
+            let __vil_resp = match #inner_name(#(#param_names),*).await {
+                Ok(data) => {
+                    // VilResponse/Response already implements IntoResponse — passthrough
+                    ::vil_server::__private::axum::response::IntoResponse::into_response(data)
+                }
+                Err(e) => {
+                    let vil_err: ::vil_server::__private::VilError = e.into();
+                    ::vil_server::__private::axum::response::IntoResponse::into_response(vil_err)
+                }
+            };
+            let __vil_elapsed = __vil_start.elapsed();
+            let __vil_status = __vil_resp.status().as_u16();
+            #emit_access_log
+            __vil_resp
+        }
+    } else if returns_vil_response {
+        // ── Passthrough mode (VilResponse<T> directly, no Result) ──
+        quote! {
+            let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
+            let __vil_start = ::std::time::Instant::now();
+            let data = #inner_name(#(#param_names),*).await;
+            let __vil_resp = ::vil_server::__private::axum::response::IntoResponse::into_response(data);
+            let __vil_elapsed = __vil_start.elapsed();
+            let __vil_status = __vil_resp.status().as_u16();
+            #emit_access_log
+            __vil_resp
+        }
+    } else if is_result {
+        // ── Standard mode (Result<T: Serialize, E>) ──
+        // Wrap Ok(data) with VilResponse::ok() (always 200)
         quote! {
             let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
             let __vil_start = ::std::time::Instant::now();
@@ -294,6 +343,8 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
             __vil_resp
         }
     } else {
+        // ── Standard mode (plain T: Serialize) ──
+        // Wrap with VilResponse::ok() (always 200)
         quote! {
             let _span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid).entered();
             let __vil_start = ::std::time::Instant::now();
