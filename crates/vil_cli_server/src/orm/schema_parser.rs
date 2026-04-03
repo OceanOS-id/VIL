@@ -103,9 +103,12 @@ impl ColumnMeta {
     }
 
     /// Full Rust type considering nullability.
+    /// Fields with DEFAULT values are non-nullable (DB fills the default).
+    /// Only fields without NOT NULL AND without DEFAULT are Option<T>.
     pub fn rust_type_full(&self) -> String {
         let base = self.rust_type();
-        if self.nullable && !self.is_primary_key {
+        let truly_nullable = self.nullable && !self.is_primary_key && self.default_value.is_none();
+        if truly_nullable {
             format!("Option<{}>", base)
         } else {
             base.to_string()
