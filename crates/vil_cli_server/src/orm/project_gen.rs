@@ -29,6 +29,7 @@ pub fn generate_project(
     files.insert("src/main.rs".into(), gen_main_rs(project_name, tables));
     files.insert("src/db.rs".into(), gen_db_rs(schema_sql));
     files.insert("src/error.rs".into(), gen_error_rs());
+    files.insert("schema/001_initial.sql".into(), schema_sql.to_string());
 
     // Models
     let mut model_mods = Vec::new();
@@ -75,10 +76,12 @@ edition = "2021"
 vil_server = "0.1"
 vil_server_core = "0.1"
 vil_server_auth = "0.1"
+vil_json = "0.1"
 vil_db_sqlx = {{ version = "0.1", features = ["sqlite"] }}
 vil_orm = "0.1"
 vil_orm_derive = "0.1"
 vil_log = "0.1"
+bytes = "1"
 
 # Database
 sqlx = {{ version = "0.8", features = ["runtime-tokio", "sqlite", "any"] }}
@@ -142,9 +145,9 @@ fn gen_main_rs(project_name: &str, tables: &[TableMeta]) -> String {
         let svc_mod = format!("{}_svc", table.name);
         out.push_str(&format!(
             "    let {var} = ServiceProcess::new(\"{name}\")\n\
-             \x20       .endpoint(Method::GET, \"/\", get({mod}::list))\n\
+             \x20       .endpoint(Method::GET, \"/list\", get({mod}::list))\n\
              \x20       .endpoint(Method::GET, \"/:id\", get({mod}::get_by_id))\n\
-             \x20       .endpoint(Method::POST, \"/\", post({mod}::create))\n\
+             \x20       .endpoint(Method::POST, \"/create\", post({mod}::create))\n\
              \x20       .endpoint(Method::PUT, \"/:id\", put({mod}::update))\n\
              \x20       .endpoint(Method::DELETE, \"/:id\", delete({mod}::delete))\n\
              \x20       .state(state.clone());\n\n",
@@ -166,47 +169,45 @@ fn gen_main_rs(project_name: &str, tables: &[TableMeta]) -> String {
         out.push_str(&format!("        .service({}_svc)\n", table.name));
     }
     out.push_str(";\n\n");
-    out.push_str("    vil_log::app_log!(Info, \"server.starting\", { port: ");
-    out.push_str(&format!("{}", port));
-    out.push_str(" as u64 });\n");
+    out.push_str(&format!("    println!(\"[server] Starting on port {}\");\n", port));
     out.push_str("    app.run().await;\n");
     out.push_str("}\n");
 
     out
 }
 
-/// Generate src/db.rs
-fn gen_db_rs(schema_sql: &str) -> String {
-    // Escape the SQL for embedding — replace " with \"
-    let escaped = schema_sql.replace('\\', "\\\\").replace('"', "\\\"");
-
+/// Generate src/db.rs — reads schema from file at runtime.
+fn gen_db_rs(_schema_sql: &str) -> String {
     let mut out = String::new();
     out.push_str("use vil_db_sqlx::{SqlxConfig, SqlxPool};\n\n");
-    out.push_str("const SCHEMA: &str = \"\\\n");
-    for line in escaped.lines() {
-        let trimmed = line.trim();
-        if !trimmed.is_empty() {
-            out.push_str(trimmed);
-            out.push_str("\\n\\\n");
-        }
-    }
-    out.push_str("\";\n\n");
     out.push_str("pub async fn connect() -> SqlxPool {\n");
     out.push_str("    let url = std::env::var(\"DATABASE_URL\")\n");
     out.push_str("        .unwrap_or_else(|_| \"sqlite:data.db?mode=rwc\".into());\n\n");
     out.push_str("    let pool = SqlxPool::connect(\"app\", SqlxConfig::sqlite(&url))\n");
     out.push_str("        .await\n");
     out.push_str("        .expect(\"Database connection failed\");\n\n");
-    out.push_str("    // Run schema migration\n");
-    out.push_str("    for statement in SCHEMA.split(';') {\n");
-    out.push_str("        let trimmed = statement.trim();\n");
-    out.push_str("        if !trimmed.is_empty() && trimmed.to_uppercase().starts_with(\"CREATE\") {\n");
-    out.push_str("            if let Err(e) = pool.execute_raw(trimmed).await {\n");
-    out.push_str("                eprintln!(\"[db] Warning: {e}\");\n");
+    out.push_str("    // Run schema from file\n");
+    out.push_str("    let schema_path = std::env::var(\"SCHEMA_PATH\")\n");
+    out.push_str("        .unwrap_or_else(|_| \"schema/001_initial.sql\".into());\n");
+    out.push_str("    if let Ok(sql) = std::fs::read_to_string(&schema_path) {\n");
+    out.push_str("        // Split by CREATE TABLE and execute each\n");
+    out.push_str("        let mut buf = String::new();\n");
+    out.push_str("        for line in sql.lines() {\n");
+    out.push_str("            let trimmed = line.trim();\n");
+    out.push_str("            if trimmed.starts_with(\"--\") || trimmed.is_empty() { continue; }\n");
+    out.push_str("            buf.push_str(trimmed);\n");
+    out.push_str("            buf.push(' ');\n");
+    out.push_str("            if trimmed.ends_with(\");\") {\n");
+    out.push_str("                if let Err(e) = pool.execute_raw(&buf).await {\n");
+    out.push_str("                    eprintln!(\"[db] Warning: {e}\");\n");
+    out.push_str("                }\n");
+    out.push_str("                buf.clear();\n");
     out.push_str("            }\n");
     out.push_str("        }\n");
-    out.push_str("    }\n");
-    out.push_str("    println!(\"[db] Schema applied\");\n\n");
+    out.push_str("        println!(\"[db] Schema applied from {}\", schema_path);\n");
+    out.push_str("    } else {\n");
+    out.push_str("        println!(\"[db] No schema file at {} — skipping migration\", schema_path);\n");
+    out.push_str("    }\n\n");
     out.push_str("    pool\n");
     out.push_str("}\n");
     out

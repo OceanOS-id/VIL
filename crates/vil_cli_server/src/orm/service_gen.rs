@@ -3,8 +3,17 @@
 //! Each table gets: list, get_by_id, create, update, delete.
 //! Uses VilEntity methods + VilQuery builder for all DB operations.
 
-use super::model_gen::to_pascal_case;
-use super::schema_parser::{ColumnMeta, TableMeta};
+use super::model_gen::{to_pascal_case, is_reserved_word};
+use super::schema_parser::TableMeta;
+
+/// Get the Rust field name for a column (appends _ for reserved words).
+fn rust_field(name: &str) -> String {
+    if is_reserved_word(name) {
+        format!("{}_", name)
+    } else {
+        name.to_string()
+    }
+}
 
 /// Generate the complete service file for a table.
 pub fn generate_service_file(table: &TableMeta) -> String {
@@ -127,28 +136,32 @@ fn gen_create(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
         if col.is_primary_key || col.is_auto_timestamp() {
             continue;
         }
+        // Skip columns with DEFAULT — let DB fill them
+        if col.default_value.is_some() {
+            continue;
+        }
 
         insert_cols.push(format!("\"{}\"", col.name));
 
         // Determine how to bind the value
-        if col.nullable || col.default_value.is_some() {
+        if col.nullable {
             // Optional field in CreateRequest
             match col.rust_type() {
                 "String" => value_calls.push(format!(
                     "        .value_opt_str(req.{}.clone())",
-                    col.name
+                    rust_field(&col.name)
                 )),
                 "i64" => value_calls.push(format!(
                     "        .value_opt_i64(req.{})",
-                    col.name
+                    rust_field(&col.name)
                 )),
                 "f64" => value_calls.push(format!(
                     "        .value_opt_f64(req.{})",
-                    col.name
+                    rust_field(&col.name)
                 )),
                 _ => value_calls.push(format!(
                     "        .value_opt_str(req.{}.clone())",
-                    col.name
+                    rust_field(&col.name)
                 )),
             }
         } else {
@@ -156,19 +169,19 @@ fn gen_create(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
             match col.rust_type() {
                 "String" => value_calls.push(format!(
                     "        .value(req.{}.clone())",
-                    col.name
+                    rust_field(&col.name)
                 )),
                 "i64" => value_calls.push(format!(
                     "        .value(req.{})",
-                    col.name
+                    rust_field(&col.name)
                 )),
                 "f64" => value_calls.push(format!(
                     "        .value(req.{})",
-                    col.name
+                    rust_field(&col.name)
                 )),
                 _ => value_calls.push(format!(
                     "        .value(req.{}.clone())",
-                    col.name
+                    rust_field(&col.name)
                 )),
             }
         }
@@ -218,19 +231,19 @@ fn gen_update(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
         match col.rust_type() {
             "String" => set_calls.push(format!(
                 "        .set_optional(\"{}\", req.{}.as_deref())",
-                col.name, col.name
+                col.name, rust_field(&col.name)
             )),
             "i64" => set_calls.push(format!(
                 "        .set_optional_i64(\"{}\", req.{})",
-                col.name, col.name
+                col.name, rust_field(&col.name)
             )),
             "f64" => set_calls.push(format!(
                 "        .set_optional_f64(\"{}\", req.{})",
-                col.name, col.name
+                col.name, rust_field(&col.name)
             )),
             _ => set_calls.push(format!(
                 "        .set_optional(\"{}\", req.{}.as_deref())",
-                col.name, col.name
+                col.name, rust_field(&col.name)
             )),
         }
     }

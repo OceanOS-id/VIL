@@ -159,7 +159,12 @@ fn generate_create_request(table: &TableMeta, struct_name: &str) -> String {
             col.rust_type().to_string()
         };
 
-        out.push_str(&format!("    pub {}: {},\n", col.name, rust_type));
+        let field_name = if is_reserved_word(&col.name) {
+            format!("{}_", col.name)
+        } else {
+            col.name.clone()
+        };
+        out.push_str(&format!("    pub {}: {},\n", field_name, rust_type));
     }
 
     out.push_str("}\n");
@@ -184,7 +189,12 @@ fn generate_update_request(table: &TableMeta, struct_name: &str) -> String {
         }
 
         let base_type = col.rust_type();
-        out.push_str(&format!("    pub {}: Option<{}>,\n", col.name, base_type));
+        let field_name = if is_reserved_word(&col.name) {
+            format!("{}_", col.name)
+        } else {
+            col.name.clone()
+        };
+        out.push_str(&format!("    pub {}: Option<{}>,\n", field_name, base_type));
     }
 
     out.push_str("}\n");
@@ -227,7 +237,7 @@ pub fn to_pascal_case(name: &str) -> String {
 }
 
 /// Check if column name is a Rust reserved word.
-fn is_reserved_word(name: &str) -> bool {
+pub fn is_reserved_word(name: &str) -> bool {
     matches!(
         name,
         "type" | "match" | "ref" | "self" | "super" | "crate" | "mod" | "fn" | "pub"
