@@ -101,8 +101,8 @@
     },
     {
       "id": "rest-crud",
-      "title": "REST CRUD API",
-      "description": "REST API with GET/POST/PUT/DELETE endpoints and in-memory store",
+      "title": "REST CRUD API (VilORM + SQLite)",
+      "description": "Task CRUD API with VilORM, VilQuery builder, SQLite. Demonstrates: VilEntity derive, q().select() projection, q().insert(), q().update().set_optional(), find_by_id(), delete(), scalar()",
       "default_port": 8080,
       "default_upstream": "",
       "category": "basic",
@@ -114,10 +114,7 @@
       "test": {},
       "files": [
         "Cargo.toml",
-        "README.md",
-        "app.vil.yaml",
-        "src/main.rs",
-        "vil-server.yaml"
+        "src/main.rs"
       ]
     },
     {
@@ -2062,6 +2059,102 @@
       "files": [
         "Cargo.toml",
         "README.md",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "605-db-vilorm-crud",
+      "title": "VilORM Blog Platform",
+      "description": "Complete VilORM showcase: VilEntity, VilQuery JOIN, on_conflict_nothing, set_optional partial update, scalar aggregates, column projection (no SELECT *)",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "database",
+      "example_dir": "605-db-vilorm-crud",
+      "replace": {
+        "package_name": "vil-db-vilorm-crud",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "606-db-vilorm-ecommerce",
+      "title": "VilORM E-Commerce",
+      "description": "E-commerce with VilORM: Products + Orders + Items. Demonstrates: LEFT JOIN + GROUP BY, atomic stock decrement (set_expr), scalar SUM aggregate, delete_where cascade, value_opt_str for nullable fields",
+      "default_port": 8086,
+      "default_upstream": "",
+      "category": "database",
+      "example_dir": "606-db-vilorm-ecommerce",
+      "replace": {
+        "package_name": "vil-db-vilorm-ecommerce",
+        "port": "8086"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8086,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "607-db-vilorm-multitenant",
+      "title": "VilORM Multi-Tenant SaaS",
+      "description": "Multi-tenant SaaS with VilORM: Tenants, Users, Settings. Demonstrates: ON CONFLICT DO UPDATE (upsert), on_conflict_nothing (idempotent), set_optional + set_optional_i64, scoped where_eq, scalar COUNT",
+      "default_port": 8087,
+      "default_upstream": "",
+      "category": "database",
+      "example_dir": "607-db-vilorm-multitenant",
+      "replace": {
+        "package_name": "vil-db-vilorm-multitenant",
+        "port": "8087"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8087,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "608-db-vilorm-analytics",
+      "title": "VilORM Event Analytics",
+      "description": "Analytics dashboard with VilORM: Events + Daily Aggregates. Demonstrates: GROUP BY + HAVING, COUNT DISTINCT scalar, time-series ORDER BY, where_raw datetime filter, do_update_raw counter increment",
+      "default_port": 8088,
+      "default_upstream": "",
+      "category": "database",
+      "example_dir": "608-db-vilorm-analytics",
+      "replace": {
+        "package_name": "vil-db-vilorm-analytics",
+        "port": "8088"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8088,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
         "src/main.rs"
       ]
     },
