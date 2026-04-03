@@ -21,7 +21,7 @@ pub fn generate_service_file(table: &TableMeta) -> String {
     let snake = &table.name;
     let mut out = String::with_capacity(4096);
 
-    // Imports
+    // Imports (glob import covers {Table}Pk for composite PK tables)
     out.push_str(&format!(
         "use crate::error::AppError;\n\
          use crate::models::{}::*;\n\
@@ -75,7 +75,7 @@ fn gen_list(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
     let order_col = if has_created_at {
         "created_at"
     } else {
-        &table.primary_key
+        table.first_pk()
     };
 
     format!(
@@ -101,36 +101,111 @@ fn gen_list(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
 
 /// GET /{table}/:id — find by primary key
 fn gen_get_by_id(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
-    format!(
-        "#[vil_handler]\n\
-         pub async fn get_by_id(\n\
-         {indent}ctx: ServiceCtx,\n\
-         {indent}Path(id): Path<String>,\n\
-         ) -> Result<VilResponse<{struct_name}>, AppError> {{\n\
-         {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
-         {indent}let item = {struct_name}::find_by_id(state.pool.inner(), &id)\n\
-         {indent2}.await?\n\
-         {indent2}.ok_or_else(|| AppError::NotFound(\"{struct_name} not found\".into()))?;\n\
-         {indent}Ok(VilResponse::ok(item))\n\
-         }}\n",
-        struct_name = struct_name,
-        indent = "    ",
-        indent2 = "        ",
-    )
+    if table.is_composite_pk() {
+        // Composite PK: Path extracts a tuple, then query with where_eq + and_eq
+        let pk_struct = format!("{}Pk", struct_name);
+        let pks = &table.primary_keys;
+
+        let mut where_chain = format!(
+            ".where_eq(\"{}\", &pk.{})",
+            pks[0],
+            rust_field(&pks[0])
+        );
+        for pk_col in &pks[1..] {
+            where_chain.push_str(&format!(
+                "\n        .and_eq(\"{}\", &pk.{})",
+                pk_col,
+                rust_field(pk_col)
+            ));
+        }
+
+        // Build path tuple type: (String, String, ...)
+        let path_types: Vec<&str> = pks.iter().map(|_| "String").collect();
+        let path_type = format!("({})", path_types.join(", "));
+        let path_fields: Vec<String> = pks.iter().map(|p| rust_field(p)).collect();
+        let path_destructure = format!("({})", path_fields.join(", "));
+
+        // Build pk struct construction
+        let mut pk_fields = String::new();
+        for pk_col in pks {
+            pk_fields.push_str(&format!(
+                "        {}: {},\n",
+                rust_field(pk_col),
+                rust_field(pk_col)
+            ));
+        }
+
+        format!(
+            "#[vil_handler]\n\
+             pub async fn get_by_pk(\n\
+             {indent}ctx: ServiceCtx,\n\
+             {indent}Path({path_destructure}): Path<{path_type}>,\n\
+             ) -> Result<VilResponse<{struct_name}>, AppError> {{\n\
+             {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
+             {indent}let pk = {pk_struct} {{\n\
+             {pk_fields}\
+             {indent}}};\n\
+             {indent}let item = {struct_name}::q()\n\
+             {indent2}.select(&[\"*\"])\n\
+             {indent2}{where_chain}\n\
+             {indent2}.fetch_optional::<{struct_name}>(state.pool.inner())\n\
+             {indent2}.await?\n\
+             {indent2}.ok_or_else(|| AppError::NotFound(\"{struct_name} not found\".into()))?;\n\
+             {indent}Ok(VilResponse::ok(item))\n\
+             }}\n",
+            struct_name = struct_name,
+            pk_struct = pk_struct,
+            pk_fields = pk_fields,
+            path_destructure = path_destructure,
+            path_type = path_type,
+            where_chain = where_chain,
+            indent = "    ",
+            indent2 = "        ",
+        )
+    } else {
+        format!(
+            "#[vil_handler]\n\
+             pub async fn get_by_id(\n\
+             {indent}ctx: ServiceCtx,\n\
+             {indent}Path(id): Path<String>,\n\
+             ) -> Result<VilResponse<{struct_name}>, AppError> {{\n\
+             {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
+             {indent}let item = {struct_name}::find_by_id(state.pool.inner(), &id)\n\
+             {indent2}.await?\n\
+             {indent2}.ok_or_else(|| AppError::NotFound(\"{struct_name} not found\".into()))?;\n\
+             {indent}Ok(VilResponse::ok(item))\n\
+             }}\n",
+            struct_name = struct_name,
+            indent = "    ",
+            indent2 = "        ",
+        )
+    }
 }
 
 /// POST /{table} — create via VilQuery insert
 fn gen_create(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
     let create_type = format!("Create{}Request", struct_name);
-    let pk = &table.primary_key;
+    let is_composite = table.is_composite_pk();
 
     // Build insert columns + value calls
     let mut insert_cols = Vec::new();
     let mut value_calls = Vec::new();
 
-    // Always include PK (auto UUID)
-    insert_cols.push(format!("\"{}\"", pk));
-    value_calls.push("        .value(id.clone())".to_string());
+    if is_composite {
+        // Composite PK: user provides all PK columns in the request body
+        for pk_col in &table.primary_keys {
+            insert_cols.push(format!("\"{}\"", pk_col));
+            value_calls.push(format!(
+                "        .value(req.{}.clone())",
+                rust_field(pk_col)
+            ));
+        }
+    } else {
+        // Single PK: auto UUID
+        let pk = table.first_pk();
+        insert_cols.push(format!("\"{}\"", pk));
+        value_calls.push("        .value(id.clone())".to_string());
+    }
 
     for col in &table.columns {
         if col.is_primary_key || col.is_auto_timestamp() {
@@ -187,34 +262,83 @@ fn gen_create(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
         }
     }
 
-    format!(
-        "#[vil_handler]\n\
-         pub async fn create(\n\
-         {indent}ctx: ServiceCtx,\n\
-         {indent}body: ShmSlice,\n\
-         ) -> Result<VilResponse<{struct_name}>, AppError> {{\n\
-         {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
-         {indent}let req: {create_type} = body.json().map_err(|_| AppError::Validation(\"Invalid JSON\".into()))?;\n\
-         {indent}let id = uuid::Uuid::new_v4().to_string();\n\
-         \n\
-         {indent}{struct_name}::q()\n\
-         {indent2}.insert_columns(&[{cols}])\n\
-         {values}\n\
-         {indent2}.execute(state.pool.inner())\n\
-         {indent2}.await?;\n\
-         \n\
-         {indent}let created = {struct_name}::find_by_id(state.pool.inner(), &id)\n\
-         {indent2}.await?\n\
-         {indent2}.ok_or_else(|| AppError::Internal(\"Created but not found\".into()))?;\n\
-         {indent}Ok(VilResponse::created(created))\n\
-         }}\n",
-        struct_name = struct_name,
-        create_type = create_type,
-        cols = insert_cols.join(", "),
-        values = value_calls.join("\n"),
-        indent = "    ",
-        indent2 = "        ",
-    )
+    if is_composite {
+        // Composite PK: no auto UUID, re-fetch via query
+        let pks = &table.primary_keys;
+        let mut where_chain = format!(
+            ".where_eq(\"{}\", &req.{})",
+            pks[0],
+            rust_field(&pks[0])
+        );
+        for pk_col in &pks[1..] {
+            where_chain.push_str(&format!(
+                "\n        .and_eq(\"{}\", &req.{})",
+                pk_col,
+                rust_field(pk_col)
+            ));
+        }
+
+        format!(
+            "#[vil_handler]\n\
+             pub async fn create(\n\
+             {indent}ctx: ServiceCtx,\n\
+             {indent}body: ShmSlice,\n\
+             ) -> Result<VilResponse<{struct_name}>, AppError> {{\n\
+             {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
+             {indent}let req: {create_type} = body.json().map_err(|_| AppError::Validation(\"Invalid JSON\".into()))?;\n\
+             \n\
+             {indent}{struct_name}::q()\n\
+             {indent2}.insert_columns(&[{cols}])\n\
+             {values}\n\
+             {indent2}.execute(state.pool.inner())\n\
+             {indent2}.await?;\n\
+             \n\
+             {indent}let created = {struct_name}::q()\n\
+             {indent2}.select(&[\"*\"])\n\
+             {indent2}{where_chain}\n\
+             {indent2}.fetch_optional::<{struct_name}>(state.pool.inner())\n\
+             {indent2}.await?\n\
+             {indent2}.ok_or_else(|| AppError::Internal(\"Created but not found\".into()))?;\n\
+             {indent}Ok(VilResponse::created(created))\n\
+             }}\n",
+            struct_name = struct_name,
+            create_type = create_type,
+            cols = insert_cols.join(", "),
+            values = value_calls.join("\n"),
+            where_chain = where_chain,
+            indent = "    ",
+            indent2 = "        ",
+        )
+    } else {
+        format!(
+            "#[vil_handler]\n\
+             pub async fn create(\n\
+             {indent}ctx: ServiceCtx,\n\
+             {indent}body: ShmSlice,\n\
+             ) -> Result<VilResponse<{struct_name}>, AppError> {{\n\
+             {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
+             {indent}let req: {create_type} = body.json().map_err(|_| AppError::Validation(\"Invalid JSON\".into()))?;\n\
+             {indent}let id = uuid::Uuid::new_v4().to_string();\n\
+             \n\
+             {indent}{struct_name}::q()\n\
+             {indent2}.insert_columns(&[{cols}])\n\
+             {values}\n\
+             {indent2}.execute(state.pool.inner())\n\
+             {indent2}.await?;\n\
+             \n\
+             {indent}let created = {struct_name}::find_by_id(state.pool.inner(), &id)\n\
+             {indent2}.await?\n\
+             {indent2}.ok_or_else(|| AppError::Internal(\"Created but not found\".into()))?;\n\
+             {indent}Ok(VilResponse::created(created))\n\
+             }}\n",
+            struct_name = struct_name,
+            create_type = create_type,
+            cols = insert_cols.join(", "),
+            values = value_calls.join("\n"),
+            indent = "    ",
+            indent2 = "        ",
+        )
+    }
 }
 
 /// PUT /{table}/:id — update via VilQuery set_optional
@@ -254,57 +378,195 @@ fn gen_update(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
         set_calls.push("        .set_raw(\"updated_at\", \"datetime('now')\")".to_string());
     }
 
-    format!(
-        "#[vil_handler]\n\
-         pub async fn update(\n\
-         {indent}ctx: ServiceCtx,\n\
-         {indent}Path(id): Path<String>,\n\
-         {indent}body: ShmSlice,\n\
-         ) -> Result<VilResponse<{struct_name}>, AppError> {{\n\
-         {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
-         {indent}let req: {update_type} = body.json().map_err(|_| AppError::Validation(\"Invalid JSON\".into()))?;\n\
-         \n\
-         {indent}{struct_name}::q()\n\
-         {indent2}.update()\n\
-         {sets}\n\
-         {indent2}.where_eq(\"{pk}\", &id)\n\
-         {indent2}.execute(state.pool.inner())\n\
-         {indent2}.await?;\n\
-         \n\
-         {indent}let updated = {struct_name}::find_by_id(state.pool.inner(), &id)\n\
-         {indent2}.await?\n\
-         {indent2}.ok_or_else(|| AppError::NotFound(\"{struct_name} not found\".into()))?;\n\
-         {indent}Ok(VilResponse::ok(updated))\n\
-         }}\n",
-        struct_name = struct_name,
-        update_type = update_type,
-        pk = table.primary_key,
-        sets = set_calls.join("\n"),
-        indent = "    ",
-        indent2 = "        ",
-    )
+    if table.is_composite_pk() {
+        let pk_struct = format!("{}Pk", struct_name);
+        let pks = &table.primary_keys;
+
+        let mut where_chain = format!(
+            ".where_eq(\"{}\", &pk.{})",
+            pks[0],
+            rust_field(&pks[0])
+        );
+        for pk_col in &pks[1..] {
+            where_chain.push_str(&format!(
+                "\n        .and_eq(\"{}\", &pk.{})",
+                pk_col,
+                rust_field(pk_col)
+            ));
+        }
+
+        // Build path tuple
+        let path_types: Vec<&str> = pks.iter().map(|_| "String").collect();
+        let path_type = format!("({})", path_types.join(", "));
+        let path_fields: Vec<String> = pks.iter().map(|p| rust_field(p)).collect();
+        let path_destructure = format!("({})", path_fields.join(", "));
+
+        let mut pk_fields = String::new();
+        for pk_col in pks {
+            pk_fields.push_str(&format!(
+                "        {}: {},\n",
+                rust_field(pk_col),
+                rust_field(pk_col)
+            ));
+        }
+
+        // Re-fetch via query
+        let mut refetch_where = format!(
+            ".where_eq(\"{}\", &pk.{})",
+            pks[0],
+            rust_field(&pks[0])
+        );
+        for pk_col in &pks[1..] {
+            refetch_where.push_str(&format!(
+                "\n        .and_eq(\"{}\", &pk.{})",
+                pk_col,
+                rust_field(pk_col)
+            ));
+        }
+
+        format!(
+            "#[vil_handler]\n\
+             pub async fn update(\n\
+             {indent}ctx: ServiceCtx,\n\
+             {indent}Path({path_destructure}): Path<{path_type}>,\n\
+             {indent}body: ShmSlice,\n\
+             ) -> Result<VilResponse<{struct_name}>, AppError> {{\n\
+             {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
+             {indent}let req: {update_type} = body.json().map_err(|_| AppError::Validation(\"Invalid JSON\".into()))?;\n\
+             {indent}let pk = {pk_struct} {{\n\
+             {pk_fields}\
+             {indent}}};\n\
+             \n\
+             {indent}{struct_name}::q()\n\
+             {indent2}.update()\n\
+             {sets}\n\
+             {indent2}{where_chain}\n\
+             {indent2}.execute(state.pool.inner())\n\
+             {indent2}.await?;\n\
+             \n\
+             {indent}let updated = {struct_name}::q()\n\
+             {indent2}.select(&[\"*\"])\n\
+             {indent2}{refetch_where}\n\
+             {indent2}.fetch_optional::<{struct_name}>(state.pool.inner())\n\
+             {indent2}.await?\n\
+             {indent2}.ok_or_else(|| AppError::NotFound(\"{struct_name} not found\".into()))?;\n\
+             {indent}Ok(VilResponse::ok(updated))\n\
+             }}\n",
+            struct_name = struct_name,
+            update_type = update_type,
+            pk_struct = pk_struct,
+            pk_fields = pk_fields,
+            path_destructure = path_destructure,
+            path_type = path_type,
+            where_chain = where_chain,
+            refetch_where = refetch_where,
+            sets = set_calls.join("\n"),
+            indent = "    ",
+            indent2 = "        ",
+        )
+    } else {
+        format!(
+            "#[vil_handler]\n\
+             pub async fn update(\n\
+             {indent}ctx: ServiceCtx,\n\
+             {indent}Path(id): Path<String>,\n\
+             {indent}body: ShmSlice,\n\
+             ) -> Result<VilResponse<{struct_name}>, AppError> {{\n\
+             {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
+             {indent}let req: {update_type} = body.json().map_err(|_| AppError::Validation(\"Invalid JSON\".into()))?;\n\
+             \n\
+             {indent}{struct_name}::q()\n\
+             {indent2}.update()\n\
+             {sets}\n\
+             {indent2}.where_eq(\"{pk}\", &id)\n\
+             {indent2}.execute(state.pool.inner())\n\
+             {indent2}.await?;\n\
+             \n\
+             {indent}let updated = {struct_name}::find_by_id(state.pool.inner(), &id)\n\
+             {indent2}.await?\n\
+             {indent2}.ok_or_else(|| AppError::NotFound(\"{struct_name} not found\".into()))?;\n\
+             {indent}Ok(VilResponse::ok(updated))\n\
+             }}\n",
+            struct_name = struct_name,
+            update_type = update_type,
+            pk = table.first_pk(),
+            sets = set_calls.join("\n"),
+            indent = "    ",
+            indent2 = "        ",
+        )
+    }
 }
 
 /// DELETE /{table}/:id — delete by primary key
 fn gen_delete(table: &TableMeta, struct_name: &str, _snake: &str) -> String {
-    format!(
-        "#[vil_handler]\n\
-         pub async fn delete(\n\
-         {indent}ctx: ServiceCtx,\n\
-         {indent}Path(id): Path<String>,\n\
-         ) -> Result<VilResponse<serde_json::Value>, AppError> {{\n\
-         {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
-         {indent}let existed = {struct_name}::delete(state.pool.inner(), &id).await?;\n\
-         {indent}if existed {{\n\
-         {indent2}Ok(VilResponse::ok(serde_json::json!({{\"deleted\": true, \"id\": id}})))\n\
-         {indent}}} else {{\n\
-         {indent2}Err(AppError::NotFound(\"{struct_name} not found\".into()))\n\
-         {indent}}}\n\
-         }}\n",
-        struct_name = struct_name,
-        indent = "    ",
-        indent2 = "        ",
-    )
+    if table.is_composite_pk() {
+        let pks = &table.primary_keys;
+
+        // Build path tuple
+        let path_types: Vec<&str> = pks.iter().map(|_| "String").collect();
+        let path_type = format!("({})", path_types.join(", "));
+        let path_fields: Vec<String> = pks.iter().map(|p| rust_field(p)).collect();
+        let path_destructure = format!("({})", path_fields.join(", "));
+
+        let mut where_chain = format!(
+            ".where_eq(\"{}\", &{})",
+            pks[0],
+            rust_field(&pks[0])
+        );
+        for pk_col in &pks[1..] {
+            where_chain.push_str(&format!(
+                "\n        .and_eq(\"{}\", &{})",
+                pk_col,
+                rust_field(pk_col)
+            ));
+        }
+
+        format!(
+            "#[vil_handler]\n\
+             pub async fn delete(\n\
+             {indent}ctx: ServiceCtx,\n\
+             {indent}Path({path_destructure}): Path<{path_type}>,\n\
+             ) -> Result<VilResponse<serde_json::Value>, AppError> {{\n\
+             {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
+             {indent}let result = {struct_name}::q()\n\
+             {indent2}.delete()\n\
+             {indent2}{where_chain}\n\
+             {indent2}.execute(state.pool.inner())\n\
+             {indent2}.await?;\n\
+             {indent}let deleted = result > 0;\n\
+             {indent}if deleted {{\n\
+             {indent2}Ok(VilResponse::ok(serde_json::json!({{\"deleted\": true}})))\n\
+             {indent}}} else {{\n\
+             {indent2}Err(AppError::NotFound(\"{struct_name} not found\".into()))\n\
+             {indent}}}\n\
+             }}\n",
+            struct_name = struct_name,
+            path_destructure = path_destructure,
+            path_type = path_type,
+            where_chain = where_chain,
+            indent = "    ",
+            indent2 = "        ",
+        )
+    } else {
+        format!(
+            "#[vil_handler]\n\
+             pub async fn delete(\n\
+             {indent}ctx: ServiceCtx,\n\
+             {indent}Path(id): Path<String>,\n\
+             ) -> Result<VilResponse<serde_json::Value>, AppError> {{\n\
+             {indent}let state = ctx.state::<AppState>().map_err(|_| AppError::Internal(\"state\".into()))?;\n\
+             {indent}let existed = {struct_name}::delete(state.pool.inner(), &id).await?;\n\
+             {indent}if existed {{\n\
+             {indent2}Ok(VilResponse::ok(serde_json::json!({{\"deleted\": true, \"id\": id}})))\n\
+             {indent}}} else {{\n\
+             {indent2}Err(AppError::NotFound(\"{struct_name} not found\".into()))\n\
+             {indent}}}\n\
+             }}\n",
+            struct_name = struct_name,
+            indent = "    ",
+            indent2 = "        ",
+        )
+    }
 }
 
 // =============================================================================
@@ -412,7 +674,11 @@ CREATE TABLE predictions (
 
             // Every service must have 5 handlers
             assert!(output.contains("pub async fn list("), "Missing list for {}", table.name);
-            assert!(output.contains("pub async fn get_by_id("), "Missing get_by_id for {}", table.name);
+            if table.is_composite_pk() {
+                assert!(output.contains("pub async fn get_by_pk("), "Missing get_by_pk for {}", table.name);
+            } else {
+                assert!(output.contains("pub async fn get_by_id("), "Missing get_by_id for {}", table.name);
+            }
             assert!(output.contains("pub async fn create("), "Missing create for {}", table.name);
             assert!(output.contains("pub async fn update("), "Missing update for {}", table.name);
             assert!(output.contains("pub async fn delete("), "Missing delete for {}", table.name);
@@ -420,10 +686,12 @@ CREATE TABLE predictions (
             // Must use VilORM
             assert!(output.contains(&format!("{}::q()", struct_name)),
                 "Missing VilQuery for {}", table.name);
-            assert!(output.contains(&format!("{}::find_by_id(", struct_name)),
-                "Missing find_by_id for {}", table.name);
-            assert!(output.contains(&format!("{}::delete(", struct_name)),
-                "Missing delete call for {}", table.name);
+            if !table.is_composite_pk() {
+                assert!(output.contains(&format!("{}::find_by_id(", struct_name)),
+                    "Missing find_by_id for {}", table.name);
+                assert!(output.contains(&format!("{}::delete(", struct_name)),
+                    "Missing delete call for {}", table.name);
+            }
 
             let lines = output.lines().count();
             println!("  {} → {}_svc.rs ({} lines, 5 handlers)", table.name, table.name, lines);

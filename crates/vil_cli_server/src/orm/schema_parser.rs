@@ -11,9 +11,21 @@
 pub struct TableMeta {
     pub name: String,
     pub columns: Vec<ColumnMeta>,
-    pub primary_key: String,
+    pub primary_keys: Vec<String>,
     pub unique_constraints: Vec<Vec<String>>,
     pub foreign_keys: Vec<ForeignKeyMeta>,
+}
+
+impl TableMeta {
+    /// True if this table has a composite primary key (2+ columns).
+    pub fn is_composite_pk(&self) -> bool {
+        self.primary_keys.len() > 1
+    }
+
+    /// First PK column name (for backward compat with single-PK code).
+    pub fn first_pk(&self) -> &str {
+        self.primary_keys.first().map(|s| s.as_str()).unwrap_or("id")
+    }
 }
 
 /// Metadata for a single column.
@@ -197,11 +209,10 @@ fn extract_table_name(header: &str) -> String {
 /// Parse the body inside CREATE TABLE (...) into columns and constraints.
 fn parse_table_body(table_name: &str, body: &str) -> TableMeta {
     let mut columns = Vec::new();
-    let mut primary_key = String::new();
+    let mut primary_keys: Vec<String> = Vec::new();
     let mut unique_constraints: Vec<Vec<String>> = Vec::new();
     let mut foreign_keys: Vec<ForeignKeyMeta> = Vec::new();
 
-    // Split by comma, but respect parentheses depth
     let parts = split_by_comma_respecting_parens(body);
 
     for part in &parts {
@@ -210,18 +221,15 @@ fn parse_table_body(table_name: &str, body: &str) -> TableMeta {
 
         let upper = trimmed.to_uppercase();
 
-        // Table-level PRIMARY KEY constraint
+        // Table-level PRIMARY KEY constraint: PRIMARY KEY (col1, col2)
         if upper.starts_with("PRIMARY KEY") {
             if let Some(cols) = extract_parens_content(trimmed) {
                 let pk_cols: Vec<String> = cols.split(',').map(|s| s.trim().to_string()).collect();
-                if !pk_cols.is_empty() {
-                    primary_key = pk_cols[0].clone();
-                }
+                primary_keys = pk_cols;
             }
             continue;
         }
 
-        // Table-level UNIQUE constraint
         if upper.starts_with("UNIQUE") {
             if let Some(cols) = extract_parens_content(trimmed) {
                 let unique_cols: Vec<String> = cols.split(',').map(|s| s.trim().to_string()).collect();
@@ -230,7 +238,6 @@ fn parse_table_body(table_name: &str, body: &str) -> TableMeta {
             continue;
         }
 
-        // Table-level FOREIGN KEY constraint
         if upper.starts_with("FOREIGN KEY") {
             if let Some(fk) = parse_foreign_key_constraint(trimmed) {
                 foreign_keys.push(fk);
@@ -240,8 +247,8 @@ fn parse_table_body(table_name: &str, body: &str) -> TableMeta {
 
         // Column definition
         if let Some(col) = parse_column_def(trimmed) {
-            if col.is_primary_key && primary_key.is_empty() {
-                primary_key = col.name.clone();
+            if col.is_primary_key && primary_keys.is_empty() {
+                primary_keys.push(col.name.clone());
             }
             columns.push(col);
         }
@@ -256,17 +263,24 @@ fn parse_table_body(table_name: &str, body: &str) -> TableMeta {
         }
     }
 
-    // Default primary key to "id" if not found
-    if primary_key.is_empty() {
+    // Mark PK columns
+    for pk_name in &primary_keys {
+        if let Some(col) = columns.iter_mut().find(|c| &c.name == pk_name) {
+            col.is_primary_key = true;
+        }
+    }
+
+    // Default to first column if no PK found
+    if primary_keys.is_empty() {
         if let Some(col) = columns.first() {
-            primary_key = col.name.clone();
+            primary_keys.push(col.name.clone());
         }
     }
 
     TableMeta {
         name: table_name.to_string(),
         columns,
-        primary_key,
+        primary_keys,
         unique_constraints,
         foreign_keys,
     }
@@ -480,7 +494,7 @@ fn parse_foreign_key_constraint(line: &str) -> Option<ForeignKeyMeta> {
 impl std::fmt::Display for TableMeta {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "TABLE {} (pk={}, {} cols, {} unique, {} fk)",
-            self.name, self.primary_key, self.columns.len(),
+            self.name, self.primary_keys.join(","), self.columns.len(),
             self.unique_constraints.len(), self.foreign_keys.len())?;
         for col in &self.columns {
             let mut flags: Vec<String> = Vec::new();
@@ -572,7 +586,7 @@ CREATE TABLE IF NOT EXISTS question_bank (
         let tables = parse_schema(SAMPLE_SQL);
         let profiles = tables.iter().find(|t| t.name == "profiles").unwrap();
         
-        assert_eq!(profiles.primary_key, "id");
+        assert_eq!(profiles.primary_keys[0], "id");
         assert_eq!(profiles.columns.len(), 14);
         
         let username = profiles.columns.iter().find(|c| c.name == "username").unwrap();
@@ -698,13 +712,13 @@ CREATE TABLE IF NOT EXISTS question_bank (
         
         // Verify profiles has correct structure
         let profiles = tables.iter().find(|t| t.name == "profiles").unwrap();
-        assert_eq!(profiles.primary_key, "id");
+        assert_eq!(profiles.primary_keys[0], "id");
         assert!(profiles.columns.len() >= 14);
         
         // Print summary
         println!("\n=== TOEFL Schema: {} tables ===", tables.len());
         for t in &tables {
-            let pk = &t.primary_key;
+            let pk = &t.primary_keys.join(",");
             let fks: Vec<String> = t.columns.iter()
                 .filter(|c| c.references.is_some())
                 .map(|c| format!("{}→{}", c.name, c.references.as_ref().unwrap().table))

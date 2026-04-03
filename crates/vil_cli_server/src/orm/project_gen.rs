@@ -8,7 +8,7 @@
 //! - src/models/mod.rs + per-table model files
 //! - src/services/mod.rs + per-table service files
 
-use super::model_gen::{generate_model_file, to_pascal_case};
+use super::model_gen::generate_model_file;
 use super::schema_parser::TableMeta;
 use super::service_gen::generate_service_file;
 use std::collections::HashMap;
@@ -143,18 +143,42 @@ fn gen_main_rs(project_name: &str, tables: &[TableMeta]) -> String {
     for table in tables {
         let svc_var = format!("{}_svc", table.name);
         let svc_mod = format!("{}_svc", table.name);
-        out.push_str(&format!(
-            "    let {var} = ServiceProcess::new(\"{name}\")\n\
-             \x20       .endpoint(Method::GET, \"/list\", get({mod}::list))\n\
-             \x20       .endpoint(Method::GET, \"/:id\", get({mod}::get_by_id))\n\
-             \x20       .endpoint(Method::POST, \"/create\", post({mod}::create))\n\
-             \x20       .endpoint(Method::PUT, \"/:id\", put({mod}::update))\n\
-             \x20       .endpoint(Method::DELETE, \"/:id\", delete({mod}::delete))\n\
-             \x20       .state(state.clone());\n\n",
-            var = svc_var,
-            name = table.name,
-            mod = svc_mod,
-        ));
+
+        if table.is_composite_pk() {
+            // Composite PK routes: /:col1/:col2/...
+            let pk_path: String = table
+                .primary_keys
+                .iter()
+                .map(|pk| format!("/:{}", pk))
+                .collect();
+
+            out.push_str(&format!(
+                "    let {var} = ServiceProcess::new(\"{name}\")\n\
+                 \x20       .endpoint(Method::GET, \"/list\", get({mod}::list))\n\
+                 \x20       .endpoint(Method::GET, \"{pk_path}\", get({mod}::get_by_pk))\n\
+                 \x20       .endpoint(Method::POST, \"/create\", post({mod}::create))\n\
+                 \x20       .endpoint(Method::PUT, \"{pk_path}\", put({mod}::update))\n\
+                 \x20       .endpoint(Method::DELETE, \"{pk_path}\", delete({mod}::delete))\n\
+                 \x20       .state(state.clone());\n\n",
+                var = svc_var,
+                name = table.name,
+                mod = svc_mod,
+                pk_path = pk_path,
+            ));
+        } else {
+            out.push_str(&format!(
+                "    let {var} = ServiceProcess::new(\"{name}\")\n\
+                 \x20       .endpoint(Method::GET, \"/list\", get({mod}::list))\n\
+                 \x20       .endpoint(Method::GET, \"/:id\", get({mod}::get_by_id))\n\
+                 \x20       .endpoint(Method::POST, \"/create\", post({mod}::create))\n\
+                 \x20       .endpoint(Method::PUT, \"/:id\", put({mod}::update))\n\
+                 \x20       .endpoint(Method::DELETE, \"/:id\", delete({mod}::delete))\n\
+                 \x20       .state(state.clone());\n\n",
+                var = svc_var,
+                name = table.name,
+                mod = svc_mod,
+            ));
+        }
     }
 
     // VilApp
@@ -328,12 +352,13 @@ CREATE TABLE posts (id TEXT PRIMARY KEY, title TEXT NOT NULL, created_at TEXT DE
     }
 
     #[test]
-    fn test_db_rs_embeds_schema() {
+    fn test_db_rs_reads_schema_file() {
         let schema = "CREATE TABLE test (id TEXT PRIMARY KEY);";
         let db = gen_db_rs(schema);
-        assert!(db.contains("CREATE TABLE test"));
         assert!(db.contains("SqlxPool::connect"));
         assert!(db.contains("execute_raw"));
+        assert!(db.contains("SCHEMA_PATH"));
+        assert!(db.contains("read_to_string"));
     }
 
     #[test]

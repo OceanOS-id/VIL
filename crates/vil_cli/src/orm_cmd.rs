@@ -82,7 +82,7 @@ fn gen_all(
     for t in tables {
         let struct_name = model_gen::to_pascal_case(&t.name);
         println!("    {} → /api/{}/  ({})", struct_name, t.name,
-            format!("{} cols, pk={}", t.columns.len(), t.primary_key).dimmed());
+            format!("{} cols, pk={}", t.columns.len(), t.primary_keys.join(",")).dimmed());
     }
     println!();
 

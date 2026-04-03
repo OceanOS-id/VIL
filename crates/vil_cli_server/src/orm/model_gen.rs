@@ -23,6 +23,12 @@ pub fn generate_model_file(table: &TableMeta) -> String {
     out.push_str(&generate_entity_struct(table, &struct_name));
     out.push_str("\n");
 
+    // Composite PK struct (e.g., UserSavedEssayPk)
+    if table.is_composite_pk() {
+        out.push_str(&generate_pk_struct(table, &struct_name));
+        out.push_str("\n");
+    }
+
     // ListItem projection struct
     let list_cols = table.list_columns();
     if list_cols.len() < table.columns.len() {
@@ -101,7 +107,7 @@ fn generate_entity_struct(table: &TableMeta, struct_name: &str) -> String {
 
 /// Generate a slim ListItem struct for list endpoints.
 fn generate_list_item_struct(
-    table: &TableMeta,
+    _table: &TableMeta,
     struct_name: &str,
     list_cols: &[&ColumnMeta],
 ) -> String {
@@ -144,8 +150,8 @@ fn generate_create_request(table: &TableMeta, struct_name: &str) -> String {
     out.push_str(&format!("pub struct {} {{\n", req_name));
 
     for col in &table.columns {
-        // Skip PK, auto-timestamps, auto-generated
-        if col.is_primary_key {
+        // For single PK: skip PK (auto UUID). For composite PK: include PK columns.
+        if col.is_primary_key && !table.is_composite_pk() {
             continue;
         }
         if col.is_auto_timestamp() {
@@ -195,6 +201,28 @@ fn generate_update_request(table: &TableMeta, struct_name: &str) -> String {
             col.name.clone()
         };
         out.push_str(&format!("    pub {}: Option<{}>,\n", field_name, base_type));
+    }
+
+    out.push_str("}\n");
+    out
+}
+
+/// Generate a composite PK struct for tables with multi-column primary keys.
+/// E.g., `UserSavedEssayPk { user_id: String, essay_id: String }`
+fn generate_pk_struct(table: &TableMeta, struct_name: &str) -> String {
+    let mut out = String::new();
+    let pk_name = format!("{}Pk", struct_name);
+
+    out.push_str("#[derive(Debug, Deserialize)]\n");
+    out.push_str(&format!("pub struct {} {{\n", pk_name));
+
+    for pk_col in &table.primary_keys {
+        let field = if is_reserved_word(pk_col) {
+            format!("{}_", pk_col)
+        } else {
+            pk_col.clone()
+        };
+        out.push_str(&format!("    pub {}: String,\n", field));
     }
 
     out.push_str("}\n");
