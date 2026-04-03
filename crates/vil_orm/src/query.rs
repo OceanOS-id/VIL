@@ -674,10 +674,15 @@ impl VilQuery {
     }
 
     /// Execute (INSERT/UPDATE/DELETE). Returns rows affected.
+    /// UPDATE with no SET clauses returns 0 (no-op) instead of invalid SQL.
     pub async fn execute(
         self,
         pool: &sqlx::Pool<sqlx::Any>,
     ) -> Result<u64, sqlx::Error> {
+        // Guard: UPDATE with empty SET → no-op
+        if self.mode == Mode::Update && self.set_clauses.is_empty() {
+            return Ok(0);
+        }
         let sql = self.to_sql();
         let args = self.build_args();
         let start = Instant::now();
