@@ -1,6 +1,7 @@
 vil_version: "6.0.0"
 name: websocket-chat
 port: 8080
+token: shm
 mode: server
 
 services:

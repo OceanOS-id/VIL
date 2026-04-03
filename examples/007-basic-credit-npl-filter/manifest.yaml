@@ -1,4 +1,24 @@
 vil_version: "6.0.0"
-name: app
-port: 8080
-mode: server
+name: NplFilterPipeline
+port: 3081
+token: shm
+
+nodes:
+  npl_filter_sink:
+    type: http_sink
+    port: 3081
+    path: "/filter-npl"
+  npl_credit_source:
+    type: http_source
+    format: json
+
+routes:
+  - from: sink.trigger_out
+    to: source.trigger_in
+    mode: LoanWrite
+  - from: source.response_data_out
+    to: sink.response_data_in
+    mode: LoanWrite
+  - from: source.response_ctrl_out
+    to: sink.response_ctrl_in
+    mode: Copy

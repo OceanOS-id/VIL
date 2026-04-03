@@ -1,4 +1,27 @@
 vil_version: "6.0.0"
-name: app
-port: 8080
-mode: server
+name: RagPipeline
+port: 3084
+token: shm
+
+nodes:
+  rag_webhook:
+    type: http_sink
+    port: 3084
+    path: "/rag"
+  rag_sse_inference:
+    type: http_source
+    url: "http://127.0.0.1:4545/v1/chat/completions"
+    format: sse
+    json_tap: "choices[0].delta.content"
+    dialect: openai
+
+routes:
+  - from: sink.trigger_out
+    to: source.trigger_in
+    mode: LoanWrite
+  - from: source.response_data_out
+    to: sink.response_data_in
+    mode: LoanWrite
+  - from: source.response_ctrl_out
+    to: sink.response_ctrl_in
+    mode: Copy

@@ -1,4 +1,24 @@
 vil_version: "6.0.0"
-name: app
-port: 8080
-mode: server
+name: MultiServiceMesh
+port: 3084
+token: shm
+
+nodes:
+  gateway:
+    type: http_sink
+    port: 3084
+    path: "/ingest"
+  credit_ingest:
+    type: http_source
+    format: json
+
+routes:
+  - from: gateway.trigger_out
+    to: ingest.trigger_in
+    mode: LoanWrite
+  - from: ingest.response_data_out
+    to: gateway.response_data_in
+    mode: LoanWrite
+  - from: ingest.response_ctrl_out
+    to: gateway.response_ctrl_in
+    mode: Copy
