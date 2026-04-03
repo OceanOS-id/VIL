@@ -228,6 +228,18 @@ enum Commands {
         fields: Vec<String>,
     },
 
+    /// VilORM — Generate project from SQL schema
+    ///
+    /// Examples:
+    ///   vil orm gen all --schema schema.sql --output my-app
+    ///   vil orm gen all --schema schema.sql --name toefl-quiz
+    ///   vil orm gen model --schema schema.sql --table profiles
+    #[command(name = "orm")]
+    Orm {
+        #[command(subcommand)]
+        action: OrmAction,
+    },
+
     /// Deploy to remote server: build release → scp → restart → health check
     ///
     /// Examples:
@@ -431,6 +443,32 @@ enum Commands {
     Sdk {
         #[command(subcommand)]
         action: SdkAction,
+    },
+}
+
+#[derive(Subcommand)]
+enum OrmAction {
+    /// Generate project/models/services from SQL schema
+    Gen {
+        /// What to generate: all, model, service
+        #[arg(default_value = "all")]
+        target: String,
+
+        /// SQL schema file path
+        #[arg(long)]
+        schema: String,
+
+        /// Output directory (default: current dir)
+        #[arg(long, short)]
+        output: Option<String>,
+
+        /// Project name (default: derived from dir)
+        #[arg(long)]
+        name: Option<String>,
+
+        /// Generate only this table (for model/service target)
+        #[arg(long)]
+        table: Option<String>,
     },
 }
 
@@ -659,6 +697,7 @@ mod vlb_inspector;
 mod wasm_builder;
 mod yaml_pipeline;
 mod yaml_tools;
+mod orm_cmd;
 
 fn main() {
     let cli = Cli::parse();
@@ -787,6 +826,17 @@ fn main() {
             if let Err(e) = generate::run_generate(kind, name, fields) {
                 eprintln!("{} {}", "Error:".red().bold(), e);
                 std::process::exit(1);
+            }
+        }
+
+        Commands::Orm { action } => {
+            match action {
+                OrmAction::Gen { target, schema, output, name, table } => {
+                    if let Err(e) = orm_cmd::run_orm_gen(&target, &schema, output.as_deref(), name.as_deref(), table.as_deref()) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
             }
         }
 
