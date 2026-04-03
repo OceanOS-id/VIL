@@ -199,6 +199,14 @@ pub fn list_templates() -> Result<(), String> {
     println!("{}", "VIL Templates".cyan().bold());
     println!();
 
+    // Web application templates (VilApp-based)
+    println!("  {}", "Web Application:".yellow().bold());
+    for (id, title, desc) in WEB_TEMPLATES {
+        println!("    {:<22} {:<26} {}", id.cyan(), title, desc);
+    }
+    println!();
+    println!("  {}", "Pipeline & SDK:".yellow().bold());
+
     let index = fetch_template_index()
         .map_err(|e| format!("Cannot fetch template list: {}", e))?;
 
@@ -392,6 +400,158 @@ struct ProjectConfig {
     observer: bool,
 }
 
+// =============================================================================
+// Web Application Templates (VilApp-based, no YAML pipeline)
+// =============================================================================
+
+const WEB_TEMPLATES: &[(&str, &str, &str)] = &[
+    ("rest-api", "REST API", "CRUD backend with VilApp + SQLite + auth ready"),
+    ("rest-api-auth", "REST API + Auth", "REST + VilJwt + VilPassword + VilClaims"),
+    ("rest-api-ai", "REST API + AI", "REST + auth + Groq/OpenAI LLM proxy"),
+];
+
+fn is_web_template(id: &str) -> bool {
+    WEB_TEMPLATES.iter().any(|(tid, _, _)| *tid == id)
+}
+
+fn generate_web_project(name: &str, template: &str, port: u16) -> Result<(), String> {
+    let dir = std::path::Path::new(name);
+    if dir.exists() {
+        return Err(format!("Directory '{}' already exists", name));
+    }
+    std::fs::create_dir_all(dir.join("src/services")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(dir.join("src/models")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(dir.join("migrations")).map_err(|e| e.to_string())?;
+
+    // Cargo.toml
+    let features = match template {
+        "rest-api-ai" => r#"features = ["web", "db-sqlite", "ai", "log"]"#,
+        _ => r#"features = ["web", "db-sqlite", "log"]"#,
+    };
+    std::fs::write(
+        dir.join("Cargo.toml"),
+        format!(
+            r#"[package]
+name = "{name}"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vil = {{ version = "0.2", {features} }}
+tokio = {{ version = "1", features = ["full"] }}
+serde = {{ version = "1.0", features = ["derive"] }}
+serde_json = "1.0"
+sqlx = {{ version = "0.8", features = ["runtime-tokio", "sqlite", "any"] }}
+uuid = {{ version = "1", features = ["v4"] }}
+chrono = "0.4"
+"#
+        ),
+    )
+    .map_err(|e| e.to_string())?;
+
+    // .env.example
+    std::fs::write(
+        dir.join(".env.example"),
+        format!(
+            "PORT={port}\nDATABASE_URL=sqlite:data.db\nJWT_SECRET=change-me\n"
+        ),
+    )
+    .map_err(|e| e.to_string())?;
+
+    // .gitignore
+    std::fs::write(dir.join(".gitignore"), "/target\n*.db\n*.db-wal\n*.db-shm\nuploads/\n.env\n")
+        .map_err(|e| e.to_string())?;
+
+    // src/main.rs
+    let auth_block = if template == "rest-api-auth" || template == "rest-api-ai" {
+        r#"
+    // Auth example
+    let auth_svc = ServiceProcess::new("auth")
+        .endpoint(Method::GET, "/me", get(services::auth::me))
+        .state(state.clone());
+    app = app.service(auth_svc);"#
+    } else {
+        ""
+    };
+
+    std::fs::write(
+        dir.join("src/main.rs"),
+        format!(
+            r#"use vil::prelude::*;
+
+mod services;
+
+#[tokio::main]
+async fn main() {{
+    let _log = vil_log::init()
+        .dev_mode(cfg!(debug_assertions))
+        .stdout(vil_log::StdoutFormat::Pretty)
+        .build();
+
+    let state = "placeholder"; // TODO: replace with your AppState
+
+    let hello = ServiceProcess::new("hello")
+        .endpoint(Method::GET, "/", get(services::hello::index));
+
+    let mut app = VilApp::new("{name}")
+        .port({port})
+        .observer(true)
+        .service(hello);
+{auth_block}
+    app.run().await;
+}}
+"#
+        ),
+    )
+    .map_err(|e| e.to_string())?;
+
+    // src/services/mod.rs
+    let mut mods = "pub mod hello;\n".to_string();
+    if template == "rest-api-auth" || template == "rest-api-ai" {
+        mods.push_str("pub mod auth;\n");
+    }
+    std::fs::write(dir.join("src/services/mod.rs"), mods).map_err(|e| e.to_string())?;
+
+    // src/services/hello.rs
+    std::fs::write(
+        dir.join("src/services/hello.rs"),
+        r#"use vil::prelude::*;
+
+#[vil_handler]
+pub async fn index() -> VilResponse<&'static str> {
+    VilResponse::ok("Hello VIL!")
+}
+"#,
+    )
+    .map_err(|e| e.to_string())?;
+
+    // src/services/auth.rs (if auth template)
+    if template == "rest-api-auth" || template == "rest-api-ai" {
+        std::fs::write(
+            dir.join("src/services/auth.rs"),
+            r#"use vil::prelude::*;
+
+#[vil_handler]
+pub async fn me() -> VilResponse<&'static str> {
+    // TODO: extract VilClaims<T> and return profile
+    VilResponse::ok("authenticated")
+}
+"#,
+        )
+        .map_err(|e| e.to_string())?;
+    }
+
+    // migrations/001_initial.sql
+    std::fs::write(
+        dir.join("migrations/001_initial.sql"),
+        "-- Add your tables here\n-- Example:\n-- CREATE TABLE users (\n--     id TEXT PRIMARY KEY,\n--     username TEXT UNIQUE\n-- );\n",
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+
 const TEMPLATES: &[Template] = &[
     Template {
         id: "ai-gateway",
@@ -522,6 +682,22 @@ const TEMPLATES: &[Template] = &[
 pub fn run_init(args: InitArgs) -> Result<(), String> {
     println!("{}", "VIL Project Initializer".cyan().bold());
     println!();
+
+    // Check for web app templates first (VilApp-based, no YAML pipeline)
+    if let Some(ref tmpl) = args.template {
+        if is_web_template(tmpl) {
+            let name = args.name
+                .ok_or("Project name required. Usage: vil init <name> --template rest-api")?;
+            let port = args.port.unwrap_or(8082);
+            generate_web_project(&name, tmpl, port)?;
+            println!();
+            println!("  {} Created web project: {}", "✅".green(), name.cyan().bold());
+            println!("  cd {} && cargo run", name);
+            println!("  → http://localhost:{}/health", port);
+            println!("  → http://localhost:{}/_vil/dashboard/", port);
+            return Ok(());
+        }
+    }
 
     let (name, template_id, lang, token, port, upstream) = if args.wizard {
         run_wizard(&args)?

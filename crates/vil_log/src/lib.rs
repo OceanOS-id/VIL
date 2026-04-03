@@ -25,6 +25,7 @@
 // ```
 // =============================================================================
 
+pub mod builder;
 pub mod config;
 pub mod dict;
 pub mod drain;
@@ -52,3 +53,18 @@ pub use types::{
     AccessPayload, AiPayload, AppPayload, DbPayload, LogCategory, LogLevel, LogSlot, MqPayload,
     SecurityPayload, SystemPayload, VilLogHeader,
 };
+
+pub use builder::{VilLogBuilder, VilLogGuard};
+
+/// Shortcut to create a VilLogBuilder.
+///
+/// # Example
+/// ```ignore
+/// let _log = vil_log::init()
+///     .dev_mode(cfg!(debug_assertions))
+///     .stdout(vil_log::StdoutFormat::Pretty)
+///     .build();
+/// ```
+pub fn init() -> VilLogBuilder {
+    VilLogBuilder::new()
+}
