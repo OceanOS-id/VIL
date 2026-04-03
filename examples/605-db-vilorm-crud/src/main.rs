@@ -331,7 +331,7 @@ async fn blog_stats(ctx: ServiceCtx) -> HandlerResult<VilResponse<serde_json::Va
 
 #[tokio::main]
 async fn main() {
-    let pool = SqlxPool::connect("blog", vil_db_sqlx::SqlxConfig::sqlite("sqlite:blog.db"))
+    let pool = SqlxPool::connect("blog", vil_db_sqlx::SqlxConfig::sqlite("sqlite:blog.db?mode=rwc"))
         .await
         .expect("SQLite connect failed");
 

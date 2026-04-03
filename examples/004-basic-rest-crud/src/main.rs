@@ -218,7 +218,7 @@ async fn task_stats(ctx: ServiceCtx) -> HandlerResult<VilResponse<serde_json::Va
 
 #[tokio::main]
 async fn main() {
-    let db_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:tasks.db".into());
+    let db_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:tasks.db?mode=rwc".into());
 
     // Connect via VIL SqlxPool
     let pool = vil_db_sqlx::SqlxPool::connect(

@@ -11314,6 +11314,8 @@ dependencies = [
  "tracing",
  "vil_db_sqlx",
  "vil_json",
+ "vil_orm",
+ "vil_orm_derive",
  "vil_sdk",
  "vil_server",
  "vil_server_core",
@@ -11347,13 +11349,18 @@ dependencies = [
 
 [[package]]
 name = "vil-basic-rest-crud"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bytes",
  "serde",
+ "serde_json",
+ "sqlx",
  "tokio",
+ "uuid",
+ "vil_db_sqlx",
  "vil_json",
- "vil_sdk",
+ "vil_orm",
+ "vil_orm_derive",
  "vil_server",
  "vil_server_core",
 ]
@@ -11525,6 +11532,78 @@ dependencies = [
  "serde_json",
  "tokio",
  "vil_json",
+ "vil_server",
+ "vil_server_core",
+]
+
+[[package]]
+name = "vil-db-vilorm-analytics"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "uuid",
+ "vil_db_sqlx",
+ "vil_json",
+ "vil_orm",
+ "vil_orm_derive",
+ "vil_server",
+ "vil_server_core",
+]
+
+[[package]]
+name = "vil-db-vilorm-crud"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "uuid",
+ "vil_db_sqlx",
+ "vil_json",
+ "vil_orm",
+ "vil_orm_derive",
+ "vil_server",
+ "vil_server_core",
+]
+
+[[package]]
+name = "vil-db-vilorm-ecommerce"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "uuid",
+ "vil_db_sqlx",
+ "vil_json",
+ "vil_orm",
+ "vil_orm_derive",
+ "vil_server",
+ "vil_server_core",
+]
+
+[[package]]
+name = "vil-db-vilorm-multitenant"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "uuid",
+ "vil_db_sqlx",
+ "vil_json",
+ "vil_orm",
+ "vil_orm_derive",
  "vil_server",
  "vil_server_core",
 ]
