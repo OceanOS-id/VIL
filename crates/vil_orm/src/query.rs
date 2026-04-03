@@ -61,6 +61,7 @@ enum Mode {
 }
 
 /// Fluent SQL query builder — one struct, zero-copy where possible.
+/// Uses `$N` numbered placeholders for cross-database compatibility (Postgres + SQLite).
 pub struct VilQuery {
     table: String,
     alias: Option<String>,
@@ -93,6 +94,8 @@ pub struct VilQuery {
     binds: Vec<Box<dyn VilBind>>,
     // Extra binds for conflict UPDATE (appended after insert binds)
     conflict_binds: Vec<Box<dyn VilBind>>,
+    // Bind counter for $N numbered placeholders
+    bind_counter: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -125,7 +128,14 @@ impl VilQuery {
             set_clauses: Vec::new(),
             binds: Vec::new(),
             conflict_binds: Vec::new(),
+            bind_counter: 0,
         }
+    }
+
+    /// Next placeholder: $1, $2, $3... (Postgres + SQLite compatible)
+    fn next_placeholder(&mut self) -> String {
+        self.bind_counter += 1;
+        format!("${}", self.bind_counter)
     }
 
     // ── Mode setters ──
@@ -228,7 +238,7 @@ impl VilQuery {
 
     /// SET column = ? with a typed bind value.
     pub fn set<V: VilBind + 'static>(mut self, col: &str, val: V) -> Self {
-        self.set_clauses.push(format!("{} = ?", col));
+        let ph = self.next_placeholder(); self.set_clauses.push(format!("{} = {}", col, ph));
         self.binds.push(Box::new(val));
         self
     }
@@ -236,7 +246,7 @@ impl VilQuery {
     /// SET column = ? only if Some, SKIP if None. No COALESCE needed.
     pub fn set_optional(mut self, col: &str, val: Option<&str>) -> Self {
         if let Some(v) = val {
-            self.set_clauses.push(format!("{} = ?", col));
+            let ph = self.next_placeholder(); self.set_clauses.push(format!("{} = {}", col, ph));
             self.binds.push(Box::new(v.to_string()));
         }
         self
@@ -245,7 +255,7 @@ impl VilQuery {
     /// SET column = ? with Option<i64>.
     pub fn set_optional_i64(mut self, col: &str, val: Option<i64>) -> Self {
         if let Some(v) = val {
-            self.set_clauses.push(format!("{} = ?", col));
+            let ph = self.next_placeholder(); self.set_clauses.push(format!("{} = {}", col, ph));
             self.binds.push(Box::new(v));
         }
         self
@@ -254,7 +264,7 @@ impl VilQuery {
     /// SET column = ? with Option<f64>.
     pub fn set_optional_f64(mut self, col: &str, val: Option<f64>) -> Self {
         if let Some(v) = val {
-            self.set_clauses.push(format!("{} = ?", col));
+            let ph = self.next_placeholder(); self.set_clauses.push(format!("{} = {}", col, ph));
             self.binds.push(Box::new(v));
         }
         self
@@ -268,7 +278,7 @@ impl VilQuery {
 
     /// SET with raw expression + bind. Example: `set_expr("xp", "xp + ?", 25_i64)`
     pub fn set_expr<V: VilBind + 'static>(mut self, col: &str, expr: &str, val: V) -> Self {
-        self.set_clauses.push(format!("{} = {}", col, expr));
+        let ph = self.next_placeholder(); let fixed_expr = expr.replace("?", &ph); self.set_clauses.push(format!("{} = {}", col, fixed_expr));
         self.binds.push(Box::new(val));
         self
     }
@@ -277,42 +287,42 @@ impl VilQuery {
 
     /// WHERE column = ? (string bind).
     pub fn where_eq(mut self, col: &str, val: &str) -> Self {
-        self.conditions.push(format!("{} = ?", col));
+        let ph = self.next_placeholder(); self.conditions.push(format!("{} = {}", col, ph));
         self.binds.push(Box::new(val.to_string()));
         self
     }
 
     /// WHERE column = ? (typed bind).
     pub fn where_eq_val<V: VilBind + 'static>(mut self, col: &str, val: V) -> Self {
-        self.conditions.push(format!("{} = ?", col));
+        let ph = self.next_placeholder(); self.conditions.push(format!("{} = {}", col, ph));
         self.binds.push(Box::new(val));
         self
     }
 
     /// WHERE column != ?
     pub fn where_ne(mut self, col: &str, val: &str) -> Self {
-        self.conditions.push(format!("{} != ?", col));
+        let ph = self.next_placeholder(); self.conditions.push(format!("{} != {}", col, ph));
         self.binds.push(Box::new(val.to_string()));
         self
     }
 
     /// WHERE column > ? (typed).
     pub fn where_gt<V: VilBind + 'static>(mut self, col: &str, val: V) -> Self {
-        self.conditions.push(format!("{} > ?", col));
+        let ph = self.next_placeholder(); self.conditions.push(format!("{} > {}", col, ph));
         self.binds.push(Box::new(val));
         self
     }
 
     /// WHERE column < ? (typed).
     pub fn where_lt<V: VilBind + 'static>(mut self, col: &str, val: V) -> Self {
-        self.conditions.push(format!("{} < ?", col));
+        let ph = self.next_placeholder(); self.conditions.push(format!("{} < {}", col, ph));
         self.binds.push(Box::new(val));
         self
     }
 
     /// WHERE column >= ? (typed).
     pub fn where_gte<V: VilBind + 'static>(mut self, col: &str, val: V) -> Self {
-        self.conditions.push(format!("{} >= ?", col));
+        let ph = self.next_placeholder(); self.conditions.push(format!("{} >= {}", col, ph));
         self.binds.push(Box::new(val));
         self
     }
@@ -338,7 +348,7 @@ impl VilQuery {
 
     /// WHERE raw SQL with a typed bind.
     pub fn where_raw_bind<V: VilBind + 'static>(mut self, sql: &str, val: V) -> Self {
-        self.conditions.push(sql.to_string());
+        let ph = self.next_placeholder(); self.conditions.push(sql.replace("?", &ph));
         self.binds.push(Box::new(val));
         self
     }
@@ -464,7 +474,9 @@ impl VilQuery {
     }
 
     fn build_insert(&self) -> String {
-        let placeholders: Vec<&str> = self.insert_cols.iter().map(|_| "?").collect();
+        let placeholders: Vec<String> = (1..=self.insert_cols.len())
+            .map(|i| format!("${}", i))
+            .collect();
         let mut sql = format!(
             "INSERT INTO {} ({}) VALUES ({})",
             self.table,

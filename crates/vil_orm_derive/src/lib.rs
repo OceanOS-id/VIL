@@ -95,7 +95,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
         })
         .map(|(f, _)| f.to_string())
         .collect();
-    let insert_placeholders: Vec<_> = insert_fields.iter().map(|_| "?").collect();
+    let insert_placeholders: Vec<String> = insert_fields.iter().enumerate().map(|(i, _)| format!("${}", i + 1)).collect();
     let _insert_cols = insert_fields.join(", ");
     let _insert_vals = insert_placeholders.join(", ");
 
@@ -120,7 +120,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 pool: &::sqlx::Pool<::sqlx::Any>,
                 id: &str,
             ) -> Result<Option<Self>, ::sqlx::Error> {
-                let sql = format!("SELECT * FROM {} WHERE {} = ?", #table, stringify!(#pk));
+                let sql = format!("SELECT * FROM {} WHERE {} = $1", #table, stringify!(#pk));
                 let start = ::std::time::Instant::now();
                 let result = ::sqlx::query_as::<_, Self>(&sql)
                     .bind(id)
@@ -207,7 +207,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 pool: &::sqlx::Pool<::sqlx::Any>,
                 id: &str,
             ) -> Result<bool, ::sqlx::Error> {
-                let sql = format!("SELECT COUNT(*) FROM {} WHERE {} = ?", #table, stringify!(#pk));
+                let sql = format!("SELECT COUNT(*) FROM {} WHERE {} = $1", #table, stringify!(#pk));
                 let start = ::std::time::Instant::now();
                 let result = ::sqlx::query_scalar(&sql)
                     .bind(id)
@@ -223,7 +223,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 pool: &::sqlx::Pool<::sqlx::Any>,
                 id: &str,
             ) -> Result<bool, ::sqlx::Error> {
-                let sql = format!("DELETE FROM {} WHERE {} = ?", #table, stringify!(#pk));
+                let sql = format!("DELETE FROM {} WHERE {} = $1", #table, stringify!(#pk));
                 let start = ::std::time::Instant::now();
                 let result = ::sqlx::query(&sql)
                     .bind(id)
@@ -283,10 +283,10 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 fields: &[(&str, &str)],
             ) -> Result<bool, ::sqlx::Error> {
                 if fields.is_empty() { return Ok(false); }
-                let sets: Vec<String> = fields.iter().map(|(k, _)| format!("{} = ?", k)).collect();
+                let sets: Vec<String> = fields.iter().enumerate().map(|(i, (k, _))| format!("{} = ${}", k, i + 1)).collect();
                 let sql = format!(
-                    "UPDATE {} SET {} WHERE {} = ?",
-                    #table, sets.join(", "), stringify!(#pk)
+                    "UPDATE {} SET {} WHERE {} = ${}",
+                    #table, sets.join(", "), stringify!(#pk), fields.len() + 1
                 );
                 let mut q = ::sqlx::query(&sql);
                 for (_, v) in fields { q = q.bind(*v); }
@@ -343,7 +343,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 columns: &[&str],
                 binds: Vec<&dyn ::vil_orm::VilBind>,
             ) -> Result<u64, ::sqlx::Error> {
-                let placeholders: Vec<&str> = columns.iter().map(|_| "?").collect();
+                let placeholders: Vec<String> = columns.iter().enumerate().map(|(i, _)| format!("${}", i + 1)).collect();
                 let sql = format!(
                     "INSERT INTO {} ({}) VALUES ({})",
                     #table, columns.join(", "), placeholders.join(", ")
@@ -562,7 +562,7 @@ pub fn derive_vil_crud(input: TokenStream) -> TokenStream {
     } else {
         insertable_fields.clone()
     };
-    let insert_placeholders: Vec<&str> = insert_cols.iter().map(|_| "?").collect();
+    let insert_placeholders: Vec<String> = insert_cols.iter().enumerate().map(|(i, _)| format!("${}", i + 1)).collect();
     let insert_sql = format!(
         "INSERT INTO {} ({}) VALUES ({})",
         table,
@@ -571,8 +571,8 @@ pub fn derive_vil_crud(input: TokenStream) -> TokenStream {
     );
 
     let list_sql = format!("SELECT * FROM {} ORDER BY {} DESC LIMIT ? OFFSET ?", table, pk_str);
-    let get_sql = format!("SELECT * FROM {} WHERE {} = ?", table, pk_str);
-    let delete_sql = format!("DELETE FROM {} WHERE {} = ?", table, pk_str);
+    let get_sql = format!("SELECT * FROM {} WHERE {} = $1", table, pk_str);
+    let delete_sql = format!("DELETE FROM {} WHERE {} = $1", table, pk_str);
     let count_sql = format!("SELECT CAST(COUNT(*) AS INTEGER) FROM {}", table);
 
     let expanded = quote! {
