@@ -2,7 +2,7 @@
 
 use colored::Colorize;
 use std::path::Path;
-use vil_cli_server::orm::{model_gen, project_gen, schema_parser, service_gen};
+use vil_cli_server::orm::{manifest_export, model_gen, project_gen, schema_parser, service_gen};
 
 /// Run `vil orm gen <target> --schema <file> [--output <dir>] [--name <name>] [--table <table>]`
 pub fn run_orm_gen(
@@ -114,5 +114,23 @@ fn gen_single_service(
 
     let output = service_gen::generate_service_file(table);
     println!("{}", output);
+    Ok(())
+}
+
+/// Run `vil export-manifest --source <main.rs> [--output <file>]`
+/// Parse Rust source → emit YAML manifest (golden reference for SDK validation).
+pub fn run_export_manifest(source: &str, output: Option<&str>) -> Result<(), String> {
+    let path = std::path::Path::new(source);
+    let app = manifest_export::parse_rust_source(path)?;
+    let yaml = manifest_export::to_manifest_yaml(&app);
+
+    if let Some(out_path) = output {
+        std::fs::write(out_path, &yaml)
+            .map_err(|e| format!("Failed to write {}: {}", out_path, e))?;
+        println!("  {} Manifest written to {}", "✓".green(), out_path);
+    } else {
+        print!("{}", yaml);
+    }
+
     Ok(())
 }

@@ -1,0 +1,18 @@
+vil_version: "6.0.0"
+name: vil-basic-hello-server
+port: 8080
+mode: server
+
+services:
+  - name: gw
+    prefix: /api/gw
+    endpoints:
+      - method: POST
+        path: /transform
+        handler: transform
+      - method: POST
+        path: /echo
+        handler: echo
+      - method: GET
+        path: /health
+        handler: health

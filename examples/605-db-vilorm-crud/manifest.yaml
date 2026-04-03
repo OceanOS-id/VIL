@@ -1,0 +1,36 @@
+vil_version: "6.0.0"
+name: vilorm-showcase
+port: 8080
+mode: server
+
+services:
+  - name: blog
+    prefix: /api/blog
+    endpoints:
+      - method: POST
+        path: /authors
+        handler: create_author
+      - method: GET
+        path: /authors
+        handler: list_authors
+      - method: GET
+        path: /posts
+        handler: list_posts
+      - method: POST
+        path: /posts
+        handler: create_post
+      - method: GET
+        path: /posts/:id
+        handler: get_post
+      - method: PUT
+        path: /posts/:id
+        handler: update_post
+      - method: DELETE
+        path: /posts/:id
+        handler: delete_post
+      - method: POST
+        path: /tags
+        handler: create_tag
+      - method: GET
+        path: /stats
+        handler: blog_stats

@@ -240,6 +240,21 @@ enum Commands {
         action: OrmAction,
     },
 
+    /// Export YAML manifest from Rust source (golden reference for SDK validation)
+    ///
+    /// Examples:
+    ///   vil export-manifest --source examples/004/src/main.rs
+    ///   vil export-manifest --source src/main.rs --output manifest.yaml
+    #[command(name = "export-manifest")]
+    ExportManifest {
+        /// Rust source file path
+        #[arg(long)]
+        source: String,
+        /// Output file (default: stdout)
+        #[arg(long, short)]
+        output: Option<String>,
+    },
+
     /// Deploy to remote server: build release → scp → restart → health check
     ///
     /// Examples:
@@ -837,6 +852,13 @@ fn main() {
                         std::process::exit(1);
                     }
                 }
+            }
+        }
+
+        Commands::ExportManifest { source, output } => {
+            if let Err(e) = orm_cmd::run_export_manifest(source, output.as_deref()) {
+                eprintln!("{} {}", "Error:".red().bold(), e);
+                std::process::exit(1);
             }
         }
 
