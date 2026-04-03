@@ -5,3 +5,4 @@ pub mod generate;
 pub mod deploy;
 pub mod tracer;
 pub mod yaml_tools;
+pub mod orm;
