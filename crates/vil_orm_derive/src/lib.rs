@@ -85,7 +85,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
         .filter(|(f, _)| !write_only_fields.iter().any(|w| w == f))
         .map(|(f, _)| f.to_string())
         .collect();
-    let select_cols = select_fields.join(", ");
+    let _select_cols = select_fields.join(", ");
 
     // Generate field names for INSERT
     let insert_fields: Vec<_> = all_fields.iter()
@@ -96,8 +96,8 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
         .map(|(f, _)| f.to_string())
         .collect();
     let insert_placeholders: Vec<_> = insert_fields.iter().map(|_| "?").collect();
-    let insert_cols = insert_fields.join(", ");
-    let insert_vals = insert_placeholders.join(", ");
+    let _insert_cols = insert_fields.join(", ");
+    let _insert_vals = insert_placeholders.join(", ");
 
     // All column names for listing
     let all_col_names: Vec<_> = all_fields.iter().map(|(f, _)| f.to_string()).collect();
@@ -109,60 +109,101 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
             /// Primary key column
             pub const PK: &'static str = stringify!(#pk);
 
-            /// Find by primary key
+            /// Fluent query builder (JOOQ-style).
+            /// Example: `Profile::q().select(&["id","xp"]).where_eq("id", &uid).fetch_one(pool).await?`
+            pub fn q() -> ::vil_orm::VilQuery {
+                ::vil_orm::VilQuery::new(#table)
+            }
+
+            /// Find by primary key (all columns).
             pub async fn find_by_id(
-                pool: &impl ::std::ops::Deref<Target = ::sqlx::Pool<::sqlx::Any>>,
+                pool: &::sqlx::Pool<::sqlx::Any>,
                 id: &str,
             ) -> Result<Option<Self>, ::sqlx::Error> {
                 let sql = format!("SELECT * FROM {} WHERE {} = ?", #table, stringify!(#pk));
                 ::sqlx::query_as::<_, Self>(&sql)
                     .bind(id)
-                    .fetch_optional(pool.deref())
+                    .fetch_optional(pool)
                     .await
             }
 
-            /// Find all (with optional limit)
+            /// Find all (with optional limit, all columns).
             pub async fn find_all(
-                pool: &impl ::std::ops::Deref<Target = ::sqlx::Pool<::sqlx::Any>>,
+                pool: &::sqlx::Pool<::sqlx::Any>,
             ) -> Result<Vec<Self>, ::sqlx::Error> {
                 let sql = format!("SELECT * FROM {} ORDER BY {} DESC LIMIT 100", #table, stringify!(#pk));
                 ::sqlx::query_as::<_, Self>(&sql)
-                    .fetch_all(pool.deref())
+                    .fetch_all(pool)
                     .await
+            }
+
+            /// Select specific columns by primary key → custom target type.
+            ///
+            /// ```ignore
+            /// #[derive(sqlx::FromRow)]
+            /// struct ProfileSlim { id: String, username: Option<String>, xp: i64 }
+            ///
+            /// let slim = Profile::select::<ProfileSlim>(pool, &["id","username","xp"], "id = ?", &["abc"]).await?;
+            /// ```
+            pub async fn select<T: for<'r> ::sqlx::FromRow<'r, ::sqlx::any::AnyRow> + Send + Unpin>(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                columns: &[&str],
+                condition: &str,
+                binds: &[&str],
+            ) -> Result<Vec<T>, ::sqlx::Error> {
+                let cols = columns.join(", ");
+                let sql = format!("SELECT {} FROM {} WHERE {}", cols, #table, condition);
+                let mut q = ::sqlx::query_as::<_, T>(&sql);
+                for b in binds { q = q.bind(*b); }
+                q.fetch_all(pool).await
+            }
+
+            /// Select specific columns, return one optional row.
+            pub async fn select_one<T: for<'r> ::sqlx::FromRow<'r, ::sqlx::any::AnyRow> + Send + Unpin>(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                columns: &[&str],
+                condition: &str,
+                binds: &[&str],
+            ) -> Result<Option<T>, ::sqlx::Error> {
+                let cols = columns.join(", ");
+                let sql = format!("SELECT {} FROM {} WHERE {}", cols, #table, condition);
+                let mut q = ::sqlx::query_as::<_, T>(&sql);
+                for b in binds { q = q.bind(*b); }
+                q.fetch_optional(pool).await
             }
 
             /// Count all rows
             pub async fn count(
-                pool: &impl ::std::ops::Deref<Target = ::sqlx::Pool<::sqlx::Any>>,
+                pool: &::sqlx::Pool<::sqlx::Any>,
             ) -> Result<i64, ::sqlx::Error> {
                 let sql = format!("SELECT CAST(COUNT(*) AS INTEGER) FROM {}", #table);
                 ::sqlx::query_scalar::<_, i64>(&sql)
-                    .fetch_one(pool.deref())
+                    .fetch_one(pool)
                     .await
             }
 
             /// Check if exists by primary key
             pub async fn exists(
-                pool: &impl ::std::ops::Deref<Target = ::sqlx::Pool<::sqlx::Any>>,
+                pool: &::sqlx::Pool<::sqlx::Any>,
                 id: &str,
             ) -> Result<bool, ::sqlx::Error> {
                 let sql = format!("SELECT COUNT(*) FROM {} WHERE {} = ?", #table, stringify!(#pk));
                 let count: i64 = ::sqlx::query_scalar(&sql)
                     .bind(id)
-                    .fetch_one(pool.deref())
+                    .fetch_one(pool)
                     .await?;
                 Ok(count > 0)
             }
 
             /// Delete by primary key. Returns true if row existed.
             pub async fn delete(
-                pool: &impl ::std::ops::Deref<Target = ::sqlx::Pool<::sqlx::Any>>,
+                pool: &::sqlx::Pool<::sqlx::Any>,
                 id: &str,
             ) -> Result<bool, ::sqlx::Error> {
                 let sql = format!("DELETE FROM {} WHERE {} = ?", #table, stringify!(#pk));
                 let result = ::sqlx::query(&sql)
                     .bind(id)
-                    .execute(pool.deref())
+                    .execute(pool)
                     .await?;
                 Ok(result.rows_affected() > 0)
             }
@@ -170,6 +211,151 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
             /// Column names (for query building)
             pub fn columns() -> &'static [&'static str] {
                 &[#(#all_col_names),*]
+            }
+
+            /// Find one row matching a WHERE clause (all columns).
+            /// For production, prefer `select_one()` with explicit columns.
+            /// Example: `Profile::find_where(pool, "username = ?", &["alice"]).await?`
+            pub async fn find_where(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                condition: &str,
+                binds: &[&str],
+            ) -> Result<Option<Self>, ::sqlx::Error> {
+                let sql = format!("SELECT * FROM {} WHERE {}", #table, condition);
+                let mut q = ::sqlx::query_as::<_, Self>(&sql);
+                for b in binds { q = q.bind(*b); }
+                q.fetch_optional(pool).await
+            }
+
+            /// Find all rows matching a WHERE clause (all columns).
+            /// For production, prefer `select()` with explicit columns.
+            /// Example: `QuizResult::find_all_where(pool, "user_id = ? ORDER BY date DESC LIMIT 100", &[user_id]).await?`
+            pub async fn find_all_where(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                condition: &str,
+                binds: &[&str],
+            ) -> Result<Vec<Self>, ::sqlx::Error> {
+                let sql = format!("SELECT * FROM {} WHERE {}", #table, condition);
+                let mut q = ::sqlx::query_as::<_, Self>(&sql);
+                for b in binds { q = q.bind(*b); }
+                q.fetch_all(pool).await
+            }
+
+            /// Update specific fields by primary key.
+            /// Example: `Profile::update_fields(pool, id, &[("xp", "100"), ("bio", "hello")]).await?`
+            pub async fn update_fields(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                id: &str,
+                fields: &[(&str, &str)],
+            ) -> Result<bool, ::sqlx::Error> {
+                if fields.is_empty() { return Ok(false); }
+                let sets: Vec<String> = fields.iter().map(|(k, _)| format!("{} = ?", k)).collect();
+                let sql = format!(
+                    "UPDATE {} SET {} WHERE {} = ?",
+                    #table, sets.join(", "), stringify!(#pk)
+                );
+                let mut q = ::sqlx::query(&sql);
+                for (_, v) in fields { q = q.bind(*v); }
+                q = q.bind(id);
+                let result = q.execute(pool).await?;
+                Ok(result.rows_affected() > 0)
+            }
+
+            /// Execute raw UPDATE with SET clause and WHERE condition.
+            /// Example: `Profile::update_where(pool, "xp = xp + 10", "id = ?", &[user_id]).await?`
+            pub async fn update_where(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                set_clause: &str,
+                condition: &str,
+                binds: &[&str],
+            ) -> Result<u64, ::sqlx::Error> {
+                let sql = format!("UPDATE {} SET {} WHERE {}", #table, set_clause, condition);
+                let mut q = ::sqlx::query(&sql);
+                for b in binds { q = q.bind(*b); }
+                let result = q.execute(pool).await?;
+                Ok(result.rows_affected())
+            }
+
+            /// Scalar query on this table.
+            /// Example: `Profile::query_scalar_where::<i64>(pool, "CAST(COUNT(*) AS INTEGER)", "xp > ?", &["100"]).await?`
+            pub async fn query_scalar_where<T: ::sqlx::Type<::sqlx::Any> + for<'r> ::sqlx::Decode<'r, ::sqlx::Any> + Send + Unpin>(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                select_expr: &str,
+                condition: &str,
+                binds: &[&str],
+            ) -> Result<T, ::sqlx::Error> {
+                let sql = format!("SELECT {} FROM {} WHERE {}", select_expr, #table, condition);
+                let mut q = ::sqlx::query_scalar::<_, T>(&sql);
+                for b in binds { q = q.bind(*b); }
+                q.fetch_one(pool).await
+            }
+
+            // ── Mixed-type bind variants (VilBind) ──
+
+            /// INSERT with mixed-type binds.
+            /// Example: `Profile::insert(pool, &["id","username","xp"], vil_args!["abc","alice",100_i64]).await?`
+            pub async fn insert(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                columns: &[&str],
+                binds: Vec<&dyn ::vil_orm::VilBind>,
+            ) -> Result<u64, ::sqlx::Error> {
+                let placeholders: Vec<&str> = columns.iter().map(|_| "?").collect();
+                let sql = format!(
+                    "INSERT INTO {} ({}) VALUES ({})",
+                    #table, columns.join(", "), placeholders.join(", ")
+                );
+                let args = ::vil_orm::build_args(&binds);
+                ::sqlx::query_with(&sql, args).execute(pool).await.map(|r| r.rows_affected())
+            }
+
+            /// UPDATE with mixed-type binds.
+            /// Example: `Profile::update_v(pool, "xp = xp + ?", "id = ?", vil_args![25_i64, "user-id"]).await?`
+            pub async fn update_v(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                set_clause: &str,
+                condition: &str,
+                binds: Vec<&dyn ::vil_orm::VilBind>,
+            ) -> Result<u64, ::sqlx::Error> {
+                let sql = format!("UPDATE {} SET {} WHERE {}", #table, set_clause, condition);
+                let args = ::vil_orm::build_args(&binds);
+                ::sqlx::query_with(&sql, args).execute(pool).await.map(|r| r.rows_affected())
+            }
+
+            /// SELECT scalar with mixed-type binds.
+            /// Example: `Profile::scalar_v::<i64>(pool, "CAST(COUNT(*) AS INTEGER)", "xp > ?", vil_args![100_i64]).await?`
+            pub async fn scalar_v<T: ::sqlx::Type<::sqlx::Any> + for<'r> ::sqlx::Decode<'r, ::sqlx::Any> + Send + Unpin>(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                select_expr: &str,
+                condition: &str,
+                binds: Vec<&dyn ::vil_orm::VilBind>,
+            ) -> Result<T, ::sqlx::Error> {
+                let sql = format!("SELECT {} FROM {} WHERE {}", select_expr, #table, condition);
+                let args = ::vil_orm::build_args(&binds);
+                ::sqlx::query_scalar_with::<_, T, _>(&sql, args).fetch_one(pool).await
+            }
+
+            /// SELECT scalar optional with mixed-type binds.
+            pub async fn scalar_optional_v<T: ::sqlx::Type<::sqlx::Any> + for<'r> ::sqlx::Decode<'r, ::sqlx::Any> + Send + Unpin>(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                select_expr: &str,
+                condition: &str,
+                binds: Vec<&dyn ::vil_orm::VilBind>,
+            ) -> Result<Option<T>, ::sqlx::Error> {
+                let sql = format!("SELECT {} FROM {} WHERE {}", select_expr, #table, condition);
+                let args = ::vil_orm::build_args(&binds);
+                ::sqlx::query_scalar_with::<_, T, _>(&sql, args).fetch_optional(pool).await
+            }
+
+            /// DELETE with mixed-type binds (custom condition).
+            pub async fn delete_where(
+                pool: &::sqlx::Pool<::sqlx::Any>,
+                condition: &str,
+                binds: &[&str],
+            ) -> Result<u64, ::sqlx::Error> {
+                let sql = format!("DELETE FROM {} WHERE {}", #table, condition);
+                let mut q = ::sqlx::query(&sql);
+                for b in binds { q = q.bind(*b); }
+                q.execute(pool).await.map(|r| r.rows_affected())
             }
         }
     };

@@ -1,6 +1,6 @@
 [package]
 name = "vil_orm"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "VIL ORM — Process-oriented zero-copy ORM built on sqlx"
 repository = "https://github.com/OceanOS-id/VIL"
@@ -9,7 +9,7 @@ documentation = "https://vastar.id/docs/vil"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-vil_orm_derive = { version = "0.1.0", path = "../vil_orm_derive" }
+vil_orm_derive = { version = "0.1.1", path = "../vil_orm_derive" }
 vil_db_sqlx = { version = "0.1", path = "../vil_db_sqlx", features = ["sqlite"] }
 vil_server_core = { version = "0.1", path = "../vil_server_core" }
 sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "any"] }

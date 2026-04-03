@@ -665,7 +665,7 @@ impl VilApp {
 
         // 7. Spawn cron tasks
         for cron in self.cron_tasks {
-            let name = cron.name;
+            let _name = cron.name;
             let interval = cron.interval_secs;
             let task_fn = cron.task;
             tokio::spawn(async move {

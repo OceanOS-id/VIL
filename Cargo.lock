@@ -12806,7 +12806,7 @@ dependencies = [
 
 [[package]]
 name = "vil_orm"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "serde",
@@ -12820,7 +12820,7 @@ dependencies = [
 
 [[package]]
 name = "vil_orm_derive"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "proc-macro2",
  "quote",

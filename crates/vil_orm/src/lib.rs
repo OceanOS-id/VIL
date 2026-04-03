@@ -19,6 +19,8 @@
 //! ```
 
 pub mod pagination;
+pub mod bind;
+pub mod query;
 
 // Re-export derive macro
 pub use vil_orm_derive::VilEntity;
@@ -27,8 +29,15 @@ pub use vil_orm_derive::VilCrud;
 // Re-export pool
 pub use vil_db_sqlx::{SqlxConfig, SqlxPool};
 
+// Re-export bind + query
+pub use bind::{VilBind, build_args};
+pub use query::VilQuery;
+
 pub mod prelude {
     pub use super::VilEntity;
+    pub use super::VilQuery;
     pub use super::pagination::{VilPage, Pagination};
+    pub use super::bind::VilBind;
+    pub use super::vil_args;
     pub use vil_db_sqlx::{SqlxConfig, SqlxPool};
 }

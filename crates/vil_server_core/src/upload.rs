@@ -6,7 +6,6 @@ use axum::extract::FromRequest;
 use axum::http::Request;
 use bytes::Bytes;
 use serde::Serialize;
-use std::path::Path;
 
 use crate::state::AppState;
 use crate::VilError;
