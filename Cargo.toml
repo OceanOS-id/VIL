@@ -14,6 +14,8 @@ members = [
     "crates/vil",
     "crates/vil_validate_derive",
     "crates/vil_migrate",
+    "crates/vil_orm_derive",
+    "crates/vil_orm",
 
     # --- Core Runtime ---
     "crates/vil_types",

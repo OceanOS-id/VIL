@@ -1,12 +1,13 @@
 //! vil dev — development mode with auto-rebuild
 //!
-//! Watches src/ for file changes and automatically rebuilds + restarts.
-//! This is for DEVELOPMENT only — not production hot-reload.
+//! Watches src/ and migrations/ for file changes and automatically rebuilds + restarts.
+//! Enhanced: clear screen, colored output, port management, migration auto-detect.
 
+use colored::Colorize;
 use std::collections::HashMap;
 use std::path::Path;
 use std::process::{Child, Command};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
 pub struct DevConfig {
     pub port: u16,
@@ -15,41 +16,69 @@ pub struct DevConfig {
 }
 
 pub fn run_dev(config: DevConfig) -> Result<(), String> {
+    clear_screen();
     println!();
-    println!("  ╔══════════════════════════════════════════════════╗");
-    println!("  ║  vil dev — Development Mode                   ║");
-    println!("  ╚══════════════════════════════════════════════════╝");
+    println!("  {}", "╔══════════════════════════════════════════════════╗".cyan());
+    println!("  {}  {} — Development Mode                     {}", "║".cyan(), "vil dev".green().bold(), "║".cyan());
+    println!("  {}", "╚══════════════════════════════════════════════════╝".cyan());
     println!();
 
-    // Read package name from Cargo.toml if not specified
     let package = config
         .package
         .unwrap_or_else(|| read_package_name().unwrap_or_else(|| "app".to_string()));
 
-    println!("  Package:   {}", package);
-    println!("  Port:      {}", config.port);
-    println!("  Interval:  {}ms", config.interval);
-    println!("  Watching:  src/");
+    let interval = if config.interval > 0 { config.interval } else { 500 };
+
+    println!("  {}   {}", "Package:".dimmed(), package.cyan());
+    println!("  {}      {}", "Port:".dimmed(), config.port.to_string().cyan());
+    println!("  {}  {}ms", "Interval:".dimmed(), interval);
+    println!("  {}  {}", "Watching:".dimmed(), "src/, migrations/".cyan());
     println!();
 
     let mut child: Option<Child> = None;
-    let mut last_modified = collect_mtimes("src/");
+    let mut last_src = collect_mtimes("src/");
+    let mut last_mig = collect_mtimes("migrations/");
 
     // Initial build and run
-    println!("  [build] Compiling {}...", package);
+    print_status("build", &format!("Compiling {}...", package));
+    let start = Instant::now();
     match build_and_run(&package, &mut child) {
-        Ok(_) => println!("  [ready] http://localhost:{}", config.port),
-        Err(e) => println!("  [error] Build failed: {}", e),
+        Ok(_) => {
+            let elapsed = start.elapsed();
+            print_status("ready", &format!(
+                "http://localhost:{} ({:.1}s)",
+                config.port,
+                elapsed.as_secs_f64()
+            ));
+            print_status("info", &format!(
+                "Dashboard: http://localhost:{}/_vil/dashboard/",
+                config.port
+            ));
+        }
+        Err(e) => print_error(&e),
     }
+
+    println!();
+    println!("  {} Watching for changes... (Ctrl+C to stop)", "👀".dimmed());
 
     // Watch loop
     loop {
-        std::thread::sleep(Duration::from_millis(config.interval));
+        std::thread::sleep(Duration::from_millis(interval));
 
-        let current = collect_mtimes("src/");
-        if has_changes(&last_modified, &current) {
+        let current_src = collect_mtimes("src/");
+        let current_mig = collect_mtimes("migrations/");
+        let src_changed = has_changes(&last_src, &current_src);
+        let mig_changed = has_changes(&last_mig, &current_mig);
+
+        if src_changed || mig_changed {
             println!();
-            println!("  [change] Source files modified");
+
+            if mig_changed {
+                print_status("migrate", "Migration files changed");
+            }
+            if src_changed {
+                print_status("change", "Source files modified");
+            }
 
             // Kill old process
             if let Some(ref mut c) = child {
@@ -59,15 +88,46 @@ pub fn run_dev(config: DevConfig) -> Result<(), String> {
             child = None;
 
             // Rebuild
-            println!("  [build] Recompiling {}...", package);
+            print_status("build", &format!("Recompiling {}...", package));
+            let start = Instant::now();
             match build_and_run(&package, &mut child) {
-                Ok(_) => println!("  [ready] http://localhost:{}", config.port),
-                Err(e) => println!("  [error] Build failed: {}", e),
+                Ok(_) => {
+                    let elapsed = start.elapsed();
+                    print_status("ready", &format!(
+                        "http://localhost:{} ({:.1}s)",
+                        config.port,
+                        elapsed.as_secs_f64()
+                    ));
+                }
+                Err(e) => print_error(&e),
             }
 
-            last_modified = current;
+            last_src = current_src;
+            last_mig = current_mig;
         }
     }
+}
+
+fn print_status(tag: &str, msg: &str) {
+    let colored_tag = match tag {
+        "ready" => format!("  {} {}", "✅".green(), msg.green()),
+        "build" => format!("  {} {}", "🔨".yellow(), msg.yellow()),
+        "change" => format!("  {} {}", "📝".cyan(), msg.cyan()),
+        "migrate" => format!("  {} {}", "🗄️ ".blue(), msg.blue()),
+        "error" => format!("  {} {}", "❌".red(), msg.red()),
+        "info" => format!("  {} {}", "ℹ️ ".dimmed(), msg.dimmed()),
+        _ => format!("  [{}] {}", tag, msg),
+    };
+    println!("{}", colored_tag);
+}
+
+fn print_error(msg: &str) {
+    println!("  {} {}", "❌ Build failed:".red().bold(), msg.red());
+    println!("  {} Fix errors and save to retry", "→".dimmed());
+}
+
+fn clear_screen() {
+    print!("\x1B[2J\x1B[1;1H");
 }
 
 fn read_package_name() -> Option<String> {
@@ -84,26 +144,29 @@ fn read_package_name() -> Option<String> {
 }
 
 fn build_and_run(package: &str, child: &mut Option<Child>) -> Result<(), String> {
-    // Build
     let build = Command::new("cargo")
         .args(["build", "-p", package])
         .status()
-        .map_err(|e| format!("Failed to run cargo build: {}", e))?;
+        .map_err(|e| format!("cargo build: {}", e))?;
 
     if !build.success() {
-        return Err("Compilation failed".into());
+        return Err("Compilation failed — see errors above".into());
     }
 
-    // Find binary
-    let binary = format!("target/debug/{}", package.replace('-', "_"));
-    if !Path::new(&binary).exists() {
-        return Err(format!("Binary not found: {}", binary));
-    }
+    // Find binary (try both formats)
+    let binary = format!("target/debug/{}", package);
+    let binary_alt = format!("target/debug/{}", package.replace('-', "_"));
+    let bin_path = if Path::new(&binary).exists() {
+        binary
+    } else if Path::new(&binary_alt).exists() {
+        binary_alt
+    } else {
+        return Err(format!("Binary not found: {} or {}", binary, binary_alt));
+    };
 
-    // Run
-    let c = Command::new(&binary)
+    let c = Command::new(&bin_path)
         .spawn()
-        .map_err(|e| format!("Failed to start {}: {}", binary, e))?;
+        .map_err(|e| format!("start {}: {}", bin_path, e))?;
 
     *child = Some(c);
     Ok(())
@@ -114,10 +177,13 @@ fn collect_mtimes(dir: &str) -> HashMap<String, SystemTime> {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_file() && path.extension().map(|e| e == "rs").unwrap_or(false) {
-                if let Ok(meta) = path.metadata() {
-                    if let Ok(mtime) = meta.modified() {
-                        map.insert(path.to_string_lossy().to_string(), mtime);
+            if path.is_file() {
+                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                if matches!(ext, "rs" | "sql" | "toml") {
+                    if let Ok(meta) = path.metadata() {
+                        if let Ok(mtime) = meta.modified() {
+                            map.insert(path.to_string_lossy().to_string(), mtime);
+                        }
                     }
                 }
             } else if path.is_dir() {

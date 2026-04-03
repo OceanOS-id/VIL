@@ -1,6 +1,6 @@
 [package]
 name = "vil"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "VIL — Pythonic Rust framework for zero-copy, high-performance backends"
 repository = "https://github.com/OceanOS-id/VIL"
@@ -29,9 +29,12 @@ log = ["dep:vil_log"]
 # SDK (pipelines, workflows)
 sdk = ["dep:vil_sdk"]
 
-# Database
+# Database (raw sqlx)
 db-sqlite = ["dep:vil_db_sqlx", "dep:vil_db_semantic", "dep:vil_server_db", "vil_db_sqlx?/sqlite"]
 db-postgres = ["dep:vil_db_sqlx", "dep:vil_db_semantic", "dep:vil_server_db", "vil_db_sqlx?/postgres"]
+
+# VilORM (process-oriented ORM on sqlx)
+vil-orm = ["dep:vil_orm", "db-sqlite"]
 db-mysql = ["dep:vil_db_sqlx", "dep:vil_db_semantic", "dep:vil_server_db", "vil_db_sqlx?/mysql"]
 db-redis = ["dep:vil_db_redis"]
 
@@ -52,7 +55,7 @@ ws = ["dep:vil_ws"]
 cache = ["dep:vil_cache"]
 
 # Full (everything)
-full = ["web", "log", "sdk", "db-sqlite", "db-postgres", "db-redis", "ai", "ws", "cache"]
+full = ["web", "log", "sdk", "db-sqlite", "db-postgres", "db-redis", "ai", "ws", "cache", "vil-orm"]
 
 [dependencies]
 # Web
@@ -73,6 +76,9 @@ vil_db_sqlx = { version = "0.1", path = "../vil_db_sqlx", optional = true }
 vil_db_semantic = { version = "0.1", path = "../vil_db_semantic", optional = true }
 vil_server_db = { version = "0.1", path = "../vil_server_db", optional = true }
 vil_db_redis = { version = "0.1", path = "../vil_db_redis", optional = true }
+
+# VilORM
+vil_orm = { version = "0.1", path = "../vil_orm", optional = true }
 
 # AI
 vil_llm = { version = "0.1", path = "../vil_llm", optional = true }

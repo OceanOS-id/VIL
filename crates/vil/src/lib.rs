@@ -65,6 +65,12 @@ pub use vil_log;
 #[cfg(feature = "sdk")]
 pub use vil_sdk;
 
+// VilORM
+#[cfg(feature = "vil-orm")]
+pub use vil_orm;
+#[cfg(feature = "vil-orm")]
+pub use vil_orm::VilEntity;
+
 // Database
 #[cfg(feature = "db-sqlite")]
 pub use vil_db_sqlx;

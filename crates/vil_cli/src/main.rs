@@ -211,6 +211,49 @@ enum Commands {
         sync: bool,
     },
 
+    /// Generate VilORM code: model, service, migration, or full resource
+    ///
+    /// Examples:
+    ///   vil g model Profile username:string xp:integer
+    ///   vil g migration add_profiles
+    ///   vil g resource profiles username:string xp:integer
+    #[command(name = "g")]
+    Gen {
+        /// What to generate: model, service, migration, resource
+        kind: String,
+        /// Name of the model/service/migration
+        name: String,
+        /// Field definitions (name:type pairs)
+        #[arg(trailing_var_arg = true)]
+        fields: Vec<String>,
+    },
+
+    /// Deploy to remote server: build release → scp → restart → health check
+    ///
+    /// Examples:
+    ///   vil deploy --host 10.10.0.14 --user app --path /opt/my-app
+    ///   vil deploy                  (uses .vil-deploy.toml)
+    ///   vil deploy init             (create .vil-deploy.toml)
+    ///   vil deploy status           (check remote health)
+    ///   vil deploy rollback         (restore previous binary)
+    Deploy {
+        /// Subcommand: init, status, rollback (default: deploy)
+        #[arg(default_value = "run")]
+        action: String,
+        /// Remote host IP or hostname
+        #[arg(long)]
+        host: Option<String>,
+        /// Remote SSH user
+        #[arg(long)]
+        user: Option<String>,
+        /// Remote binary path
+        #[arg(long)]
+        path: Option<String>,
+        /// Systemd service name (default: package name)
+        #[arg(long)]
+        service: Option<String>,
+    },
+
     /// Build a VIL service into a deployable artifact
     Build {
         /// Build target (vlb for vflow-server provisioning)
@@ -588,7 +631,9 @@ mod call_resolver;
 mod checker;
 mod codegen;
 mod compiler;
+mod deploy;
 mod dev_mode;
+mod generate;
 mod doctor;
 mod error_catalog;
 mod errors;
@@ -733,6 +778,26 @@ fn main() {
                 upstream: upstream.clone(),
                 wizard: *wizard || template.is_none(),
             }) {
+                eprintln!("{} {}", "Error:".red().bold(), e);
+                std::process::exit(1);
+            }
+        }
+
+        Commands::Gen { kind, name, fields } => {
+            if let Err(e) = generate::run_generate(kind, name, fields) {
+                eprintln!("{} {}", "Error:".red().bold(), e);
+                std::process::exit(1);
+            }
+        }
+
+        Commands::Deploy { action, host, user, path, service } => {
+            if let Err(e) = deploy::run_deploy(
+                action,
+                host.as_deref(),
+                user.as_deref(),
+                path.as_deref(),
+                service.as_deref(),
+            ) {
                 eprintln!("{} {}", "Error:".red().bold(), e);
                 std::process::exit(1);
             }
