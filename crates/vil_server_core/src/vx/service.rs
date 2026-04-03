@@ -122,13 +122,14 @@ impl ServiceProcess {
     /// State is stored as `Arc<T>` and can be downcast via `ServiceCtx::state::<T>()`.
     /// Also auto-injects as `Extension<T>` so extractors using `Extension<T>` work
     /// without a separate `.extension()` call.
-    pub fn state<T: Clone + Send + Sync + 'static>(mut self, state: T) -> Self {
-        self.state = Some(Arc::new(state.clone()));
-        // Auto-inject as Extension<T> for backward compatibility —
-        // handlers can use either ServiceCtx::state::<T>() or Extension<T>.
+    pub fn state<T: Send + Sync + 'static>(mut self, state: T) -> Self {
+        let shared = Arc::new(state);
+        self.state = Some(shared.clone());
+        // Auto-inject as Extension<Arc<T>> for backward compatibility —
+        // handlers can use either ServiceCtx::state::<T>() or Extension<Arc<T>>.
         self.extensions
             .push(Box::new(move |router: Router<AppState>| {
-                router.layer(Extension(state))
+                router.layer(Extension(shared))
             }));
         self
     }

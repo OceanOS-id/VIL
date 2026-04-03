@@ -13062,7 +13062,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -13122,7 +13122,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_core"
-version = "0.1.13"
+version = "0.1.14"
 dependencies = [
  "aes-gcm",
  "axum 0.7.9",
