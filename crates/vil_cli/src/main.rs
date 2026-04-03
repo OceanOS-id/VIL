@@ -214,10 +214,10 @@ enum Commands {
     /// Generate VilORM code: model, service, migration, or full resource
     ///
     /// Examples:
-    ///   vil g model Profile username:string xp:integer
-    ///   vil g migration add_profiles
-    ///   vil g resource profiles username:string xp:integer
-    #[command(name = "g")]
+    ///   vil gen model Profile username:string xp:integer
+    ///   vil gen migration add_profiles
+    ///   vil gen resource profiles username:string xp:integer
+    #[command(name = "gen")]
     Gen {
         /// What to generate: model, service, migration, resource
         kind: String,
