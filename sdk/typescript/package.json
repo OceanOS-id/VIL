@@ -1,0 +1,23 @@
+{
+  "name": "vil-sdk",
+  "version": "6.0.0",
+  "description": "VIL TypeScript SDK — Transpile DSL for building VIL pipelines and servers",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublish": "tsc"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/OceanOS-id/VIL",
+  "keywords": [
+    "vil",
+    "pipeline",
+    "zero-copy",
+    "process-oriented"
+  ],
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2"
+  }
+}

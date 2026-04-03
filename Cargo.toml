@@ -300,6 +300,7 @@ members = [
     "examples/606-db-vilorm-ecommerce",
     "examples/607-db-vilorm-multitenant",
     "examples/608-db-vilorm-analytics",
+    "examples/609-db-vilorm-overhead-bench",
 ]
 
 [workspace.package]
