@@ -10,6 +10,11 @@
 [workspace]
 resolver = "2"
 members = [
+    # --- Meta-crate ---
+    "crates/vil",
+    "crates/vil_validate_derive",
+    "crates/vil_migrate",
+
     # --- Core Runtime ---
     "crates/vil_types",
     "crates/vil_shm",

@@ -1,6 +1,6 @@
 # VIL Roadmap
 
-> Last updated: 2026-03-27
+> Last updated: 2026-04-03
 
 ## Current State (v0.1.0)
 
@@ -30,12 +30,12 @@ LLM (multi-provider), RAG, Agent (ReAct), Embedder, Inference Server, VectorDB (
 Crawler, Chunker (SIMD), Doc Parser, Doc Extract, Doc Layout, Synthetic Data Generator, RLHF/DPO Pipeline, Data Prep, Index Updater
 
 ### Tooling
-CLI (`vil init` — 5 languages, 8 templates), SDK, Plugin SDK, LSP, Visualization, Sidecar Protocol
+CLI (`vil init` — 5 languages, 5 templates), SDK, Plugin SDK, LSP, Visualization, Sidecar Protocol
 
 ### Scripting
 JavaScript (sandboxed), Lua (sandboxed)
 
-### SDK / Transpile Languages
+### SDK / Transpile Languages (5 production)
 Rust (native), Python, Go, Java, TypeScript
 
 ---
@@ -86,13 +86,16 @@ All 10 crates: `vil_log` integrated, `db_log!` auto-emit on every operation, COM
 
 ---
 
-## Phase 2 — Q4 2026: Connector & Message Queue Expansion ✅ COMPLETED
+## Phase 2 — Q4 2026: Connector & Message Queue Expansion ⚠️ PARTIAL
 
 ### Message Queue
-- [x] RabbitMQ (`vil_mq_rabbitmq`) — AMQP via lapin
-- [x] Apache Pulsar (`vil_mq_pulsar`) — pulsar crate
-- [x] AWS SQS/SNS (`vil_mq_sqs`) — aws-sdk-sqs/sns
-- [x] Google Pub/Sub (`vil_mq_pubsub`) — google-cloud-pubsub
+- [x] Kafka (`vil_mq_kafka`) — production ready
+- [x] MQTT (`vil_mq_mqtt`) — production ready
+- [x] NATS (`vil_mq_nats`) — production ready
+- [⚠️] RabbitMQ (`vil_mq_rabbitmq`) — skeleton, needs implementation
+- [⚠️] Apache Pulsar (`vil_mq_pulsar`) — skeleton, needs implementation
+- [⚠️] AWS SQS/SNS (`vil_mq_sqs`) — skeleton, needs implementation
+- [⚠️] Google Pub/Sub (`vil_mq_pubsub`) — skeleton, needs implementation
 - [ ] Azure Service Bus (`vil_mq_azure_sb`) — deferred
 - [ ] Apache Flink bridge (`vil_mq_flink`) — deferred
 
@@ -102,9 +105,10 @@ All 10 crates: `vil_log` integrated, `db_log!` auto-emit on every operation, COM
 - [x] Modbus (`vil_modbus`) — tokio-modbus
 - [ ] AMQP 1.0 (`vil_amqp`) — deferred
 - [x] WebSocket server (`vil_ws`) — tokio-tungstenite
-- [x] Server-Sent Events (`vil_sse`) — tokio channels
+- [x] Server-Sent Events — via vil_new_http SSE dialects
 
-All 9 crates: `vil_log` integrated, `mq_log!`/`db_log!` auto-emit, COMPLIANCE.md §8 verified.
+Production-ready crates: Kafka, MQTT, NATS, SOAP, OPC-UA, Modbus, WebSocket.
+Skeleton crates: RabbitMQ, Pulsar, SQS, PubSub (compile but need real driver implementation).
 
 ---
 
@@ -123,13 +127,17 @@ All 8 crates: `vil_log` + `mq_log!` auto-emit, `TriggerSource` trait, COMPLIANCE
 
 ---
 
-## Phase 4 — Q2 2027: SDK & Platform ✅ COMPLETED
+## Phase 4 — Q2 2027: SDK & Platform ⚠️ PARTIAL
 
-### SDK Languages (now 9 total: Rust + 8 transpile)
-- [x] C# / .NET (`vil init --lang csharp`) — .csproj + app.vil.cs
-- [x] Kotlin (`vil init --lang kotlin`) — build.gradle.kts + app.vil.kt
-- [x] Swift (`vil init --lang swift`) — Package.swift + app.vil.swift
-- [x] Zig (`vil init --lang zig`) — build.zig + app.vil.zig
+### SDK Languages (5 production: Rust + 4 transpile)
+- [x] Python (`vil init --lang python`)
+- [x] Go (`vil init --lang go`)
+- [x] Java (`vil init --lang java`)
+- [x] TypeScript (`vil init --lang typescript`)
+- [🔲] C# / .NET — planned, not yet implemented
+- [🔲] Kotlin — planned, not yet implemented
+- [🔲] Swift — planned, not yet implemented
+- [🔲] Zig — planned, not yet implemented
 
 ### Platform
 - [x] crates.io metadata — repository, homepage, documentation, keywords, categories

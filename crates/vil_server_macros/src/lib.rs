@@ -61,22 +61,46 @@ use syn::{
 /// - Opens a tracing `info_span` tagged with the request id
 /// - Delegates to the inner function
 /// - Maps the result into an `axum::response::Response`
-/// Parse `#[vil_handler]` or `#[vil_handler(shm)]` attribute.
+/// Parse `#[vil_handler]`, `#[vil_handler(shm)]`, or `#[vil_handler(state = MyState)]`.
+/// Combinations: `#[vil_handler(state = MyState, shm)]`
 struct VilHandlerAttr {
     shm_mode: bool,
+    /// If set, auto-extract state via ServiceCtx::state::<T>() and inject as first param.
+    state_type: Option<syn::Type>,
 }
 
 impl Parse for VilHandlerAttr {
     fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut shm_mode = false;
+        let mut state_type = None;
+
         if input.is_empty() {
-            return Ok(VilHandlerAttr { shm_mode: false });
+            return Ok(VilHandlerAttr { shm_mode, state_type });
         }
-        let ident: Ident = input.parse()?;
-        if ident == "shm" {
-            Ok(VilHandlerAttr { shm_mode: true })
-        } else {
-            Err(syn::Error::new_spanned(ident, "expected `shm`"))
+
+        // Parse comma-separated attributes: state = Type, shm
+        loop {
+            if input.is_empty() {
+                break;
+            }
+            let ident: Ident = input.parse()?;
+            if ident == "shm" {
+                shm_mode = true;
+            } else if ident == "state" {
+                input.parse::<Token![=]>()?;
+                state_type = Some(input.parse::<syn::Type>()?);
+            } else {
+                return Err(syn::Error::new_spanned(
+                    ident,
+                    "expected `shm` or `state = Type`",
+                ));
+            }
+            if input.peek(Token![,]) {
+                input.parse::<Token![,]>()?;
+            }
         }
+
+        Ok(VilHandlerAttr { shm_mode, state_type })
     }
 }
 
@@ -286,6 +310,28 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
+    // Generate state extraction preamble if state = T is specified.
+    let (state_ctx_param, state_extract, state_forward) = if let Some(ref stype) = handler_attr.state_type {
+        (
+            quote! { __vil_ctx: ::vil_server::__private::ServiceCtx, },
+            quote! {
+                let __vil_state: &#stype = match __vil_ctx.state::<#stype>() {
+                    Ok(s) => s,
+                    Err(_) => {
+                        return ::vil_server::__private::axum::response::IntoResponse::into_response(
+                            ::vil_server::__private::VilError::internal(
+                                concat!("state type mismatch: expected ", stringify!(#stype))
+                            )
+                        );
+                    }
+                };
+            },
+            quote! { __vil_state, },
+        )
+    } else {
+        (quote! {}, quote! {}, quote! {})
+    };
+
     let wrapper_body = if returns_vil_response && is_result {
         // ── Passthrough mode (Result<VilResponse<T>, E>) ──
         // Handler already wraps response with VilResponse — don't re-wrap.
@@ -293,7 +339,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! {
             let __vil_span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid);
             let __vil_start = ::std::time::Instant::now();
-            let __vil_resp = match #inner_name(#(#param_names),*).await {
+            let __vil_resp = match #inner_name(#state_forward #(#param_names),*).await {
                 Ok(data) => {
                     // VilResponse/Response already implements IntoResponse — passthrough
                     ::vil_server::__private::axum::response::IntoResponse::into_response(data)
@@ -313,7 +359,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! {
             let __vil_span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid);
             let __vil_start = ::std::time::Instant::now();
-            let data = #inner_name(#(#param_names),*).await;
+            let data = #inner_name(#state_forward #(#param_names),*).await;
             let __vil_resp = ::vil_server::__private::axum::response::IntoResponse::into_response(data);
             let __vil_elapsed = __vil_start.elapsed();
             let __vil_status = __vil_resp.status().as_u16();
@@ -326,7 +372,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! {
             let __vil_span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid);
             let __vil_start = ::std::time::Instant::now();
-            let __vil_resp = match #inner_name(#(#param_names),*).await {
+            let __vil_resp = match #inner_name(#state_forward #(#param_names),*).await {
                 Ok(data) => {
                     ::vil_server::__private::axum::response::IntoResponse::into_response(
                         ::vil_server::__private::response::VilResponse::ok(data)
@@ -348,7 +394,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! {
             let __vil_span = ::vil_server::__private::tracing::info_span!(#name_str, request_id = %__vil_rid);
             let __vil_start = ::std::time::Instant::now();
-            let data = #inner_name(#(#param_names),*).await;
+            let data = #inner_name(#state_forward #(#param_names),*).await;
             let __vil_resp = ::vil_server::__private::axum::response::IntoResponse::into_response(
                 ::vil_server::__private::response::VilResponse::ok(data)
             );
@@ -366,10 +412,11 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
         // Inner function preserves the user's original signature
         #asyncness fn #inner_name(#original_inputs) #return_type #body
 
-        // Public wrapper — same param count as original (no extra RequestId param).
+        // Public wrapper — same param count as original (+ ServiceCtx if state mode).
         // RequestId generated inside body to preserve Handler<T, S> compatibility.
         // Tracing span created but NOT entered (Entered guard is !Send across .await).
         #vis async fn #name(
+            #state_ctx_param
             #extra_wrapper_params
             #(#wrapper_params),*
         ) -> ::vil_server::__private::axum::response::Response {
@@ -378,6 +425,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
                 let t = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
                 format!("{:x}", t)
             });
+            #state_extract
             #wrapper_body
         }
     };
@@ -1277,4 +1325,204 @@ pub fn vil_service(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     TokenStream::from(quote! { #module })
+}
+
+// =============================================================================
+// VilHttpError — Derive macro for HTTP error enums
+// =============================================================================
+//
+// Generates: IntoResponse (JSON), Into<VilError>, Display
+//
+// Usage:
+//   #[derive(Debug, VilHttpError)]
+//   enum AppError {
+//       #[status(401)] #[code("AUTH_REQUIRED")]
+//       Auth(String),
+//       #[status(500)] #[code("INTERNAL")] #[message("An error occurred")]
+//       Internal(String),
+//   }
+
+/// Derive macro for HTTP error types.
+///
+/// Generates `IntoResponse` (RFC 7807 JSON), `Into<VilError>`, and `Display`.
+///
+/// # Attributes
+///
+/// - `#[status(NNN)]` — HTTP status code (required on each variant)
+/// - `#[code("STRING")]` — error code in JSON response
+/// - `#[message("STRING")]` — override message (hides internal details)
+///
+/// # Example
+///
+/// ```ignore
+/// #[derive(Debug, VilHttpError)]
+/// enum AppError {
+///     #[status(401)] #[code("AUTH_REQUIRED")]
+///     Auth(String),
+///     #[status(404)] #[code("NOT_FOUND")]
+///     NotFound(String),
+///     #[status(500)] #[code("INTERNAL")] #[message("An error occurred")]
+///     Internal(String),
+/// }
+/// ```
+#[proc_macro_derive(VilHttpError, attributes(status, code, message))]
+pub fn derive_vil_http_error(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let variants = match &input.data {
+        syn::Data::Enum(data) => &data.variants,
+        _ => {
+            return TokenStream::from(
+                syn::Error::new_spanned(name, "VilHttpError can only be derived for enums")
+                    .to_compile_error(),
+            );
+        }
+    };
+
+    let mut into_response_arms = Vec::new();
+    let mut into_vilerror_arms = Vec::new();
+    let mut display_arms = Vec::new();
+
+    for variant in variants {
+        let vname = &variant.ident;
+
+        // Parse attributes
+        let mut status_code: u16 = 500;
+        let mut error_code = vname.to_string().to_uppercase();
+        let mut override_message: Option<String> = None;
+
+        for attr in &variant.attrs {
+            if attr.path().is_ident("status") {
+                let _ = attr.parse_nested_meta(|meta| {
+                    if let Some(lit) = meta.path.get_ident() {
+                        if let Ok(n) = lit.to_string().parse::<u16>() {
+                            status_code = n;
+                        }
+                    }
+                    Ok(())
+                });
+                // Also try: #[status(401)] as literal
+                if status_code == 500 {
+                    if let Ok(lit) = attr.parse_args::<syn::LitInt>() {
+                        if let Ok(n) = lit.base10_parse::<u16>() {
+                            status_code = n;
+                        }
+                    }
+                }
+            }
+            if attr.path().is_ident("code") {
+                if let Ok(lit) = attr.parse_args::<syn::LitStr>() {
+                    error_code = lit.value();
+                }
+            }
+            if attr.path().is_ident("message") {
+                if let Ok(lit) = attr.parse_args::<syn::LitStr>() {
+                    override_message = Some(lit.value());
+                }
+            }
+        }
+
+        let status_u16 = status_code;
+        let code_str = &error_code;
+
+        // Determine variant shape
+        let has_string_field = match &variant.fields {
+            syn::Fields::Unnamed(f) => f.unnamed.len() == 1,
+            _ => false,
+        };
+        let has_named_fields = matches!(&variant.fields, syn::Fields::Named(_));
+
+        // IntoResponse arm
+        let message_expr = if let Some(ref msg) = override_message {
+            let msg = msg.as_str();
+            if has_string_field {
+                quote! { Self::#vname(_) => #msg.to_string() }
+            } else if has_named_fields {
+                quote! { Self::#vname { .. } => #msg.to_string() }
+            } else {
+                quote! { Self::#vname => #msg.to_string() }
+            }
+        } else if has_string_field {
+            quote! { Self::#vname(ref m) => m.clone() }
+        } else if has_named_fields {
+            quote! { Self::#vname { .. } => stringify!(#vname).to_string() }
+        } else {
+            quote! { Self::#vname => stringify!(#vname).to_string() }
+        };
+
+        let status_arm = if has_string_field {
+            quote! { Self::#vname(_) => ::vil_server::__private::axum::http::StatusCode::from_u16(#status_u16).unwrap_or(::vil_server::__private::axum::http::StatusCode::INTERNAL_SERVER_ERROR) }
+        } else if has_named_fields {
+            quote! { Self::#vname { .. } => ::vil_server::__private::axum::http::StatusCode::from_u16(#status_u16).unwrap_or(::vil_server::__private::axum::http::StatusCode::INTERNAL_SERVER_ERROR) }
+        } else {
+            quote! { Self::#vname => ::vil_server::__private::axum::http::StatusCode::from_u16(#status_u16).unwrap_or(::vil_server::__private::axum::http::StatusCode::INTERNAL_SERVER_ERROR) }
+        };
+
+        let code_arm = if has_string_field {
+            quote! { Self::#vname(_) => #code_str }
+        } else if has_named_fields {
+            quote! { Self::#vname { .. } => #code_str }
+        } else {
+            quote! { Self::#vname => #code_str }
+        };
+
+        into_response_arms.push(status_arm);
+        into_vilerror_arms.push(code_arm.clone());
+        display_arms.push(message_expr);
+    }
+
+    let expanded = quote! {
+        impl ::std::fmt::Display for #name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                let msg: String = match self {
+                    #(#display_arms),*
+                };
+                write!(f, "{}", msg)
+            }
+        }
+
+        impl ::vil_server::__private::axum::response::IntoResponse for #name {
+            fn into_response(self) -> ::vil_server::__private::axum::response::Response {
+                let status = match &self {
+                    #(#into_response_arms),*
+                };
+                let code: &str = match &self {
+                    #(#into_vilerror_arms),*
+                };
+                let message = self.to_string();
+                let body = ::serde_json::json!({
+                    "ok": false,
+                    "error": { "code": code, "message": message }
+                });
+                (status, ::vil_server::__private::axum::Json(body)).into_response()
+            }
+        }
+
+        impl From<#name> for ::vil_server::__private::VilError {
+            fn from(e: #name) -> Self {
+                let status = match &e {
+                    #(#into_response_arms),*
+                };
+                let msg = e.to_string();
+                match status.as_u16() {
+                    401 => ::vil_server::__private::VilError::unauthorized(msg),
+                    403 => ::vil_server::__private::VilError::forbidden(msg),
+                    404 => ::vil_server::__private::VilError::not_found(msg),
+                    422 => ::vil_server::__private::VilError::validation(msg),
+                    _ => ::vil_server::__private::VilError::internal(msg),
+                }
+            }
+        }
+
+        impl From<::sqlx::Error> for #name {
+            fn from(e: ::sqlx::Error) -> Self {
+                // Map sqlx errors to the last variant (assumed Internal)
+                // Users should customize via #[from(sqlx::Error)] in future
+                Self::Internal(e.to_string())
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
 }

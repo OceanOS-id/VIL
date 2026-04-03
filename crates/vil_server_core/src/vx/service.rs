@@ -120,8 +120,16 @@ impl ServiceProcess {
     /// Set the private heap state for this service.
     ///
     /// State is stored as `Arc<T>` and can be downcast via `ServiceCtx::state::<T>()`.
-    pub fn state<T: Send + Sync + 'static>(mut self, state: T) -> Self {
-        self.state = Some(Arc::new(state));
+    /// Also auto-injects as `Extension<T>` so extractors using `Extension<T>` work
+    /// without a separate `.extension()` call.
+    pub fn state<T: Clone + Send + Sync + 'static>(mut self, state: T) -> Self {
+        self.state = Some(Arc::new(state.clone()));
+        // Auto-inject as Extension<T> for backward compatibility —
+        // handlers can use either ServiceCtx::state::<T>() or Extension<T>.
+        self.extensions
+            .push(Box::new(move |router: Router<AppState>| {
+                router.layer(Extension(state))
+            }));
         self
     }
 

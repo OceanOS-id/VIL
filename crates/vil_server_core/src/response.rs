@@ -15,19 +15,77 @@ pub struct VilResponse<T: Serialize> {
 }
 
 impl<T: Serialize> VilResponse<T> {
+    /// 200 OK — standard success response.
     pub fn ok(data: T) -> Self {
-        Self {
-            status: StatusCode::OK,
-            data,
-        }
+        Self { status: StatusCode::OK, data }
     }
 
+    /// 201 Created — resource created successfully.
     pub fn created(data: T) -> Self {
-        Self {
-            status: StatusCode::CREATED,
-            data,
-        }
+        Self { status: StatusCode::CREATED, data }
     }
+
+    /// 202 Accepted — request accepted for async processing.
+    pub fn accepted(data: T) -> Self {
+        Self { status: StatusCode::ACCEPTED, data }
+    }
+
+    /// Custom HTTP status code with typed data.
+    pub fn with_status(data: T, status: StatusCode) -> Self {
+        Self { status, data }
+    }
+}
+
+/// Error response helpers — return JSON error body without typed data.
+impl VilResponse<serde_json::Value> {
+    /// 400 Bad Request
+    pub fn bad_request(detail: impl Into<String>) -> Self {
+        Self { status: StatusCode::BAD_REQUEST, data: _err_body("BAD_REQUEST", detail) }
+    }
+
+    /// 401 Unauthorized
+    pub fn unauthorized(detail: impl Into<String>) -> Self {
+        Self { status: StatusCode::UNAUTHORIZED, data: _err_body("UNAUTHORIZED", detail) }
+    }
+
+    /// 403 Forbidden
+    pub fn forbidden(detail: impl Into<String>) -> Self {
+        Self { status: StatusCode::FORBIDDEN, data: _err_body("FORBIDDEN", detail) }
+    }
+
+    /// 404 Not Found
+    pub fn not_found(detail: impl Into<String>) -> Self {
+        Self { status: StatusCode::NOT_FOUND, data: _err_body("NOT_FOUND", detail) }
+    }
+
+    /// 409 Conflict
+    pub fn conflict(detail: impl Into<String>) -> Self {
+        Self { status: StatusCode::CONFLICT, data: _err_body("CONFLICT", detail) }
+    }
+
+    /// 422 Unprocessable Entity
+    pub fn unprocessable(detail: impl Into<String>) -> Self {
+        Self { status: StatusCode::UNPROCESSABLE_ENTITY, data: _err_body("VALIDATION_ERROR", detail) }
+    }
+
+    /// 429 Too Many Requests
+    pub fn too_many(detail: impl Into<String>) -> Self {
+        Self { status: StatusCode::TOO_MANY_REQUESTS, data: _err_body("RATE_LIMITED", detail) }
+    }
+
+    /// 500 Internal Server Error
+    pub fn internal_error(detail: impl Into<String>) -> Self {
+        Self { status: StatusCode::INTERNAL_SERVER_ERROR, data: _err_body("INTERNAL_ERROR", detail) }
+    }
+
+    /// 503 Service Unavailable
+    pub fn unavailable(detail: impl Into<String>) -> Self {
+        Self { status: StatusCode::SERVICE_UNAVAILABLE, data: _err_body("UNAVAILABLE", detail) }
+    }
+}
+
+fn _err_body(code: &str, message: impl Into<String>) -> serde_json::Value {
+    serde_json::json!({ "ok": false, "error": { "code": code, "message": message.into() } })
 }
 
 impl<T: Serialize> VilResponse<T> {

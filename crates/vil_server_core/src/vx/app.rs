@@ -210,6 +210,15 @@ pub struct VilApp {
     plugin_registry: PluginRegistry,
     /// Enable the embedded observer dashboard at `/_vil/dashboard/`.
     observer: bool,
+    /// Background cron tasks spawned on run().
+    cron_tasks: Vec<CronTaskDef>,
+}
+
+/// A scheduled background task definition.
+struct CronTaskDef {
+    name: String,
+    interval_secs: u64,
+    task: Box<dyn Fn() -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>> + Send + Sync>,
 }
 
 impl VilApp {
@@ -226,6 +235,7 @@ impl VilApp {
             sidecar_configs: Vec::new(),
             plugin_registry: PluginRegistry::new(),
             observer: false,
+            cron_tasks: Vec::new(),
         }
     }
 
@@ -272,6 +282,30 @@ impl VilApp {
     /// Enable the embedded observer dashboard at `/_vil/dashboard/`.
     pub fn observer(mut self, enabled: bool) -> Self {
         self.observer = enabled;
+        self
+    }
+
+    /// Register a periodic background task.
+    ///
+    /// Tasks are spawned when `run()` is called. Each task runs on a fixed interval.
+    ///
+    /// # Example
+    /// ```ignore
+    /// VilApp::new("my-app")
+    ///     .cron("cleanup", 1800, || async { cleanup_expired().await })
+    ///     .cron("daily_report", 86400, || async { send_report().await })
+    ///     .run().await;
+    /// ```
+    pub fn cron<F, Fut>(mut self, name: impl Into<String>, interval_secs: u64, task: F) -> Self
+    where
+        F: Fn() -> Fut + Send + Sync + 'static,
+        Fut: std::future::Future<Output = ()> + Send + 'static,
+    {
+        self.cron_tasks.push(CronTaskDef {
+            name: name.into(),
+            interval_secs,
+            task: Box::new(move || Box::pin(task())),
+        });
         self
     }
 
@@ -629,7 +663,21 @@ impl VilApp {
             }
         }
 
-        // 7. Run the server
+        // 7. Spawn cron tasks
+        for cron in self.cron_tasks {
+            let name = cron.name;
+            let interval = cron.interval_secs;
+            let task_fn = cron.task;
+            tokio::spawn(async move {
+                let mut tick = tokio::time::interval(std::time::Duration::from_secs(interval));
+                loop {
+                    tick.tick().await;
+                    (task_fn)().await;
+                }
+            });
+        }
+
+        // 8. Run the server
         server.run().await;
     }
 

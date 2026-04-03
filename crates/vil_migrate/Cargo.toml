@@ -1,0 +1,14 @@
+[package]
+name = "vil_migrate"
+version = "0.1.0"
+edition = "2021"
+description = "VIL Migration — SQL database migration runner with up/down support"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "any", "postgres", "mysql"] }
+tokio = { version = "1", features = ["full"] }
+chrono = "0.4"

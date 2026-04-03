@@ -1,0 +1,89 @@
+[package]
+name = "vil"
+version = "0.2.0"
+edition = "2021"
+description = "VIL — Pythonic Rust framework for zero-copy, high-performance backends"
+repository = "https://github.com/OceanOS-id/VIL"
+homepage = "https://vastar.id/products/vil"
+documentation = "https://vastar.id/docs/vil"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+keywords = ["web-framework", "zero-copy", "api", "server", "backend"]
+categories = ["web-programming::http-server", "network-programming"]
+
+[features]
+default = ["web", "log"]
+
+# Core web server
+web = [
+    "dep:vil_server",
+    "dep:vil_server_core",
+    "dep:vil_server_auth",
+    "dep:vil_server_web",
+    "dep:vil_json",
+]
+
+# Logging
+log = ["dep:vil_log"]
+
+# SDK (pipelines, workflows)
+sdk = ["dep:vil_sdk"]
+
+# Database
+db-sqlite = ["dep:vil_db_sqlx", "dep:vil_db_semantic", "dep:vil_server_db", "vil_db_sqlx?/sqlite"]
+db-postgres = ["dep:vil_db_sqlx", "dep:vil_db_semantic", "dep:vil_server_db", "vil_db_sqlx?/postgres"]
+db-mysql = ["dep:vil_db_sqlx", "dep:vil_db_semantic", "dep:vil_server_db", "vil_db_sqlx?/mysql"]
+db-redis = ["dep:vil_db_redis"]
+
+# AI
+ai = [
+    "dep:vil_llm",
+    "dep:vil_ai_gateway",
+    "dep:vil_ai_trace",
+    "dep:vil_cost_tracker",
+    "dep:vil_prompts",
+    "dep:vil_prompt_shield",
+    "dep:vil_output_parser",
+    "dep:vil_guardrails",
+]
+
+# Infrastructure
+ws = ["dep:vil_ws"]
+cache = ["dep:vil_cache"]
+
+# Full (everything)
+full = ["web", "log", "sdk", "db-sqlite", "db-postgres", "db-redis", "ai", "ws", "cache"]
+
+[dependencies]
+# Web
+vil_server = { version = "0.1", path = "../vil_server", optional = true }
+vil_server_core = { version = "0.1", path = "../vil_server_core", optional = true }
+vil_server_auth = { version = "0.1", path = "../vil_server_auth", optional = true }
+vil_server_web = { version = "0.1", path = "../vil_server_web", optional = true }
+vil_json = { version = "0.1", path = "../vil_json", optional = true }
+
+# Log
+vil_log = { version = "0.1", path = "../vil_log", optional = true }
+
+# SDK
+vil_sdk = { version = "0.1", path = "../vil_sdk", optional = true }
+
+# Database
+vil_db_sqlx = { version = "0.1", path = "../vil_db_sqlx", optional = true }
+vil_db_semantic = { version = "0.1", path = "../vil_db_semantic", optional = true }
+vil_server_db = { version = "0.1", path = "../vil_server_db", optional = true }
+vil_db_redis = { version = "0.1", path = "../vil_db_redis", optional = true }
+
+# AI
+vil_llm = { version = "0.1", path = "../vil_llm", optional = true }
+vil_ai_gateway = { version = "0.1", path = "../vil_ai_gateway", optional = true }
+vil_ai_trace = { version = "0.1", path = "../vil_ai_trace", optional = true }
+vil_cost_tracker = { version = "0.1", path = "../vil_cost_tracker", optional = true }
+vil_prompts = { version = "0.1", path = "../vil_prompts", optional = true }
+vil_prompt_shield = { version = "0.1", path = "../vil_prompt_shield", optional = true }
+vil_output_parser = { version = "0.1", path = "../vil_output_parser", optional = true }
+vil_guardrails = { version = "0.1", path = "../vil_guardrails", optional = true }
+
+# Infrastructure
+vil_ws = { version = "0.1", path = "../vil_ws", optional = true }
+vil_cache = { version = "0.1", path = "../vil_cache", optional = true }

@@ -16,6 +16,14 @@ pub mod ip_filter;
 pub mod rbac;
 pub mod session;
 
+// Auth essentials (new in enhance-iter01)
+pub mod password;
+pub mod jwt_full;
+pub mod claims;
+
 pub use circuit_breaker::{CircuitBreaker, CircuitBreakerConfig, CircuitState};
 pub use jwt::JwtAuth;
 pub use rate_limit::RateLimit;
+pub use password::VilPassword;
+pub use jwt_full::{VilJwt, TokenPair};
+pub use claims::VilClaims;
