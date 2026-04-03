@@ -21,6 +21,7 @@
 pub mod pagination;
 pub mod bind;
 pub mod query;
+pub mod log;
 
 // Re-export derive macro
 pub use vil_orm_derive::VilEntity;

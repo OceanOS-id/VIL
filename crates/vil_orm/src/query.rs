@@ -49,6 +49,7 @@
 
 use crate::bind::{VilBind, VilOptF64, VilOptI64, VilOptStr};
 use sqlx::any::AnyArguments;
+use std::time::Instant;
 
 /// Query operation mode.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -537,6 +538,37 @@ impl VilQuery {
         args
     }
 
+    // ── db_log helper ──
+
+    fn op_type_code(&self) -> u8 {
+        match self.mode {
+            Mode::Select => 0,
+            Mode::Insert => 1,
+            Mode::Update => 2,
+            Mode::Delete => 3,
+        }
+    }
+
+    fn emit_db_log(&self, sql: &str, duration_us: u32, rows: u32, error_code: u8) {
+        let table_hash = vil_log::dict::register_str(&self.table);
+        let query_hash = vil_log::dict::register_str(sql);
+        vil_log::db_log!(Info, vil_log::DbPayload {
+            db_hash: 0, // default pool
+            table_hash,
+            query_hash,
+            duration_us,
+            rows_affected: rows,
+            op_type: self.op_type_code(),
+            prepared: 1,
+            tx_state: 0,
+            error_code,
+            pool_id: 0,
+            shard_id: 0,
+            _pad: [0; 4],
+            meta_bytes: [0; 160],
+        });
+    }
+
     // ── Terminal operations (execute against pool) ──
 
     /// Fetch all rows as Vec<T>.
@@ -546,9 +578,16 @@ impl VilQuery {
     ) -> Result<Vec<T>, sqlx::Error> {
         let sql = self.to_sql();
         let args = self.build_args();
-        sqlx::query_as_with::<_, T, _>(&sql, args)
+        let start = Instant::now();
+        let result = sqlx::query_as_with::<_, T, _>(&sql, args)
             .fetch_all(pool)
-            .await
+            .await;
+        let dur = start.elapsed().as_micros() as u32;
+        match &result {
+            Ok(rows) => self.emit_db_log(&sql, dur, rows.len() as u32, 0),
+            Err(_) => self.emit_db_log(&sql, dur, 0, 1),
+        }
+        result
     }
 
     /// Fetch one row (error if not found).
@@ -558,9 +597,13 @@ impl VilQuery {
     ) -> Result<T, sqlx::Error> {
         let sql = self.to_sql();
         let args = self.build_args();
-        sqlx::query_as_with::<_, T, _>(&sql, args)
+        let start = Instant::now();
+        let result = sqlx::query_as_with::<_, T, _>(&sql, args)
             .fetch_one(pool)
-            .await
+            .await;
+        let dur = start.elapsed().as_micros() as u32;
+        self.emit_db_log(&sql, dur, if result.is_ok() { 1 } else { 0 }, result.is_err() as u8);
+        result
     }
 
     /// Fetch optional row.
@@ -570,9 +613,17 @@ impl VilQuery {
     ) -> Result<Option<T>, sqlx::Error> {
         let sql = self.to_sql();
         let args = self.build_args();
-        sqlx::query_as_with::<_, T, _>(&sql, args)
+        let start = Instant::now();
+        let result = sqlx::query_as_with::<_, T, _>(&sql, args)
             .fetch_optional(pool)
-            .await
+            .await;
+        let dur = start.elapsed().as_micros() as u32;
+        match &result {
+            Ok(Some(_)) => self.emit_db_log(&sql, dur, 1, 0),
+            Ok(None) => self.emit_db_log(&sql, dur, 0, 0),
+            Err(_) => self.emit_db_log(&sql, dur, 0, 1),
+        }
+        result
     }
 
     /// Fetch a single scalar value.
@@ -582,9 +633,13 @@ impl VilQuery {
     ) -> Result<T, sqlx::Error> {
         let sql = self.to_sql();
         let args = self.build_args();
-        sqlx::query_scalar_with::<_, T, _>(&sql, args)
+        let start = Instant::now();
+        let result = sqlx::query_scalar_with::<_, T, _>(&sql, args)
             .fetch_one(pool)
-            .await
+            .await;
+        let dur = start.elapsed().as_micros() as u32;
+        self.emit_db_log(&sql, dur, 1, result.is_err() as u8);
+        result
     }
 
     /// Fetch an optional scalar value.
@@ -594,9 +649,17 @@ impl VilQuery {
     ) -> Result<Option<T>, sqlx::Error> {
         let sql = self.to_sql();
         let args = self.build_args();
-        sqlx::query_scalar_with::<_, T, _>(&sql, args)
+        let start = Instant::now();
+        let result = sqlx::query_scalar_with::<_, T, _>(&sql, args)
             .fetch_optional(pool)
-            .await
+            .await;
+        let dur = start.elapsed().as_micros() as u32;
+        match &result {
+            Ok(Some(_)) => self.emit_db_log(&sql, dur, 1, 0),
+            Ok(None) => self.emit_db_log(&sql, dur, 0, 0),
+            Err(_) => self.emit_db_log(&sql, dur, 0, 1),
+        }
+        result
     }
 
     /// Execute (INSERT/UPDATE/DELETE). Returns rows affected.
@@ -606,9 +669,15 @@ impl VilQuery {
     ) -> Result<u64, sqlx::Error> {
         let sql = self.to_sql();
         let args = self.build_args();
-        sqlx::query_with(&sql, args)
+        let start = Instant::now();
+        let result = sqlx::query_with(&sql, args)
             .execute(pool)
-            .await
-            .map(|r| r.rows_affected())
+            .await;
+        let dur = start.elapsed().as_micros() as u32;
+        match &result {
+            Ok(r) => self.emit_db_log(&sql, dur, r.rows_affected() as u32, 0),
+            Err(_) => self.emit_db_log(&sql, dur, 0, 1),
+        }
+        result.map(|r| r.rows_affected())
     }
 }

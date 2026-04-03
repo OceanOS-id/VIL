@@ -121,10 +121,14 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 id: &str,
             ) -> Result<Option<Self>, ::sqlx::Error> {
                 let sql = format!("SELECT * FROM {} WHERE {} = ?", #table, stringify!(#pk));
-                ::sqlx::query_as::<_, Self>(&sql)
+                let start = ::std::time::Instant::now();
+                let result = ::sqlx::query_as::<_, Self>(&sql)
                     .bind(id)
                     .fetch_optional(pool)
-                    .await
+                    .await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, if result.as_ref().ok().and_then(|r| r.as_ref()).is_some() { 1 } else { 0 }, 0, result.is_err());
+                result
             }
 
             /// Find all (with optional limit, all columns).
@@ -132,9 +136,13 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 pool: &::sqlx::Pool<::sqlx::Any>,
             ) -> Result<Vec<Self>, ::sqlx::Error> {
                 let sql = format!("SELECT * FROM {} ORDER BY {} DESC LIMIT 100", #table, stringify!(#pk));
-                ::sqlx::query_as::<_, Self>(&sql)
+                let start = ::std::time::Instant::now();
+                let result = ::sqlx::query_as::<_, Self>(&sql)
                     .fetch_all(pool)
-                    .await
+                    .await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.len() as u32).unwrap_or(0), 0, result.is_err());
+                result
             }
 
             /// Select specific columns by primary key → custom target type.
@@ -155,7 +163,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let sql = format!("SELECT {} FROM {} WHERE {}", cols, #table, condition);
                 let mut q = ::sqlx::query_as::<_, T>(&sql);
                 for b in binds { q = q.bind(*b); }
-                q.fetch_all(pool).await
+                let start = ::std::time::Instant::now();
+                let result = q.fetch_all(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.len() as u32).unwrap_or(0), 0, result.is_err());
+                result
             }
 
             /// Select specific columns, return one optional row.
@@ -169,7 +181,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let sql = format!("SELECT {} FROM {} WHERE {}", cols, #table, condition);
                 let mut q = ::sqlx::query_as::<_, T>(&sql);
                 for b in binds { q = q.bind(*b); }
-                q.fetch_optional(pool).await
+                let start = ::std::time::Instant::now();
+                let result = q.fetch_optional(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, if result.as_ref().ok().and_then(|r| r.as_ref()).is_some() { 1 } else { 0 }, 0, result.is_err());
+                result
             }
 
             /// Count all rows
@@ -177,9 +193,13 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 pool: &::sqlx::Pool<::sqlx::Any>,
             ) -> Result<i64, ::sqlx::Error> {
                 let sql = format!("SELECT CAST(COUNT(*) AS INTEGER) FROM {}", #table);
-                ::sqlx::query_scalar::<_, i64>(&sql)
+                let start = ::std::time::Instant::now();
+                let result = ::sqlx::query_scalar::<_, i64>(&sql)
                     .fetch_one(pool)
-                    .await
+                    .await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, 1, 0, result.is_err());
+                result
             }
 
             /// Check if exists by primary key
@@ -188,11 +208,14 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 id: &str,
             ) -> Result<bool, ::sqlx::Error> {
                 let sql = format!("SELECT COUNT(*) FROM {} WHERE {} = ?", #table, stringify!(#pk));
-                let count: i64 = ::sqlx::query_scalar(&sql)
+                let start = ::std::time::Instant::now();
+                let result = ::sqlx::query_scalar(&sql)
                     .bind(id)
                     .fetch_one(pool)
-                    .await?;
-                Ok(count > 0)
+                    .await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, 1, 0, result.is_err());
+                result.map(|count: i64| count > 0)
             }
 
             /// Delete by primary key. Returns true if row existed.
@@ -201,11 +224,14 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 id: &str,
             ) -> Result<bool, ::sqlx::Error> {
                 let sql = format!("DELETE FROM {} WHERE {} = ?", #table, stringify!(#pk));
+                let start = ::std::time::Instant::now();
                 let result = ::sqlx::query(&sql)
                     .bind(id)
                     .execute(pool)
-                    .await?;
-                Ok(result.rows_affected() > 0)
+                    .await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| if r.rows_affected() > 0 { 1 } else { 0 }).unwrap_or(0), 3, result.is_err());
+                result.map(|r| r.rows_affected() > 0)
             }
 
             /// Column names (for query building)
@@ -224,7 +250,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let sql = format!("SELECT * FROM {} WHERE {}", #table, condition);
                 let mut q = ::sqlx::query_as::<_, Self>(&sql);
                 for b in binds { q = q.bind(*b); }
-                q.fetch_optional(pool).await
+                let start = ::std::time::Instant::now();
+                let result = q.fetch_optional(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, if result.as_ref().ok().and_then(|r| r.as_ref()).is_some() { 1 } else { 0 }, 0, result.is_err());
+                result
             }
 
             /// Find all rows matching a WHERE clause (all columns).
@@ -238,7 +268,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let sql = format!("SELECT * FROM {} WHERE {}", #table, condition);
                 let mut q = ::sqlx::query_as::<_, Self>(&sql);
                 for b in binds { q = q.bind(*b); }
-                q.fetch_all(pool).await
+                let start = ::std::time::Instant::now();
+                let result = q.fetch_all(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.len() as u32).unwrap_or(0), 0, result.is_err());
+                result
             }
 
             /// Update specific fields by primary key.
@@ -257,8 +291,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let mut q = ::sqlx::query(&sql);
                 for (_, v) in fields { q = q.bind(*v); }
                 q = q.bind(id);
-                let result = q.execute(pool).await?;
-                Ok(result.rows_affected() > 0)
+                let start = ::std::time::Instant::now();
+                let result = q.execute(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| if r.rows_affected() > 0 { 1 } else { 0 }).unwrap_or(0), 2, result.is_err());
+                result.map(|r| r.rows_affected() > 0)
             }
 
             /// Execute raw UPDATE with SET clause and WHERE condition.
@@ -272,8 +309,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let sql = format!("UPDATE {} SET {} WHERE {}", #table, set_clause, condition);
                 let mut q = ::sqlx::query(&sql);
                 for b in binds { q = q.bind(*b); }
-                let result = q.execute(pool).await?;
-                Ok(result.rows_affected())
+                let start = ::std::time::Instant::now();
+                let result = q.execute(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.rows_affected() as u32).unwrap_or(0), 2, result.is_err());
+                result.map(|r| r.rows_affected())
             }
 
             /// Scalar query on this table.
@@ -287,7 +327,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let sql = format!("SELECT {} FROM {} WHERE {}", select_expr, #table, condition);
                 let mut q = ::sqlx::query_scalar::<_, T>(&sql);
                 for b in binds { q = q.bind(*b); }
-                q.fetch_one(pool).await
+                let start = ::std::time::Instant::now();
+                let result = q.fetch_one(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, 1, 0, result.is_err());
+                result
             }
 
             // ── Mixed-type bind variants (VilBind) ──
@@ -305,7 +349,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                     #table, columns.join(", "), placeholders.join(", ")
                 );
                 let args = ::vil_orm::build_args(&binds);
-                ::sqlx::query_with(&sql, args).execute(pool).await.map(|r| r.rows_affected())
+                let start = ::std::time::Instant::now();
+                let result = ::sqlx::query_with(&sql, args).execute(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.rows_affected() as u32).unwrap_or(0), 1, result.is_err());
+                result.map(|r| r.rows_affected())
             }
 
             /// UPDATE with mixed-type binds.
@@ -318,7 +366,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
             ) -> Result<u64, ::sqlx::Error> {
                 let sql = format!("UPDATE {} SET {} WHERE {}", #table, set_clause, condition);
                 let args = ::vil_orm::build_args(&binds);
-                ::sqlx::query_with(&sql, args).execute(pool).await.map(|r| r.rows_affected())
+                let start = ::std::time::Instant::now();
+                let result = ::sqlx::query_with(&sql, args).execute(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.rows_affected() as u32).unwrap_or(0), 2, result.is_err());
+                result.map(|r| r.rows_affected())
             }
 
             /// SELECT scalar with mixed-type binds.
@@ -331,7 +383,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
             ) -> Result<T, ::sqlx::Error> {
                 let sql = format!("SELECT {} FROM {} WHERE {}", select_expr, #table, condition);
                 let args = ::vil_orm::build_args(&binds);
-                ::sqlx::query_scalar_with::<_, T, _>(&sql, args).fetch_one(pool).await
+                let start = ::std::time::Instant::now();
+                let result = ::sqlx::query_scalar_with::<_, T, _>(&sql, args).fetch_one(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, 1, 0, result.is_err());
+                result
             }
 
             /// SELECT scalar optional with mixed-type binds.
@@ -343,7 +399,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
             ) -> Result<Option<T>, ::sqlx::Error> {
                 let sql = format!("SELECT {} FROM {} WHERE {}", select_expr, #table, condition);
                 let args = ::vil_orm::build_args(&binds);
-                ::sqlx::query_scalar_with::<_, T, _>(&sql, args).fetch_optional(pool).await
+                let start = ::std::time::Instant::now();
+                let result = ::sqlx::query_scalar_with::<_, T, _>(&sql, args).fetch_optional(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, if result.as_ref().ok().and_then(|r| r.as_ref()).is_some() { 1 } else { 0 }, 0, result.is_err());
+                result
             }
 
             /// DELETE with mixed-type binds (custom condition).
@@ -355,7 +415,11 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let sql = format!("DELETE FROM {} WHERE {}", #table, condition);
                 let mut q = ::sqlx::query(&sql);
                 for b in binds { q = q.bind(*b); }
-                q.execute(pool).await.map(|r| r.rows_affected())
+                let start = ::std::time::Instant::now();
+                let result = q.execute(pool).await;
+                let dur = start.elapsed().as_micros() as u32;
+                ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.rows_affected() as u32).unwrap_or(0), 3, result.is_err());
+                result.map(|r| r.rows_affected())
             }
         }
     };
