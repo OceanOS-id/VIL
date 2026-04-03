@@ -1,6 +1,6 @@
 [package]
 name = "vil_server"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2021"
 description = "VIL Server — Process-oriented modular server for Rust. Zero-copy SHM, Tri-Lane protocol, built on Axum."
 repository = "https://github.com/OceanOS-id/VIL"
@@ -20,7 +20,7 @@ vil_server_db = { version = "0.1.0", path = "../vil_server_db" }
 
 # VIL macros
 vil_macros = { version = "0.1.0", path = "../vil_macros" }
-vil_server_macros = { version = "0.1.0", path = "../vil_server_macros" }
+vil_server_macros = { version = "0.1.3", path = "../vil_server_macros" }
 vil_json = { version = "0.1.0", path = "../vil_json" }
 
 # VIL SDK (needed for semantic type macros: vil_state, vil_event, etc.)
