@@ -1,6 +1,6 @@
 [package]
 name = "vil_db_sea_orm"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 description = "VIL Database Plugin — Full ORM via sea-orm (Entity, Migration, Query Builder)"
 repository = "https://github.com/OceanOS-id/VIL"
