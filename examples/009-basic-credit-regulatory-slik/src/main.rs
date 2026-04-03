@@ -45,7 +45,7 @@ pub struct RegulatoryBatchCompleted {
     pub records_in_batch: u32,
     pub valid_count: u32,
     pub rejected_count: u32,
-    pub timestamp_us: u64,
+    pub timestamp_ns: u64,
 }
 
 #[vil_fault]

@@ -75,7 +75,7 @@ impl SqsClient {
                     broker_hash: register_str("sqs"),
                     topic_hash: queue_hash,
                     message_bytes: body.len() as u32,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 0, // publish
                     ..Default::default()
                 }
@@ -113,7 +113,7 @@ impl SqsClient {
                     broker_hash: register_str("sqs"),
                     topic_hash: queue_hash,
                     message_bytes: count,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 1, // consume
                     ..Default::default()
                 }
@@ -171,7 +171,7 @@ impl SqsClient {
                     broker_hash: register_str("sqs"),
                     topic_hash: queue_hash,
                     message_bytes: 0,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 2, // ack (delete = ack in SQS)
                     ..Default::default()
                 }
@@ -238,7 +238,7 @@ impl SnsClient {
                     broker_hash: register_str("sns"),
                     topic_hash,
                     message_bytes: message.len() as u32,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 0, // publish
                     ..Default::default()
                 }

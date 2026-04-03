@@ -8,9 +8,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 pub struct PoolMetrics {
     pub queries_total: AtomicU64,
     pub query_errors: AtomicU64,
-    pub query_duration_sum_us: AtomicU64,
+    pub query_duration_sum_ns: AtomicU64,
     pub acquires_total: AtomicU64,
-    pub acquire_duration_sum_us: AtomicU64,
+    pub acquire_duration_sum_ns: AtomicU64,
     pub health_checks_ok: AtomicU64,
     pub health_checks_fail: AtomicU64,
 }
@@ -20,27 +20,27 @@ impl PoolMetrics {
         Self {
             queries_total: AtomicU64::new(0),
             query_errors: AtomicU64::new(0),
-            query_duration_sum_us: AtomicU64::new(0),
+            query_duration_sum_ns: AtomicU64::new(0),
             acquires_total: AtomicU64::new(0),
-            acquire_duration_sum_us: AtomicU64::new(0),
+            acquire_duration_sum_ns: AtomicU64::new(0),
             health_checks_ok: AtomicU64::new(0),
             health_checks_fail: AtomicU64::new(0),
         }
     }
 
-    pub fn record_query(&self, duration_us: u64, is_error: bool) {
+    pub fn record_query(&self, duration_ns: u64, is_error: bool) {
         self.queries_total.fetch_add(1, Ordering::Relaxed);
-        self.query_duration_sum_us
-            .fetch_add(duration_us, Ordering::Relaxed);
+        self.query_duration_sum_ns
+            .fetch_add(duration_ns, Ordering::Relaxed);
         if is_error {
             self.query_errors.fetch_add(1, Ordering::Relaxed);
         }
     }
 
-    pub fn record_acquire(&self, duration_us: u64) {
+    pub fn record_acquire(&self, duration_ns: u64) {
         self.acquires_total.fetch_add(1, Ordering::Relaxed);
-        self.acquire_duration_sum_us
-            .fetch_add(duration_us, Ordering::Relaxed);
+        self.acquire_duration_sum_ns
+            .fetch_add(duration_ns, Ordering::Relaxed);
     }
 
     pub fn record_health_check(&self, ok: bool) {
@@ -54,11 +54,11 @@ impl PoolMetrics {
     /// Export metrics as a snapshot.
     pub fn snapshot(&self) -> MetricsSnapshot {
         let queries = self.queries_total.load(Ordering::Relaxed);
-        let dur_sum = self.query_duration_sum_us.load(Ordering::Relaxed);
+        let dur_sum = self.query_duration_sum_ns.load(Ordering::Relaxed);
         MetricsSnapshot {
             queries_total: queries,
             query_errors: self.query_errors.load(Ordering::Relaxed),
-            avg_query_us: if queries > 0 { dur_sum / queries } else { 0 },
+            avg_query_ns: if queries > 0 { dur_sum / queries } else { 0 },
             acquires_total: self.acquires_total.load(Ordering::Relaxed),
             health_checks_ok: self.health_checks_ok.load(Ordering::Relaxed),
             health_checks_fail: self.health_checks_fail.load(Ordering::Relaxed),
@@ -71,7 +71,7 @@ impl PoolMetrics {
         format!(
             "vil_db_queries_total{{pool=\"{}\"}} {}\n\
              vil_db_query_errors{{pool=\"{}\"}} {}\n\
-             vil_db_query_avg_us{{pool=\"{}\"}} {}\n\
+             vil_db_query_avg_ns{{pool=\"{}\"}} {}\n\
              vil_db_acquires_total{{pool=\"{}\"}} {}\n\
              vil_db_health_ok{{pool=\"{}\"}} {}\n\
              vil_db_health_fail{{pool=\"{}\"}} {}\n",
@@ -80,7 +80,7 @@ impl PoolMetrics {
             pool_name,
             s.query_errors,
             pool_name,
-            s.avg_query_us,
+            s.avg_query_ns,
             pool_name,
             s.acquires_total,
             pool_name,
@@ -102,7 +102,7 @@ impl Default for PoolMetrics {
 pub struct MetricsSnapshot {
     pub queries_total: u64,
     pub query_errors: u64,
-    pub avg_query_us: u64,
+    pub avg_query_ns: u64,
     pub acquires_total: u64,
     pub health_checks_ok: u64,
     pub health_checks_fail: u64,

@@ -11,7 +11,7 @@ pub struct GrpcMetrics {
 struct MethodMetrics {
     requests: AtomicU64,
     errors: AtomicU64,
-    duration_sum_us: AtomicU64,
+    duration_sum_ns: AtomicU64,
 }
 
 impl GrpcMetrics {
@@ -21,19 +21,19 @@ impl GrpcMetrics {
         }
     }
 
-    pub fn record(&self, method: &str, duration_us: u64, is_error: bool) {
+    pub fn record(&self, method: &str, duration_ns: u64, is_error: bool) {
         let entry = self
             .methods
             .entry(method.to_string())
             .or_insert_with(|| MethodMetrics {
                 requests: AtomicU64::new(0),
                 errors: AtomicU64::new(0),
-                duration_sum_us: AtomicU64::new(0),
+                duration_sum_ns: AtomicU64::new(0),
             });
         entry.requests.fetch_add(1, Ordering::Relaxed);
         entry
-            .duration_sum_us
-            .fetch_add(duration_us, Ordering::Relaxed);
+            .duration_sum_ns
+            .fetch_add(duration_ns, Ordering::Relaxed);
         if is_error {
             entry.errors.fetch_add(1, Ordering::Relaxed);
         }

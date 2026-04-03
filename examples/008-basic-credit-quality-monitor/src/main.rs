@@ -43,7 +43,7 @@ pub struct QualityIssueDetected {
     pub record_id: u64,
     pub error_type: u32,
     pub field_name: u32,
-    pub timestamp_us: u64,
+    pub timestamp_ns: u64,
 }
 
 #[vil_fault]

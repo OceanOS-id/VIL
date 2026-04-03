@@ -85,7 +85,7 @@ async fn sidecar_detail(
                 "errors": snapshot.errors,
                 "timeouts": snapshot.timeouts,
                 "in_flight": snapshot.in_flight,
-                "avg_latency_us": snapshot.avg_latency_us,
+                "avg_latency_ns": snapshot.avg_latency_ns,
                 "health_failures": snapshot.health_failures,
                 "uptime_secs": snapshot.uptime_secs,
             },

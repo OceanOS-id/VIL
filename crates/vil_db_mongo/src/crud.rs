@@ -54,16 +54,16 @@ impl MongoClient {
 
         let start = Instant::now();
         let result = coll.find_one(filter).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(doc) => {
                 let rows = if doc.is_some() { 1u32 } else { 0u32 };
-                emit_db_log(self.db_hash(), collection, OP_SELECT, elapsed_us, rows, 0);
+                emit_db_log(self.db_hash(), collection, OP_SELECT, elapsed_ns, rows, 0);
                 Ok(doc)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), collection, OP_SELECT, elapsed_us, 0, 1);
+                emit_db_log(self.db_hash(), collection, OP_SELECT, elapsed_ns, 0, 1);
                 Err(MongoFault::QueryFailed {
                     collection_hash: coll_hash,
                     reason_code: fault_code_from_mongo_err(&e),
@@ -95,11 +95,11 @@ impl MongoClient {
 
         let start = Instant::now();
         let cursor_result = coll.find(filter).with_options(find_opts).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match cursor_result {
             Err(e) => {
-                emit_db_log(self.db_hash(), collection, OP_SELECT, elapsed_us, 0, 1);
+                emit_db_log(self.db_hash(), collection, OP_SELECT, elapsed_ns, 0, 1);
                 Err(MongoFault::QueryFailed {
                     collection_hash: coll_hash,
                     reason_code: fault_code_from_mongo_err(&e),
@@ -108,17 +108,17 @@ impl MongoClient {
             Ok(cursor) => {
                 let collect_start = Instant::now();
                 let docs: Result<Vec<T>, mongodb::error::Error> = cursor.try_collect().await;
-                let collect_us = collect_start.elapsed().as_micros() as u32;
-                let total_us = elapsed_us.saturating_add(collect_us);
+                let collect_ns = collect_start.elapsed().as_nanos() as u64;
+                let total_ns = elapsed_ns.saturating_add(collect_ns);
 
                 match docs {
                     Ok(vec) => {
                         let rows = vec.len() as u32;
-                        emit_db_log(self.db_hash(), collection, OP_SELECT, total_us, rows, 0);
+                        emit_db_log(self.db_hash(), collection, OP_SELECT, total_ns, rows, 0);
                         Ok(vec)
                     }
                     Err(e) => {
-                        emit_db_log(self.db_hash(), collection, OP_SELECT, total_us, 0, 1);
+                        emit_db_log(self.db_hash(), collection, OP_SELECT, total_ns, 0, 1);
                         Err(MongoFault::QueryFailed {
                             collection_hash: coll_hash,
                             reason_code: fault_code_from_mongo_err(&e),
@@ -147,15 +147,15 @@ impl MongoClient {
 
         let start = Instant::now();
         let result = coll.insert_one(doc).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(res) => {
-                emit_db_log(self.db_hash(), collection, OP_INSERT, elapsed_us, 1, 0);
+                emit_db_log(self.db_hash(), collection, OP_INSERT, elapsed_ns, 1, 0);
                 Ok(res.inserted_id.to_string())
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), collection, OP_INSERT, elapsed_us, 0, 1);
+                emit_db_log(self.db_hash(), collection, OP_INSERT, elapsed_ns, 0, 1);
                 Err(MongoFault::InsertFailed {
                     collection_hash: coll_hash,
                     reason_code: fault_code_from_mongo_err(&e),
@@ -182,7 +182,7 @@ impl MongoClient {
 
         let start = Instant::now();
         let result = coll.insert_many(docs).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(res) => {
@@ -196,11 +196,11 @@ impl MongoClient {
                     sorted.sort_by_key(|(k, _)| *k);
                     sorted.into_iter().map(|(_, v)| v).collect()
                 };
-                emit_db_log(self.db_hash(), collection, OP_INSERT, elapsed_us, rows, 0);
+                emit_db_log(self.db_hash(), collection, OP_INSERT, elapsed_ns, rows, 0);
                 Ok(ids)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), collection, OP_INSERT, elapsed_us, 0, 1);
+                emit_db_log(self.db_hash(), collection, OP_INSERT, elapsed_ns, 0, 1);
                 Err(MongoFault::InsertFailed {
                     collection_hash: coll_hash,
                     reason_code: fault_code_from_mongo_err(&e),
@@ -228,16 +228,16 @@ impl MongoClient {
 
         let start = Instant::now();
         let result = coll.update_one(filter, update).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(res) => {
                 let rows = res.modified_count as u32;
-                emit_db_log(self.db_hash(), collection, OP_UPDATE, elapsed_us, rows, 0);
+                emit_db_log(self.db_hash(), collection, OP_UPDATE, elapsed_ns, rows, 0);
                 Ok(res.modified_count)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), collection, OP_UPDATE, elapsed_us, 0, 1);
+                emit_db_log(self.db_hash(), collection, OP_UPDATE, elapsed_ns, 0, 1);
                 Err(MongoFault::UpdateFailed {
                     collection_hash: coll_hash,
                     reason_code: fault_code_from_mongo_err(&e),
@@ -260,16 +260,16 @@ impl MongoClient {
 
         let start = Instant::now();
         let result = coll.delete_one(filter).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(res) => {
                 let rows = res.deleted_count as u32;
-                emit_db_log(self.db_hash(), collection, OP_DELETE, elapsed_us, rows, 0);
+                emit_db_log(self.db_hash(), collection, OP_DELETE, elapsed_ns, rows, 0);
                 Ok(res.deleted_count)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), collection, OP_DELETE, elapsed_us, 0, 1);
+                emit_db_log(self.db_hash(), collection, OP_DELETE, elapsed_ns, 0, 1);
                 Err(MongoFault::DeleteFailed {
                     collection_hash: coll_hash,
                     reason_code: fault_code_from_mongo_err(&e),
@@ -294,7 +294,7 @@ impl MongoClient {
 
         let start = Instant::now();
         let result = coll.count_documents(filter_doc).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(n) => {
@@ -302,14 +302,14 @@ impl MongoClient {
                     self.db_hash(),
                     collection,
                     OP_SELECT,
-                    elapsed_us,
+                    elapsed_ns,
                     n as u32,
                     0,
                 );
                 Ok(n)
             }
             Err(e) => {
-                emit_db_log(self.db_hash(), collection, OP_SELECT, elapsed_us, 0, 1);
+                emit_db_log(self.db_hash(), collection, OP_SELECT, elapsed_ns, 0, 1);
                 Err(MongoFault::QueryFailed {
                     collection_hash: coll_hash,
                     reason_code: fault_code_from_mongo_err(&e),

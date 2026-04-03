@@ -29,7 +29,7 @@ use crate::types::TimeseriesResult;
 /// Every operation emits a `db_log!` entry with:
 /// - `db_hash`       — FxHash of the bucket/database name
 /// - `query_hash`    — FxHash of the Flux query (influxdb) or SQL (timescale)
-/// - `duration_us`   — Wall-clock time of the operation
+/// - `duration_ns`   — Wall-clock time of the operation
 /// - `rows_affected` — Points written / rows returned
 /// - `op_type`       — 0=QUERY 1=WRITE
 /// - `error_code`    — 0 on success, non-zero on fault
@@ -97,7 +97,7 @@ pub(crate) fn emit_db_log(
     db_hash: u32,
     query: &str,
     op_type: u8,
-    duration_us: u32,
+    duration_ns: u64,
     rows_affected: u32,
     error_code: u8,
     pool_id: u16,
@@ -108,7 +108,7 @@ pub(crate) fn emit_db_log(
         DbPayload {
             db_hash,
             query_hash,
-            duration_us,
+            duration_ns,
             rows_affected,
             op_type,
             error_code,

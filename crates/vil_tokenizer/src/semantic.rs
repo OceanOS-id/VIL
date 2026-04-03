@@ -7,7 +7,7 @@ use vil_macros::{VilAiEvent, VilAiFault, VilAiState};
 pub struct TokenizeEvent {
     pub text_length: u32,
     pub token_count: u32,
-    pub latency_us: u64,
+    pub latency_ns: u64,
     pub vocab: String,
 }
 

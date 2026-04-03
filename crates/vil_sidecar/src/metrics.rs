@@ -11,7 +11,7 @@ pub struct SidecarMetrics {
     pub errors: AtomicU64,
     pub timeouts: AtomicU64,
     pub in_flight: AtomicU64,
-    pub total_latency_us: AtomicU64,
+    pub total_latency_ns: AtomicU64,
     pub health_failures: AtomicU64,
     started_at: Instant,
 }
@@ -23,7 +23,7 @@ impl SidecarMetrics {
             errors: AtomicU64::new(0),
             timeouts: AtomicU64::new(0),
             in_flight: AtomicU64::new(0),
-            total_latency_us: AtomicU64::new(0),
+            total_latency_ns: AtomicU64::new(0),
             health_failures: AtomicU64::new(0),
             started_at: Instant::now(),
         }
@@ -36,10 +36,10 @@ impl SidecarMetrics {
     }
 
     /// Record a successful invocation with latency.
-    pub fn invoke_ok(&self, latency_us: u64) {
+    pub fn invoke_ok(&self, latency_ns: u64) {
         self.in_flight.fetch_sub(1, Ordering::Relaxed);
-        self.total_latency_us
-            .fetch_add(latency_us, Ordering::Relaxed);
+        self.total_latency_ns
+            .fetch_add(latency_ns, Ordering::Relaxed);
     }
 
     /// Record a failed invocation.
@@ -67,7 +67,7 @@ impl SidecarMetrics {
     /// Snapshot of all metrics.
     pub fn snapshot(&self) -> MetricsSnapshot {
         let invocations = self.invocations.load(Ordering::Relaxed);
-        let total_latency = self.total_latency_us.load(Ordering::Relaxed);
+        let total_latency = self.total_latency_ns.load(Ordering::Relaxed);
         let successful = invocations.saturating_sub(
             self.errors.load(Ordering::Relaxed) + self.timeouts.load(Ordering::Relaxed),
         );
@@ -76,7 +76,7 @@ impl SidecarMetrics {
             errors: self.errors.load(Ordering::Relaxed),
             timeouts: self.timeouts.load(Ordering::Relaxed),
             in_flight: self.in_flight.load(Ordering::Relaxed),
-            avg_latency_us: if successful > 0 {
+            avg_latency_ns: if successful > 0 {
                 total_latency / successful
             } else {
                 0
@@ -94,7 +94,7 @@ impl SidecarMetrics {
              vil_sidecar_errors_total{{sidecar=\"{}\"}} {}\n\
              vil_sidecar_timeouts_total{{sidecar=\"{}\"}} {}\n\
              vil_sidecar_in_flight{{sidecar=\"{}\"}} {}\n\
-             vil_sidecar_avg_latency_us{{sidecar=\"{}\"}} {}\n\
+             vil_sidecar_avg_latency_ns{{sidecar=\"{}\"}} {}\n\
              vil_sidecar_health_failures{{sidecar=\"{}\"}} {}\n",
             name,
             s.invocations,
@@ -105,7 +105,7 @@ impl SidecarMetrics {
             name,
             s.in_flight,
             name,
-            s.avg_latency_us,
+            s.avg_latency_ns,
             name,
             s.health_failures,
         )
@@ -125,7 +125,7 @@ pub struct MetricsSnapshot {
     pub errors: u64,
     pub timeouts: u64,
     pub in_flight: u64,
-    pub avg_latency_us: u64,
+    pub avg_latency_ns: u64,
     pub health_failures: u64,
     pub uptime_secs: u64,
 }
@@ -151,7 +151,7 @@ mod tests {
         let s = m.snapshot();
         assert_eq!(s.invocations, 2);
         assert_eq!(s.errors, 1);
-        assert_eq!(s.avg_latency_us, 100);
+        assert_eq!(s.avg_latency_ns, 100);
     }
 
     #[test]

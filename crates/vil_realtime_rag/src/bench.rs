@@ -6,9 +6,9 @@ pub struct BenchResult {
     /// Number of search iterations performed.
     pub iterations: usize,
     /// Total elapsed time in microseconds.
-    pub total_us: u64,
+    pub total_ns: u64,
     /// Average time per search in microseconds.
-    pub avg_us: f64,
+    pub avg_ns: f64,
     /// Number of documents in the index.
     pub docs: usize,
 }
@@ -32,8 +32,8 @@ pub fn bench_search(
 
     BenchResult {
         iterations,
-        total_us: total.as_micros() as u64,
-        avg_us: total.as_micros() as f64 / iterations as f64,
+        total_ns: total.as_nanos() as u64,
+        avg_ns: total.as_nanos() as f64 / iterations as f64,
         docs: index.count(),
     }
 }
@@ -61,7 +61,7 @@ mod tests {
 
         let result = bench_search(&idx, 384, 100);
         assert_eq!(result.iterations, 100);
-        assert!(result.avg_us > 0.0);
+        assert!(result.avg_ns > 0.0);
         assert_eq!(result.docs, 10);
     }
 

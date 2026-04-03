@@ -99,7 +99,7 @@ fn bench_access() -> R {
                 method: 1,
                 status_code: 200,
                 protocol: 0,
-                duration_us: 2300,
+                duration_ns: 2300,
                 request_bytes: 256,
                 response_bytes: 1024,
                 client_ip: 0x7F000001,
@@ -110,7 +110,7 @@ fn bench_access() -> R {
                 session_id: 99999,
                 authenticated: 1,
                 cache_status: 0,
-                _pad: [0; 18],
+                _pad: [0; 14],
             }
         );
     }
@@ -130,15 +130,14 @@ fn bench_ai() -> R {
                 provider_hash: 0xABCD,
                 input_tokens: 150,
                 output_tokens: 500,
-                latency_us: 1_200_000,
+                latency_ns: 1_200_000_000,
                 cost_micro_usd: 350,
                 provider_status: 200,
                 op_type: 0,
                 streaming: 1,
                 retries: 0,
                 cache_hit: 0,
-                _pad: [0; 2],
-                meta_bytes: [0; 160],
+                meta_bytes: [0; 158],
             }
         );
     }
@@ -157,7 +156,7 @@ fn bench_db() -> R {
                 db_hash: 0x1111,
                 table_hash: 0x2222,
                 query_hash: 0x3333,
-                duration_us: 450,
+                duration_ns: 450,
                 rows_affected: 1,
                 op_type: 1,
                 prepared: 1,
@@ -165,7 +164,6 @@ fn bench_db() -> R {
                 error_code: 0,
                 pool_id: 0,
                 shard_id: 0,
-                _pad: [0; 4],
                 meta_bytes: [0; 160],
             }
         );
@@ -187,13 +185,12 @@ fn bench_mq() -> R {
                 group_hash: 0xCCCC,
                 offset: 123456,
                 message_bytes: 512,
-                e2e_latency_us: 80,
+                e2e_latency_ns: 80_000,
                 op_type: 0,
                 partition: 3,
                 retries: 0,
                 compression: 0,
-                _pad: [0; 4],
-                meta_bytes: [0; 152],
+                meta_bytes: [0; 148],
             }
         );
     }

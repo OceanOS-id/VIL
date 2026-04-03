@@ -10,5 +10,5 @@ pub struct ElasticClientState {
     pub total_indexes: u64,
     pub total_searches: u64,
     pub total_errors: u64,
-    pub avg_latency_us: u32,
+    pub avg_latency_ns: u64,
 }

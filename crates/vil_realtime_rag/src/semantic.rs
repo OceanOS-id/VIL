@@ -16,7 +16,7 @@ pub struct RealtimeRagEvent {
     pub query_embedding_dim: usize,
     pub chunks_retrieved: u32,
     pub from_cache: bool,
-    pub search_time_us: u64,
+    pub search_time_ns: u64,
 }
 
 // ── Faults (Control Lane, error signals) ────────────────────────────
@@ -67,5 +67,5 @@ pub struct RealtimeRagState {
     pub doc_count: u64,
     pub cache_entries: u64,
     pub total_queries: u64,
-    pub avg_search_time_us: u64,
+    pub avg_search_time_ns: u64,
 }

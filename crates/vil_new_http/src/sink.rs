@@ -17,9 +17,9 @@ use std::time::Duration;
 static INBOUND_REQUESTS: AtomicU64 = AtomicU64::new(0);
 static INBOUND_COMPLETED: AtomicU64 = AtomicU64::new(0);
 static INBOUND_ERRORS: AtomicU64 = AtomicU64::new(0);
-static INBOUND_LATENCY_SUM_US: AtomicU64 = AtomicU64::new(0);
-static INBOUND_MIN_US: AtomicU64 = AtomicU64::new(u64::MAX);
-static INBOUND_MAX_US: AtomicU64 = AtomicU64::new(0);
+static INBOUND_LATENCY_SUM_NS: AtomicU64 = AtomicU64::new(0);
+static INBOUND_MIN_NS: AtomicU64 = AtomicU64::new(u64::MAX);
+static INBOUND_MAX_NS: AtomicU64 = AtomicU64::new(0);
 
 /// Latency histogram — same bucket boundaries as obs_middleware.
 const LATENCY_BUCKETS: [u64; 40] = [
@@ -34,16 +34,16 @@ static INBOUND_BUCKETS: [AtomicU64; 41] = {
     [ZERO; 41]
 };
 
-fn record_inbound_latency(duration_us: u64) {
+fn record_inbound_latency(duration_ns: u64) {
     INBOUND_COMPLETED.fetch_add(1, Ordering::Relaxed);
-    INBOUND_LATENCY_SUM_US.fetch_add(duration_us, Ordering::Relaxed);
+    INBOUND_LATENCY_SUM_NS.fetch_add(duration_ns, Ordering::Relaxed);
 
     // min (CAS)
-    let mut cur = INBOUND_MIN_US.load(Ordering::Relaxed);
-    while duration_us < cur {
-        match INBOUND_MIN_US.compare_exchange_weak(
+    let mut cur = INBOUND_MIN_NS.load(Ordering::Relaxed);
+    while duration_ns < cur {
+        match INBOUND_MIN_NS.compare_exchange_weak(
             cur,
-            duration_us,
+            duration_ns,
             Ordering::Relaxed,
             Ordering::Relaxed,
         ) {
@@ -52,11 +52,11 @@ fn record_inbound_latency(duration_us: u64) {
         }
     }
     // max (CAS)
-    let mut cur = INBOUND_MAX_US.load(Ordering::Relaxed);
-    while duration_us > cur {
-        match INBOUND_MAX_US.compare_exchange_weak(
+    let mut cur = INBOUND_MAX_NS.load(Ordering::Relaxed);
+    while duration_ns > cur {
+        match INBOUND_MAX_NS.compare_exchange_weak(
             cur,
-            duration_us,
+            duration_ns,
             Ordering::Relaxed,
             Ordering::Relaxed,
         ) {
@@ -67,7 +67,7 @@ fn record_inbound_latency(duration_us: u64) {
     // bucket
     let idx = LATENCY_BUCKETS
         .iter()
-        .position(|&b| duration_us <= b)
+        .position(|&b| duration_ns <= b)
         .unwrap_or(LATENCY_BUCKETS.len());
     INBOUND_BUCKETS[idx].fetch_add(1, Ordering::Relaxed);
 }
@@ -101,20 +101,20 @@ pub fn inbound_snapshot() -> InboundSnapshot {
     let reqs = INBOUND_REQUESTS.load(Ordering::Relaxed);
     let completed = INBOUND_COMPLETED.load(Ordering::Relaxed);
     let errs = INBOUND_ERRORS.load(Ordering::Relaxed);
-    let sum = INBOUND_LATENCY_SUM_US.load(Ordering::Relaxed);
-    let min = INBOUND_MIN_US.load(Ordering::Relaxed);
-    let max = INBOUND_MAX_US.load(Ordering::Relaxed);
+    let sum = INBOUND_LATENCY_SUM_NS.load(Ordering::Relaxed);
+    let min = INBOUND_MIN_NS.load(Ordering::Relaxed);
+    let max = INBOUND_MAX_NS.load(Ordering::Relaxed);
     InboundSnapshot {
         requests: reqs,
         completed,
         in_flight: reqs.saturating_sub(completed),
         errors: errs,
-        avg_latency_us: if completed > 0 { sum / completed } else { 0 },
-        min_latency_us: if min == u64::MAX { 0 } else { min },
-        max_latency_us: max,
-        p95_us: percentile_from_buckets(0.95),
-        p99_us: percentile_from_buckets(0.99),
-        p999_us: percentile_from_buckets(0.999),
+        avg_latency_ns: if completed > 0 { sum / completed } else { 0 },
+        min_latency_ns: if min == u64::MAX { 0 } else { min },
+        max_latency_ns: max,
+        p95_ns: percentile_from_buckets(0.95),
+        p99_ns: percentile_from_buckets(0.99),
+        p999_ns: percentile_from_buckets(0.999),
     }
 }
 
@@ -124,12 +124,12 @@ pub struct InboundSnapshot {
     pub completed: u64,
     pub in_flight: u64,
     pub errors: u64,
-    pub avg_latency_us: u64,
-    pub min_latency_us: u64,
-    pub max_latency_us: u64,
-    pub p95_us: u64,
-    pub p99_us: u64,
-    pub p999_us: u64,
+    pub avg_latency_ns: u64,
+    pub min_latency_ns: u64,
+    pub max_latency_ns: u64,
+    pub p95_ns: u64,
+    pub p99_ns: u64,
+    pub p999_ns: u64,
 }
 
 use axum::{
@@ -646,7 +646,7 @@ async fn handle_webhook<T: StreamTokenLike>(
     impl<T: StreamTokenLike> Drop for SessionGuard<T> {
         fn drop(&mut self) {
             self.registry.cleanup(self.id);
-            let dur = self.start.elapsed().as_micros() as u64;
+            let dur = self.start.elapsed().as_nanos() as u64;
             record_inbound_latency(dur);
         }
     }

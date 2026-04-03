@@ -69,7 +69,7 @@ pub struct MultiWorkflowState {
 pub struct WorkflowCycleCompleted {
     pub workflow_id: u8,
     pub request_id: u64,
-    pub latency_us: u64,
+    pub latency_ns: u64,
     pub format: u8,
 }
 

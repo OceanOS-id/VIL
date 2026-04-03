@@ -27,7 +27,7 @@ pub struct PipelineState {
 pub struct PipelineCompleted {
     pub request_id: u64,
     pub total_records: u64,
-    pub duration_us: u64,
+    pub duration_ns: u64,
 }
 
 #[vil_fault]

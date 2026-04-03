@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 pub struct OrmMetrics {
     pub queries_total: AtomicU64,
     pub query_errors: AtomicU64,
-    pub query_duration_sum_us: AtomicU64,
+    pub query_duration_sum_ns: AtomicU64,
     pub acquires_total: AtomicU64,
     pub health_ok: AtomicU64,
     pub health_fail: AtomicU64,
@@ -19,7 +19,7 @@ impl OrmMetrics {
         Self {
             queries_total: AtomicU64::new(0),
             query_errors: AtomicU64::new(0),
-            query_duration_sum_us: AtomicU64::new(0),
+            query_duration_sum_ns: AtomicU64::new(0),
             acquires_total: AtomicU64::new(0),
             health_ok: AtomicU64::new(0),
             health_fail: AtomicU64::new(0),
@@ -27,10 +27,10 @@ impl OrmMetrics {
         }
     }
 
-    pub fn record_query(&self, duration_us: u64, is_error: bool) {
+    pub fn record_query(&self, duration_ns: u64, is_error: bool) {
         self.queries_total.fetch_add(1, Ordering::Relaxed);
-        self.query_duration_sum_us
-            .fetch_add(duration_us, Ordering::Relaxed);
+        self.query_duration_sum_ns
+            .fetch_add(duration_ns, Ordering::Relaxed);
         if is_error {
             self.query_errors.fetch_add(1, Ordering::Relaxed);
         }

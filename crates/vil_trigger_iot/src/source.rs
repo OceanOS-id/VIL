@@ -117,7 +117,7 @@ impl IotTrigger {
                         group_hash: kind_hash,
                         offset: seq,
                         message_bytes: msg_len,
-                        e2e_latency_us: elapsed.as_micros() as u32,
+                        e2e_latency_ns: elapsed.as_nanos() as u64,
                         op_type: 1, // consume
                         partition: publish.qos as u8,
                         retries: 0,

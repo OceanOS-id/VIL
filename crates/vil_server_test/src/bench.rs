@@ -38,12 +38,12 @@ pub struct BenchReport {
     pub failed: usize,
     pub total_duration: Duration,
     pub requests_per_sec: f64,
-    pub latency_min_us: u64,
-    pub latency_max_us: u64,
-    pub latency_mean_us: u64,
-    pub latency_p50_us: u64,
-    pub latency_p95_us: u64,
-    pub latency_p99_us: u64,
+    pub latency_min_ns: u64,
+    pub latency_max_ns: u64,
+    pub latency_mean_ns: u64,
+    pub latency_p50_ns: u64,
+    pub latency_p95_ns: u64,
+    pub latency_p99_ns: u64,
     pub bytes_transferred: u64,
 }
 
@@ -113,8 +113,8 @@ impl BenchRunner {
 
             let req_start = Instant::now();
             let response = self.app.clone().oneshot(req).await;
-            let latency_us = req_start.elapsed().as_micros() as u64;
-            latencies.push(latency_us);
+            let latency_ns = req_start.elapsed().as_nanos() as u64;
+            latencies.push(latency_ns);
 
             match response {
                 Ok(resp) => {
@@ -144,16 +144,16 @@ impl BenchRunner {
             failed,
             total_duration,
             requests_per_sec: self.requests as f64 / total_duration.as_secs_f64(),
-            latency_min_us: *latencies.first().unwrap_or(&0),
-            latency_max_us: *latencies.last().unwrap_or(&0),
-            latency_mean_us: if len > 0 {
+            latency_min_ns: *latencies.first().unwrap_or(&0),
+            latency_max_ns: *latencies.last().unwrap_or(&0),
+            latency_mean_ns: if len > 0 {
                 latencies.iter().sum::<u64>() / len as u64
             } else {
                 0
             },
-            latency_p50_us: percentile(&latencies, 50),
-            latency_p95_us: percentile(&latencies, 95),
-            latency_p99_us: percentile(&latencies, 99),
+            latency_p50_ns: percentile(&latencies, 50),
+            latency_p95_ns: percentile(&latencies, 95),
+            latency_p99_ns: percentile(&latencies, 99),
             bytes_transferred,
         }
     }
@@ -182,12 +182,12 @@ impl std::fmt::Display for BenchReport {
         )?;
         writeln!(f, "  Throughput:   {:.0} req/s", self.requests_per_sec)?;
         writeln!(f, "  Latency:")?;
-        writeln!(f, "    min:  {}µs", self.latency_min_us)?;
-        writeln!(f, "    mean: {}µs", self.latency_mean_us)?;
-        writeln!(f, "    p50:  {}µs", self.latency_p50_us)?;
-        writeln!(f, "    p95:  {}µs", self.latency_p95_us)?;
-        writeln!(f, "    p99:  {}µs", self.latency_p99_us)?;
-        writeln!(f, "    max:  {}µs", self.latency_max_us)?;
+        writeln!(f, "    min:  {}ns", self.latency_min_ns)?;
+        writeln!(f, "    mean: {}ns", self.latency_mean_ns)?;
+        writeln!(f, "    p50:  {}ns", self.latency_p50_ns)?;
+        writeln!(f, "    p95:  {}ns", self.latency_p95_ns)?;
+        writeln!(f, "    p99:  {}ns", self.latency_p99_ns)?;
+        writeln!(f, "    max:  {}ns", self.latency_max_ns)?;
         Ok(())
     }
 }

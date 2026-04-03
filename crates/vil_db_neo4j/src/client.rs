@@ -23,7 +23,7 @@ use crate::types::Neo4jResult;
 /// Every operation automatically emits a `db_log!` entry with:
 /// - `db_hash`       — FxHash of `"neo4j"`
 /// - `query_hash`    — FxHash of the Cypher query string
-/// - `duration_us`   — Wall-clock time of the operation
+/// - `duration_ns`   — Wall-clock time of the operation
 /// - `rows_affected` — Nodes/rows created/matched/returned
 /// - `op_type`       — 0=MATCH 1=CREATE 4=CALL (transaction)
 /// - `error_code`    — 0 on success, non-zero on fault
@@ -91,7 +91,7 @@ pub(crate) fn emit_db_log(
     db_hash: u32,
     query: &str,
     op_type: u8,
-    duration_us: u32,
+    duration_ns: u64,
     rows_affected: u32,
     error_code: u8,
     pool_id: u16,
@@ -102,7 +102,7 @@ pub(crate) fn emit_db_log(
         DbPayload {
             db_hash,
             query_hash,
-            duration_us,
+            duration_ns,
             rows_affected,
             op_type,
             error_code,

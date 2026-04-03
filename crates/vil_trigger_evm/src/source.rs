@@ -145,7 +145,7 @@ impl EvmTrigger {
                             group_hash: sig_hash,
                             offset: seq,
                             message_bytes: data_len,
-                            e2e_latency_us: elapsed.as_micros() as u32,
+                            e2e_latency_ns: elapsed.as_nanos() as u64,
                             op_type: 1, // consume
                             partition: 0,
                             retries: 0,

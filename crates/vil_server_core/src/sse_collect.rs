@@ -403,7 +403,7 @@ impl SseCollect {
         let resp = match req.send().await {
             Ok(r) => r,
             Err(e) => {
-                let dur = start.elapsed().as_micros() as u64;
+                let dur = start.elapsed().as_nanos() as u64;
                 crate::upstream_metrics::record_end(&upstream_url, dur, 0, true);
                 return Err(SseCollectError::Request(e.to_string()));
             }
@@ -427,7 +427,7 @@ impl SseCollect {
                     let evt = evt.trim();
                     if let Some(ref de) = self.done_event {
                         if evt == de {
-                            let dur = start.elapsed().as_micros() as u64;
+                            let dur = start.elapsed().as_nanos() as u64;
                             crate::upstream_metrics::record_end(&upstream_url, dur, status, false);
                             return Ok(content);
                         }
@@ -445,7 +445,7 @@ impl SseCollect {
 
                     if let Some(ref dm) = self.done_marker {
                         if data == dm {
-                            let dur = start.elapsed().as_micros() as u64;
+                            let dur = start.elapsed().as_nanos() as u64;
                             crate::upstream_metrics::record_end(&upstream_url, dur, status, false);
                             return Ok(content);
                         }
@@ -454,7 +454,7 @@ impl SseCollect {
                     if let Some((ref field, ref expected)) = self.done_json_field {
                         if let Ok(json) = serde_json::from_str::<serde_json::Value>(data) {
                             if &json[field.as_str()] == expected {
-                                let dur = start.elapsed().as_micros() as u64;
+                                let dur = start.elapsed().as_nanos() as u64;
                                 crate::upstream_metrics::record_end(
                                     &upstream_url,
                                     dur,
@@ -493,7 +493,7 @@ impl SseCollect {
             }
         }
 
-        let dur = start.elapsed().as_micros() as u64;
+        let dur = start.elapsed().as_nanos() as u64;
         crate::upstream_metrics::record_end(&upstream_url, dur, status, false);
         Ok(content)
     }

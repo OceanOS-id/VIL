@@ -48,7 +48,7 @@ impl PulsarClient {
                     broker_hash: register_str("pulsar"),
                     topic_hash: url_hash,
                     message_bytes: 0,
-                    e2e_latency_us: __start.elapsed().as_micros() as u32,
+                    e2e_latency_ns: __start.elapsed().as_nanos() as u64,
                     op_type: 1, // consume (connection = setup for consume)
                     ..Default::default()
                 }

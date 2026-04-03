@@ -62,7 +62,7 @@ impl DynamoClient {
             .set_key(Some(key))
             .send()
             .await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(out) => {
@@ -72,7 +72,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_GET,
-                    elapsed_us,
+                    elapsed_ns,
                     rows,
                     0,
                     self.pool_id(),
@@ -84,7 +84,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_GET,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -119,7 +119,7 @@ impl DynamoClient {
             .set_item(Some(item))
             .send()
             .await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(_) => {
@@ -127,7 +127,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_PUT,
-                    elapsed_us,
+                    elapsed_ns,
                     1,
                     0,
                     self.pool_id(),
@@ -139,7 +139,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_PUT,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -174,7 +174,7 @@ impl DynamoClient {
             .set_key(Some(key))
             .send()
             .await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(_) => {
@@ -182,7 +182,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_DELETE,
-                    elapsed_us,
+                    elapsed_ns,
                     1,
                     0,
                     self.pool_id(),
@@ -194,7 +194,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_DELETE,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -232,7 +232,7 @@ impl DynamoClient {
             .set_expression_attribute_values(Some(expr_attr_values))
             .send()
             .await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(out) => {
@@ -242,7 +242,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_QUERY,
-                    elapsed_us,
+                    elapsed_ns,
                     rows,
                     0,
                     self.pool_id(),
@@ -254,7 +254,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_QUERY,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -293,7 +293,7 @@ impl DynamoClient {
 
         let start = Instant::now();
         let result = req.send().await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(out) => {
@@ -303,7 +303,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_SCAN,
-                    elapsed_us,
+                    elapsed_ns,
                     rows,
                     0,
                     self.pool_id(),
@@ -315,7 +315,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_SCAN,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -354,7 +354,7 @@ impl DynamoClient {
             .set_expression_attribute_values(Some(expr_attr_values))
             .send()
             .await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(_) => {
@@ -362,7 +362,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_UPDATE,
-                    elapsed_us,
+                    elapsed_ns,
                     1,
                     0,
                     self.pool_id(),
@@ -374,7 +374,7 @@ impl DynamoClient {
                     self.db_hash(),
                     table,
                     OP_UPDATE,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),

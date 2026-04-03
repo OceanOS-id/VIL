@@ -27,7 +27,7 @@ struct EndpointInfo {
     path: String,
     requests: u64,
     error_rate: f64,
-    avg_latency_us: u64,
+    avg_latency_ns: u64,
 }
 
 // ── New types ──────────────────────────────────────────────────────────────
@@ -38,10 +38,10 @@ struct RouteInfo {
     path: String,
     exec_class: String,
     request_count: u64,
-    avg_latency_us: u64,
-    p95_us: u64,
-    p99_us: u64,
-    p999_us: u64,
+    avg_latency_ns: u64,
+    p95_ns: u64,
+    p99_ns: u64,
+    p999_ns: u64,
     error_rate: f64,
 }
 
@@ -56,7 +56,7 @@ struct ShmStats {
 
 #[derive(Serialize)]
 struct LogEntry {
-    timestamp_us: u64,
+    timestamp_ns: u64,
     level: String,
     module: String,
     message: String,
@@ -97,7 +97,7 @@ async fn topology(
                 path: snap.path.clone(),
                 requests: snap.requests,
                 error_rate: snap.error_rate,
-                avg_latency_us: snap.avg_latency_us,
+                avg_latency_ns: snap.avg_latency_ns,
             });
     }
 
@@ -150,13 +150,13 @@ async fn routes(Extension(collector): Extension<Arc<MetricsCollector>>) -> Json<
         .iter()
         .map(|snap| {
             // Classify exec_class heuristically from avg latency
-            let exec_class = if snap.avg_latency_us == 0 {
+            let exec_class = if snap.avg_latency_ns == 0 {
                 "unknown"
-            } else if snap.avg_latency_us < 1_000 {
+            } else if snap.avg_latency_ns < 1_000 {
                 "fast" // < 1 ms
-            } else if snap.avg_latency_us < 10_000 {
+            } else if snap.avg_latency_ns < 10_000 {
                 "normal" // < 10 ms
-            } else if snap.avg_latency_us < 100_000 {
+            } else if snap.avg_latency_ns < 100_000 {
                 "slow" // < 100 ms
             } else {
                 "very_slow"
@@ -166,10 +166,10 @@ async fn routes(Extension(collector): Extension<Arc<MetricsCollector>>) -> Json<
                 path: snap.path.clone(),
                 exec_class: exec_class.into(),
                 request_count: snap.requests,
-                avg_latency_us: snap.avg_latency_us,
-                p95_us: snap.p95_us,
-                p99_us: snap.p99_us,
-                p999_us: snap.p999_us,
+                avg_latency_ns: snap.avg_latency_ns,
+                p95_ns: snap.p95_ns,
+                p99_ns: snap.p99_ns,
+                p999_ns: snap.p999_ns,
                 error_rate: snap.error_rate,
             }
         })
@@ -321,14 +321,14 @@ async fn prometheus_metrics(
     out.push_str("# TYPE vil_route_requests_total counter\n");
     out.push_str("# HELP vil_route_errors_total Errors per route.\n");
     out.push_str("# TYPE vil_route_errors_total counter\n");
-    out.push_str("# HELP vil_route_latency_avg_us Average latency per route.\n");
-    out.push_str("# TYPE vil_route_latency_avg_us gauge\n");
-    out.push_str("# HELP vil_route_latency_p95_us P95 latency per route.\n");
-    out.push_str("# TYPE vil_route_latency_p95_us gauge\n");
-    out.push_str("# HELP vil_route_latency_p99_us P99 latency per route.\n");
-    out.push_str("# TYPE vil_route_latency_p99_us gauge\n");
-    out.push_str("# HELP vil_route_latency_p999_us P99.9 latency per route.\n");
-    out.push_str("# TYPE vil_route_latency_p999_us gauge\n");
+    out.push_str("# HELP vil_route_latency_avg_ns Average latency per route.\n");
+    out.push_str("# TYPE vil_route_latency_avg_ns gauge\n");
+    out.push_str("# HELP vil_route_latency_p95_ns P95 latency per route.\n");
+    out.push_str("# TYPE vil_route_latency_p95_ns gauge\n");
+    out.push_str("# HELP vil_route_latency_p99_ns P99 latency per route.\n");
+    out.push_str("# TYPE vil_route_latency_p99_ns gauge\n");
+    out.push_str("# HELP vil_route_latency_p999_ns P99.9 latency per route.\n");
+    out.push_str("# TYPE vil_route_latency_p999_ns gauge\n");
 
     for snap in &snapshots {
         let labels = format!(
@@ -337,10 +337,10 @@ async fn prometheus_metrics(
         );
         out.push_str(&format!("vil_route_requests_total{{{}}} {}\n", labels, snap.requests));
         out.push_str(&format!("vil_route_errors_total{{{}}} {}\n", labels, snap.errors));
-        out.push_str(&format!("vil_route_latency_avg_us{{{}}} {}\n", labels, snap.avg_latency_us));
-        out.push_str(&format!("vil_route_latency_p95_us{{{}}} {}\n", labels, snap.p95_us));
-        out.push_str(&format!("vil_route_latency_p99_us{{{}}} {}\n", labels, snap.p99_us));
-        out.push_str(&format!("vil_route_latency_p999_us{{{}}} {}\n", labels, snap.p999_us));
+        out.push_str(&format!("vil_route_latency_avg_ns{{{}}} {}\n", labels, snap.avg_latency_ns));
+        out.push_str(&format!("vil_route_latency_p95_ns{{{}}} {}\n", labels, snap.p95_ns));
+        out.push_str(&format!("vil_route_latency_p99_ns{{{}}} {}\n", labels, snap.p99_ns));
+        out.push_str(&format!("vil_route_latency_p999_ns{{{}}} {}\n", labels, snap.p999_ns));
     }
 
     // System metrics (if available via procfs)
@@ -499,31 +499,31 @@ async fn alert_status(
     // P99 latency alert per route
     for snap in &snapshots {
         if snap.requests < 10 { continue; } // skip low-traffic routes
-        if snap.p99_us > 5_000_000 { // > 5 seconds
-            let msg = format!("{} {} p99={:.0}ms exceeds 5000ms", snap.method, snap.path, snap.p99_us as f64 / 1000.0);
+        if snap.p99_ns > 5_000_000 { // > 5 seconds
+            let msg = format!("{} {} p99={:.0}ms exceeds 5000ms", snap.method, snap.path, snap.p99_ns as f64 / 1000.0);
             eprintln!("[VIL ALERT] CRITICAL: {}", msg);
             alerts.push(Alert {
                 level: "critical",
                 metric: format!("p99_latency:{}:{}", snap.method, snap.path),
                 message: msg,
-                value: format!("{:.0}ms", snap.p99_us as f64 / 1000.0),
+                value: format!("{:.0}ms", snap.p99_ns as f64 / 1000.0),
                 threshold: "5000ms".into(),
             });
-        } else if snap.p99_us > 1_000_000 { // > 1 second
-            let msg = format!("{} {} p99={:.0}ms exceeds 1000ms", snap.method, snap.path, snap.p99_us as f64 / 1000.0);
+        } else if snap.p99_ns > 1_000_000 { // > 1 second
+            let msg = format!("{} {} p99={:.0}ms exceeds 1000ms", snap.method, snap.path, snap.p99_ns as f64 / 1000.0);
             eprintln!("[VIL ALERT] WARNING: {}", msg);
             alerts.push(Alert {
                 level: "warning",
                 metric: format!("p99_latency:{}:{}", snap.method, snap.path),
                 message: msg,
-                value: format!("{:.0}ms", snap.p99_us as f64 / 1000.0),
+                value: format!("{:.0}ms", snap.p99_ns as f64 / 1000.0),
                 threshold: "1000ms".into(),
             });
         }
 
         // Spread alert: p99/p50 > 10x
-        if snap.avg_latency_us > 0 && snap.p99_us > snap.avg_latency_us * 10 {
-            let spread = snap.p99_us as f64 / snap.avg_latency_us as f64;
+        if snap.avg_latency_ns > 0 && snap.p99_ns > snap.avg_latency_ns * 10 {
+            let spread = snap.p99_ns as f64 / snap.avg_latency_ns as f64;
             let msg = format!("{} {} spread p99/avg={:.1}x — high variance", snap.method, snap.path, spread);
             eprintln!("[VIL ALERT] WARNING: {}", msg);
             alerts.push(Alert {

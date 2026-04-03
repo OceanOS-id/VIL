@@ -33,7 +33,7 @@ pub struct RealtimeQueryResult {
     /// Whether the query embedding was served from cache.
     pub from_cache: bool,
     /// Wall-clock search time in microseconds.
-    pub search_time_us: u64,
+    pub search_time_ns: u64,
 }
 
 impl RealtimeRagPipeline {
@@ -71,14 +71,14 @@ impl RealtimeRagPipeline {
     pub fn query_with_embedding(&self, query_embedding: &[f32]) -> RealtimeQueryResult {
         let start = Instant::now();
         let chunks = self.index.search(query_embedding, self.top_k);
-        let search_time_us = start.elapsed().as_micros() as u64;
+        let search_time_ns = start.elapsed().as_nanos() as u64;
 
         let context = self.format_context(&chunks);
         RealtimeQueryResult {
             context,
             chunks,
             from_cache: false,
-            search_time_us,
+            search_time_ns,
         }
     }
 
@@ -97,14 +97,14 @@ impl RealtimeRagPipeline {
 
         let start = Instant::now();
         let chunks = self.index.search(&embedding, self.top_k);
-        let search_time_us = start.elapsed().as_micros() as u64;
+        let search_time_ns = start.elapsed().as_nanos() as u64;
 
         let context = self.format_context(&chunks);
         RealtimeQueryResult {
             context,
             chunks,
             from_cache,
-            search_time_us,
+            search_time_ns,
         }
     }
 

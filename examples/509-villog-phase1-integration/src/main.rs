@@ -79,7 +79,7 @@ fn simulate_s3_put(bucket: &str, key: &str, _size: u64) {
             db_hash: vil_log::dict::register_str("s3"),
             table_hash: vil_log::dict::register_str(bucket),
             query_hash: vil_log::dict::register_str(key),
-            duration_us: elapsed.as_micros() as u32,
+            duration_ns: elapsed.as_nanos() as u64,
             rows_affected: 1,
             op_type: 1, // INSERT (put)
             prepared: 0,
@@ -87,7 +87,6 @@ fn simulate_s3_put(bucket: &str, key: &str, _size: u64) {
             error_code: 0,
             pool_id: 0,
             shard_id: 0,
-            _pad: [0; 4],
             meta_bytes: [0; 160],
         }
     );
@@ -104,7 +103,7 @@ fn simulate_mongo_find(collection: &str, count: u32) {
             db_hash: vil_log::dict::register_str("mongodb"),
             table_hash: vil_log::dict::register_str(collection),
             query_hash: vil_log::dict::register_str("find_many"),
-            duration_us: elapsed.as_micros() as u32,
+            duration_ns: elapsed.as_nanos() as u64,
             rows_affected: count,
             op_type: 0, // SELECT
             prepared: 0,
@@ -112,7 +111,6 @@ fn simulate_mongo_find(collection: &str, count: u32) {
             error_code: 0,
             pool_id: 0,
             shard_id: 0,
-            _pad: [0; 4],
             meta_bytes: [0; 160],
         }
     );
@@ -129,7 +127,7 @@ fn simulate_clickhouse_batch(table: &str, rows: u32) {
             db_hash: vil_log::dict::register_str("clickhouse"),
             table_hash: vil_log::dict::register_str(table),
             query_hash: vil_log::dict::register_str("batch_insert"),
-            duration_us: elapsed.as_micros() as u32,
+            duration_ns: elapsed.as_nanos() as u64,
             rows_affected: rows,
             op_type: 1, // INSERT
             prepared: 0,
@@ -137,7 +135,6 @@ fn simulate_clickhouse_batch(table: &str, rows: u32) {
             error_code: 0,
             pool_id: 0,
             shard_id: 0,
-            _pad: [0; 4],
             meta_bytes: [0; 160],
         }
     );
@@ -154,7 +151,7 @@ fn simulate_elastic_search(index: &str, hits: u32) {
             db_hash: vil_log::dict::register_str("elasticsearch"),
             table_hash: vil_log::dict::register_str(index),
             query_hash: vil_log::dict::register_str("search"),
-            duration_us: elapsed.as_micros() as u32,
+            duration_ns: elapsed.as_nanos() as u64,
             rows_affected: hits,
             op_type: 0, // SELECT
             prepared: 0,
@@ -162,7 +159,6 @@ fn simulate_elastic_search(index: &str, hits: u32) {
             error_code: 0,
             pool_id: 0,
             shard_id: 0,
-            _pad: [0; 4],
             meta_bytes: [0; 160],
         }
     );
@@ -179,7 +175,7 @@ fn simulate_neo4j_cypher(query: &str, nodes: u32) {
             db_hash: vil_log::dict::register_str("neo4j"),
             table_hash: vil_log::dict::register_str("graph"),
             query_hash: vil_log::dict::register_str(query),
-            duration_us: elapsed.as_micros() as u32,
+            duration_ns: elapsed.as_nanos() as u64,
             rows_affected: nodes,
             op_type: 0, // SELECT (match)
             prepared: 0,
@@ -187,7 +183,6 @@ fn simulate_neo4j_cypher(query: &str, nodes: u32) {
             error_code: 0,
             pool_id: 0,
             shard_id: 0,
-            _pad: [0; 4],
             meta_bytes: [0; 160],
         }
     );
@@ -204,7 +199,7 @@ fn simulate_db_error(db: &str, table: &str) {
             db_hash: vil_log::dict::register_str(db),
             table_hash: vil_log::dict::register_str(table),
             query_hash: vil_log::dict::register_str("failed_op"),
-            duration_us: elapsed.as_micros() as u32,
+            duration_ns: elapsed.as_nanos() as u64,
             rows_affected: 0,
             op_type: 0,
             prepared: 0,
@@ -212,7 +207,6 @@ fn simulate_db_error(db: &str, table: &str) {
             error_code: 1, // error!
             pool_id: 0,
             shard_id: 0,
-            _pad: [0; 4],
             meta_bytes: [0; 160],
         }
     );
@@ -233,7 +227,7 @@ fn bench_db_log_throughput() -> Duration {
                 db_hash: 0x1111,
                 table_hash: 0x2222,
                 query_hash: 0x3333,
-                duration_us: 450,
+                duration_ns: 450,
                 rows_affected: 1,
                 op_type: (i % 4) as u8,
                 prepared: 1,
@@ -241,7 +235,6 @@ fn bench_db_log_throughput() -> Duration {
                 error_code: 0,
                 pool_id: 0,
                 shard_id: 0,
-                _pad: [0; 4],
                 meta_bytes: [0; 160],
             }
         );
@@ -265,7 +258,7 @@ fn bench_db_log_multithread(threads: usize) -> Duration {
                             db_hash: 0x1111,
                             table_hash: 0x2222,
                             query_hash: 0x3333,
-                            duration_us: 450,
+                            duration_ns: 450,
                             rows_affected: 1,
                             op_type: (i % 4) as u8,
                             prepared: 1,
@@ -273,7 +266,6 @@ fn bench_db_log_multithread(threads: usize) -> Duration {
                             error_code: 0,
                             pool_id: 0,
                             shard_id: 0,
-                            _pad: [0; 4],
                             meta_bytes: [0; 160],
                         }
                     );

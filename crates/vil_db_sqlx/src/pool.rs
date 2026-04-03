@@ -79,8 +79,8 @@ impl SqlxPool {
     pub async fn execute_raw(&self, sql: &str) -> Result<u64, sqlx::Error> {
         let start = std::time::Instant::now();
         let result = sqlx::query(sql).execute(&self.pool).await?;
-        let duration_us = start.elapsed().as_micros() as u64;
-        self.metrics.record_query(duration_us, false);
+        let duration_ns = start.elapsed().as_nanos() as u64;
+        self.metrics.record_query(duration_ns, false);
         Ok(result.rows_affected())
     }
 
@@ -98,8 +98,8 @@ impl vil_server_db::DbPool for SqlxPool {
     async fn acquire(&self) -> Result<Self::Connection, Self::Error> {
         let start = std::time::Instant::now();
         let conn = self.pool.acquire().await?;
-        let duration_us = start.elapsed().as_micros() as u64;
-        self.metrics.record_acquire(duration_us);
+        let duration_ns = start.elapsed().as_nanos() as u64;
+        self.metrics.record_acquire(duration_ns);
         Ok(conn)
     }
 

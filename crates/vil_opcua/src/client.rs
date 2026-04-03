@@ -31,7 +31,7 @@ use crate::error::OpcUaFault;
 /// Every operation automatically emits a `db_log!` entry with:
 /// - `db_hash`      — FxHash of the endpoint URL
 /// - `table_hash`   — FxHash of the node ID
-/// - `duration_us`  — Wall-clock time of the operation
+/// - `duration_ns`  — Wall-clock time of the operation
 /// - `op_type`      — 0=read, 2=write, 4=subscribe
 /// - `error_code`   — 0 on success, non-zero on fault
 ///
@@ -118,7 +118,7 @@ impl OpcUaClient {
                 db_hash: self.endpoint_hash,
                 table_hash: node_hash,
                 query_hash: node_hash,
-                duration_us: elapsed.as_micros() as u32,
+                duration_ns: elapsed.as_nanos() as u64,
                 rows_affected: rows,
                 op_type: 0, // SELECT / read
                 error_code: err_code,
@@ -171,7 +171,7 @@ impl OpcUaClient {
                 db_hash: self.endpoint_hash,
                 table_hash: node_hash,
                 query_hash: node_hash,
-                duration_us: elapsed.as_micros() as u32,
+                duration_ns: elapsed.as_nanos() as u64,
                 rows_affected: 1,
                 op_type: 2, // UPDATE / write
                 error_code: err_code,
@@ -245,7 +245,7 @@ impl OpcUaClient {
                 db_hash: self.endpoint_hash,
                 table_hash: node_hash,
                 query_hash: node_hash,
-                duration_us: elapsed.as_micros() as u32,
+                duration_ns: elapsed.as_nanos() as u64,
                 rows_affected: 0,
                 op_type: 4, // CALL — subscribe
                 error_code: err_code,

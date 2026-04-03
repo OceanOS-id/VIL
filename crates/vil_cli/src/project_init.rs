@@ -1897,7 +1897,7 @@ semantic_types:
     fields:
       - {{ name: request_id, type: u64 }}
       - {{ name: tokens_received, type: u32 }}
-      - {{ name: latency_us, type: u64 }}
+      - {{ name: latency_ns, type: u64 }}
       - {{ name: stream_active, type: bool }}
 
   - name: InferenceCompleted
@@ -1905,7 +1905,7 @@ semantic_types:
     fields:
       - {{ name: request_id, type: u64 }}
       - {{ name: total_tokens, type: u32 }}
-      - {{ name: duration_us, type: u64 }}
+      - {{ name: duration_ns, type: u64 }}
       - {{ name: status_code, type: u16 }}
 
   - name: InferenceFault

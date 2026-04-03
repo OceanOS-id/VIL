@@ -10,5 +10,5 @@ pub struct TimeseriesClientState {
     pub total_writes: u64,
     pub total_queries: u64,
     pub total_errors: u64,
-    pub avg_latency_us: u32,
+    pub avg_latency_ns: u64,
 }

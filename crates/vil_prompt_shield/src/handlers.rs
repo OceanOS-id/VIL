@@ -33,7 +33,7 @@ pub struct ScanResponseBody {
     pub risk_level: String,
     pub score: f64,
     pub threat_count: usize,
-    pub scan_time_us: u64,
+    pub scan_time_ns: u64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -41,7 +41,7 @@ pub struct ShieldStatsBody {
     pub total_scans: u64,
     pub total_blocked: u64,
     pub total_safe: u64,
-    pub avg_scan_time_us: f64,
+    pub avg_scan_time_ns: f64,
     pub pattern_count: usize,
 }
 
@@ -69,7 +69,7 @@ pub async fn scan_handler(
         safe: result.safe,
         risk_score: result.score,
         threat_count: result.threats.len(),
-        scan_time_us: result.scan_time_us,
+        scan_time_ns: result.scan_time_ns,
     };
 
     if let Ok(mut s) = state.lock() {
@@ -81,7 +81,7 @@ pub async fn scan_handler(
         risk_level: format!("{:?}", result.risk_level),
         score: result.score,
         threat_count: result.threats.len(),
-        scan_time_us: result.scan_time_us,
+        scan_time_ns: result.scan_time_ns,
     }))
 }
 
@@ -96,7 +96,7 @@ pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<ShieldStatsBody> {
         total_scans: s.total_scans,
         total_blocked: s.total_blocked,
         total_safe: s.total_safe,
-        avg_scan_time_us: s.avg_scan_time_us,
+        avg_scan_time_ns: s.avg_scan_time_ns,
         pattern_count: shield.pattern_count(),
     })
 }

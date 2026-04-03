@@ -126,7 +126,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                     .bind(id)
                     .fetch_optional(pool)
                     .await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, if result.as_ref().ok().and_then(|r| r.as_ref()).is_some() { 1 } else { 0 }, 0, result.is_err());
                 result
             }
@@ -140,7 +140,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let result = ::sqlx::query_as::<_, Self>(&sql)
                     .fetch_all(pool)
                     .await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.len() as u32).unwrap_or(0), 0, result.is_err());
                 result
             }
@@ -165,7 +165,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 for b in binds { q = q.bind(*b); }
                 let start = ::std::time::Instant::now();
                 let result = q.fetch_all(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.len() as u32).unwrap_or(0), 0, result.is_err());
                 result
             }
@@ -183,7 +183,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 for b in binds { q = q.bind(*b); }
                 let start = ::std::time::Instant::now();
                 let result = q.fetch_optional(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, if result.as_ref().ok().and_then(|r| r.as_ref()).is_some() { 1 } else { 0 }, 0, result.is_err());
                 result
             }
@@ -197,7 +197,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let result = ::sqlx::query_scalar::<_, i64>(&sql)
                     .fetch_one(pool)
                     .await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, 1, 0, result.is_err());
                 result
             }
@@ -213,7 +213,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                     .bind(id)
                     .fetch_one(pool)
                     .await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, 1, 0, result.is_err());
                 result.map(|count: i64| count > 0)
             }
@@ -229,7 +229,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                     .bind(id)
                     .execute(pool)
                     .await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| if r.rows_affected() > 0 { 1 } else { 0 }).unwrap_or(0), 3, result.is_err());
                 result.map(|r| r.rows_affected() > 0)
             }
@@ -252,7 +252,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 for b in binds { q = q.bind(*b); }
                 let start = ::std::time::Instant::now();
                 let result = q.fetch_optional(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, if result.as_ref().ok().and_then(|r| r.as_ref()).is_some() { 1 } else { 0 }, 0, result.is_err());
                 result
             }
@@ -270,7 +270,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 for b in binds { q = q.bind(*b); }
                 let start = ::std::time::Instant::now();
                 let result = q.fetch_all(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.len() as u32).unwrap_or(0), 0, result.is_err());
                 result
             }
@@ -293,7 +293,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 q = q.bind(id);
                 let start = ::std::time::Instant::now();
                 let result = q.execute(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| if r.rows_affected() > 0 { 1 } else { 0 }).unwrap_or(0), 2, result.is_err());
                 result.map(|r| r.rows_affected() > 0)
             }
@@ -311,7 +311,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 for b in binds { q = q.bind(*b); }
                 let start = ::std::time::Instant::now();
                 let result = q.execute(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.rows_affected() as u32).unwrap_or(0), 2, result.is_err());
                 result.map(|r| r.rows_affected())
             }
@@ -329,7 +329,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 for b in binds { q = q.bind(*b); }
                 let start = ::std::time::Instant::now();
                 let result = q.fetch_one(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, 1, 0, result.is_err());
                 result
             }
@@ -351,7 +351,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let args = ::vil_orm::build_args(&binds);
                 let start = ::std::time::Instant::now();
                 let result = ::sqlx::query_with(&sql, args).execute(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.rows_affected() as u32).unwrap_or(0), 1, result.is_err());
                 result.map(|r| r.rows_affected())
             }
@@ -368,7 +368,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let args = ::vil_orm::build_args(&binds);
                 let start = ::std::time::Instant::now();
                 let result = ::sqlx::query_with(&sql, args).execute(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.rows_affected() as u32).unwrap_or(0), 2, result.is_err());
                 result.map(|r| r.rows_affected())
             }
@@ -385,7 +385,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let args = ::vil_orm::build_args(&binds);
                 let start = ::std::time::Instant::now();
                 let result = ::sqlx::query_scalar_with::<_, T, _>(&sql, args).fetch_one(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, 1, 0, result.is_err());
                 result
             }
@@ -401,7 +401,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 let args = ::vil_orm::build_args(&binds);
                 let start = ::std::time::Instant::now();
                 let result = ::sqlx::query_scalar_with::<_, T, _>(&sql, args).fetch_optional(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, if result.as_ref().ok().and_then(|r| r.as_ref()).is_some() { 1 } else { 0 }, 0, result.is_err());
                 result
             }
@@ -417,7 +417,7 @@ pub fn derive_vil_entity(input: TokenStream) -> TokenStream {
                 for b in binds { q = q.bind(*b); }
                 let start = ::std::time::Instant::now();
                 let result = q.execute(pool).await;
-                let dur = start.elapsed().as_micros() as u32;
+                let dur = start.elapsed().as_nanos() as u64;
                 ::vil_orm::log::emit(#table, &sql, dur, result.as_ref().map(|r| r.rows_affected() as u32).unwrap_or(0), 3, result.is_err());
                 result.map(|r| r.rows_affected())
             }

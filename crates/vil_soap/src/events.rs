@@ -12,7 +12,7 @@ pub struct ActionCalled {
     /// FxHash of the endpoint URL.
     pub endpoint_hash: u32,
     /// Round-trip latency in microseconds.
-    pub latency_us: u32,
+    pub latency_ns: u32,
     /// Response payload size in bytes.
     pub response_bytes: u32,
     /// Wall-clock timestamp in nanoseconds (UNIX_EPOCH).

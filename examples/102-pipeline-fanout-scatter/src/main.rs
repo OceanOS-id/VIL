@@ -58,7 +58,7 @@ pub struct ScatterBatchCompleted {
     pub pipeline_name: u8,
     pub record_count: u64,
     pub filtered_count: u64,
-    pub latency_us: u64,
+    pub latency_ns: u64,
 }
 
 /// Faults for the fan-out scatter topology.

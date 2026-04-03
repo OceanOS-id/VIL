@@ -25,7 +25,7 @@ use crate::error::SoapFault;
 /// Every `call_action()` automatically emits a `db_log!` entry with:
 /// - `db_hash`       — FxHash of the endpoint URL
 /// - `table_hash`    — FxHash of the SOAP action name
-/// - `duration_us`   — Wall-clock time of the call
+/// - `duration_ns`   — Wall-clock time of the call
 /// - `op_type`       — 4 (CALL) for all SOAP RPC calls
 /// - `error_code`    — 0 on success, non-zero on fault
 ///
@@ -93,7 +93,7 @@ impl SoapClient {
             .map_err(|e| {
                 let elapsed = start.elapsed();
                 let error_code = if e.is_timeout() { 6u8 } else { 1u8 };
-                self.emit_db_log(action_hash, elapsed.as_micros() as u32, 0, error_code);
+                self.emit_db_log(action_hash, elapsed.as_nanos() as u64, 0, error_code);
                 if e.is_timeout() {
                     SoapFault::Timeout {
                         action_hash,
@@ -110,7 +110,7 @@ impl SoapClient {
         let status = resp.status();
         if !status.is_success() {
             let elapsed = start.elapsed();
-            self.emit_db_log(action_hash, elapsed.as_micros() as u32, 0, 2);
+            self.emit_db_log(action_hash, elapsed.as_nanos() as u64, 0, 2);
             return Err(SoapFault::HttpError {
                 action_hash,
                 status_code: status.as_u16() as u32,
@@ -119,7 +119,7 @@ impl SoapClient {
 
         let xml_body = resp.text().await.map_err(|_| {
             let elapsed = start.elapsed();
-            self.emit_db_log(action_hash, elapsed.as_micros() as u32, 0, 5);
+            self.emit_db_log(action_hash, elapsed.as_nanos() as u64, 0, 5);
             SoapFault::EnvelopeParseFailed {
                 action_hash,
                 reason_code: 2,
@@ -131,14 +131,14 @@ impl SoapClient {
         let elapsed = start.elapsed();
 
         if parsed.is_fault {
-            self.emit_db_log(action_hash, elapsed.as_micros() as u32, 0, 3);
+            self.emit_db_log(action_hash, elapsed.as_nanos() as u64, 0, 3);
             return Err(SoapFault::SoapFaultResponse {
                 faultcode_hash: parsed.faultcode_hash,
                 faultstring_hash: parsed.faultstring_hash,
             });
         }
 
-        self.emit_db_log(action_hash, elapsed.as_micros() as u32, 1, 0);
+        self.emit_db_log(action_hash, elapsed.as_nanos() as u64, 1, 0);
         Ok(parsed)
     }
 
@@ -151,14 +151,14 @@ impl SoapClient {
     // Internal helper — emit db_log! after any call (COMPLIANCE.md §8)
     // -------------------------------------------------------------------------
 
-    fn emit_db_log(&self, action_hash: u32, duration_us: u32, rows_affected: u32, error_code: u8) {
+    fn emit_db_log(&self, action_hash: u32, duration_ns: u64, rows_affected: u32, error_code: u8) {
         db_log!(
             Info,
             DbPayload {
                 db_hash: self.endpoint_hash,
                 table_hash: action_hash,
                 query_hash: action_hash,
-                duration_us,
+                duration_ns,
                 rows_affected,
                 op_type: 4, // CALL — RPC-style SOAP
                 error_code,

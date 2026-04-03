@@ -24,7 +24,7 @@ use crate::types::MongoResult;
 /// Every operation automatically emits a `db_log!` entry with:
 /// - `db_hash`        — FxHash of the database name
 /// - `table_hash`     — FxHash of the collection name
-/// - `duration_us`    — Wall-clock time of the operation
+/// - `duration_ns`    — Wall-clock time of the operation
 /// - `rows_affected`  — Documents matched/modified/inserted
 /// - `op_type`        — 0=SELECT, 1=INSERT, 2=UPDATE, 3=DELETE
 /// - `error_code`     — 0 on success, non-zero on fault
@@ -104,7 +104,7 @@ pub(crate) fn emit_db_log(
     db_hash: u32,
     collection: &str,
     op_type: u8,
-    duration_us: u32,
+    duration_ns: u64,
     rows_affected: u32,
     error_code: u8,
 ) {
@@ -114,7 +114,7 @@ pub(crate) fn emit_db_log(
         DbPayload {
             db_hash,
             table_hash,
-            duration_us,
+            duration_ns,
             rows_affected,
             op_type,
             error_code,

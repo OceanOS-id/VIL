@@ -25,7 +25,7 @@ use crate::types::DynamoResult;
 /// Every operation automatically emits a `db_log!` entry with:
 /// - `db_hash`       — FxHash of `"dynamodb"`
 /// - `table_hash`    — FxHash of the table name
-/// - `duration_us`   — Wall-clock time of the operation
+/// - `duration_ns`   — Wall-clock time of the operation
 /// - `rows_affected` — Items returned/affected
 /// - `op_type`       — 0=GET 1=PUT 2=UPDATE 3=DELETE 4=QUERY 5=SCAN
 /// - `error_code`    — 0 on success, non-zero on fault
@@ -92,7 +92,7 @@ pub(crate) fn emit_db_log(
     db_hash: u32,
     table: &str,
     op_type: u8,
-    duration_us: u32,
+    duration_ns: u64,
     rows_affected: u32,
     error_code: u8,
     pool_id: u16,
@@ -103,7 +103,7 @@ pub(crate) fn emit_db_log(
         DbPayload {
             db_hash,
             table_hash,
-            duration_us,
+            duration_ns,
             rows_affected,
             op_type,
             error_code,

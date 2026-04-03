@@ -10,5 +10,5 @@ pub struct GcsClientState {
     pub total_puts: u64,
     pub total_gets: u64,
     pub total_errors: u64,
-    pub avg_latency_us: u32,
+    pub avg_latency_ns: u32,
 }

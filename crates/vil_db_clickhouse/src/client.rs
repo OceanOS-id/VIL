@@ -7,7 +7,7 @@
 // Every public operation:
 //   1. Records `Instant::now()` at entry.
 //   2. Executes the ClickHouse call.
-//   3. Emits `db_log!(Info/Error, DbPayload { ... })` with elapsed_us before
+//   3. Emits `db_log!(Info/Error, DbPayload { ... })` with elapsed_ns before
 //      returning — regardless of success or failure.
 //
 // op_type codes (DbPayload::op_type):
@@ -86,7 +86,7 @@ impl ChClient {
 
         let result = self.inner.query(sql).fetch_all::<T>().await;
 
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(rows) => {
@@ -96,7 +96,7 @@ impl ChClient {
                         db_hash: self.db_hash,
                         table_hash: 0,
                         query_hash,
-                        duration_us: elapsed_us,
+                        duration_ns: elapsed_ns,
                         rows_affected: rows.len() as u32,
                         op_type: 0, // SELECT
                         error_code: 0,
@@ -113,7 +113,7 @@ impl ChClient {
                         db_hash: self.db_hash,
                         table_hash: 0,
                         query_hash,
-                        duration_us: elapsed_us,
+                        duration_ns: elapsed_ns,
                         rows_affected: 0,
                         op_type: 0, // SELECT
                         error_code: (reason_code & 0xFF) as u8,
@@ -141,7 +141,7 @@ impl ChClient {
 
         let result = self.inner.query(sql).execute().await;
 
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(()) => {
@@ -151,7 +151,7 @@ impl ChClient {
                         db_hash: self.db_hash,
                         table_hash: 0,
                         query_hash,
-                        duration_us: elapsed_us,
+                        duration_ns: elapsed_ns,
                         rows_affected: 0,
                         op_type: 5, // DDL
                         error_code: 0,
@@ -168,7 +168,7 @@ impl ChClient {
                         db_hash: self.db_hash,
                         table_hash: 0,
                         query_hash,
-                        duration_us: elapsed_us,
+                        duration_ns: elapsed_ns,
                         rows_affected: 0,
                         op_type: 5, // DDL
                         error_code: (reason_code & 0xFF) as u8,
@@ -209,7 +209,7 @@ impl ChClient {
         }
         .await;
 
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(()) => {
@@ -219,7 +219,7 @@ impl ChClient {
                         db_hash: self.db_hash,
                         table_hash,
                         query_hash: 0,
-                        duration_us: elapsed_us,
+                        duration_ns: elapsed_ns,
                         rows_affected: row_count as u32,
                         op_type: 1, // INSERT
                         error_code: 0,
@@ -236,7 +236,7 @@ impl ChClient {
                         db_hash: self.db_hash,
                         table_hash,
                         query_hash: 0,
-                        duration_us: elapsed_us,
+                        duration_ns: elapsed_ns,
                         rows_affected: 0,
                         op_type: 1, // INSERT
                         error_code: (reason_code & 0xFF) as u8,

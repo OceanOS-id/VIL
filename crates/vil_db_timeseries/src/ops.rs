@@ -61,7 +61,7 @@ impl TimeseriesClient {
             .raw_influx()
             .write(bucket.as_str(), futures::stream::iter(points))
             .await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(_) => {
@@ -69,7 +69,7 @@ impl TimeseriesClient {
                     self.db_hash(),
                     bucket,
                     OP_WRITE,
-                    elapsed_us,
+                    elapsed_ns,
                     count,
                     0,
                     self.pool_id(),
@@ -81,7 +81,7 @@ impl TimeseriesClient {
                     self.db_hash(),
                     bucket,
                     OP_WRITE,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -115,7 +115,7 @@ impl TimeseriesClient {
             .raw_influx()
             .query_raw(Some(influxdb2::models::Query::new(flux.to_string())))
             .await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(records) => {
@@ -124,7 +124,7 @@ impl TimeseriesClient {
                     self.db_hash(),
                     flux,
                     OP_QUERY,
-                    elapsed_us,
+                    elapsed_ns,
                     rows,
                     0,
                     self.pool_id(),
@@ -136,7 +136,7 @@ impl TimeseriesClient {
                     self.db_hash(),
                     flux,
                     OP_QUERY,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),

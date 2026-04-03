@@ -47,7 +47,7 @@ pub struct RagResponse {
     pub request_id: u64,
     pub total_tokens: u32,
     pub docs_cited: u8,
-    pub duration_us: u64,
+    pub duration_ns: u64,
 }
 
 /// Fault domain for the RAG gateway pipeline.

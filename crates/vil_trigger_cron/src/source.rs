@@ -224,7 +224,7 @@ async fn cron_loop(
         // Also forward through the mpsc channel for internal consumers.
         let _ = tx.try_send(event);
 
-        let elapsed_us = fire_start.elapsed().as_micros() as u32;
+        let elapsed_ns = fire_start.elapsed().as_nanos() as u64;
 
         mq_log!(
             Info,
@@ -232,7 +232,7 @@ async fn cron_loop(
                 broker_hash,
                 topic_hash,
                 offset: seq,
-                e2e_latency_us: elapsed_us,
+                e2e_latency_ns: elapsed_ns,
                 op_type: 0, // publish
                 ..MqPayload::default()
             }

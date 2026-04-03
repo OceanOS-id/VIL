@@ -287,7 +287,7 @@ pub fn vil_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
 
                     let __vil_payload = AccessPayload {
                         status_code:    __vil_status,
-                        duration_us:    __vil_elapsed.as_micros() as u32,
+                        duration_ns:    __vil_elapsed.as_nanos() as u64,
                         route_hash:     register_str(#name_str),
                         path_hash:      register_str(#name_str),
                         session_id:     register_str(&__vil_rid.0) as u64,

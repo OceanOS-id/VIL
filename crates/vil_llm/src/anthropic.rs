@@ -202,15 +202,14 @@ impl LlmProvider for AnthropicProvider {
                     provider_hash: vil_log::dict::register_str(self.provider_name()),
                     input_tokens,
                     output_tokens,
-                    latency_us: __elapsed.as_micros() as u32,
+                    latency_ns: __elapsed.as_nanos() as u64,
                     cost_micro_usd: 0,
                     provider_status: 200,
                     op_type: 0,
                     streaming: 0,
                     retries: 0,
                     cache_hit: 0,
-                    _pad: [0; 2],
-                    meta_bytes: [0; 160],
+                    meta_bytes: [0; 158],
                 }
             );
         }

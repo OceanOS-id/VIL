@@ -549,22 +549,21 @@ impl VilQuery {
         }
     }
 
-    fn emit_db_log(&self, sql: &str, duration_us: u32, rows: u32, error_code: u8) {
+    fn emit_db_log(&self, sql: &str, duration_ns: u64, rows: u32, error_code: u8) {
         let table_hash = vil_log::dict::register_str(&self.table);
         let query_hash = vil_log::dict::register_str(sql);
         vil_log::db_log!(Info, vil_log::DbPayload {
-            db_hash: 0, // default pool
+            db_hash: 0,
             table_hash,
             query_hash,
-            duration_us,
             rows_affected: rows,
+            duration_ns,
             op_type: self.op_type_code(),
             prepared: 1,
             tx_state: 0,
             error_code,
             pool_id: 0,
             shard_id: 0,
-            _pad: [0; 4],
             meta_bytes: [0; 160],
         });
     }
@@ -582,7 +581,7 @@ impl VilQuery {
         let result = sqlx::query_as_with::<_, T, _>(&sql, args)
             .fetch_all(pool)
             .await;
-        let dur = start.elapsed().as_micros() as u32;
+        let dur = start.elapsed().as_nanos() as u64;
         match &result {
             Ok(rows) => self.emit_db_log(&sql, dur, rows.len() as u32, 0),
             Err(_) => self.emit_db_log(&sql, dur, 0, 1),
@@ -601,7 +600,7 @@ impl VilQuery {
         let result = sqlx::query_as_with::<_, T, _>(&sql, args)
             .fetch_one(pool)
             .await;
-        let dur = start.elapsed().as_micros() as u32;
+        let dur = start.elapsed().as_nanos() as u64;
         self.emit_db_log(&sql, dur, if result.is_ok() { 1 } else { 0 }, result.is_err() as u8);
         result
     }
@@ -617,7 +616,7 @@ impl VilQuery {
         let result = sqlx::query_as_with::<_, T, _>(&sql, args)
             .fetch_optional(pool)
             .await;
-        let dur = start.elapsed().as_micros() as u32;
+        let dur = start.elapsed().as_nanos() as u64;
         match &result {
             Ok(Some(_)) => self.emit_db_log(&sql, dur, 1, 0),
             Ok(None) => self.emit_db_log(&sql, dur, 0, 0),
@@ -637,7 +636,7 @@ impl VilQuery {
         let result = sqlx::query_scalar_with::<_, T, _>(&sql, args)
             .fetch_one(pool)
             .await;
-        let dur = start.elapsed().as_micros() as u32;
+        let dur = start.elapsed().as_nanos() as u64;
         self.emit_db_log(&sql, dur, 1, result.is_err() as u8);
         result
     }
@@ -653,7 +652,7 @@ impl VilQuery {
         let result = sqlx::query_scalar_with::<_, T, _>(&sql, args)
             .fetch_optional(pool)
             .await;
-        let dur = start.elapsed().as_micros() as u32;
+        let dur = start.elapsed().as_nanos() as u64;
         match &result {
             Ok(Some(_)) => self.emit_db_log(&sql, dur, 1, 0),
             Ok(None) => self.emit_db_log(&sql, dur, 0, 0),
@@ -673,7 +672,7 @@ impl VilQuery {
         let result = sqlx::query_with(&sql, args)
             .execute(pool)
             .await;
-        let dur = start.elapsed().as_micros() as u32;
+        let dur = start.elapsed().as_nanos() as u64;
         match &result {
             Ok(r) => self.emit_db_log(&sql, dur, r.rows_affected() as u32, 0),
             Err(_) => self.emit_db_log(&sql, dur, 0, 1),

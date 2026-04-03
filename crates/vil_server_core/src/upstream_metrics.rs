@@ -10,7 +10,7 @@ use serde::Serialize;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock};
 
-use crate::obs_middleware::LATENCY_BUCKETS_US;
+use crate::obs_middleware::LATENCY_BUCKETS_NS;
 
 // ── Global singleton ──────────────────────────────────────────────────────────
 
@@ -36,11 +36,11 @@ pub fn record_start(url: &str) {
 }
 
 /// Record upstream call completion (no-op when observer OFF).
-pub fn record_end(url: &str, duration_us: u64, status: u16, is_error: bool) {
+pub fn record_end(url: &str, duration_ns: u64, status: u16, is_error: bool) {
     if !ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
         return;
     }
-    global().call_end(url, duration_us, status, is_error);
+    global().call_end(url, duration_ns, status, is_error);
 }
 
 /// Per-upstream atomic metrics.
@@ -48,7 +48,7 @@ pub struct UpstreamEndpoint {
     pub url: String,
     pub requests: AtomicU64,
     pub errors: AtomicU64,
-    pub duration_sum_us: AtomicU64,
+    pub duration_sum_ns: AtomicU64,
     pub duration_count: AtomicU64,
     pub in_flight: AtomicU64,
     pub latency_buckets: [AtomicU64; 41],
@@ -61,7 +61,7 @@ impl UpstreamEndpoint {
             url: url.to_string(),
             requests: AtomicU64::new(0),
             errors: AtomicU64::new(0),
-            duration_sum_us: AtomicU64::new(0),
+            duration_sum_ns: AtomicU64::new(0),
             duration_count: AtomicU64::new(0),
             in_flight: AtomicU64::new(0),
             latency_buckets: std::array::from_fn(|_| AtomicU64::new(0)),
@@ -93,20 +93,20 @@ impl UpstreamRegistry {
     }
 
     /// Record end of an upstream call.
-    pub fn call_end(&self, url: &str, duration_us: u64, status: u16, is_error: bool) {
+    pub fn call_end(&self, url: &str, duration_ns: u64, status: u16, is_error: bool) {
         if let Some(m) = self.upstreams.get(url) {
             m.in_flight.fetch_sub(1, Ordering::Relaxed);
-            m.duration_sum_us.fetch_add(duration_us, Ordering::Relaxed);
+            m.duration_sum_ns.fetch_add(duration_ns, Ordering::Relaxed);
             m.duration_count.fetch_add(1, Ordering::Relaxed);
             m.last_status.store(status as u64, Ordering::Relaxed);
             if is_error {
                 m.errors.fetch_add(1, Ordering::Relaxed);
             }
             // Histogram bucket
-            let idx = LATENCY_BUCKETS_US
+            let idx = LATENCY_BUCKETS_NS
                 .iter()
-                .position(|&b| duration_us <= b)
-                .unwrap_or(LATENCY_BUCKETS_US.len());
+                .position(|&b| duration_ns <= b)
+                .unwrap_or(LATENCY_BUCKETS_NS.len());
             m.latency_buckets[idx].fetch_add(1, Ordering::Relaxed);
         }
     }
@@ -120,24 +120,24 @@ impl UpstreamRegistry {
                 let reqs = m.requests.load(Ordering::Relaxed);
                 let errs = m.errors.load(Ordering::Relaxed);
                 let dur_count = m.duration_count.load(Ordering::Relaxed);
-                let dur_sum = m.duration_sum_us.load(Ordering::Relaxed);
-                let avg_us = if dur_count > 0 {
+                let dur_sum = m.duration_sum_ns.load(Ordering::Relaxed);
+                let avg_ns = if dur_count > 0 {
                     dur_sum / dur_count
                 } else {
                     0
                 };
 
-                let p95 = crate::obs_middleware::HandlerMetricsRegistry::percentile_us(
+                let p95 = crate::obs_middleware::HandlerMetricsRegistry::percentile_ns(
                     &m.latency_buckets,
                     reqs,
                     0.95,
                 );
-                let p99 = crate::obs_middleware::HandlerMetricsRegistry::percentile_us(
+                let p99 = crate::obs_middleware::HandlerMetricsRegistry::percentile_ns(
                     &m.latency_buckets,
                     reqs,
                     0.99,
                 );
-                let p999 = crate::obs_middleware::HandlerMetricsRegistry::percentile_us(
+                let p999 = crate::obs_middleware::HandlerMetricsRegistry::percentile_ns(
                     &m.latency_buckets,
                     reqs,
                     0.999,
@@ -152,10 +152,10 @@ impl UpstreamRegistry {
                     } else {
                         0.0
                     },
-                    avg_latency_us: avg_us,
-                    p95_us: p95,
-                    p99_us: p99,
-                    p999_us: p999,
+                    avg_latency_ns: avg_ns,
+                    p95_ns: p95,
+                    p99_ns: p99,
+                    p999_ns: p999,
                     in_flight: m.in_flight.load(Ordering::Relaxed),
                     last_status: m.last_status.load(Ordering::Relaxed) as u16,
                 }
@@ -177,10 +177,10 @@ pub struct UpstreamSnapshot {
     pub requests: u64,
     pub errors: u64,
     pub error_rate: f64,
-    pub avg_latency_us: u64,
-    pub p95_us: u64,
-    pub p99_us: u64,
-    pub p999_us: u64,
+    pub avg_latency_ns: u64,
+    pub p95_ns: u64,
+    pub p99_ns: u64,
+    pub p999_ns: u64,
     pub in_flight: u64,
     pub last_status: u16,
 }

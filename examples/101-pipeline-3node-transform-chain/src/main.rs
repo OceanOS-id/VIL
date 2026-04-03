@@ -55,7 +55,7 @@ pub struct TransformChainCompleted {
     pub request_id: u64,
     pub total_records: u64,
     pub high_risk_count: u32,
-    pub duration_us: u64,
+    pub duration_ns: u64,
 }
 
 /// Faults specific to the transform chain pipeline.

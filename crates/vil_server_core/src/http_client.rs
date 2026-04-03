@@ -66,7 +66,7 @@ impl HttpClientPool {
     }
 
     /// Record a request to a host.
-    pub fn record_request(&self, host: &str, latency_us: u64) {
+    pub fn record_request(&self, host: &str, latency_ns: u64) {
         self.request_counts
             .entry(host.to_string())
             .or_insert_with(|| AtomicU64::new(0))
@@ -75,7 +75,7 @@ impl HttpClientPool {
         self.latencies
             .entry(host.to_string())
             .or_insert_with(Vec::new)
-            .push(latency_us);
+            .push(latency_ns);
     }
 
     /// Get statistics for a host.
@@ -92,7 +92,7 @@ impl HttpClientPool {
         Some(HostStats {
             host: host.to_string(),
             total_requests: count,
-            avg_latency_us: avg_latency,
+            avg_latency_ns: avg_latency,
         })
     }
 
@@ -120,5 +120,5 @@ impl Default for HttpClientPool {
 pub struct HostStats {
     pub host: String,
     pub total_requests: u64,
-    pub avg_latency_us: u64,
+    pub avg_latency_ns: u64,
 }

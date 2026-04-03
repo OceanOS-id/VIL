@@ -51,7 +51,7 @@ impl PromptShield {
                     risk_level: RiskLevel::None,
                     threats: vec![],
                     score: 0.0,
-                    scan_time_us: start.elapsed().as_micros() as u64,
+                    scan_time_ns: start.elapsed().as_nanos() as u64,
                 };
             }
         }
@@ -95,7 +95,7 @@ impl PromptShield {
             risk_level,
             threats,
             score: total_score,
-            scan_time_us: start.elapsed().as_micros() as u64,
+            scan_time_ns: start.elapsed().as_nanos() as u64,
         }
     }
 
@@ -206,7 +206,7 @@ mod tests {
         let text = "What is the capital of France? ".repeat(100); // ~3KB
         let result = shield.scan(&text);
         // Should complete in <1ms for ~3KB text
-        assert!(result.scan_time_us < 1000, "took {}us", result.scan_time_us);
+        assert!(result.scan_time_ns < 1000, "took {}ns", result.scan_time_ns);
     }
 
     #[test]

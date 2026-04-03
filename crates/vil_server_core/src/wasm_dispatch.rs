@@ -86,7 +86,7 @@ pub async fn dispatch_to_wasm(
     // via data_mut() — 1 copy, no intermediate buffer.
     let response = invoke_wasm_capsule(state, handler_name, &context_json);
 
-    let _duration_us = start.elapsed().as_micros() as u64;
+    let _duration_ns = start.elapsed().as_nanos() as u64;
 
     // debug-level: skip vil_log
 

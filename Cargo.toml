@@ -289,6 +289,12 @@ members = [
     "examples/802-trigger-fs-watcher",
     "examples/803-trigger-webhook-receiver",
     "examples/804-trigger-cdc-postgres",
+
+    # --- Phase 6 Stream 4: VilORM Examples ---
+    "examples/605-db-vilorm-crud",
+    "examples/606-db-vilorm-ecommerce",
+    "examples/607-db-vilorm-multitenant",
+    "examples/608-db-vilorm-analytics",
 ]
 
 [workspace.package]

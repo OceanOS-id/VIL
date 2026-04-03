@@ -48,7 +48,7 @@ pub struct ModelFallbackEvent {
     pub request_id: u64,
     pub model_id: u32,
     pub is_fallback: bool,
-    pub latency_us: u64,
+    pub latency_ns: u64,
     pub confidence_score_x100: u16,
 }
 

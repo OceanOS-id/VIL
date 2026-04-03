@@ -170,13 +170,13 @@ fn resolve_db_detail_v1(payload: &[u8; 192]) -> String {
 
     if p.error_code != 0 {
         format!(
-            "{} {}.{} query={} dur={}us rows={} ERROR({})",
-            op, db, table, query, p.duration_us, p.rows_affected, p.error_code
+            "{} {}.{} query={} dur={}ns rows={} ERROR({})",
+            op, db, table, query, p.duration_ns, p.rows_affected, p.error_code
         )
     } else {
         format!(
-            "{} {}.{} query={} dur={}us rows={}",
-            op, db, table, query, p.duration_us, p.rows_affected
+            "{} {}.{} query={} dur={}ns rows={}",
+            op, db, table, query, p.duration_ns, p.rows_affected
         )
     }
 }
@@ -190,8 +190,8 @@ fn resolve_mq_detail_v1(payload: &[u8; 192]) -> String {
     let op = dict::resolve_mq_op(p.op_type);
 
     format!(
-        "{} {}/{} offset={} size={}B dur={}us",
-        op, broker, topic, p.offset, p.message_bytes, p.e2e_latency_us
+        "{} {}/{} offset={} size={}B dur={}ns",
+        op, broker, topic, p.offset, p.message_bytes, p.e2e_latency_ns
     )
 }
 
@@ -211,8 +211,8 @@ fn resolve_access_detail_v1(payload: &[u8; 192]) -> String {
     };
 
     format!(
-        "{} {} dur={}us req={}B resp={}B",
-        method_str, p.status_code, p.duration_us, p.request_bytes, p.response_bytes
+        "{} {} dur={}ns req={}B resp={}B",
+        method_str, p.status_code, p.duration_ns, p.request_bytes, p.response_bytes
     )
 }
 
@@ -229,7 +229,7 @@ fn resolve_ai_detail_v1(payload: &[u8; 192]) -> String {
         model,
         p.input_tokens,
         p.output_tokens,
-        p.latency_us / 1000,
+        p.latency_ns / 1_000_000,
         p.cost_micro_usd as f64 / 1_000_000.0
     )
 }

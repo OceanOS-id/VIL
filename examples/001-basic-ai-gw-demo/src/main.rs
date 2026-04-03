@@ -25,7 +25,7 @@ use vil_sdk::prelude::*;
 pub struct InferenceState {
     pub request_id: u64,
     pub tokens_received: u32,
-    pub latency_us: u64,
+    pub latency_ns: u64,
     pub stream_active: bool,
 }
 
@@ -34,7 +34,7 @@ pub struct InferenceState {
 pub struct InferenceCompleted {
     pub request_id: u64,
     pub total_tokens: u32,
-    pub duration_us: u64,
+    pub duration_ns: u64,
     pub status_code: u16,
 }
 

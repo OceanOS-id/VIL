@@ -169,8 +169,8 @@ mod tests {
     fn test_check_timing() {
         let engine = GuardrailsEngine::new();
         let result = engine.check("Some text to check for timing.");
-        // check_time_us should be populated (non-negative, which it always is for u64)
+        // check_time_ns should be populated (non-negative, which it always is for u64)
         // Just verify it runs without panic and returns a value
-        assert!(result.check_time_us < 10_000_000); // less than 10 seconds
+        assert!(result.check_time_ns < 10_000_000); // less than 10 seconds
     }
 }

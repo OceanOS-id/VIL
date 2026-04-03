@@ -12,7 +12,7 @@ pub struct NodeRead {
     /// OPC-UA status code of the read result.
     pub status_code: u32,
     /// Round-trip latency in microseconds.
-    pub latency_us: u32,
+    pub latency_ns: u32,
     /// Wall-clock timestamp in nanoseconds (UNIX_EPOCH).
     pub timestamp_ns: u64,
 }
@@ -25,7 +25,7 @@ pub struct NodeWritten {
     /// OPC-UA status code of the write result.
     pub status_code: u32,
     /// Round-trip latency in microseconds.
-    pub latency_us: u32,
+    pub latency_ns: u32,
     /// Wall-clock timestamp in nanoseconds (UNIX_EPOCH).
     pub timestamp_ns: u64,
 }

@@ -2313,7 +2313,7 @@ async fn sidecar_invoke(
                 "target": req.target,
                 "method": req.method,
                 "result": result,
-                "latency_us": response.latency_us
+                "latency_ns": response.latency_ns
             }))
         }
         Err(e) => VilResponse::ok(serde_json::json!({

@@ -58,7 +58,7 @@ pub struct CreditBatchIngested {
     pub request_id: u64,
     pub batch_size: u32,
     pub pipeline_id: u8,
-    pub latency_us: u64,
+    pub latency_ns: u64,
 }
 
 #[vil_fault]

@@ -14,5 +14,5 @@ pub struct SoapClientState {
     /// Total HTTP/transport errors.
     pub transport_errors: u64,
     /// Average round-trip latency in microseconds.
-    pub avg_latency_us: u32,
+    pub avg_latency_ns: u32,
 }

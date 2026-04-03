@@ -49,7 +49,7 @@ async fn main() {
             method: 1, // POST
             status_code: 201,
             protocol: 1, // HTTP/2
-            duration_us: 1_850,
+            duration_ns: 1_850,
             request_bytes: 512,
             response_bytes: 256,
             server_port: 8080,
@@ -81,7 +81,7 @@ async fn main() {
             model_hash: register_str("gpt-4o-mini"),
             input_tokens: 280,
             output_tokens: 420,
-            latency_us: 950_000, // 950ms
+            latency_ns: 950_000_000, // 950ms
             cost_micro_usd: 120,
             op_type: 0, // chat
             streaming: 0,
@@ -100,7 +100,7 @@ async fn main() {
             model_hash: register_str("gpt-4o-mini"),
             input_tokens: 280,
             output_tokens: 420,
-            latency_us: 800, // sub-ms from cache
+            latency_ns: 800_000, // sub-ms from cache
             cost_micro_usd: 0,
             op_type: 0,
             cache_hit: 2, // semantic hit
@@ -119,7 +119,7 @@ async fn main() {
             db_hash: register_str("postgres"),
             table_hash: register_str("orders"),
             query_hash: register_str("INSERT INTO orders (customer_id, total) VALUES ($1, $2)"),
-            duration_us: 1_200,
+            duration_ns: 1_200,
             rows_affected: 1,
             op_type: 1, // INSERT
             prepared: 1,
@@ -137,7 +137,7 @@ async fn main() {
             db_hash: register_str("postgres"),
             table_hash: register_str("inventory"),
             query_hash: register_str("SELECT stock FROM inventory WHERE sku = $1 FOR UPDATE"),
-            duration_us: 85_000, // slow query
+            duration_ns: 85_000, // slow query
             rows_affected: 1,
             op_type: 0, // SELECT
             prepared: 1,
@@ -159,7 +159,7 @@ async fn main() {
             group_hash: register_str("order-fulfillment"),
             offset: 204_892,
             message_bytes: 384,
-            e2e_latency_us: 2_100,
+            e2e_latency_ns: 2_100_000,
             op_type: 0, // publish
             partition: 3,
             retries: 0,
@@ -176,7 +176,7 @@ async fn main() {
             group_hash: register_str("payment-processor"),
             offset: 18_443,
             message_bytes: 256,
-            e2e_latency_us: 25_000,
+            e2e_latency_ns: 25_000_000,
             op_type: 4, // dlq
             partition: 1,
             retries: 5,

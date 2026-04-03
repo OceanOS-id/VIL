@@ -110,7 +110,7 @@ impl RabbitClient {
                     broker_hash: register_str("rabbitmq"),
                     topic_hash: exchange_hash,
                     message_bytes: payload.len() as u32,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 0, // publish
                     ..Default::default()
                 }
@@ -171,7 +171,7 @@ impl RabbitClient {
                             broker_hash: register_str("rabbitmq"),
                             topic_hash: queue_hash,
                             message_bytes: payload_len,
-                            e2e_latency_us: __elapsed.as_micros() as u32,
+                            e2e_latency_ns: __elapsed.as_nanos() as u64,
                             op_type: 1, // consume
                             ..Default::default()
                         }
@@ -207,7 +207,7 @@ impl RabbitClient {
                     broker_hash: register_str("rabbitmq"),
                     topic_hash: 0,
                     message_bytes: 0,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 2, // ack
                     offset: delivery_tag,
                     ..Default::default()
@@ -244,7 +244,7 @@ impl RabbitClient {
                     broker_hash: register_str("rabbitmq"),
                     topic_hash: 0,
                     message_bytes: 0,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 3, // nack
                     offset: delivery_tag,
                     ..Default::default()

@@ -64,12 +64,12 @@ impl SidecarBuilder {
                 "inbound_completed": inbound.completed,
                 "inbound_in_flight": inbound.in_flight,
                 "inbound_errors": inbound.errors,
-                "inbound_avg_latency_us": inbound.avg_latency_us,
-                "inbound_min_latency_us": inbound.min_latency_us,
-                "inbound_max_latency_us": inbound.max_latency_us,
-                "inbound_p95_us": inbound.p95_us,
-                "inbound_p99_us": inbound.p99_us,
-                "inbound_p999_us": inbound.p999_us,
+                "inbound_avg_latency_ns": inbound.avg_latency_ns,
+                "inbound_min_latency_ns": inbound.min_latency_ns,
+                "inbound_max_latency_ns": inbound.max_latency_ns,
+                "inbound_p95_ns": inbound.p95_ns,
+                "inbound_p99_ns": inbound.p99_ns,
+                "inbound_p999_ns": inbound.p999_ns,
             })
         })
         .counters(move || {

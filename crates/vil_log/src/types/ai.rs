@@ -17,8 +17,8 @@ pub struct AiPayload {
     pub input_tokens: u32,
     /// Number of output tokens generated.
     pub output_tokens: u32,
-    /// Inference latency in microseconds.
-    pub latency_us: u32,
+    /// Inference latency in nanoseconds.
+    pub latency_ns: u64,
     /// Total cost in micro-USD (e.g. 1000 = $0.001).
     pub cost_micro_usd: u32,
     /// HTTP status from provider (0 = no HTTP call).
@@ -31,10 +31,8 @@ pub struct AiPayload {
     pub retries: u8,
     /// Cache hit: 0=miss 1=exact 2=semantic
     pub cache_hit: u8,
-    /// Padding.
-    pub _pad: [u8; 2],
     /// Inline request/response metadata (msgpack).
-    pub meta_bytes: [u8; 160],
+    pub meta_bytes: [u8; 158],
 }
 
 impl Default for AiPayload {

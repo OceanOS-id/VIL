@@ -65,7 +65,7 @@ impl PulsarProducer {
                     broker_hash: register_str("pulsar"),
                     topic_hash,
                     message_bytes: payload.len() as u32,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 0, // publish
                     ..Default::default()
                 }

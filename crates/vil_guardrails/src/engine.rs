@@ -35,7 +35,7 @@ pub struct GuardrailResult {
     /// Rule matches.
     pub rule_matches: Vec<RuleMatch>,
     /// Check duration in microseconds.
-    pub check_time_us: u64,
+    pub check_time_ns: u64,
 }
 
 /// The main guardrails engine combining PII, toxicity, and custom rules.
@@ -152,7 +152,7 @@ impl GuardrailsEngine {
             pii_found,
             toxicity_score,
             rule_matches,
-            check_time_us: elapsed.as_micros() as u64,
+            check_time_ns: elapsed.as_nanos() as u64,
         }
     }
 }

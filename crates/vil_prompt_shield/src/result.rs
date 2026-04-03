@@ -50,7 +50,7 @@ pub struct ScanResult {
     pub risk_level: RiskLevel,
     pub threats: Vec<Threat>,
     pub score: f64, // 0.0 (safe) to 1.0 (dangerous)
-    pub scan_time_us: u64,
+    pub scan_time_ns: u64,
 }
 
 impl ScanResult {
@@ -60,7 +60,7 @@ impl ScanResult {
             risk_level: RiskLevel::None,
             threats: vec![],
             score: 0.0,
-            scan_time_us: 0,
+            scan_time_ns: 0,
         }
     }
 

@@ -70,7 +70,7 @@
   "metrics": [
     { "name": "vil_db_queries_total", "type": "counter", "label": "Total Queries" },
     { "name": "vil_db_query_errors", "type": "counter", "label": "Query Errors" },
-    { "name": "vil_db_query_avg_us", "type": "gauge", "label": "Avg Query Latency (µs)" },
+    { "name": "vil_db_query_avg_ns", "type": "gauge", "label": "Avg Query Latency (ns)" },
     { "name": "vil_db_acquires_total", "type": "counter", "label": "Pool Acquires" },
     { "name": "vil_db_health_ok", "type": "counter", "label": "Health Checks OK" },
     { "name": "vil_db_health_fail", "type": "counter", "label": "Health Checks Failed" }

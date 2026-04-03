@@ -123,7 +123,7 @@ impl WsServer {
                 broker_hash: self.addr_hash,
                 topic_hash,
                 message_bytes: msg.len() as u32,
-                e2e_latency_us: elapsed.as_micros() as u32,
+                e2e_latency_ns: elapsed.as_nanos() as u64,
                 op_type: 0, // publish / send
                 ..MqPayload::default()
             }
@@ -153,7 +153,7 @@ impl WsServer {
                 broker_hash: self.addr_hash,
                 topic_hash,
                 message_bytes: msg.len() as u32,
-                e2e_latency_us: elapsed.as_micros() as u32,
+                e2e_latency_ns: elapsed.as_nanos() as u64,
                 op_type: 0, // publish / send
                 ..MqPayload::default()
             }
@@ -197,7 +197,7 @@ async fn handle_connection(
                     broker_hash,
                     topic_hash: 0,
                     message_bytes: msg_bytes.len() as u32,
-                    e2e_latency_us: elapsed.as_micros() as u32,
+                    e2e_latency_ns: elapsed.as_nanos() as u64,
                     op_type: 0, // publish / send
                     ..MqPayload::default()
                 }
@@ -232,7 +232,7 @@ async fn handle_connection(
                         broker_hash,
                         topic_hash: client_id as u32,
                         message_bytes: msg_bytes.len() as u32,
-                        e2e_latency_us: elapsed.as_micros() as u32,
+                        e2e_latency_ns: elapsed.as_nanos() as u64,
                         op_type: 1, // consume / receive
                         ..MqPayload::default()
                     }

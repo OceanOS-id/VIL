@@ -94,7 +94,7 @@ impl MqttClient {
                     broker_hash: register_str("mqtt"),
                     topic_hash: register_str(topic),
                     message_bytes: payload.len() as u32,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 0,
                     ..Default::default()
                 }

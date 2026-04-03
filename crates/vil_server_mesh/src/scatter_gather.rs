@@ -50,7 +50,7 @@ pub struct ScatterResult {
     pub success: bool,
     pub response: Option<Bytes>,
     pub error: Option<String>,
-    pub latency_us: u64,
+    pub latency_ns: u64,
 }
 
 /// Scatter-gather request builder.
@@ -107,14 +107,14 @@ impl ScatterGather {
                 success: true,
                 response: Some(Bytes::from(format!("response from {}", target.service))),
                 error: None,
-                latency_us: target_start.elapsed().as_micros() as u64,
+                latency_ns: target_start.elapsed().as_nanos() as u64,
             });
         }
 
         GatherResult {
             total_targets: self.targets.len(),
             responses_received: results.len(),
-            total_latency_us: start.elapsed().as_micros() as u64,
+            total_latency_ns: start.elapsed().as_nanos() as u64,
             results,
         }
     }
@@ -135,7 +135,7 @@ impl Default for ScatterGather {
 pub struct GatherResult {
     pub total_targets: usize,
     pub responses_received: usize,
-    pub total_latency_us: u64,
+    pub total_latency_ns: u64,
     pub results: Vec<ScatterResult>,
 }
 

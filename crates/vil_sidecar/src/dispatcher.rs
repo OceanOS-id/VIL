@@ -22,8 +22,8 @@ static REQUEST_COUNTER: AtomicU64 = AtomicU64::new(1);
 pub struct InvokeResponse {
     /// Raw response bytes read from SHM.
     pub data: Vec<u8>,
-    /// Latency of the invocation in microseconds.
-    pub latency_us: u64,
+    /// Latency of the invocation in nanoseconds.
+    pub latency_ns: u64,
 }
 
 /// Invoke a method on a sidecar with the given request data.
@@ -117,12 +117,12 @@ pub async fn invoke(
                         Vec::new()
                     };
 
-                    let latency_us = start.elapsed().as_micros() as u64;
-                    metrics.invoke_ok(latency_us);
+                    let latency_ns = start.elapsed().as_nanos() as u64;
+                    metrics.invoke_ok(latency_ns);
 
                     Ok(InvokeResponse {
                         data: resp_data,
-                        latency_us,
+                        latency_ns,
                     })
                 }
                 InvokeStatus::Error => {

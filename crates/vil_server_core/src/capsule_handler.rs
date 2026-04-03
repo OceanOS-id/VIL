@@ -92,7 +92,7 @@ impl CapsuleRegistry {
 
         self.modules.insert(name.to_string(), Arc::new(bytes));
 
-        let elapsed_us = start.elapsed().as_micros() as u64;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         // Increment reload count
         if let Some(mut count) = self.reload_counts.get_mut(name) {
@@ -101,10 +101,10 @@ impl CapsuleRegistry {
 
         {
             use vil_log::app_log;
-            app_log!(Info, "capsule.handler.reloaded", { handler: name, reload_us: elapsed_us });
+            app_log!(Info, "capsule.handler.reloaded", { handler: name, reload_ns: elapsed_ns });
         }
 
-        Ok(elapsed_us)
+        Ok(elapsed_ns)
     }
 
     /// Get the WASM bytes for a handler.
@@ -172,12 +172,12 @@ async fn reload_handler(
     }
 
     match registry.reload(&name) {
-        Ok(elapsed_us) => (
+        Ok(elapsed_ns) => (
             StatusCode::OK,
             axum::Json(serde_json::json!({
                 "handler": name,
                 "status": "reloaded",
-                "reload_time_us": elapsed_us,
+                "reload_time_ns": elapsed_ns,
                 "total_reloads": registry.reload_count(&name),
             })),
         ),

@@ -29,7 +29,7 @@ pub struct ReloadEvent {
     pub timestamp: u64,
     pub source: String, // "http", "sighup", "file_watch"
     pub success: bool,
-    pub duration_us: u64,
+    pub duration_ns: u64,
     pub changes: Vec<String>,
 }
 
@@ -54,7 +54,7 @@ impl ConfigReloader {
         &self,
         source: &str,
         success: bool,
-        duration_us: u64,
+        duration_ns: u64,
         changes: Vec<String>,
     ) {
         self.reload_count.fetch_add(1, Ordering::Relaxed);
@@ -67,7 +67,7 @@ impl ConfigReloader {
                 .as_secs(),
             source: source.to_string(),
             success,
-            duration_us,
+            duration_ns,
             changes,
         };
 
@@ -107,20 +107,20 @@ async fn reload_config(State(state): State<AppState>) -> impl IntoResponse {
 
     // Attempt to reload config from vil-server.yaml
     let changes = vec!["config reloaded via HTTP".to_string()];
-    let duration_us = start.elapsed().as_micros() as u64;
+    let duration_ns = start.elapsed().as_nanos() as u64;
 
     state
         .config_reloader()
-        .record_reload("http", true, duration_us, changes.clone());
+        .record_reload("http", true, duration_ns, changes.clone());
 
     {
         use vil_log::app_log;
-        app_log!(Info, "config.reloaded", { duration_us: duration_us });
+        app_log!(Info, "config.reloaded", { duration_ns: duration_ns });
     }
 
     axum::Json(serde_json::json!({
         "status": "reloaded",
-        "duration_us": duration_us,
+        "duration_ns": duration_ns,
         "changes": changes,
         "total_reloads": state.config_reloader().reload_count(),
     }))

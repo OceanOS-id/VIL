@@ -16,8 +16,8 @@ pub struct AccessPayload {
     pub status_code: u16,
     /// Protocol version: 0=HTTP/1.1 1=HTTP/2 2=HTTP/3 3=gRPC
     pub protocol: u8,
-    /// Request duration in microseconds.
-    pub duration_us: u32,
+    /// Request duration in nanoseconds.
+    pub duration_ns: u64,
     /// Request body size in bytes.
     pub request_bytes: u32,
     /// Response body size in bytes.
@@ -39,7 +39,7 @@ pub struct AccessPayload {
     /// Cache hit indicator: 0=miss 1=hit 2=stale
     pub cache_status: u8,
     /// Padding to 64 bytes.
-    pub _pad: [u8; 18],
+    pub _pad: [u8; 14],
 }
 
 impl Default for AccessPayload {

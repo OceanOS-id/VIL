@@ -116,7 +116,7 @@ impl JsConsumer {
                             broker_hash: register_str("nats"),
                             topic_hash: register_str(&subject_str),
                             message_bytes: payload_len as u32,
-                            e2e_latency_us: __elapsed.as_micros() as u32,
+                            e2e_latency_ns: __elapsed.as_nanos() as u64,
                             op_type: 1,
                             offset: sequence,
                             ..Default::default()
@@ -268,7 +268,7 @@ impl JetStreamClient {
                     broker_hash: register_str("nats"),
                     topic_hash: register_str(subject),
                     message_bytes: payload.len() as u32,
-                    e2e_latency_us: __elapsed.as_micros() as u32,
+                    e2e_latency_ns: __elapsed.as_nanos() as u64,
                     op_type: 0,
                     offset: seq,
                     ..Default::default()

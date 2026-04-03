@@ -154,7 +154,7 @@ impl CdcTrigger {
                         group_hash: pub_hash,
                         offset: seq,
                         message_bytes: 0,
-                        e2e_latency_us: elapsed.as_micros() as u32,
+                        e2e_latency_ns: elapsed.as_nanos() as u64,
                         op_type: mq_op,
                         partition: 0,
                         retries: 0,

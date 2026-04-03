@@ -13008,6 +13008,7 @@ dependencies = [
  "sqlx",
  "uuid",
  "vil_db_sqlx",
+ "vil_log",
  "vil_orm_derive",
  "vil_server_core",
 ]

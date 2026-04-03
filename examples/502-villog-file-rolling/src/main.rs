@@ -71,7 +71,7 @@ async fn main() {
                 method: 0, // GET
                 status_code: status,
                 protocol: 0,
-                duration_us: 100 + i * 10,
+                duration_ns: (100 + i * 10) as u64 * 1_000,
                 request_bytes: 64,
                 response_bytes: 512 + i * 8,
                 route_hash: register_str("/api/orders"),
@@ -90,7 +90,7 @@ async fn main() {
                 db_hash: register_str("postgres"),
                 table_hash: register_str("orders"),
                 query_hash: register_str("SELECT * FROM orders WHERE id = $1"),
-                duration_us: 500 + i * 20,
+                duration_ns: 500u64 + i as u64 * 20,
                 rows_affected: 1,
                 op_type: 0, // SELECT
                 prepared: 1,

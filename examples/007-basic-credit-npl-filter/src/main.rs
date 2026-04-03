@@ -50,7 +50,7 @@ pub struct NplDetected {
     pub credit_id: u64,
     pub kolektabilitas: u8,
     pub saldo_outstanding: u64,
-    pub timestamp_us: u64,
+    pub timestamp_ns: u64,
 }
 
 /// Fault domain for the NPL detection pipeline.

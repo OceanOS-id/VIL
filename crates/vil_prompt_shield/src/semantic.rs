@@ -17,7 +17,7 @@ pub struct ShieldEvent {
     pub safe: bool,
     pub risk_score: f64,
     pub threat_count: usize,
-    pub scan_time_us: u64,
+    pub scan_time_ns: u64,
 }
 
 // ── Faults (Control Lane, error signals) ────────────────────────────
@@ -62,7 +62,7 @@ pub struct ShieldState {
     pub total_scans: u64,
     pub total_blocked: u64,
     pub total_safe: u64,
-    pub avg_scan_time_us: f64,
+    pub avg_scan_time_ns: f64,
 }
 
 impl ShieldState {
@@ -74,7 +74,7 @@ impl ShieldState {
             self.total_blocked += 1;
         }
         let n = self.total_scans as f64;
-        self.avg_scan_time_us =
-            self.avg_scan_time_us * (n - 1.0) / n + event.scan_time_us as f64 / n;
+        self.avg_scan_time_ns =
+            self.avg_scan_time_ns * (n - 1.0) / n + event.scan_time_ns as f64 / n;
     }
 }

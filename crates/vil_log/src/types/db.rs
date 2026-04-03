@@ -3,9 +3,16 @@
 // =============================================================================
 //
 // Database query/operation log payload.
+// Designed for high-throughput systems — nanosecond precision timing.
 // =============================================================================
 
-/// Database operation event payload. Fits in 192 bytes.
+/// Database operation event payload. Fixed 192 bytes, zero-copy compatible.
+///
+/// Nanosecond precision for duration — critical for:
+/// - SHM zero-copy operations (sub-microsecond)
+/// - VilDB AST-based processor (nanosecond territory)
+/// - Cache hit vs DB roundtrip differentiation
+/// - High-throughput benchmarking (10M+ ops/sec)
 #[derive(Debug, Clone, Copy, zerocopy::FromBytes, zerocopy::Immutable, zerocopy::KnownLayout)]
 #[repr(C)]
 pub struct DbPayload {
@@ -15,10 +22,11 @@ pub struct DbPayload {
     pub table_hash: u32,
     /// FxHash of the normalized query template.
     pub query_hash: u32,
-    /// Query execution duration in microseconds.
-    pub duration_us: u32,
     /// Number of rows affected/returned.
     pub rows_affected: u32,
+    /// Query execution duration in nanoseconds (u64 for sub-µs precision).
+    /// u64 covers up to ~584 years — no overflow concern.
+    pub duration_ns: u64,
     /// Operation type: 0=SELECT 1=INSERT 2=UPDATE 3=DELETE 4=CALL 5=DDL
     pub op_type: u8,
     /// Whether query was a prepared statement.
@@ -31,8 +39,6 @@ pub struct DbPayload {
     pub pool_id: u16,
     /// Shard/replica ID.
     pub shard_id: u16,
-    /// Padding.
-    pub _pad: [u8; 4],
     /// Inline query parameter metadata (msgpack).
     pub meta_bytes: [u8; 160],
 }

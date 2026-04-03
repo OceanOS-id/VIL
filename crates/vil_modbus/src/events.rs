@@ -12,7 +12,7 @@ pub struct RegisterRead {
     /// Number of registers read.
     pub count: u16,
     /// Round-trip latency in microseconds.
-    pub latency_us: u32,
+    pub latency_ns: u32,
     /// Wall-clock timestamp in nanoseconds (UNIX_EPOCH).
     pub timestamp_ns: u64,
 }
@@ -25,7 +25,7 @@ pub struct RegisterWritten {
     /// Number of registers written.
     pub count: u16,
     /// Round-trip latency in microseconds.
-    pub latency_us: u32,
+    pub latency_ns: u32,
     /// Wall-clock timestamp in nanoseconds (UNIX_EPOCH).
     pub timestamp_ns: u64,
 }

@@ -35,7 +35,7 @@ fn bench_tracing_file() -> (std::time::Duration, PathBuf) {
             counter = i,
             method = "POST",
             status = 200u16,
-            latency_us = 2300u32,
+            latency_ns = 2300000u64,
             path = "/api/orders",
             "request completed"
         );
@@ -79,7 +79,7 @@ async fn bench_vil_file() -> (std::time::Duration, PathBuf) {
                 method: 1,
                 status_code: 200,
                 protocol: 0,
-                duration_us: 2300,
+                duration_ns: 2_300_000,
                 request_bytes: 256,
                 response_bytes: 1024,
                 client_ip: 0x7F000001,
@@ -90,7 +90,7 @@ async fn bench_vil_file() -> (std::time::Duration, PathBuf) {
                 session_id: 99999,
                 authenticated: 1,
                 cache_status: 0,
-                _pad: [0; 18],
+                _pad: [0; 14],
             }
         );
     }

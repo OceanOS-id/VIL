@@ -43,7 +43,7 @@ async fn main() {
             method: 1, // POST
             status_code: 201,
             protocol: 0, // HTTP/1.1
-            duration_us: 2_300,
+            duration_ns: 2_300_000,
             request_bytes: 256,
             response_bytes: 128,
             path_hash: register_str("/api/orders"),
@@ -59,7 +59,7 @@ async fn main() {
             method: 0, // GET
             status_code: 404,
             protocol: 0,
-            duration_us: 450,
+            duration_ns: 450_000,
             path_hash: register_str("/api/products/9999"),
             route_hash: register_str("/api/products/:id"),
             ..AccessPayload::default()
@@ -74,7 +74,7 @@ async fn main() {
             model_hash: register_str("gpt-4o"),
             input_tokens: 150,
             output_tokens: 500,
-            latency_us: 1_200_000, // 1.2 seconds
+            latency_ns: 1_200_000_000, // 1.2 seconds
             cost_micro_usd: 350,
             op_type: 0, // chat
             provider_status: 200,

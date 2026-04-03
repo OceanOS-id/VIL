@@ -166,7 +166,7 @@ impl DbQueryExecutor for ProviderExecutor {
                     db_hash: self.db_hash,
                     table_hash: __table_hash,
                     query_hash: __query_hash,
-                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    duration_ns: __elapsed.as_nanos() as u64,
                     rows_affected: rows,
                     op_type: 0, // SELECT
                     prepared: 1,
@@ -200,7 +200,7 @@ impl DbQueryExecutor for ProviderExecutor {
                     db_hash: self.db_hash,
                     table_hash: __table_hash,
                     query_hash: __query_hash,
-                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    duration_ns: __elapsed.as_nanos() as u64,
                     rows_affected: rows,
                     op_type: 0, // SELECT
                     prepared: 1,
@@ -233,7 +233,7 @@ impl DbQueryExecutor for ProviderExecutor {
                     db_hash: self.db_hash,
                     table_hash: __table_hash,
                     query_hash: 0,
-                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    duration_ns: __elapsed.as_nanos() as u64,
                     rows_affected: rows,
                     op_type: 1, // INSERT
                     prepared: 1,
@@ -272,7 +272,7 @@ impl DbQueryExecutor for ProviderExecutor {
                     db_hash: self.db_hash,
                     table_hash: __table_hash,
                     query_hash: __query_hash,
-                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    duration_ns: __elapsed.as_nanos() as u64,
                     rows_affected: rows,
                     op_type: 2, // UPDATE
                     prepared: 1,
@@ -306,7 +306,7 @@ impl DbQueryExecutor for ProviderExecutor {
                     db_hash: self.db_hash,
                     table_hash: __table_hash,
                     query_hash: __query_hash,
-                    duration_us: __elapsed.as_micros().min(u32::MAX as u128) as u32,
+                    duration_ns: __elapsed.as_nanos() as u64,
                     rows_affected: rows,
                     op_type: 3, // DELETE
                     prepared: 1,

@@ -64,7 +64,7 @@ async fn main() {
                 method: 1, // POST
                 status_code: 200,
                 protocol: 1, // HTTP/2
-                duration_us: 800 + i * 50,
+                duration_ns: (800 + i * 50) as u64 * 1_000,
                 request_bytes: 1024,
                 response_bytes: 256,
                 route_hash: register_str("/api/events"),
@@ -84,7 +84,7 @@ async fn main() {
             group_hash: register_str("order-processor"),
             offset: 1_042_883,
             message_bytes: 512,
-            e2e_latency_us: 3_200,
+            e2e_latency_ns: 3_200_000,
             op_type: 1, // consume
             partition: 0,
             retries: 0,
@@ -100,7 +100,7 @@ async fn main() {
             group_hash: register_str("payment-processor"),
             offset: 9_875,
             message_bytes: 256,
-            e2e_latency_us: 12_000,
+            e2e_latency_ns: 12_000_000,
             op_type: 4, // dlq
             partition: 2,
             retries: 3,

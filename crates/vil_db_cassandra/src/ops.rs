@@ -83,7 +83,7 @@ impl CassandraClient {
 
         let start = Instant::now();
         let result = self.raw_session().execute_unpaged(prepared, values).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(qr) => {
@@ -93,7 +93,7 @@ impl CassandraClient {
                     cql,
                     OP_SELECT,
                     1,
-                    elapsed_us,
+                    elapsed_ns,
                     rows,
                     0,
                     self.pool_id(),
@@ -106,7 +106,7 @@ impl CassandraClient {
                     cql,
                     OP_SELECT,
                     1,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -135,7 +135,7 @@ impl CassandraClient {
 
         let start = Instant::now();
         let result = self.raw_session().query_unpaged(cql, values).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(qr) => {
@@ -145,7 +145,7 @@ impl CassandraClient {
                     cql,
                     OP_SELECT,
                     0,
-                    elapsed_us,
+                    elapsed_ns,
                     rows,
                     0,
                     self.pool_id(),
@@ -158,7 +158,7 @@ impl CassandraClient {
                     cql,
                     OP_SELECT,
                     0,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -185,7 +185,7 @@ impl CassandraClient {
     ) -> CassandraResult<QueryResult> {
         let start = Instant::now();
         let result = self.raw_session().batch(batch, values).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(qr) => {
@@ -194,7 +194,7 @@ impl CassandraClient {
                     "batch",
                     OP_BATCH,
                     0,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     0,
                     self.pool_id(),
@@ -207,7 +207,7 @@ impl CassandraClient {
                     "batch",
                     OP_BATCH,
                     0,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -244,7 +244,7 @@ impl CassandraClient {
                 .raw_session()
                 .execute_single_page(prepared, values.clone(), paging_state)
                 .await;
-            let elapsed_us = start.elapsed().as_micros() as u32;
+            let elapsed_ns = start.elapsed().as_nanos() as u64;
 
             match result {
                 Ok((qr, paging_state_response)) => {
@@ -255,7 +255,7 @@ impl CassandraClient {
                         cql,
                         OP_SELECT,
                         1,
-                        elapsed_us,
+                        elapsed_ns,
                         count,
                         0,
                         self.pool_id(),
@@ -276,7 +276,7 @@ impl CassandraClient {
                         cql,
                         OP_SELECT,
                         1,
-                        elapsed_us,
+                        elapsed_ns,
                         0,
                         1,
                         self.pool_id(),

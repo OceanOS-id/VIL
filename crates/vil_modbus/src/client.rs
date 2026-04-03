@@ -30,7 +30,7 @@ use crate::error::ModbusFault;
 /// Every operation automatically emits a `db_log!` entry with:
 /// - `db_hash`       — FxHash of the "host:port" connection string
 /// - `table_hash`    — FxHash of the register address as decimal string
-/// - `duration_us`   — Wall-clock time of the operation
+/// - `duration_ns`   — Wall-clock time of the operation
 /// - `rows_affected` — Number of coils/registers read or written
 /// - `op_type`       — 0=read (SELECT), 2=write (UPDATE)
 /// - `error_code`    — 0 on success, non-zero on fault
@@ -105,7 +105,7 @@ impl ModbusClient {
                 db_hash: self.host_hash,
                 table_hash: addr_hash,
                 query_hash: register_str("read_coils"),
-                duration_us: elapsed.as_micros() as u32,
+                duration_ns: elapsed.as_nanos() as u64,
                 rows_affected: rows,
                 op_type: 0, // SELECT / read
                 error_code: err_code,
@@ -153,7 +153,7 @@ impl ModbusClient {
                 db_hash: self.host_hash,
                 table_hash: addr_hash,
                 query_hash: register_str("read_registers"),
-                duration_us: elapsed.as_micros() as u32,
+                duration_ns: elapsed.as_nanos() as u64,
                 rows_affected: rows,
                 op_type: 0, // SELECT / read
                 error_code: err_code,
@@ -197,7 +197,7 @@ impl ModbusClient {
                 db_hash: self.host_hash,
                 table_hash: addr_hash,
                 query_hash: register_str("write_coil"),
-                duration_us: elapsed.as_micros() as u32,
+                duration_ns: elapsed.as_nanos() as u64,
                 rows_affected: 1,
                 op_type: 2, // UPDATE / write
                 error_code: err_code,
@@ -241,7 +241,7 @@ impl ModbusClient {
                 db_hash: self.host_hash,
                 table_hash: addr_hash,
                 query_hash: register_str("write_register"),
-                duration_us: elapsed.as_micros() as u32,
+                duration_ns: elapsed.as_nanos() as u64,
                 rows_affected: 1,
                 op_type: 2, // UPDATE / write
                 error_code: err_code,

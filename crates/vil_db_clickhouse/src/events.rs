@@ -9,6 +9,6 @@ use vil_connector_macros::connector_event;
 pub struct ChBatchInserted {
     pub table_hash: u32,
     pub rows: u64,
-    pub elapsed_us: u32,
+    pub elapsed_ns: u32,
     pub timestamp_ns: u64,
 }

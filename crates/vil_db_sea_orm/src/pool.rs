@@ -68,7 +68,7 @@ impl SeaOrmPool {
             ))
             .await?;
         self.metrics
-            .record_query(start.elapsed().as_micros() as u64, false);
+            .record_query(start.elapsed().as_nanos() as u64, false);
         Ok(result.rows_affected())
     }
 

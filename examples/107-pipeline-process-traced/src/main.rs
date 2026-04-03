@@ -38,7 +38,7 @@ use vil_sdk::prelude::*;
 pub struct SupplyChainState {
     pub tracking_id: u64,
     pub hops_completed: u64,
-    pub total_latency_us: u64,
+    pub total_latency_ns: u64,
 }
 
 /// Event emitted when a package completes one hop in the supply chain.
@@ -47,7 +47,7 @@ pub struct SupplyChainState {
 #[vil_event]
 pub struct PackageHopCompleted {
     pub hop_name: u64,
-    pub latency_us: u64,
+    pub latency_ns: u64,
     pub process_id: u64,
 }
 

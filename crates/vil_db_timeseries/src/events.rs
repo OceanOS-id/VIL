@@ -9,6 +9,6 @@ use vil_connector_macros::connector_event;
 pub struct TimeseriesPointsWritten {
     pub bucket_hash: u32,
     pub points_count: u32,
-    pub elapsed_us: u32,
+    pub elapsed_ns: u64,
     pub timestamp_ns: u64,
 }

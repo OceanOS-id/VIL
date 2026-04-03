@@ -130,7 +130,7 @@ impl<T: Row + Serialize> BatchInserter<T> {
         }
         .await;
 
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(()) => {
@@ -140,7 +140,7 @@ impl<T: Row + Serialize> BatchInserter<T> {
                         db_hash: self.client.db_hash,
                         table_hash: self.table_hash,
                         query_hash: 0,
-                        duration_us: elapsed_us,
+                        duration_ns: elapsed_ns,
                         rows_affected: row_count as u32,
                         op_type: 1, // INSERT
                         error_code: 0,
@@ -157,7 +157,7 @@ impl<T: Row + Serialize> BatchInserter<T> {
                         db_hash: self.client.db_hash,
                         table_hash: self.table_hash,
                         query_hash: 0,
-                        duration_us: elapsed_us,
+                        duration_ns: elapsed_ns,
                         rows_affected: 0,
                         op_type: 1, // INSERT
                         error_code: (reason_code & 0xFF) as u8,

@@ -212,7 +212,7 @@ struct PoolSize {
 struct PoolMetricsInfo {
     queries_total: u64,
     query_errors: u64,
-    avg_query_us: u64,
+    avg_query_ns: u64,
     acquires_total: u64,
     health_checks_ok: u64,
     health_checks_fail: u64,
@@ -467,7 +467,7 @@ async fn pool_stats(ctx: ServiceCtx) -> VilResponse<PoolStatsResponse> {
             metrics: PoolMetricsInfo {
                 queries_total: metrics_snap.queries_total,
                 query_errors: metrics_snap.query_errors,
-                avg_query_us: metrics_snap.avg_query_us,
+                avg_query_ns: metrics_snap.avg_query_ns,
                 acquires_total: metrics_snap.acquires_total,
                 health_checks_ok: metrics_snap.health_checks_ok,
                 health_checks_fail: metrics_snap.health_checks_fail,

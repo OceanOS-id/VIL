@@ -119,14 +119,14 @@ impl S3Client {
     }
 
     /// Emit a db_log! entry for an S3 operation.
-    fn emit_log(&self, key_hash: u32, elapsed_us: u32, rows: u32, op: u8, err: u8) {
+    fn emit_log(&self, key_hash: u32, elapsed_ns: u64, rows: u32, op: u8, err: u8) {
         db_log!(
             Info,
             DbPayload {
                 db_hash: self.config_hash,
                 table_hash: register_str(&self.bucket),
                 query_hash: key_hash,
-                duration_us: elapsed_us,
+                duration_ns: elapsed_ns,
                 rows_affected: rows,
                 op_type: op,
                 error_code: err,
@@ -151,18 +151,18 @@ impl S3Client {
             .send()
             .await;
 
-        let us = start.elapsed().as_micros() as u32;
+        let ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(resp) => {
-                self.emit_log(key_hash, us, 1, OP_PUT, 0);
+                self.emit_log(key_hash, ns, 1, OP_PUT, 0);
                 Ok(PutResult {
                     e_tag: Some(resp.etag),
                     version_id: resp.version_id,
                 })
             }
             Err(_) => {
-                self.emit_log(key_hash, us, 0, OP_PUT, 1);
+                self.emit_log(key_hash, ns, 0, OP_PUT, 1);
                 Err(S3Fault::UploadFailed { key_hash, size })
             }
         }
@@ -181,21 +181,21 @@ impl S3Client {
 
         let result = self.inner.get_object(&self.bucket, key).send().await;
 
-        let us = start.elapsed().as_micros() as u32;
+        let ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(resp) => match collect_content(resp.content).await {
                 Ok(data) => {
-                    self.emit_log(key_hash, us, 1, OP_GET, 0);
+                    self.emit_log(key_hash, ns, 1, OP_GET, 0);
                     Ok(data)
                 }
                 Err(fault) => {
-                    self.emit_log(key_hash, us, 0, OP_GET, 1);
+                    self.emit_log(key_hash, ns, 0, OP_GET, 1);
                     Err(fault)
                 }
             },
             Err(_) => {
-                self.emit_log(key_hash, us, 0, OP_GET, 1);
+                self.emit_log(key_hash, ns, 0, OP_GET, 1);
                 Err(S3Fault::NotFound { key_hash })
             }
         }
@@ -214,15 +214,15 @@ impl S3Client {
 
         let result = self.inner.delete_object(&self.bucket, key).send().await;
 
-        let us = start.elapsed().as_micros() as u32;
+        let ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(_) => {
-                self.emit_log(key_hash, us, 1, OP_DELETE, 0);
+                self.emit_log(key_hash, ns, 1, OP_DELETE, 0);
                 Ok(())
             }
             Err(_) => {
-                self.emit_log(key_hash, us, 0, OP_DELETE, 1);
+                self.emit_log(key_hash, ns, 0, OP_DELETE, 1);
                 Err(S3Fault::Unknown {
                     message_hash: register_str("delete_object_error"),
                 })
@@ -268,8 +268,8 @@ impl S3Client {
                     }
                 }
                 Err(_) => {
-                    let us = start.elapsed().as_micros() as u32;
-                    self.emit_log(prefix_hash, us, 0, OP_LIST, 1);
+                    let ns = start.elapsed().as_nanos() as u64;
+                    self.emit_log(prefix_hash, ns, 0, OP_LIST, 1);
                     return Err(S3Fault::BucketNotFound {
                         bucket_hash: register_str(&self.bucket),
                     });
@@ -278,8 +278,8 @@ impl S3Client {
         }
 
         let count = objects.len() as u32;
-        let us = start.elapsed().as_micros() as u32;
-        self.emit_log(prefix_hash, us, count, OP_LIST, 0);
+        let ns = start.elapsed().as_nanos() as u64;
+        self.emit_log(prefix_hash, ns, count, OP_LIST, 0);
 
         Ok(objects)
     }
@@ -297,11 +297,11 @@ impl S3Client {
 
         let result = self.inner.stat_object(&self.bucket, key).send().await;
 
-        let us = start.elapsed().as_micros() as u32;
+        let ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(resp) => {
-                self.emit_log(key_hash, us, 1, OP_HEAD, 0);
+                self.emit_log(key_hash, ns, 1, OP_HEAD, 0);
                 Ok(ObjectMeta {
                     key: key.to_owned(),
                     size: resp.size,
@@ -310,7 +310,7 @@ impl S3Client {
                 })
             }
             Err(_) => {
-                self.emit_log(key_hash, us, 0, OP_HEAD, 1);
+                self.emit_log(key_hash, ns, 0, OP_HEAD, 1);
                 Err(S3Fault::NotFound { key_hash })
             }
         }
@@ -335,15 +335,15 @@ impl S3Client {
             .send()
             .await;
 
-        let us = start.elapsed().as_micros() as u32;
+        let ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(resp) => {
-                self.emit_log(key_hash, us, 1, OP_GET, 0);
+                self.emit_log(key_hash, ns, 1, OP_GET, 0);
                 Ok(resp.url)
             }
             Err(_) => {
-                self.emit_log(key_hash, us, 0, OP_GET, 1);
+                self.emit_log(key_hash, ns, 0, OP_GET, 1);
                 Err(S3Fault::Unknown {
                     message_hash: register_str("presign_error"),
                 })

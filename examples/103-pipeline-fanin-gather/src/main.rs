@@ -59,7 +59,7 @@ pub struct GatherState {
 pub struct GatherCompleted {
     pub source_name: u8,
     pub record_count: u64,
-    pub latency_us: u64,
+    pub latency_ns: u64,
     pub format: u8,
 }
 

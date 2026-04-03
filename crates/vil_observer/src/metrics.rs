@@ -9,12 +9,12 @@ pub struct EndpointMetrics {
     pub method: String,
     pub requests: AtomicU64,
     pub errors: AtomicU64,
-    pub total_latency_us: AtomicU64,
-    pub min_latency_us: AtomicU64,
-    pub max_latency_us: AtomicU64,
-    pub p95_us: AtomicU64,
-    pub p99_us: AtomicU64,
-    pub p999_us: AtomicU64,
+    pub total_latency_ns: AtomicU64,
+    pub min_latency_ns: AtomicU64,
+    pub max_latency_ns: AtomicU64,
+    pub p95_ns: AtomicU64,
+    pub p99_ns: AtomicU64,
+    pub p999_ns: AtomicU64,
 }
 
 impl EndpointMetrics {
@@ -24,28 +24,28 @@ impl EndpointMetrics {
             method: method.to_string(),
             requests: AtomicU64::new(0),
             errors: AtomicU64::new(0),
-            total_latency_us: AtomicU64::new(0),
-            min_latency_us: AtomicU64::new(u64::MAX),
-            max_latency_us: AtomicU64::new(0),
-            p95_us: AtomicU64::new(0),
-            p99_us: AtomicU64::new(0),
-            p999_us: AtomicU64::new(0),
+            total_latency_ns: AtomicU64::new(0),
+            min_latency_ns: AtomicU64::new(u64::MAX),
+            max_latency_ns: AtomicU64::new(0),
+            p95_ns: AtomicU64::new(0),
+            p99_ns: AtomicU64::new(0),
+            p999_ns: AtomicU64::new(0),
         }
     }
 
-    pub fn record(&self, latency_us: u64, is_error: bool) {
+    pub fn record(&self, latency_ns: u64, is_error: bool) {
         self.requests.fetch_add(1, Ordering::Relaxed);
         if is_error {
             self.errors.fetch_add(1, Ordering::Relaxed);
         }
-        self.total_latency_us
-            .fetch_add(latency_us, Ordering::Relaxed);
+        self.total_latency_ns
+            .fetch_add(latency_ns, Ordering::Relaxed);
         // Update min (atomic min via compare_exchange loop)
-        let mut current = self.min_latency_us.load(Ordering::Relaxed);
-        while latency_us < current {
-            match self.min_latency_us.compare_exchange_weak(
+        let mut current = self.min_latency_ns.load(Ordering::Relaxed);
+        while latency_ns < current {
+            match self.min_latency_ns.compare_exchange_weak(
                 current,
-                latency_us,
+                latency_ns,
                 Ordering::Relaxed,
                 Ordering::Relaxed,
             ) {
@@ -54,11 +54,11 @@ impl EndpointMetrics {
             }
         }
         // Update max
-        let mut current = self.max_latency_us.load(Ordering::Relaxed);
-        while latency_us > current {
-            match self.max_latency_us.compare_exchange_weak(
+        let mut current = self.max_latency_ns.load(Ordering::Relaxed);
+        while latency_ns > current {
+            match self.max_latency_ns.compare_exchange_weak(
                 current,
-                latency_us,
+                latency_ns,
                 Ordering::Relaxed,
                 Ordering::Relaxed,
             ) {
@@ -71,9 +71,9 @@ impl EndpointMetrics {
     pub fn snapshot(&self) -> EndpointSnapshot {
         let requests = self.requests.load(Ordering::Relaxed);
         let errors = self.errors.load(Ordering::Relaxed);
-        let total = self.total_latency_us.load(Ordering::Relaxed);
-        let min = self.min_latency_us.load(Ordering::Relaxed);
-        let max = self.max_latency_us.load(Ordering::Relaxed);
+        let total = self.total_latency_ns.load(Ordering::Relaxed);
+        let min = self.min_latency_ns.load(Ordering::Relaxed);
+        let max = self.max_latency_ns.load(Ordering::Relaxed);
 
         EndpointSnapshot {
             path: self.path.clone(),
@@ -85,12 +85,12 @@ impl EndpointMetrics {
             } else {
                 0.0
             },
-            avg_latency_us: if requests > 0 { total / requests } else { 0 },
-            min_latency_us: if min == u64::MAX { 0 } else { min },
-            max_latency_us: max,
-            p95_us: self.p95_us.load(Ordering::Relaxed),
-            p99_us: self.p99_us.load(Ordering::Relaxed),
-            p999_us: self.p999_us.load(Ordering::Relaxed),
+            avg_latency_ns: if requests > 0 { total / requests } else { 0 },
+            min_latency_ns: if min == u64::MAX { 0 } else { min },
+            max_latency_ns: max,
+            p95_ns: self.p95_ns.load(Ordering::Relaxed),
+            p99_ns: self.p99_ns.load(Ordering::Relaxed),
+            p999_ns: self.p999_ns.load(Ordering::Relaxed),
         }
     }
 }
@@ -102,12 +102,12 @@ pub struct EndpointSnapshot {
     pub requests: u64,
     pub errors: u64,
     pub error_rate: f64,
-    pub avg_latency_us: u64,
-    pub min_latency_us: u64,
-    pub max_latency_us: u64,
-    pub p95_us: u64,
-    pub p99_us: u64,
-    pub p999_us: u64,
+    pub avg_latency_ns: u64,
+    pub min_latency_ns: u64,
+    pub max_latency_ns: u64,
+    pub p95_ns: u64,
+    pub p99_ns: u64,
+    pub p999_ns: u64,
 }
 
 /// Global metrics collector for all endpoints.
@@ -184,10 +184,10 @@ impl MetricsCollector {
         path: &str,
         requests: u64,
         errors: u64,
-        avg_latency_us: u64,
-        p95_us: u64,
-        p99_us: u64,
-        p999_us: u64,
+        avg_latency_ns: u64,
+        p95_ns: u64,
+        p99_ns: u64,
+        p999_ns: u64,
     ) {
         let mut started = self.started_at.lock().unwrap();
         if started.is_none() {
@@ -202,33 +202,33 @@ impl MetricsCollector {
         if let Some(m) = existing {
             m.requests.store(requests, Ordering::Relaxed);
             m.errors.store(errors, Ordering::Relaxed);
-            m.total_latency_us
-                .store(avg_latency_us * requests, Ordering::Relaxed);
-            m.p95_us.store(p95_us, Ordering::Relaxed);
-            m.p99_us.store(p99_us, Ordering::Relaxed);
-            m.p999_us.store(p999_us, Ordering::Relaxed);
-            if requests > 0 && avg_latency_us > 0 {
-                let min = m.min_latency_us.load(Ordering::Relaxed);
-                if avg_latency_us < min {
-                    m.min_latency_us.store(avg_latency_us, Ordering::Relaxed);
+            m.total_latency_ns
+                .store(avg_latency_ns * requests, Ordering::Relaxed);
+            m.p95_ns.store(p95_ns, Ordering::Relaxed);
+            m.p99_ns.store(p99_ns, Ordering::Relaxed);
+            m.p999_ns.store(p999_ns, Ordering::Relaxed);
+            if requests > 0 && avg_latency_ns > 0 {
+                let min = m.min_latency_ns.load(Ordering::Relaxed);
+                if avg_latency_ns < min {
+                    m.min_latency_ns.store(avg_latency_ns, Ordering::Relaxed);
                 }
-                let max = m.max_latency_us.load(Ordering::Relaxed);
-                if avg_latency_us > max || max == 0 {
-                    m.max_latency_us.store(avg_latency_us, Ordering::Relaxed);
+                let max = m.max_latency_ns.load(Ordering::Relaxed);
+                if avg_latency_ns > max || max == 0 {
+                    m.max_latency_ns.store(avg_latency_ns, Ordering::Relaxed);
                 }
             }
         } else {
             let m = Arc::new(EndpointMetrics::new(method, path));
             m.requests.store(requests, Ordering::Relaxed);
             m.errors.store(errors, Ordering::Relaxed);
-            m.total_latency_us
-                .store(avg_latency_us * requests, Ordering::Relaxed);
-            m.p95_us.store(p95_us, Ordering::Relaxed);
-            m.p99_us.store(p99_us, Ordering::Relaxed);
-            m.p999_us.store(p999_us, Ordering::Relaxed);
-            if requests > 0 && avg_latency_us > 0 {
-                m.min_latency_us.store(avg_latency_us, Ordering::Relaxed);
-                m.max_latency_us.store(avg_latency_us, Ordering::Relaxed);
+            m.total_latency_ns
+                .store(avg_latency_ns * requests, Ordering::Relaxed);
+            m.p95_ns.store(p95_ns, Ordering::Relaxed);
+            m.p99_ns.store(p99_ns, Ordering::Relaxed);
+            m.p999_ns.store(p999_ns, Ordering::Relaxed);
+            if requests > 0 && avg_latency_ns > 0 {
+                m.min_latency_ns.store(avg_latency_ns, Ordering::Relaxed);
+                m.max_latency_ns.store(avg_latency_ns, Ordering::Relaxed);
             }
             endpoints.push(m);
         }
@@ -241,12 +241,12 @@ impl MetricsCollector {
         path: &str,
         requests: u64,
         errors: u64,
-        avg_latency_us: u64,
-        min_us: u64,
-        max_us: u64,
-        p95_us: u64,
-        p99_us: u64,
-        p999_us: u64,
+        avg_latency_ns: u64,
+        min_ns: u64,
+        max_ns: u64,
+        p95_ns: u64,
+        p99_ns: u64,
+        p999_ns: u64,
     ) {
         let mut started = self.started_at.lock().unwrap();
         if started.is_none() {
@@ -261,30 +261,30 @@ impl MetricsCollector {
         if let Some(m) = existing {
             m.requests.store(requests, Ordering::Relaxed);
             m.errors.store(errors, Ordering::Relaxed);
-            m.total_latency_us
-                .store(avg_latency_us * requests, Ordering::Relaxed);
-            m.min_latency_us.store(
-                if min_us == u64::MAX { 0 } else { min_us },
+            m.total_latency_ns
+                .store(avg_latency_ns * requests, Ordering::Relaxed);
+            m.min_latency_ns.store(
+                if min_ns == u64::MAX { 0 } else { min_ns },
                 Ordering::Relaxed,
             );
-            m.max_latency_us.store(max_us, Ordering::Relaxed);
-            m.p95_us.store(p95_us, Ordering::Relaxed);
-            m.p99_us.store(p99_us, Ordering::Relaxed);
-            m.p999_us.store(p999_us, Ordering::Relaxed);
+            m.max_latency_ns.store(max_ns, Ordering::Relaxed);
+            m.p95_ns.store(p95_ns, Ordering::Relaxed);
+            m.p99_ns.store(p99_ns, Ordering::Relaxed);
+            m.p999_ns.store(p999_ns, Ordering::Relaxed);
         } else {
             let m = Arc::new(EndpointMetrics::new(method, path));
             m.requests.store(requests, Ordering::Relaxed);
             m.errors.store(errors, Ordering::Relaxed);
-            m.total_latency_us
-                .store(avg_latency_us * requests, Ordering::Relaxed);
-            m.min_latency_us.store(
-                if min_us == u64::MAX { 0 } else { min_us },
+            m.total_latency_ns
+                .store(avg_latency_ns * requests, Ordering::Relaxed);
+            m.min_latency_ns.store(
+                if min_ns == u64::MAX { 0 } else { min_ns },
                 Ordering::Relaxed,
             );
-            m.max_latency_us.store(max_us, Ordering::Relaxed);
-            m.p95_us.store(p95_us, Ordering::Relaxed);
-            m.p99_us.store(p99_us, Ordering::Relaxed);
-            m.p999_us.store(p999_us, Ordering::Relaxed);
+            m.max_latency_ns.store(max_ns, Ordering::Relaxed);
+            m.p95_ns.store(p95_ns, Ordering::Relaxed);
+            m.p99_ns.store(p99_ns, Ordering::Relaxed);
+            m.p999_ns.store(p999_ns, Ordering::Relaxed);
             endpoints.push(m);
         }
     }
@@ -304,9 +304,9 @@ mod tests {
         let snap = m.snapshot();
         assert_eq!(snap.requests, 3);
         assert_eq!(snap.errors, 1);
-        assert_eq!(snap.min_latency_us, 100);
-        assert_eq!(snap.max_latency_us, 300);
-        assert_eq!(snap.avg_latency_us, 200); // (100+200+300)/3
+        assert_eq!(snap.min_latency_ns, 100);
+        assert_eq!(snap.max_latency_ns, 300);
+        assert_eq!(snap.avg_latency_ns, 200); // (100+200+300)/3
     }
 
     #[test]

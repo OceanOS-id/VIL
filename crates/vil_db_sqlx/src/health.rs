@@ -9,7 +9,7 @@ use crate::pool::SqlxPool;
 pub struct HealthResult {
     pub pool_name: String,
     pub healthy: bool,
-    pub latency_us: u64,
+    pub latency_ns: u64,
     pub error: Option<String>,
     pub pool_size: u32,
     pub idle: u32,
@@ -25,7 +25,7 @@ pub async fn check_health(pool: &SqlxPool) -> HealthResult {
             HealthResult {
                 pool_name: pool.name().to_string(),
                 healthy: true,
-                latency_us: start.elapsed().as_micros() as u64,
+                latency_ns: start.elapsed().as_nanos() as u64,
                 error: None,
                 pool_size: info.current,
                 idle: info.idle,
@@ -36,7 +36,7 @@ pub async fn check_health(pool: &SqlxPool) -> HealthResult {
             HealthResult {
                 pool_name: pool.name().to_string(),
                 healthy: false,
-                latency_us: start.elapsed().as_micros() as u64,
+                latency_ns: start.elapsed().as_nanos() as u64,
                 error: Some(e.to_string()),
                 pool_size: 0,
                 idle: 0,

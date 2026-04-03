@@ -48,7 +48,7 @@ impl Neo4jClient {
 
         let start = Instant::now();
         let stream_result = self.raw_graph().execute(neo4rs::query(cypher)).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         let mut stream = match stream_result {
             Ok(s) => s,
@@ -57,7 +57,7 @@ impl Neo4jClient {
                     self.db_hash(),
                     cypher,
                     OP_MATCH,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -75,12 +75,12 @@ impl Neo4jClient {
                 Ok(Some(row)) => rows.push(row),
                 Ok(None) => break,
                 Err(e) => {
-                    let total_us = start.elapsed().as_micros() as u32;
+                    let total_ns = start.elapsed().as_nanos() as u64;
                     emit_db_log(
                         self.db_hash(),
                         cypher,
                         OP_MATCH,
-                        total_us,
+                        total_ns,
                         0,
                         1,
                         self.pool_id(),
@@ -93,13 +93,13 @@ impl Neo4jClient {
             }
         }
 
-        let total_us = start.elapsed().as_micros() as u32;
+        let total_ns = start.elapsed().as_nanos() as u64;
         let count = rows.len() as u32;
         emit_db_log(
             self.db_hash(),
             cypher,
             OP_MATCH,
-            total_us,
+            total_ns,
             count,
             0,
             self.pool_id(),
@@ -123,12 +123,12 @@ impl Neo4jClient {
         let mut txn = match txn_result {
             Ok(t) => t,
             Err(e) => {
-                let elapsed_us = start.elapsed().as_micros() as u32;
+                let elapsed_ns = start.elapsed().as_nanos() as u64;
                 emit_db_log(
                     self.db_hash(),
                     cypher,
                     OP_CALL,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -141,13 +141,13 @@ impl Neo4jClient {
 
         let run_result = txn.run(neo4rs::query(cypher)).await;
         if let Err(e) = run_result {
-            let elapsed_us = start.elapsed().as_micros() as u32;
+            let elapsed_ns = start.elapsed().as_nanos() as u64;
             let _ = txn.rollback().await;
             emit_db_log(
                 self.db_hash(),
                 cypher,
                 OP_CALL,
-                elapsed_us,
+                elapsed_ns,
                 0,
                 1,
                 self.pool_id(),
@@ -158,7 +158,7 @@ impl Neo4jClient {
         }
 
         let commit_result = txn.commit().await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match commit_result {
             Ok(_) => {
@@ -166,7 +166,7 @@ impl Neo4jClient {
                     self.db_hash(),
                     cypher,
                     OP_CALL,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     0,
                     self.pool_id(),
@@ -178,7 +178,7 @@ impl Neo4jClient {
                     self.db_hash(),
                     cypher,
                     OP_CALL,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -206,7 +206,7 @@ impl Neo4jClient {
 
         let start = Instant::now();
         let result = self.raw_graph().run(neo4rs::query(&cypher)).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         match result {
             Ok(_) => {
@@ -214,7 +214,7 @@ impl Neo4jClient {
                     self.db_hash(),
                     &cypher,
                     OP_CREATE,
-                    elapsed_us,
+                    elapsed_ns,
                     1,
                     0,
                     self.pool_id(),
@@ -226,7 +226,7 @@ impl Neo4jClient {
                     self.db_hash(),
                     &cypher,
                     OP_CREATE,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -252,7 +252,7 @@ impl Neo4jClient {
 
         let start = Instant::now();
         let stream_result = self.raw_graph().execute(neo4rs::query(cypher)).await;
-        let elapsed_us = start.elapsed().as_micros() as u32;
+        let elapsed_ns = start.elapsed().as_nanos() as u64;
 
         let mut stream = match stream_result {
             Ok(s) => s,
@@ -261,7 +261,7 @@ impl Neo4jClient {
                     self.db_hash(),
                     cypher,
                     OP_MATCH,
-                    elapsed_us,
+                    elapsed_ns,
                     0,
                     1,
                     self.pool_id(),
@@ -279,12 +279,12 @@ impl Neo4jClient {
                 Ok(Some(row)) => rows.push(row),
                 Ok(None) => break,
                 Err(e) => {
-                    let total_us = start.elapsed().as_micros() as u32;
+                    let total_ns = start.elapsed().as_nanos() as u64;
                     emit_db_log(
                         self.db_hash(),
                         cypher,
                         OP_MATCH,
-                        total_us,
+                        total_ns,
                         0,
                         1,
                         self.pool_id(),
@@ -297,13 +297,13 @@ impl Neo4jClient {
             }
         }
 
-        let total_us = start.elapsed().as_micros() as u32;
+        let total_ns = start.elapsed().as_nanos() as u64;
         let count = rows.len() as u32;
         emit_db_log(
             self.db_hash(),
             cypher,
             OP_MATCH,
-            total_us,
+            total_ns,
             count,
             0,
             self.pool_id(),
