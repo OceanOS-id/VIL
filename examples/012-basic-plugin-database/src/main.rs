@@ -65,9 +65,10 @@
 // =============================================================================
 
 use vil_db_sqlx::{SqlxConfig, SqlxPool};
+use vil_orm::VilQuery;
+use vil_orm_derive::VilEntity;
 use vil_server::prelude::*;
 
-use sqlx::Row;
 use std::sync::Arc;
 
 // ---------------------------------------------------------------------------
@@ -135,8 +136,10 @@ struct ProductsResponse {
     source: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel, sqlx::FromRow, VilEntity)]
+#[vil_entity(table = "products")]
 struct ProductRow {
+    #[vil_entity(pk)]
     id: i32,
     name: String,
     category: String,
@@ -170,8 +173,10 @@ struct TasksResponse {
     source: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel, sqlx::FromRow, VilEntity)]
+#[vil_entity(table = "tasks")]
 struct TaskRow {
+    #[vil_entity(pk)]
     id: i32,
     title: String,
     description: String,
@@ -356,38 +361,26 @@ async fn show_config(ctx: ServiceCtx) -> VilResponse<ConfigResponse> {
     })
 }
 
-/// GET /api/products — query real products table from PostgreSQL.
+/// GET /api/products — query products via VilQuery (specific columns, not SELECT *)
 async fn list_products(ctx: ServiceCtx) -> HandlerResult<VilResponse<ProductsResponse>> {
     let state = ctx.state::<DbState>().expect("state type mismatch");
-    let pool = state.pg_pool.inner();
 
-    let rows = sqlx::query(
-        "SELECT id, name, category, price::float8 as price, stock FROM products ORDER BY id",
-    )
-    .fetch_all(pool)
-    .await
-    .map_err(|e| VilError::internal(format!("PostgreSQL query failed: {}", e)))?;
-
-    let products: Vec<ProductRow> = rows
-        .iter()
-        .map(|row| ProductRow {
-            id: row.get::<i32, _>("id"),
-            name: row.get::<String, _>("name"),
-            category: row.get::<String, _>("category"),
-            price: row.get::<f64, _>("price"),
-            stock: row.get::<i32, _>("stock"),
-        })
-        .collect();
+    let products = ProductRow::q()
+        .select(&["id", "name", "category", "price::float8 as price", "stock"])
+        .order_by_asc("id")
+        .fetch_all::<ProductRow>(state.pg_pool.inner())
+        .await
+        .map_err(|e| VilError::internal(format!("PostgreSQL query failed: {}", e)))?;
 
     let count = products.len();
     Ok(VilResponse::ok(ProductsResponse {
         products,
         count,
-        source: "PostgreSQL (vil_demo.products)".to_string(),
+        source: "PostgreSQL (vil_demo.products) via VilQuery".to_string(),
     }))
 }
 
-/// POST /api/tasks — create a new task in PostgreSQL.
+/// POST /api/tasks — create a new task via VilQuery insert
 async fn create_task(
     ctx: ServiceCtx,
     body: ShmSlice,
@@ -399,52 +392,55 @@ async fn create_task(
         return Err(VilError::bad_request("title must not be empty"));
     }
 
+    let title = req.title;
     let description = req.description.unwrap_or_default();
-    let pool = state.pg_pool.inner();
 
-    let row = sqlx::query(
-        "INSERT INTO tasks (title, description) VALUES ($1, $2) RETURNING id, title, description, done"
-    )
-        .bind(&req.title)
-        .bind(&description)
-        .fetch_one(pool)
+    // PostgreSQL RETURNING via raw query (VilQuery doesn't support RETURNING yet)
+    // But we showcase VilQuery insert for the write path:
+    TaskRow::q()
+        .insert_columns(&["title", "description"])
+        .value(title.clone())
+        .value(description.clone())
+        .execute(state.pg_pool.inner())
         .await
         .map_err(|e| VilError::internal(format!("PostgreSQL insert failed: {}", e)))?;
 
+    // Fetch back via VilQuery
+    let task = TaskRow::q()
+        .select(&["id", "title", "description", "done"])
+        .where_eq("title", &title)
+        .order_by_desc("id")
+        .limit(1)
+        .fetch_optional::<TaskRow>(state.pg_pool.inner())
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?
+        .ok_or_else(|| VilError::internal("insert succeeded but fetch failed"))?;
+
     Ok(VilResponse::ok(CreateTaskResponse {
-        id: row.get::<i32, _>("id"),
-        title: row.get::<String, _>("title"),
-        description: row.get::<String, _>("description"),
-        done: row.get::<bool, _>("done"),
-        message: "Task created in PostgreSQL".to_string(),
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        done: task.done,
+        message: "Task created in PostgreSQL via VilQuery".to_string(),
     }))
 }
 
-/// GET /api/tasks — list all tasks from PostgreSQL.
+/// GET /api/tasks — list all tasks via VilQuery (specific columns)
 async fn list_tasks(ctx: ServiceCtx) -> HandlerResult<VilResponse<TasksResponse>> {
     let state = ctx.state::<DbState>().expect("state type mismatch");
-    let pool = state.pg_pool.inner();
 
-    let rows = sqlx::query("SELECT id, title, description, done FROM tasks ORDER BY id")
-        .fetch_all(pool)
+    let tasks = TaskRow::q()
+        .select(&["id", "title", "description", "done"])
+        .order_by_asc("id")
+        .fetch_all::<TaskRow>(state.pg_pool.inner())
         .await
         .map_err(|e| VilError::internal(format!("PostgreSQL query failed: {}", e)))?;
-
-    let tasks: Vec<TaskRow> = rows
-        .iter()
-        .map(|row| TaskRow {
-            id: row.get::<i32, _>("id"),
-            title: row.get::<String, _>("title"),
-            description: row.get::<String, _>("description"),
-            done: row.get::<bool, _>("done"),
-        })
-        .collect();
 
     let count = tasks.len();
     Ok(VilResponse::ok(TasksResponse {
         tasks,
         count,
-        source: "PostgreSQL (vil_demo.tasks)".to_string(),
+        source: "PostgreSQL (vil_demo.tasks) via VilQuery".to_string(),
     }))
 }
 

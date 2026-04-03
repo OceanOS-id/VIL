@@ -1,81 +1,62 @@
 // ╔════════════════════════════════════════════════════════════╗
-// ║  004 — Task Management System (Project Management Tool)   ║
+// ║  004 — Task CRUD with SQLite + VilORM                     ║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Domain:   Project Management — Sprint/Task Tracking       ║
-// ║  Pattern:  VX_APP                                           ║
-// ║  Token:    N/A (HTTP server)                                ║
-// ║  Features: ShmSlice, ServiceCtx, VilResponse                ║
+// ║  Pattern:  VX_APP + VilEntity + VilQuery                    ║
+// ║  Features: VilORM, VilQuery builder, VilEntity derive       ║
+// ║  Domain:   Task management — full CRUD on SQLite            ║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Business: REST API for engineering teams to manage tasks   ║
-// ║  within sprints. Supports create, read, update, delete     ║
-// ║  with input validation. In-memory store for demo; swap     ║
-// ║  with PostgreSQL (via vlang_db_sqlx) for production.       ║
+// ║  Showcases:                                                 ║
+// ║  - #[derive(VilEntity)] for auto CRUD methods               ║
+// ║  - T::q() fluent query builder (JOOQ-style)                ║
+// ║  - T::find_by_id() / T::find_all() convenience methods     ║
+// ║  - T::q().insert_columns().value().execute() for INSERT     ║
+// ║  - T::q().update().set_optional().where_eq() for UPDATE     ║
+// ║  - T::q().select(&[cols]).order_by_desc() for projections   ║
+// ║  - T::delete() for DELETE by primary key                    ║
 // ╚════════════════════════════════════════════════════════════╝
-// Task Management REST API (VX Process-Oriented)
-// =============================================================================
 //
-// Demonstrates a full CRUD API with in-memory storage using the VX
-// Process-Oriented architecture — "break the dot-builder" pattern:
-//
-//   Step 1: Define domain types, store, and handlers (pure logic)
-//   Step 2: Build a ServiceProcess with individual endpoint registrations
-//   Step 3: Assemble into VilApp and run
-//
-// Endpoints:
-//   GET    /api/tasks       → list all tasks
-//   POST   /api/tasks       → create a new task (with validation)
-//   GET    /api/tasks/:id   → get a single task by ID
-//   PUT    /api/tasks/:id   → update a task by ID
-//   DELETE /api/tasks/:id   → delete a task by ID
-//
-// In-memory storage uses Arc<RwLock<HashMap<u64, Task>>> shared via
-// axum's Extension layer. The ServiceProcess compiles down to an Axum
-// Router (Phase 1 bridge), so Extension injection works unchanged.
-//
-// Run:
-//   cargo run -p basic-usage-rest-crud
-//
+// Run:   cargo run -p vil-basic-rest-crud
 // Test:
 //   curl http://localhost:8080/api/tasks
 //   curl -X POST http://localhost:8080/api/tasks \
 //     -H 'Content-Type: application/json' \
 //     -d '{"title":"Buy groceries","description":"Milk, eggs, bread"}'
-//   curl http://localhost:8080/api/tasks/1
-//   curl -X PUT http://localhost:8080/api/tasks/1 \
+//   curl http://localhost:8080/api/tasks/some-uuid-here
+//   curl -X PUT http://localhost:8080/api/tasks/some-uuid-here \
 //     -H 'Content-Type: application/json' \
-//     -d '{"title":"Buy groceries","description":"Milk, eggs, bread, butter","done":true}'
-//   curl -X DELETE http://localhost:8080/api/tasks/1
-// =============================================================================
+//     -d '{"title":"Buy groceries","description":"Updated list","done":true}'
+//   curl -X DELETE http://localhost:8080/api/tasks/some-uuid-here
 
-use vil_server::axum::extract::Extension;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use vil_db_sqlx::SqlxPool;
+use vil_orm::VilQuery;
+use vil_orm_derive::VilEntity;
 use vil_server::prelude::*;
 
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
+// ── Domain Model ──
 
-// ---------------------------------------------------------------------------
-// Step 1: Domain types, store, and handlers (pure logic — no framework glue)
-// ---------------------------------------------------------------------------
-
-/// A task in our TODO list.
-#[derive(Debug, Clone, Serialize, Deserialize, VilModel)]
+#[derive(Debug, Clone, Serialize, Deserialize, VilModel, sqlx::FromRow, VilEntity)]
+#[vil_entity(table = "tasks")]
 struct Task {
-    id: u64,
+    #[vil_entity(pk)]
+    id: String,
     title: String,
     description: String,
-    done: bool,
+    done: i64,
+    #[vil_entity(auto_now_add)]
+    created_at: String,
+    #[vil_entity(auto_now)]
+    updated_at: String,
 }
 
-/// Request body for creating a task.
 #[derive(Debug, Deserialize)]
 struct CreateTask {
     title: String,
     #[serde(default)]
-    description: String,
+    description: Option<String>,
 }
 
-/// Request body for updating a task.
 #[derive(Debug, Deserialize)]
 struct UpdateTask {
     title: Option<String>,
@@ -83,186 +64,199 @@ struct UpdateTask {
     done: Option<bool>,
 }
 
-// -- Response types ----------------------------------------------------------
-
-/// Response containing a list of tasks.
-#[derive(Serialize)]
-struct TaskListResponse {
-    count: usize,
-    tasks: Vec<Task>,
+// Slim projection — only fetch what the list endpoint needs
+#[derive(Debug, Clone, Serialize, Deserialize, VilModel, sqlx::FromRow)]
+struct TaskListItem {
+    id: String,
+    title: String,
+    done: i64,
+    created_at: String,
 }
 
-/// Response containing a single task with an optional message.
-#[derive(Serialize)]
-struct TaskResponse {
-    message: &'static str,
-    task: Task,
-}
+// ── Shared State ──
 
-// -- Shared store ------------------------------------------------------------
-
-/// In-memory task store: maps task ID to Task.
 #[derive(Clone)]
-struct Store {
-    tasks: Arc<RwLock<HashMap<u64, Task>>>,
-    next_id: Arc<std::sync::atomic::AtomicU64>,
+struct AppState {
+    pool: Arc<SqlxPool>,
 }
 
-impl Store {
-    fn new() -> Self {
-        Self {
-            tasks: Arc::new(RwLock::new(HashMap::new())),
-            next_id: Arc::new(std::sync::atomic::AtomicU64::new(1)),
-        }
-    }
+// ── Handlers ──
+
+/// GET /tasks — list tasks (slim projection, not SELECT *)
+async fn list_tasks(ctx: ServiceCtx) -> HandlerResult<VilResponse<Vec<TaskListItem>>> {
+    let state = ctx.state::<AppState>().expect("state");
+    let tasks = Task::q()
+        .select(&["id", "title", "done", "created_at"])
+        .order_by_desc("created_at")
+        .limit(100)
+        .fetch_all::<TaskListItem>(state.pool.inner())
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?;
+    Ok(VilResponse::ok(tasks))
 }
 
-// -- Handlers ----------------------------------------------------------------
+/// POST /tasks — create task via VilQuery insert
+async fn create_task(ctx: ServiceCtx, body: ShmSlice) -> HandlerResult<VilResponse<Task>> {
+    let state = ctx.state::<AppState>().expect("state");
+    let req: CreateTask = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
 
-/// GET /tasks — list all tasks.
-async fn list_tasks(ctx: ServiceCtx) -> VilResponse<TaskListResponse> {
-    let store = ctx.state::<Store>().expect("state type mismatch");
-    let map = store.tasks.read().await;
-    let tasks: Vec<Task> = map.values().cloned().collect();
-    VilResponse::ok(TaskListResponse {
-        count: tasks.len(),
-        tasks,
-    })
-}
-
-/// POST /tasks — create a new task with validation.
-async fn create_task(ctx: ServiceCtx, body: ShmSlice) -> HandlerResult<VilResponse<TaskResponse>> {
-    let store = ctx.state::<Store>().expect("state type mismatch");
-    let input: CreateTask = body.json().expect("invalid JSON body");
-    // Validate: title must not be empty
-    if input.title.trim().is_empty() {
+    if req.title.trim().is_empty() {
         return Err(VilError::bad_request("title must not be empty"));
     }
 
-    let id = store
-        .next_id
-        .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-    let task = Task {
-        id,
-        title: input.title,
-        description: input.description,
-        done: false,
-    };
+    let id = uuid::Uuid::new_v4().to_string();
+    let title = req.title;
+    let desc = req.description.unwrap_or_default();
 
-    store.tasks.write().await.insert(id, task.clone());
+    Task::q()
+        .insert_columns(&["id", "title", "description"])
+        .value(id.clone())
+        .value(title)
+        .value(desc)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?;
 
-    Ok(VilResponse::created(TaskResponse {
-        message: "Task created",
-        task,
-    }))
+    // Fetch back full record
+    let task = Task::find_by_id(state.pool.inner(), &id)
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?
+        .ok_or_else(|| VilError::internal("insert succeeded but fetch failed"))?;
+
+    Ok(VilResponse::created(task))
 }
 
-/// GET /tasks/:id — get a single task.
-async fn get_task(
-    ctx: ServiceCtx,
-    Path(id): Path<u64>,
-) -> HandlerResult<VilResponse<TaskResponse>> {
-    let store = ctx.state::<Store>().expect("state type mismatch");
-    let map = store.tasks.read().await;
-    let task = map
-        .get(&id)
-        .cloned()
-        .ok_or_else(|| VilError::not_found(format!("Task {} does not exist", id)))?;
-    Ok(VilResponse::ok(TaskResponse {
-        message: "Task found",
-        task,
-    }))
+/// GET /tasks/:id — get by primary key
+async fn get_task(ctx: ServiceCtx, Path(id): Path<String>) -> HandlerResult<VilResponse<Task>> {
+    let state = ctx.state::<AppState>().expect("state");
+    let task = Task::find_by_id(state.pool.inner(), &id)
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?
+        .ok_or_else(|| VilError::not_found(format!("Task {id} not found")))?;
+    Ok(VilResponse::ok(task))
 }
 
-/// PUT /tasks/:id — update a task.
+/// PUT /tasks/:id — partial update via VilQuery set_optional (skip None fields)
 async fn update_task(
     ctx: ServiceCtx,
-    Path(id): Path<u64>,
+    Path(id): Path<String>,
     body: ShmSlice,
-) -> HandlerResult<VilResponse<TaskResponse>> {
-    let store = ctx.state::<Store>().expect("state type mismatch");
-    let input: UpdateTask = body.json().expect("invalid JSON body");
-    let mut map = store.tasks.write().await;
-    let task = map
-        .get_mut(&id)
-        .ok_or_else(|| VilError::not_found(format!("Task {} does not exist", id)))?;
+) -> HandlerResult<VilResponse<Task>> {
+    let state = ctx.state::<AppState>().expect("state");
+    let req: UpdateTask = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
 
-    if let Some(title) = input.title {
-        if title.trim().is_empty() {
+    // Validate title if provided
+    if let Some(ref t) = req.title {
+        if t.trim().is_empty() {
             return Err(VilError::bad_request("title must not be empty"));
         }
-        task.title = title;
-    }
-    if let Some(description) = input.description {
-        task.description = description;
-    }
-    if let Some(done) = input.done {
-        task.done = done;
     }
 
-    let updated = task.clone();
-    Ok(VilResponse::ok(TaskResponse {
-        message: "Task updated",
-        task: updated,
-    }))
+    // Build UPDATE dynamically — only SET provided fields
+    let mut q = Task::q()
+        .update()
+        .set_optional("title", req.title.as_deref())
+        .set_optional("description", req.description.as_deref())
+        .set_raw("updated_at", "datetime('now')");
+
+    if let Some(done) = req.done {
+        q = q.set("done", if done { 1_i64 } else { 0_i64 });
+    }
+
+    q.where_eq("id", &id)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?;
+
+    let task = Task::find_by_id(state.pool.inner(), &id)
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?
+        .ok_or_else(|| VilError::not_found(format!("Task {id} not found")))?;
+
+    Ok(VilResponse::ok(task))
 }
 
-/// DELETE /tasks/:id — delete a task.
-async fn delete_task(
-    ctx: ServiceCtx,
-    Path(id): Path<u64>,
-) -> HandlerResult<VilResponse<TaskResponse>> {
-    let store = ctx.state::<Store>().expect("state type mismatch");
-    let mut map = store.tasks.write().await;
-    let task = map
-        .remove(&id)
-        .ok_or_else(|| VilError::not_found(format!("Task {} does not exist", id)))?;
-    Ok(VilResponse::ok(TaskResponse {
-        message: "Task deleted",
-        task,
-    }))
+/// DELETE /tasks/:id — delete by primary key
+async fn delete_task(ctx: ServiceCtx, Path(id): Path<String>) -> HandlerResult<VilResponse<Task>> {
+    let state = ctx.state::<AppState>().expect("state");
+    let task = Task::find_by_id(state.pool.inner(), &id)
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?
+        .ok_or_else(|| VilError::not_found(format!("Task {id} not found")))?;
+
+    Task::delete(state.pool.inner(), &id)
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?;
+
+    Ok(VilResponse::ok(task))
 }
 
-// ---------------------------------------------------------------------------
-// Step 2 + 3: Service definition and app assembly
-// ---------------------------------------------------------------------------
+/// GET /tasks/stats — aggregate via VilQuery scalar
+async fn task_stats(ctx: ServiceCtx) -> HandlerResult<VilResponse<serde_json::Value>> {
+    let state = ctx.state::<AppState>().expect("state");
+    let pool = state.pool.inner();
+
+    let total = Task::count(pool)
+        .await
+        .map_err(|e| VilError::internal(format!("{e}")))?;
+
+    let done: i64 = Task::q()
+        .select_expr("CAST(COUNT(*) AS INTEGER)")
+        .where_eq_val("done", 1_i64)
+        .scalar::<i64>(pool)
+        .await
+        .unwrap_or(0);
+
+    Ok(VilResponse::ok(serde_json::json!({
+        "total": total,
+        "done": done,
+        "pending": total - done,
+    })))
+}
+
+// ── Main ──
 
 #[tokio::main]
 async fn main() {
-    let store = Store::new();
+    let db_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:tasks.db".into());
 
-    // ── Step 2: Define the Task CRUD service as a Process ──────────────
-    //
-    // Each endpoint is registered individually with its HTTP method, path,
-    // and handler. This is the "break the dot-builder" pattern: the service
-    // definition is separated from the app assembly, making each piece
-    // independently testable and readable.
-    //
-    // The Extension(store) layer is applied to the service's built router
-    // so handlers can extract Store via Extension<Store> (Phase 1 compat).
+    // Connect via VIL SqlxPool
+    let pool = vil_db_sqlx::SqlxPool::connect(
+        "tasks",
+        vil_db_sqlx::SqlxConfig::sqlite(&db_url),
+    )
+    .await
+    .expect("Failed to connect to SQLite");
 
-    let task_service = ServiceProcess::new("tasks")
-        .prefix("/api")
-        // Collection endpoints: /tasks
+    // Auto-create table
+    pool.execute_raw(
+        "CREATE TABLE IF NOT EXISTS tasks (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT DEFAULT '',
+            done INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+            updated_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+        )"
+    ).await.expect("Migration failed");
+
+    let state = AppState {
+        pool: Arc::new(pool),
+    };
+
+    let task_svc = ServiceProcess::new("tasks")
         .endpoint(Method::GET, "/tasks", get(list_tasks))
         .endpoint(Method::POST, "/tasks", post(create_task))
-        // Item endpoints: /tasks/:id
+        .endpoint(Method::GET, "/tasks/stats", get(task_stats))
         .endpoint(Method::GET, "/tasks/:id", get(get_task))
         .endpoint(Method::PUT, "/tasks/:id", put(update_task))
         .endpoint(Method::DELETE, "/tasks/:id", delete(delete_task))
-        // Inject the in-memory store so handlers can extract via Extension<Store>
-        .state(store);
+        .state(state);
 
-    // ── Step 3: Assemble into VilApp and run ────────────────────────
-    //
-    // VilApp composes services into a process topology and delegates
-    // the HTTP boundary to VilServer (Phase 1 bridge). Each service
-    // gets its own prefix, and the VX banner prints the full topology.
-
-    VilApp::new("crud-service")
+    VilApp::new("crud-vilorm")
         .port(8080)
         .observer(true)
-        .service(task_service)
+        .service(task_svc)
         .run()
         .await;
 }

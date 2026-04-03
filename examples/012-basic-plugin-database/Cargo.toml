@@ -11,6 +11,8 @@ vil_server = { path = "../../crates/vil_server" }
 vil_server_core = { path = "../../crates/vil_server_core" }
 vil_json = { path = "../../crates/vil_json" }
 vil_db_sqlx = { path = "../../crates/vil_db_sqlx", features = ["postgres"] }
+vil_orm = { path = "../../crates/vil_orm" }
+vil_orm_derive = { path = "../../crates/vil_orm_derive" }
 bytes = "1"
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
