@@ -1,34 +1,13 @@
 #!/usr/bin/env python3
-"""010 — WebSocket Chat
-Equivalent to: examples/010-basic-websocket-chat (Rust)
+"""010-basic-websocket-chat — Python SDK equivalent
 Compile: vil compile --from python --input 010-basic-websocket-chat.py --release
 """
 import os
-from vil import VilServer
+from vil import VilPipeline, VilServer, ServiceProcess
 
 server = VilServer("websocket-chat", port=8080)
-
-# -- WebSocket events ---------------------------------------------------------
-server.ws_event("chat_message", topic="chat.message", fields={
-    "from": "String",
-    "message": "String",
-    "timestamp": "String",
-})
-server.ws_event("user_joined", topic="chat.presence", fields={
-    "username": "String",
-})
-server.ws_event("user_left", topic="chat.presence", fields={
-    "username": "String",
-})
-
-# -- ServiceProcess: chat (prefix: /api/chat) ---------------------------------
-chat = server.service_process("chat", prefix="/api/chat")
+chat = server.service_process("chat")
 chat.endpoint("GET", "/", "index")
 chat.endpoint("GET", "/ws", "ws_handler")
 chat.endpoint("GET", "/stats", "stats")
-
-# -- Emit / compile -----------------------------------------------------------
-if os.environ.get("VIL_COMPILE_MODE") == "manifest":
-    print(server.to_yaml())
-else:
-    server.compile()
+server.compile()

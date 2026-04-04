@@ -74,13 +74,12 @@ export class VilPipeline {
       port: nodePort,
       path: nodePath,
     });
-    this.port = nodePort;
     return this;
   }
 
   /** Add an HttpSource node (upstream inference endpoint). */
   source(opts: {
-    url: string;
+    url?: string;
     format?: string;
     name?: string;
     jsonTap?: string;
@@ -91,7 +90,7 @@ export class VilPipeline {
     const node: NodeEntry = {
       type: 'http_source',
       url: opts.url,
-      format: opts.format ?? 'sse',
+      format: opts.format,
     };
     if (opts.jsonTap) node.json_tap = opts.jsonTap;
     if (opts.postBody) node.post_body = opts.postBody;

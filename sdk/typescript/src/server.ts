@@ -333,6 +333,8 @@ export class VilServer {
     lines.push('vil_version: "6.0.0"');
     lines.push(`name: ${this.name}`);
     lines.push(`port: ${this.port}`);
+    lines.push('token: shm');
+    lines.push('mode: server');
 
     lines.push(...yamlSemanticTypes(this._semanticTypes));
     lines.push(...yamlErrors(this._errors));
@@ -392,10 +394,11 @@ export class VilServer {
 
     // Services (VX app mode)
     if (this._services.length > 0) {
+      lines.push('');
       lines.push('services:');
       for (const svc of this._services) {
         lines.push(`  - name: ${svc.name}`);
-        lines.push(`    prefix: "${svc.prefix}"`);
+        lines.push(`    prefix: ${svc.prefix}`);
         if (svc.emitsType) {
           lines.push(`    emits: ${svc.emitsType}`);
         }
@@ -409,7 +412,7 @@ export class VilServer {
           lines.push('    endpoints:');
           for (const ep of svc.endpoints) {
             lines.push(`      - method: ${ep.method}`);
-            lines.push(`        path: "${ep.path}"`);
+            lines.push(`        path: ${ep.path}`);
             lines.push(`        handler: ${ep.handler}`);
           }
         }

@@ -1,37 +1,14 @@
 #!/usr/bin/env python3
-"""001 — AI Gateway (SSE Pipeline)
-Equivalent to: examples/001-basic-ai-gw-demo (Rust)
+"""001-basic-ai-gw-demo — Python SDK equivalent
 Compile: vil compile --from python --input 001-basic-ai-gw-demo.py --release
 """
 import os
-from vil import VilPipeline
+from vil import VilPipeline, VilServer, ServiceProcess
 
-pipeline = VilPipeline("ai-gateway", port=3080)
-
-# -- Semantic types -----------------------------------------------------------
-pipeline.semantic_type("InferenceState", "state", fields={
-    "request_id": "u64",
-    "tokens": "u32",
-})
-pipeline.fault("InferenceFault", variants=["UpstreamTimeout", "ParseError"])
-
-# -- Nodes --------------------------------------------------------------------
-pipeline.sink(port=3080, path="/trigger", name="webhook")
-pipeline.source(
-    url="http://localhost:4545/v1/chat/completions",
-    format="sse",
-    dialect="openai",
-    json_tap="choices[0].delta.content",
-    name="inference",
-)
-
-# -- Tri-Lane routes ----------------------------------------------------------
-pipeline.route("webhook.trigger_out", "inference.trigger_in", "LoanWrite")
-pipeline.route("inference.data_out", "webhook.data_in", "LoanWrite")
-pipeline.route("inference.ctrl_out", "webhook.ctrl_in", "Copy")
-
-# -- Emit / compile -----------------------------------------------------------
-if os.environ.get("VIL_COMPILE_MODE") == "manifest":
-    print(pipeline.to_yaml())
-else:
-    pipeline.compile()
+pipeline = VilPipeline("DecomposedPipeline", 3080)
+pipeline.sink(port=3080, path="/trigger", name="webhook_trigger")
+pipeline.source(url="http://127.0.0.1:4545/v1/chat/completions", format="sse", json_tap="choices[0].delta.content", dialect="openai", name="sse_inference")
+pipeline.route("sink.trigger_out", "source.trigger_in", "LoanWrite")
+pipeline.route("source.response_data_out", "sink.response_data_in", "LoanWrite")
+pipeline.route("source.response_ctrl_out", "sink.response_ctrl_in", "Copy")
+pipeline.compile()

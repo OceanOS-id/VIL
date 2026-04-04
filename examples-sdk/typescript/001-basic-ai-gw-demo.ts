@@ -1,37 +1,13 @@
 #!/usr/bin/env tsx
-// 001 — AI Gateway (SSE Pipeline)
-// Equivalent to: examples/001-basic-ai-gw-demo (Rust)
+// 001-basic-ai-gw-demo — TypeScript SDK equivalent
 // Compile: vil compile --from typescript --input 001-basic-ai-gw-demo.ts --release
 
-import { VilPipeline } from "vil-sdk";
+import { VilPipeline, VilServer, ServiceProcess } from "vil-sdk";
 
-const pipeline = new VilPipeline("ai-gateway", 3080);
-
-// -- Semantic types -----------------------------------------------------------
-pipeline.semanticType("InferenceState", "state", {
-  request_id: "u64",
-  tokens: "u32",
-});
-pipeline.fault("InferenceFault", ["UpstreamTimeout", "ParseError"]);
-
-// -- Nodes --------------------------------------------------------------------
-pipeline.sink({ port: 3080, path: "/trigger", name: "webhook" });
-pipeline.source({
-  url: "http://localhost:4545/v1/chat/completions",
-  format: "sse",
-  dialect: "openai",
-  jsonTap: "choices[0].delta.content",
-  name: "inference",
-});
-
-// -- Tri-Lane routes ----------------------------------------------------------
-pipeline.route("webhook.trigger_out", "inference.trigger_in", "LoanWrite");
-pipeline.route("inference.data_out", "webhook.data_in", "LoanWrite");
-pipeline.route("inference.ctrl_out", "webhook.ctrl_in", "Copy");
-
-// -- Emit / compile -----------------------------------------------------------
-if (process.env.VIL_COMPILE_MODE === "manifest") {
-  console.log(pipeline.toYaml());
-} else {
-  pipeline.compile();
-}
+const p = new VilPipeline("DecomposedPipeline", 3080);
+p.sink({ port: 3080, path: "/trigger", name: "webhook_trigger" });
+p.source({ name: "sse_inference", url: "http://127.0.0.1:4545/v1/chat/completions", format: "sse", jsonTap: "choices[0].delta.content", dialect: "openai" });
+p.route("sink.trigger_out", "source.trigger_in", "LoanWrite");
+p.route("source.response_data_out", "sink.response_data_in", "LoanWrite");
+p.route("source.response_ctrl_out", "sink.response_ctrl_in", "Copy");
+p.compile();

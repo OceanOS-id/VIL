@@ -229,10 +229,9 @@ class VilPipeline:
             "port": port,
             "path": path,
         }
-        self.port = port
         return self
 
-    def source(self, url, format="sse", name=None, json_tap=None,
+    def source(self, url=None, format=None, name=None, json_tap=None,
                post_body=None, dialect=None):
         """Add an HttpSource node (upstream inference endpoint).
 
@@ -749,6 +748,8 @@ class VilServer:
         lines.append('vil_version: "6.0.0"')
         lines.append(f"name: {self.name}")
         lines.append(f"port: {self.port}")
+        lines.append("token: shm")
+        lines.append("mode: server")
 
         lines.extend(_yaml_semantic_types(self._semantic_types))
         lines.extend(_yaml_errors(self._errors))
@@ -803,10 +804,11 @@ class VilServer:
 
         # Services (VX app mode)
         if self._services:
+            lines.append("")
             lines.append("services:")
             for svc in self._services:
                 lines.append(f"  - name: {svc.name}")
-                lines.append(f'    prefix: "{svc.prefix}"')
+                lines.append(f"    prefix: {svc.prefix}")
                 if svc._emits_type:
                     lines.append(f"    emits: {svc._emits_type}")
                 if svc._faults_type:
@@ -817,7 +819,7 @@ class VilServer:
                     lines.append("    endpoints:")
                     for ep in svc._endpoints:
                         lines.append(f"      - method: {ep['method']}")
-                        lines.append(f'        path: "{ep["path"]}"')
+                        lines.append(f"        path: {ep['path']}")
                         lines.append(f"        handler: {ep['handler']}")
 
         return "\n".join(lines) + "\n"
