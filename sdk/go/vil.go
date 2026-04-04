@@ -340,14 +340,28 @@ type VilPipeline struct {
 	wsEvents      []eventEntry
 }
 
+// PipelineOption is a functional option for NewPipeline.
+type PipelineOption func(*VilPipeline)
+
+// WithToken sets the token mode for the pipeline.
+func WithToken(token string) PipelineOption {
+	return func(p *VilPipeline) {
+		p.token = token
+	}
+}
+
 // NewPipeline creates a new VilPipeline with the given name and port.
-func NewPipeline(name string, port int) *VilPipeline {
-	return &VilPipeline{
+func NewPipeline(name string, port int, opts ...PipelineOption) *VilPipeline {
+	p := &VilPipeline{
 		name:  name,
 		port:  port,
 		token: "shm",
 		nodes: make(map[string]*pipelineNode),
 	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
 }
 
 // Sink adds an HttpSink node (webhook trigger endpoint).
@@ -585,6 +599,11 @@ func NewService(name string) *ServiceProcess {
 	}
 }
 
+// NewServiceProcess is an alias for NewService.
+func NewServiceProcess(name string) *ServiceProcess {
+	return NewService(name)
+}
+
 // Endpoint adds an endpoint to this service.
 func (sp *ServiceProcess) Endpoint(method, path string, handler ...string) *ServiceProcess {
 	h := ""
@@ -604,6 +623,11 @@ func (sp *ServiceProcess) Endpoint(method, path string, handler ...string) *Serv
 		Method: method, Path: path, Handler: h,
 	})
 	return sp
+}
+
+// EndpointWs adds a WebSocket endpoint (alias for Endpoint).
+func (sp *ServiceProcess) EndpointWs(method, path string, handler ...string) *ServiceProcess {
+	return sp.Endpoint(method, path, handler...)
 }
 
 // SetState declares the managed state type (semantic contract).
@@ -689,7 +713,11 @@ func NewServer(name string, port int) *VilServer {
 }
 
 // Service registers a ServiceProcess with this server.
-func (s *VilServer) Service(svc *ServiceProcess) *VilServer {
+// An optional prefix argument overrides the service's default prefix.
+func (s *VilServer) Service(svc *ServiceProcess, prefix ...string) *VilServer {
+	if len(prefix) > 0 && prefix[0] != "" {
+		svc.prefix = prefix[0]
+	}
 	s.services = append(s.services, svc)
 	return s
 }
@@ -701,12 +729,17 @@ func (s *VilServer) Observer(enabled bool) *VilServer {
 }
 
 // SemanticType declares a semantic type (state/event/fault/decision).
-func (s *VilServer) SemanticType(name, kind string, fields map[string]string, variants []string) *VilServer {
+// variants is optional — pass nil, omit, or pass a single []string.
+func (s *VilServer) SemanticType(name, kind string, fields map[string]string, variants ...[]string) *VilServer {
+	var v []string
+	if len(variants) > 0 {
+		v = variants[0]
+	}
 	s.semanticTypes = append(s.semanticTypes, semanticEntry{
 		Name:     name,
 		Kind:     kind,
 		Fields:   fieldsFromMap(fields),
-		Variants: variants,
+		Variants: v,
 	})
 	return s
 }
@@ -727,6 +760,56 @@ func (s *VilServer) Error(name string, status int, code string, retry *bool, fie
 		Code:   code,
 		Retry:  retry,
 		Fields: fieldsFromMap(fields),
+	})
+	return s
+}
+
+// Fault is a shorthand for declaring a semantic fault type.
+func (s *VilServer) Fault(name string, variants []string) *VilServer {
+	s.semanticTypes = append(s.semanticTypes, semanticEntry{
+		Name:     name,
+		Kind:     "fault",
+		Variants: variants,
+	})
+	return s
+}
+
+// WsEventOpts configures a WebSocket event declaration.
+type WsEventOpts struct {
+	Topic  string
+	Fields map[string]string
+}
+
+// WsEvent declares a WebSocket event type.
+func (s *VilServer) WsEvent(name string, opts WsEventOpts) *VilServer {
+	s.wsEvents = append(s.wsEvents, eventEntry{
+		Name:   name,
+		Topic:  opts.Topic,
+		Fields: fieldsFromMap(opts.Fields),
+	})
+	return s
+}
+
+// Get registers a GET endpoint directly on the server (no ServiceProcess).
+func (s *VilServer) Get(path, handler string) *VilServer {
+	s.endpoints = append(s.endpoints, serverEndpoint{
+		Method: "GET", Path: path, Handler: handler,
+	})
+	return s
+}
+
+// Post registers a POST endpoint directly on the server (no ServiceProcess).
+func (s *VilServer) Post(path, handler string) *VilServer {
+	s.endpoints = append(s.endpoints, serverEndpoint{
+		Method: "POST", Path: path, Handler: handler,
+	})
+	return s
+}
+
+// Route registers an endpoint directly on the server (convenience method).
+func (s *VilServer) Route(method, path, handler string) *VilServer {
+	s.endpoints = append(s.endpoints, serverEndpoint{
+		Method: method, Path: path, Handler: handler,
 	})
 	return s
 }
@@ -822,6 +905,9 @@ func (s *VilServer) ToYaml() string {
 
 	return strings.Join(lines, "\n") + "\n"
 }
+
+// ToYAML is an alias for ToYaml (backward compat).
+func (s *VilServer) ToYAML() string { return s.ToYaml() }
 
 // Compile generates the YAML manifest and either prints it (manifest mode)
 // or invokes `vil compile`.

@@ -4,7 +4,7 @@ Equivalent to: examples/010-basic-websocket-chat (Rust)
 Compile: vil compile --from python --input 010-basic-websocket-chat.py --release
 """
 import os
-from vil import VilServer, ServiceProcess
+from vil import VilServer
 
 server = VilServer("websocket-chat", port=8080)
 
@@ -22,11 +22,10 @@ server.ws_event("user_left", topic="chat.presence", fields={
 })
 
 # -- ServiceProcess: chat (prefix: /api/chat) ---------------------------------
-chat = ServiceProcess("chat")
+chat = server.service_process("chat", prefix="/api/chat")
 chat.endpoint("GET", "/", "index")
-chat.endpoint("GET", "/ws", "ws_handler", protocol="websocket")
+chat.endpoint("GET", "/ws", "ws_handler")
 chat.endpoint("GET", "/stats", "stats")
-server.service(chat, prefix="/api/chat")
 
 # -- Emit / compile -----------------------------------------------------------
 if os.environ.get("VIL_COMPILE_MODE") == "manifest":

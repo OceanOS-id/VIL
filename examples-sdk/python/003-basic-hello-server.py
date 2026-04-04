@@ -4,17 +4,16 @@ Equivalent to: examples/003-basic-hello-server (Rust)
 Compile: vil compile --from python --input 003-basic-hello-server.py --release
 """
 import os
-from vil import VilServer, ServiceProcess
+from vil import VilServer
 
 server = VilServer("hello-server", port=8080)
 
 # -- ServiceProcess: hello (prefix: /api/hello) -------------------------------
-hello = ServiceProcess("hello")
+hello = server.service_process("hello", prefix="/api/hello")
 hello.endpoint("GET", "/", "hello")
 hello.endpoint("GET", "/greet/:name", "greet")
 hello.endpoint("POST", "/echo", "echo")
 hello.endpoint("GET", "/shm-info", "shm_info")
-server.service(hello, prefix="/api/hello")
 
 # -- Built-in endpoints (auto-provided) ---------------------------------------
 # GET /health, /ready, /metrics, /info

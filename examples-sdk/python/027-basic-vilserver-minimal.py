@@ -12,8 +12,8 @@ server = VilServer("minimal-api", port=8080)
 server.fault("ApiFault", variants=["InvalidInput", "NotFound"])
 
 # -- Routes (no ServiceProcess, no VX) ----------------------------------------
-server.route("GET", "/hello", "hello")
-server.route("POST", "/echo", "echo")
+server.get("/hello", handler="hello")
+server.post("/echo", handler="echo")
 
 # Built-in: GET /health, /ready, /metrics, /info
 

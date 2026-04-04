@@ -4,7 +4,7 @@ Equivalent to: examples/004-basic-rest-crud (Rust)
 Compile: vil compile --from python --input 004-basic-rest-crud.py --release
 """
 import os
-from vil import VilServer, ServiceProcess
+from vil import VilServer
 
 server = VilServer("crud-service", port=8080)
 
@@ -16,13 +16,12 @@ server.semantic_type("TaskState", "state", fields={
 server.fault("CrudFault", variants=["NotFound", "InvalidInput", "Conflict"])
 
 # -- ServiceProcess: tasks (prefix: /api) -------------------------------------
-tasks = ServiceProcess("tasks")
+tasks = server.service_process("tasks", prefix="/api")
 tasks.endpoint("GET", "/tasks", "list_tasks")
 tasks.endpoint("POST", "/tasks", "create_task")
 tasks.endpoint("GET", "/tasks/:id", "get_task")
 tasks.endpoint("PUT", "/tasks/:id", "update_task")
 tasks.endpoint("DELETE", "/tasks/:id", "delete_task")
-server.service(tasks, prefix="/api")
 
 # -- Emit / compile -----------------------------------------------------------
 if os.environ.get("VIL_COMPILE_MODE") == "manifest":

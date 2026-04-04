@@ -6,7 +6,7 @@ Compile: vil compile --from python --input 005-basic-multiservice-mesh-ndjson.py
 import os
 from vil import VilPipeline
 
-pipeline = VilPipeline("multiservice-mesh", port=3084, token="shm")
+pipeline = VilPipeline("multiservice-mesh", port=3084)
 
 # -- Semantic types -----------------------------------------------------------
 pipeline.semantic_type("MeshState", "state", fields={
