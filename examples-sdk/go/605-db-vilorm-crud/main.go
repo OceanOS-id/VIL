@@ -1,11 +1,11 @@
-// 605 — Blog Platform (VilORM CRUD)
-// Equivalent to: examples/605-db-vilorm-crud (Rust)
+// 605-db-vilorm-crud — Go SDK equivalent
+// Compile: vil compile --from go --input 605-db-vilorm-crud/main.go --release
 package main
 
 import vil "github.com/OceanOS-id/vil-go"
 
 func main() {
-	server := vil.NewServer("vilorm-showcase", 8080)
+	s := vil.NewServer("vilorm-showcase", 8080)
 
 	blog := vil.NewService("blog")
 	blog.Endpoint("POST", "/authors", "create_author")
@@ -17,7 +17,7 @@ func main() {
 	blog.Endpoint("DELETE", "/posts/:id", "delete_post")
 	blog.Endpoint("POST", "/tags", "create_tag")
 	blog.Endpoint("GET", "/stats", "blog_stats")
-	server.Service(blog)
+	s.Service(blog)
 
-	server.Compile()
+	s.Compile()
 }

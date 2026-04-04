@@ -1,0 +1,31 @@
+vil_version: "6.0.0"
+name: vilorm-ecommerce
+port: 8086
+token: shm
+mode: server
+
+services:
+  - name: shop
+    prefix: /api/shop
+    endpoints:
+      - method: POST
+        path: /products
+        handler: create_product
+      - method: GET
+        path: /products
+        handler: list_products
+      - method: GET
+        path: /products/:id
+        handler: get_product
+      - method: POST
+        path: /orders
+        handler: create_order
+      - method: GET
+        path: /orders
+        handler: list_orders
+      - method: GET
+        path: /orders/:id/total
+        handler: order_total
+      - method: DELETE
+        path: /orders/:id
+        handler: cancel_order

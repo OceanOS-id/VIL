@@ -386,7 +386,6 @@ func (p *VilPipeline) Sink(opts SinkOpts) *VilPipeline {
 	if _, exists := nodeOrderContains(p.nodeOrder, nodeName); !exists {
 		p.nodeOrder = append(p.nodeOrder, nodeName)
 	}
-	p.port = port
 	return p
 }
 
@@ -396,14 +395,10 @@ func (p *VilPipeline) Source(opts SourceOpts) *VilPipeline {
 	if nodeName == "" {
 		nodeName = "http_source"
 	}
-	format := opts.Format
-	if format == "" {
-		format = "sse"
-	}
 	node := &pipelineNode{
 		Type:   "http_source",
 		URL:    opts.URL,
-		Format: format,
+		Format: opts.Format,
 	}
 	jsonTap := opts.JSONTap
 	if jsonTap == "" {

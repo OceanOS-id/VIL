@@ -1,11 +1,11 @@
-// 004 — REST CRUD (ServiceProcess + State)
-// Equivalent to: examples/004-basic-rest-crud (Rust)
+// 004-basic-rest-crud — Go SDK equivalent
+// Compile: vil compile --from go --input 004-basic-rest-crud/main.go --release
 package main
 
 import vil "github.com/OceanOS-id/vil-go"
 
 func main() {
-	server := vil.NewServer("crud-vilorm", 8080)
+	s := vil.NewServer("crud-vilorm", 8080)
 
 	tasks := vil.NewService("tasks")
 	tasks.Endpoint("GET", "/tasks", "list_tasks")
@@ -14,7 +14,7 @@ func main() {
 	tasks.Endpoint("GET", "/tasks/:id", "get_task")
 	tasks.Endpoint("PUT", "/tasks/:id", "update_task")
 	tasks.Endpoint("DELETE", "/tasks/:id", "delete_task")
-	server.Service(tasks)
+	s.Service(tasks)
 
-	server.Compile()
+	s.Compile()
 }

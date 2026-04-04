@@ -1,0 +1,9 @@
+vil_version: "6.0.0"
+name: llm-streaming-translator
+port: 3103
+token: shm
+mode: server
+
+services:
+  - name: translator
+    prefix: /api/translator

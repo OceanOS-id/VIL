@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: ai-agent
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: agent
+    prefix: /api/agent
+    endpoints:
+      - method: POST
+        path: /agent
+        handler: agent_handler

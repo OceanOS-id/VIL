@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: react-multi-tool-agent
+port: 3124
+token: shm
+mode: server
+
+services:
+  - name: react-agent
+    prefix: /api/react-agent
+    endpoints:
+      - method: POST
+        path: /react
+        handler: react_handler

@@ -1,0 +1,28 @@
+vil_version: "6.0.0"
+name: vilorm-analytics
+port: 8088
+token: shm
+mode: server
+
+services:
+  - name: analytics
+    prefix: /api/analytics
+    endpoints:
+      - method: POST
+        path: /events
+        handler: log_event
+      - method: GET
+        path: /events/recent
+        handler: recent_events
+      - method: GET
+        path: /events/by-type
+        handler: events_by_type
+      - method: GET
+        path: /stats/daily
+        handler: daily_stats
+      - method: GET
+        path: /stats/unique-users
+        handler: unique_users
+      - method: GET
+        path: /stats/summary
+        handler: stats_summary
