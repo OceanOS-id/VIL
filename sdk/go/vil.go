@@ -820,6 +820,8 @@ func (s *VilServer) ToYaml() string {
 	lines = append(lines, `vil_version: "6.0.0"`)
 	lines = append(lines, fmt.Sprintf("name: %s", s.name))
 	lines = append(lines, fmt.Sprintf("port: %d", s.port))
+	lines = append(lines, "token: shm")
+	lines = append(lines, "mode: server")
 
 	lines = append(lines, yamlSemanticTypes(s.semanticTypes)...)
 	lines = append(lines, yamlErrors(s.errors)...)
@@ -879,10 +881,11 @@ func (s *VilServer) ToYaml() string {
 
 	// Services (VX app mode)
 	if len(s.services) > 0 {
+		lines = append(lines, "")
 		lines = append(lines, "services:")
 		for _, svc := range s.services {
 			lines = append(lines, fmt.Sprintf("  - name: %s", svc.name))
-			lines = append(lines, fmt.Sprintf(`    prefix: "%s"`, svc.prefix))
+			lines = append(lines, fmt.Sprintf("    prefix: %s", svc.prefix))
 			if svc.emitsType != "" {
 				lines = append(lines, fmt.Sprintf("    emits: %s", svc.emitsType))
 			}
@@ -896,7 +899,7 @@ func (s *VilServer) ToYaml() string {
 				lines = append(lines, "    endpoints:")
 				for _, ep := range svc.endpoints {
 					lines = append(lines, fmt.Sprintf("      - method: %s", ep.Method))
-					lines = append(lines, fmt.Sprintf(`        path: "%s"`, ep.Path))
+					lines = append(lines, fmt.Sprintf("        path: %s", ep.Path))
 					lines = append(lines, fmt.Sprintf("        handler: %s", ep.Handler))
 				}
 			}
