@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: rag-citation-extraction
+port: 3113
+token: shm
+mode: server
+
+services:
+  - name: rag-citation
+    prefix: /api/rag-citation
+    endpoints:
+      - method: POST
+        path: /cited-rag
+        handler: cited_rag_handler

@@ -1,0 +1,16 @@
+vil_version: "6.0.0"
+name: insurance-claim-processing
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: claims
+    prefix: /api/claims
+    endpoints:
+      - method: POST
+        path: /claims/submit
+        handler: submit_claim
+      - method: GET
+        path: /claims/sample
+        handler: sample_claim

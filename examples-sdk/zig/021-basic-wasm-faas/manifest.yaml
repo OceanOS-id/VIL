@@ -1,0 +1,25 @@
+vil_version: "6.0.0"
+name: wasm-faas-example
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: wasm-faas
+    prefix: /api/wasm-faas
+    endpoints:
+      - method: GET
+        path: /
+        handler: index
+      - method: GET
+        path: /wasm/modules
+        handler: list_modules
+      - method: POST
+        path: /wasm/pricing
+        handler: invoke_pricing
+      - method: POST
+        path: /wasm/validation
+        handler: invoke_validation
+      - method: POST
+        path: /wasm/transform
+        handler: invoke_transform

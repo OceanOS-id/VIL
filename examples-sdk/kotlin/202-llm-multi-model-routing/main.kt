@@ -1,7 +1,8 @@
 // 202-llm-multi-model-routing — Kotlin SDK equivalent
-// Compile: vil compile --from kotlin --input 202-llm-multi-model-routing/main.kt --release
-
 fun main() {
-    val server = VilServer("MultiModelPipeline_GPT4", 8080)
-    server.compile()
+    val p = VilPipeline("MultiModelPipeline_GPT4", 8080)
+    p.route("sink.trigger_out", "source_gpt4.trigger_in", "LoanWrite")
+    p.route("source_gpt4.response_data_out", "sink.response_data_in", "LoanWrite")
+    p.route("source_gpt4.response_ctrl_out", "sink.response_ctrl_in", "Copy")
+    p.compile()
 }

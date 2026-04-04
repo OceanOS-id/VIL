@@ -1,0 +1,19 @@
+vil_version: "6.0.0"
+name: macro-demo
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: demo
+    prefix: /api/demo
+    endpoints:
+      - method: GET
+        path: /plain
+        handler: plain_handler
+      - method: GET
+        path: /handled
+        handler: handled_handler
+      - method: POST
+        path: /endpoint
+        handler: endpoint_handler

@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: llm-basic-chat
+port: 3100
+token: shm
+mode: server
+
+services:
+  - name: chat
+    prefix: /api/chat
+    endpoints:
+      - method: POST
+        path: /chat
+        handler: chat_handler

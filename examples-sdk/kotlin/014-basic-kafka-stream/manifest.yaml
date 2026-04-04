@@ -1,0 +1,24 @@
+vil_version: "6.0.0"
+name: kafka-stream
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: kafka
+    prefix: /api/kafka
+    endpoints:
+      - method: GET
+        path: /kafka/config
+        handler: kafka_config
+      - method: POST
+        path: /kafka/produce
+        handler: kafka_produce
+      - method: GET
+        path: /kafka/consumer
+        handler: consumer_info
+      - method: GET
+        path: /kafka/bridge
+        handler: bridge_status
+  - name: root
+    prefix: /api/root

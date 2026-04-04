@@ -1,0 +1,15 @@
+vil_version: "6.0.0"
+name: ChunkedSummarizerPipeline
+port: 8080
+token: shm
+
+routes:
+  - from: sink.trigger_out
+    to: source_summarize.trigger_in
+    mode: LoanWrite
+  - from: source_summarize.response_data_out
+    to: sink.response_data_in
+    mode: LoanWrite
+  - from: source_summarize.response_ctrl_out
+    to: sink.response_ctrl_in
+    mode: Copy

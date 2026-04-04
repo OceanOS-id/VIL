@@ -1,0 +1,9 @@
+vil_version: "6.0.0"
+name: multi-pipeline-bench
+port: 3090
+token: shm
+mode: server
+
+services:
+  - name: pipeline
+    prefix: /api/pipeline

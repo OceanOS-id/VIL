@@ -1,0 +1,16 @@
+vil_version: "6.0.0"
+name: http-researcher-agent
+port: 3121
+token: shm
+mode: server
+
+services:
+  - name: research-agent
+    prefix: /api/research-agent
+    endpoints:
+      - method: POST
+        path: /research
+        handler: research_handler
+      - method: GET
+        path: /products
+        handler: products_handler

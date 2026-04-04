@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: rag-hybrid-exact-semantic
+port: 3112
+token: shm
+mode: server
+
+services:
+  - name: rag-hybrid
+    prefix: /api/rag-hybrid
+    endpoints:
+      - method: POST
+        path: /hybrid
+        handler: hybrid_handler

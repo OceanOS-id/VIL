@@ -1,0 +1,19 @@
+vil_version: "6.0.0"
+name: sse-hub-demo
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: events
+    prefix: /api/events
+    endpoints:
+      - method: POST
+        path: /publish
+        handler: publish
+      - method: GET
+        path: /stream
+        handler: stream
+      - method: GET
+        path: /stats
+        handler: stats

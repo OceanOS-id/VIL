@@ -1,0 +1,34 @@
+vil_version: "6.0.0"
+name: banking-transaction-mesh
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: teller
+    prefix: /api/teller
+    endpoints:
+      - method: GET
+        path: /ping
+        handler: teller_ping
+      - method: POST
+        path: /submit
+        handler: teller_submit
+  - name: fraud_check
+    prefix: /api/fraud_check
+    endpoints:
+      - method: POST
+        path: /analyze
+        handler: fraud_process
+  - name: core_banking
+    prefix: /api/core_banking
+    endpoints:
+      - method: POST
+        path: /post
+        handler: core_banking_post
+  - name: notification
+    prefix: /api/notification
+    endpoints:
+      - method: GET
+        path: /send
+        handler: notification_send

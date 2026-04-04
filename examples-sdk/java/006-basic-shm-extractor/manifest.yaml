@@ -1,0 +1,22 @@
+vil_version: "6.0.0"
+name: shm-extractor-demo
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: shm-demo
+    prefix: /api/shm-demo
+    endpoints:
+      - method: POST
+        path: /ingest
+        handler: ingest
+      - method: POST
+        path: /compute
+        handler: compute
+      - method: GET
+        path: /shm-stats
+        handler: shm_stats
+      - method: GET
+        path: /benchmark
+        handler: benchmark

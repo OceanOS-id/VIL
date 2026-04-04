@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: vil-app-gateway
+port: 3081
+token: shm
+mode: server
+
+services:
+  - name: gw
+    prefix: /api/gw
+    endpoints:
+      - method: POST
+        path: /trigger
+        handler: trigger_handler

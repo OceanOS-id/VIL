@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: ai-multi-model-router
+port: 3085
+token: shm
+mode: server
+
+services:
+  - name: router
+    prefix: /api/router
+    endpoints:
+      - method: POST
+        path: /route
+        handler: route_handler

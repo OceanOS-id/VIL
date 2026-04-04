@@ -1,0 +1,16 @@
+vil_version: "6.0.0"
+name: fraud-detection-agent
+port: 3126
+token: shm
+mode: server
+
+services:
+  - name: fraud-agent
+    prefix: /api/fraud-agent
+    endpoints:
+      - method: POST
+        path: /detect
+        handler: detect_fraud
+      - method: GET
+        path: /health
+        handler: health

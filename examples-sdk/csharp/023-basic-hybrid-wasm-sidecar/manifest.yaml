@@ -1,0 +1,25 @@
+vil_version: "6.0.0"
+name: hybrid-pipeline
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: pipeline
+    prefix: /api/pipeline
+    endpoints:
+      - method: GET
+        path: /
+        handler: index
+      - method: POST
+        path: /validate
+        handler: validate_order
+      - method: POST
+        path: /price
+        handler: calculate_price
+      - method: POST
+        path: /fraud
+        handler: fraud_check
+      - method: POST
+        path: /order
+        handler: process_order

@@ -1,0 +1,25 @@
+vil_version: "6.0.0"
+name: payment-gateway-ha
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: primary
+    prefix: /api/primary
+    endpoints:
+      - method: GET
+        path: /health
+        handler: primary_health
+      - method: POST
+        path: /charge
+        handler: primary_charge
+  - name: backup
+    prefix: /api/backup
+    endpoints:
+      - method: GET
+        path: /health
+        handler: backup_health
+      - method: POST
+        path: /charge
+        handler: backup_charge

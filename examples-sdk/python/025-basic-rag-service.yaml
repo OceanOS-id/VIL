@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: rag-service
+port: 3091
+token: shm
+mode: server
+
+services:
+  - name: rag
+    prefix: /api/rag
+    endpoints:
+      - method: POST
+        path: /rag
+        handler: rag_handler

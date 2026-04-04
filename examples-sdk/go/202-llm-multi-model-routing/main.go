@@ -5,6 +5,11 @@ package main
 import vil "github.com/OceanOS-id/vil-go"
 
 func main() {
-	s := vil.NewServer("MultiModelPipeline_GPT4", 8080)
-	s.Compile()
+	p := vil.NewPipeline("MultiModelPipeline_GPT4", 8080)
+
+	p.Route("sink.trigger_out", "source_gpt4.trigger_in", "LoanWrite")
+	p.Route("source_gpt4.response_data_out", "sink.response_data_in", "LoanWrite")
+	p.Route("source_gpt4.response_ctrl_out", "sink.response_ctrl_in", "Copy")
+
+	p.Compile()
 }

@@ -5,6 +5,7 @@ package main
 import vil "github.com/OceanOS-id/vil-go"
 
 func main() {
-	s := vil.NewServer("rag-multi-source-fanin", 3111)
-	s.Compile()
+	p := vil.NewPipeline("rag-multi-source-fanin", 3111)
+
+	p.Compile()
 }

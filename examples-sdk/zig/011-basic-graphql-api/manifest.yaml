@@ -1,0 +1,22 @@
+vil_version: "6.0.0"
+name: graphql-api
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: graphql
+    prefix: /api/graphql
+    endpoints:
+      - method: GET
+        path: /
+        handler: index
+      - method: GET
+        path: /schema
+        handler: schema_info
+      - method: GET
+        path: /entities
+        handler: list_entities
+      - method: POST
+        path: /query
+        handler: graphql_query

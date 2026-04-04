@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: calculator-agent
+port: 3120
+token: shm
+mode: server
+
+services:
+  - name: calc-agent
+    prefix: /api/calc-agent
+    endpoints:
+      - method: POST
+        path: /calc
+        handler: calc_handler

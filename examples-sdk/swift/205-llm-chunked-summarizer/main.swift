@@ -1,5 +1,6 @@
 // 205-llm-chunked-summarizer — Swift SDK equivalent
-// Compile: vil compile --from swift --input 205-llm-chunked-summarizer/main.swift --release
-
-let server = VilServer(name: "ChunkedSummarizerPipeline", port: 8080)
-server.compile()
+let p = VilPipeline(name: "ChunkedSummarizerPipeline", port: 8080)
+p.route(from: "sink.trigger_out", to: "source_summarize.trigger_in", mode: "LoanWrite")
+p.route(from: "source_summarize.response_data_out", to: "sink.response_data_in", mode: "LoanWrite")
+p.route(from: "source_summarize.response_ctrl_out", to: "sink.response_ctrl_in", mode: "Copy")
+p.compile()

@@ -1,0 +1,42 @@
+vil_version: "6.0.0"
+name: NplPipeline
+port: 3091
+token: shm
+
+nodes:
+  npl_sink:
+    type: http_sink
+    port: 3091
+    path: "/npl"
+  npl_source:
+    type: http_source
+    url: "http://localhost:18081/api/v1/credits/ndjson?count=100"
+    format: json
+  healthy_sink:
+    type: http_sink
+    port: 3092
+    path: "/healthy"
+  healthy_source:
+    type: http_source
+    url: "http://localhost:18081/api/v1/credits/ndjson?count=100"
+    format: json
+
+routes:
+  - from: npl_sink.trigger_out
+    to: npl_source.trigger_in
+    mode: LoanWrite
+  - from: npl_source.response_data_out
+    to: npl_sink.response_data_in
+    mode: LoanWrite
+  - from: npl_source.response_ctrl_out
+    to: npl_sink.response_ctrl_in
+    mode: Copy
+  - from: healthy_sink.trigger_out
+    to: healthy_source.trigger_in
+    mode: LoanWrite
+  - from: healthy_source.response_data_out
+    to: healthy_sink.response_data_in
+    mode: LoanWrite
+  - from: healthy_source.response_ctrl_out
+    to: healthy_sink.response_ctrl_in
+    mode: Copy

@@ -1,0 +1,60 @@
+vil_version: "6.0.0"
+name: AiGatewayWorkflow
+port: 3097
+token: shm
+
+nodes:
+  ai_gateway_sink:
+    type: http_sink
+    port: 3097
+    path: "/ai"
+  ai_sse_source:
+    type: http_source
+    url: "http://127.0.0.1:4545/v1/chat/completions"
+    format: sse
+    json_tap: "choices[0].delta.content"
+    dialect: openai
+  credit_sink:
+    type: http_sink
+    port: 3098
+    path: "/credit"
+  credit_ndjson_source:
+    type: http_source
+    url: "http://localhost:18081/api/v1/credits/ndjson?count=100"
+    format: json
+  inventory_sink:
+    type: http_sink
+    port: 3099
+    path: "/inventory"
+  inventory_rest_source:
+    type: http_source
+    url: "http://localhost:18092/api/v1/products"
+
+routes:
+  - from: ai_sink.trigger_out
+    to: ai_source.trigger_in
+    mode: LoanWrite
+  - from: ai_source.response_data_out
+    to: ai_sink.response_data_in
+    mode: LoanWrite
+  - from: ai_source.response_ctrl_out
+    to: ai_sink.response_ctrl_in
+    mode: Copy
+  - from: credit_sink.trigger_out
+    to: credit_source.trigger_in
+    mode: LoanWrite
+  - from: credit_source.response_data_out
+    to: credit_sink.response_data_in
+    mode: LoanWrite
+  - from: credit_source.response_ctrl_out
+    to: credit_sink.response_ctrl_in
+    mode: Copy
+  - from: inventory_sink.trigger_out
+    to: inventory_source.trigger_in
+    mode: LoanWrite
+  - from: inventory_source.response_data_out
+    to: inventory_sink.response_data_in
+    mode: LoanWrite
+  - from: inventory_source.response_ctrl_out
+    to: inventory_sink.response_ctrl_in
+    mode: Copy

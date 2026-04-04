@@ -1,0 +1,34 @@
+vil_version: "6.0.0"
+name: overhead-bench
+port: 8099
+token: shm
+mode: server
+
+services:
+  - name: bench
+    prefix: /api/bench
+    endpoints:
+      - method: GET
+        path: /raw/items/:id
+        handler: raw_find_by_id
+      - method: GET
+        path: /raw/items
+        handler: raw_list
+      - method: GET
+        path: /raw/count
+        handler: raw_count
+      - method: GET
+        path: /raw/cols
+        handler: raw_select_cols
+      - method: GET
+        path: /orm/items/:id
+        handler: orm_find_by_id
+      - method: GET
+        path: /orm/items
+        handler: orm_list
+      - method: GET
+        path: /orm/count
+        handler: orm_count
+      - method: GET
+        path: /orm/cols
+        handler: orm_select_cols

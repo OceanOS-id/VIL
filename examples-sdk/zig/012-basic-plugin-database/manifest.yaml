@@ -1,0 +1,34 @@
+vil_version: "6.0.0"
+name: plugin-database
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: plugin-db
+    prefix: /api/plugin-db
+    endpoints:
+      - method: GET
+        path: /
+        handler: index
+      - method: GET
+        path: /plugins
+        handler: list_plugins
+      - method: GET
+        path: /config
+        handler: show_config
+      - method: GET
+        path: /products
+        handler: list_products
+      - method: POST
+        path: /tasks
+        handler: create_task
+      - method: GET
+        path: /tasks
+        handler: list_tasks
+      - method: GET
+        path: /pool-stats
+        handler: pool_stats
+      - method: GET
+        path: /redis-ping
+        handler: redis_ping

@@ -1,0 +1,22 @@
+vil_version: "6.0.0"
+name: sidecar-python-example
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: fraud
+    prefix: /api/fraud
+    endpoints:
+      - method: GET
+        path: /status
+        handler: fraud_status
+      - method: POST
+        path: /check
+        handler: fraud_check
+  - name: root
+    prefix: /api/root
+    endpoints:
+      - method: GET
+        path: /
+        handler: index

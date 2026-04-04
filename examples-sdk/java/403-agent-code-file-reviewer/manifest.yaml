@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: code-file-reviewer-agent
+port: 3122
+token: shm
+mode: server
+
+services:
+  - name: code-review-agent
+    prefix: /api/code-review-agent
+    endpoints:
+      - method: POST
+        path: /code-review
+        handler: code_review_handler

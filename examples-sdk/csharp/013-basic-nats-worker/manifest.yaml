@@ -1,0 +1,24 @@
+vil_version: "6.0.0"
+name: nats-worker
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: nats
+    prefix: /api/nats
+    endpoints:
+      - method: GET
+        path: /nats/config
+        handler: nats_config
+      - method: POST
+        path: /nats/publish
+        handler: nats_publish
+      - method: GET
+        path: /nats/jetstream
+        handler: jetstream_info
+      - method: GET
+        path: /nats/kv
+        handler: kv_demo
+  - name: root
+    prefix: /api/root

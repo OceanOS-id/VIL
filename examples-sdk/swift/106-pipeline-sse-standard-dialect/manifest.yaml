@@ -1,0 +1,25 @@
+vil_version: "6.0.0"
+name: IoTSensorPipeline
+port: 3106
+token: shm
+
+nodes:
+  io_t_dashboard_sink:
+    type: http_sink
+    port: 3106
+    path: "/stream"
+  io_t_sensor_source:
+    type: http_source
+    url: "http://localhost:18081/api/v1/credits/stream"
+    format: sse
+
+routes:
+  - from: sink.trigger_out
+    to: source.trigger_in
+    mode: LoanWrite
+  - from: source.sensor_data_out
+    to: sink.sensor_data_in
+    mode: LoanWrite
+  - from: source.batch_ctrl_out
+    to: sink.batch_ctrl_in
+    mode: Copy

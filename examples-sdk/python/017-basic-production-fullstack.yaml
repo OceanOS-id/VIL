@@ -1,0 +1,30 @@
+vil_version: "6.0.0"
+name: production-fullstack
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: fullstack
+    prefix: /api/fullstack
+    endpoints:
+      - method: GET
+        path: /stack
+        handler: stack_info
+      - method: GET
+        path: /config
+        handler: full_config
+      - method: GET
+        path: /sprints
+        handler: sprints
+      - method: GET
+        path: /middleware
+        handler: middleware_info
+  - name: admin
+    prefix: /api/admin
+    endpoints:
+      - method: GET
+        path: /config
+        handler: full_config
+  - name: root
+    prefix: /api/root

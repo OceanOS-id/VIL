@@ -1,0 +1,9 @@
+vil_version: "6.0.0"
+name: insurance-underwriting-ai
+port: 3116
+token: shm
+mode: server
+
+services:
+  - name: underwriter
+    prefix: /api/underwriter

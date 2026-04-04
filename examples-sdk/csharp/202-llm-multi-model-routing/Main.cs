@@ -1,7 +1,6 @@
 // 202-llm-multi-model-routing — C# SDK equivalent
-// Compile: vil compile --from csharp --input 202-llm-multi-model-routing/Main.cs --release
-
-#r "sdk/csharp/Vil.cs"
-
-var server = new VilServer("MultiModelPipeline_GPT4", 8080);
-server.Compile();
+var p = new VilPipeline("MultiModelPipeline_GPT4", 8080);
+p.Route("sink.trigger_out", "source_gpt4.trigger_in", "LoanWrite");
+p.Route("source_gpt4.response_data_out", "sink.response_data_in", "LoanWrite");
+p.Route("source_gpt4.response_ctrl_out", "sink.response_ctrl_in", "Copy");
+p.Compile();

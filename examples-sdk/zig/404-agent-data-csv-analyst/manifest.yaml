@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: csv-analyst-agent
+port: 3123
+token: shm
+mode: server
+
+services:
+  - name: csv-analyst-agent
+    prefix: /api/csv-analyst-agent
+    endpoints:
+      - method: POST
+        path: /csv-analyze
+        handler: csv_analyze_handler

@@ -1,0 +1,9 @@
+vil_version: "6.0.0"
+name: ai-gw-bench
+port: 3081
+token: shm
+mode: server
+
+services:
+  - name: gw
+    prefix: /api/gw

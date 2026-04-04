@@ -4,5 +4,5 @@
 
 import { VilPipeline, VilServer, ServiceProcess } from "vil-sdk";
 
-const server = new VilServer("rag-multi-source-fanin", 3111);
-server.compile();
+const p = new VilPipeline("rag-multi-source-fanin", 3111);
+p.compile();

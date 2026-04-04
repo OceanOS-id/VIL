@@ -1,0 +1,4 @@
+vil_version: "6.0.0"
+name: rag-multi-source-fanin
+port: 3111
+token: shm

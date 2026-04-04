@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: rag-guardrail-pipeline
+port: 3114
+token: shm
+mode: server
+
+services:
+  - name: rag-guardrail
+    prefix: /api/rag-guardrail
+    endpoints:
+      - method: POST
+        path: /safe-rag
+        handler: safe_rag_handler

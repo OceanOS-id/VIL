@@ -1,0 +1,28 @@
+vil_version: "6.0.0"
+name: crud-vilorm
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: tasks
+    prefix: /api/tasks
+    endpoints:
+      - method: GET
+        path: /tasks
+        handler: list_tasks
+      - method: POST
+        path: /tasks
+        handler: create_task
+      - method: GET
+        path: /tasks/stats
+        handler: task_stats
+      - method: GET
+        path: /tasks/:id
+        handler: get_task
+      - method: PUT
+        path: /tasks/:id
+        handler: update_task
+      - method: DELETE
+        path: /tasks/:id
+        handler: delete_task

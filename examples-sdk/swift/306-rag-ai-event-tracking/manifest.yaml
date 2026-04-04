@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: customer-support-rag
+port: 3116
+token: shm
+mode: server
+
+services:
+  - name: support
+    prefix: /api/support
+    endpoints:
+      - method: POST
+        path: /support/ask
+        handler: answer_question

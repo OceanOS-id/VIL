@@ -1,0 +1,16 @@
+vil_version: "6.0.0"
+name: stock-market-ticker
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: ticker
+    prefix: /api/ticker
+    endpoints:
+      - method: GET
+        path: /stream
+        handler: ticker_stream
+      - method: GET
+        path: /info
+        handler: ticker_info

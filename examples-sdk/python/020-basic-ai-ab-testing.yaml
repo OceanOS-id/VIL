@@ -1,0 +1,25 @@
+vil_version: "6.0.0"
+name: ai-ab-testing-gateway
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: ab
+    prefix: /api/ab
+    endpoints:
+      - method: POST
+        path: /infer
+        handler: infer
+      - method: GET
+        path: /metrics
+        handler: metrics
+      - method: POST
+        path: /config
+        handler: update_config
+  - name: root
+    prefix: /api/root
+    endpoints:
+      - method: GET
+        path: /
+        handler: index

@@ -5,5 +5,5 @@ Compile: vil compile --from python --input 302-rag-multi-source-fanin.py --relea
 import os
 from vil import VilPipeline, VilServer, ServiceProcess
 
-server = VilServer("rag-multi-source-fanin", port=3111)
-server.compile()
+pipeline = VilPipeline("rag-multi-source-fanin", 3111)
+pipeline.compile()

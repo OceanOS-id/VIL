@@ -1,0 +1,15 @@
+vil_version: "6.0.0"
+name: ecommerce-order-pipeline
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: gateway
+    prefix: /api/gateway
+  - name: fulfillment
+    prefix: /api/fulfillment
+    endpoints:
+      - method: GET
+        path: /status
+        handler: fulfillment_status

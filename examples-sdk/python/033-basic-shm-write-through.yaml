@@ -1,0 +1,16 @@
+vil_version: "6.0.0"
+name: realtime-analytics-dashboard
+port: 8080
+token: shm
+mode: server
+
+services:
+  - name: catalog
+    prefix: /api/catalog
+    endpoints:
+      - method: POST
+        path: /catalog/search
+        handler: catalog_search
+      - method: GET
+        path: /catalog/health
+        handler: catalog_health

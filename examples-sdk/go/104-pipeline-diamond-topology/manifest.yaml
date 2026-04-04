@@ -1,0 +1,42 @@
+vil_version: "6.0.0"
+name: DiamondSummary
+port: 3095
+token: shm
+
+nodes:
+  summary_sink:
+    type: http_sink
+    port: 3095
+    path: "/diamond"
+  summary_source:
+    type: http_source
+    url: "http://localhost:18081/api/v1/credits/ndjson?count=100"
+    format: json
+  detail_sink:
+    type: http_sink
+    port: 3096
+    path: "/diamond-detail"
+  detail_source:
+    type: http_source
+    url: "http://localhost:18081/api/v1/credits/ndjson?count=100"
+    format: json
+
+routes:
+  - from: summary_sink.trigger_out
+    to: summary_source.trigger_in
+    mode: LoanWrite
+  - from: summary_source.response_data_out
+    to: summary_sink.response_data_in
+    mode: LoanWrite
+  - from: summary_source.response_ctrl_out
+    to: summary_sink.response_ctrl_in
+    mode: Copy
+  - from: detail_sink.trigger_out
+    to: detail_source.trigger_in
+    mode: LoanWrite
+  - from: detail_source.response_data_out
+    to: detail_sink.response_data_in
+    mode: LoanWrite
+  - from: detail_source.response_ctrl_out
+    to: detail_sink.response_ctrl_in
+    mode: Copy

@@ -1,0 +1,13 @@
+vil_version: "6.0.0"
+name: llm-code-review-tools
+port: 3102
+token: shm
+mode: server
+
+services:
+  - name: code-review
+    prefix: /api/code-review
+    endpoints:
+      - method: POST
+        path: /code/review
+        handler: code_review_handler
