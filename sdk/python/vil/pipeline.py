@@ -62,6 +62,31 @@ def http(url, method="POST", body=None):
 
 
 # =============================================================================
+# Handler implementation helpers
+# =============================================================================
+
+
+def sidecar(command, protocol="shm", timeout_ms=5000):
+    """Declare a sidecar handler implementation."""
+    return {"mode": "sidecar", "command": command, "protocol": protocol, "timeout_ms": timeout_ms}
+
+
+def wasm(module, function="handle"):
+    """Declare a WASM handler implementation."""
+    return {"mode": "wasm", "module": module, "function": function}
+
+
+def stub(response='{"ok": true}'):
+    """Declare a stub handler implementation."""
+    return {"mode": "stub", "response": response}
+
+
+def inline(code):
+    """Declare an inline handler implementation."""
+    return {"mode": "inline", "code": code}
+
+
+# =============================================================================
 # YAML emitter helpers (no PyYAML dependency)
 # =============================================================================
 
@@ -150,6 +175,36 @@ def _yaml_events(events, section_name):
             lines.append(f"    topic: {ev['topic']}")
         lines.append("    fields:")
         lines.extend(_yaml_fields(ev["fields"], indent=6))
+    return lines
+
+
+def _yaml_impl(impl_dict, indent=8):
+    """Emit handler impl section as YAML lines."""
+    if not impl_dict:
+        return []
+    prefix = " " * indent
+    lines = [f"{prefix}impl:"]
+    mode = impl_dict.get("mode", "stub")
+    lines.append(f"{prefix}  mode: {mode}")
+    if mode == "inline" and impl_dict.get("code"):
+        lines.append(f"{prefix}  code: |")
+        for code_line in impl_dict["code"].splitlines():
+            lines.append(f"{prefix}    {code_line}")
+    elif mode == "wasm":
+        if impl_dict.get("module"):
+            lines.append(f"{prefix}  module: {impl_dict['module']}")
+        if impl_dict.get("function"):
+            lines.append(f"{prefix}  function: {impl_dict['function']}")
+    elif mode == "sidecar":
+        if impl_dict.get("command"):
+            lines.append(f"{prefix}  command: {impl_dict['command']}")
+        if impl_dict.get("protocol"):
+            lines.append(f"{prefix}  protocol: {impl_dict['protocol']}")
+        if impl_dict.get("timeout_ms") is not None:
+            lines.append(f"{prefix}  timeout_ms: {impl_dict['timeout_ms']}")
+    elif mode == "stub":
+        if impl_dict.get("response"):
+            lines.append(f"{prefix}  response: '{impl_dict['response']}'")
     return lines
 
 
@@ -472,13 +527,15 @@ class ServiceProcess:
         self._faults_type = None
         self._semantic_types = []
 
-    def endpoint(self, method, path, handler_name=None):
+    def endpoint(self, method, path, handler_name=None, impl=None):
         """Add an endpoint to this service.
 
         Args:
             method: HTTP method (GET, POST, PUT, DELETE).
             path: URL path (appended to prefix).
             handler_name: Handler function name for codegen.
+            impl: Handler implementation spec from sidecar(), wasm(),
+                  stub(), or inline(). Defaults to stub().
 
         Returns:
             self for chaining.
@@ -490,6 +547,7 @@ class ServiceProcess:
             handler_name = f"{method.lower()}_{handler_name}"
         self._endpoints.append({
             "method": method, "path": path, "handler": handler_name,
+            "impl": impl or stub(),
         })
         return self
 
@@ -821,6 +879,8 @@ class VilServer:
                         lines.append(f"      - method: {ep['method']}")
                         lines.append(f"        path: {ep['path']}")
                         lines.append(f"        handler: {ep['handler']}")
+                        if ep.get("impl"):
+                            lines.extend(_yaml_impl(ep["impl"], indent=8))
 
         return "\n".join(lines) + "\n"
 
@@ -945,6 +1005,8 @@ class VilApp:
                     lines.append(f"      - method: {ep['method']}")
                     lines.append(f'        path: "{ep["path"]}"')
                     lines.append(f"        handler: {ep['handler']}")
+                    if ep.get("impl"):
+                        lines.extend(_yaml_impl(ep["impl"], indent=8))
 
         return "\n".join(lines) + "\n"
 

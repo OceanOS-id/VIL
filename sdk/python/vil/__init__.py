@@ -24,6 +24,10 @@ from .pipeline import (
     array,
     sse,
     http,
+    sidecar,
+    wasm,
+    stub,
+    inline,
 )
 
 __version__ = "6.0.0"
@@ -38,4 +42,8 @@ __all__ = [
     "array",
     "sse",
     "http",
+    "sidecar",
+    "wasm",
+    "stub",
+    "inline",
 ]

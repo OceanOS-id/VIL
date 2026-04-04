@@ -276,6 +276,86 @@ func compile(name, yaml string, release bool) {
 }
 
 // ---------------------------------------------------------------------------
+// HandlerImpl — handler implementation descriptor
+// ---------------------------------------------------------------------------
+
+// HandlerImpl describes how a handler endpoint is implemented.
+type HandlerImpl struct {
+	Mode      string // "sidecar", "wasm", "stub", "inline"
+	Command   string // sidecar
+	Protocol  string // sidecar (shm|http)
+	TimeoutMs int    // sidecar
+	Module    string // wasm
+	Function  string // wasm
+	Response  string // stub
+	Code      string // inline
+}
+
+// Sidecar creates a sidecar handler implementation.
+func Sidecar(command string, protocol string, timeoutMs int) HandlerImpl {
+	return HandlerImpl{Mode: "sidecar", Command: command, Protocol: protocol, TimeoutMs: timeoutMs}
+}
+
+// Wasm creates a WASM handler implementation.
+func Wasm(module string, function string) HandlerImpl {
+	return HandlerImpl{Mode: "wasm", Module: module, Function: function}
+}
+
+// Stub creates a stub handler implementation.
+func Stub(response string) HandlerImpl {
+	if response == "" {
+		response = `{"ok": true}`
+	}
+	return HandlerImpl{Mode: "stub", Response: response}
+}
+
+// Inline creates an inline handler implementation.
+func Inline(code string) HandlerImpl {
+	return HandlerImpl{Mode: "inline", Code: code}
+}
+
+// yamlHandlerImpl emits the impl section for a handler.
+func yamlHandlerImpl(impl *HandlerImpl, indent int) []string {
+	if impl == nil {
+		return nil
+	}
+	prefix := strings.Repeat(" ", indent)
+	lines := []string{fmt.Sprintf("%simpl:", prefix)}
+	lines = append(lines, fmt.Sprintf("%s  mode: %s", prefix, impl.Mode))
+	switch impl.Mode {
+	case "inline":
+		if impl.Code != "" {
+			lines = append(lines, fmt.Sprintf("%s  code: |", prefix))
+			for _, cl := range strings.Split(impl.Code, "\n") {
+				lines = append(lines, fmt.Sprintf("%s    %s", prefix, cl))
+			}
+		}
+	case "wasm":
+		if impl.Module != "" {
+			lines = append(lines, fmt.Sprintf("%s  module: %s", prefix, impl.Module))
+		}
+		if impl.Function != "" {
+			lines = append(lines, fmt.Sprintf("%s  function: %s", prefix, impl.Function))
+		}
+	case "sidecar":
+		if impl.Command != "" {
+			lines = append(lines, fmt.Sprintf("%s  command: %s", prefix, impl.Command))
+		}
+		if impl.Protocol != "" {
+			lines = append(lines, fmt.Sprintf("%s  protocol: %s", prefix, impl.Protocol))
+		}
+		if impl.TimeoutMs > 0 {
+			lines = append(lines, fmt.Sprintf("%s  timeout_ms: %d", prefix, impl.TimeoutMs))
+		}
+	case "stub":
+		if impl.Response != "" {
+			lines = append(lines, fmt.Sprintf("%s  response: '%s'", prefix, impl.Response))
+		}
+	}
+	return lines
+}
+
+// ---------------------------------------------------------------------------
 // SinkOpts / SourceOpts
 // ---------------------------------------------------------------------------
 
@@ -574,6 +654,7 @@ type serviceEndpoint struct {
 	Method  string
 	Path    string
 	Handler string
+	Impl    *HandlerImpl
 }
 
 // ServiceProcess is a VX service builder for VilServer.
@@ -599,11 +680,29 @@ func NewServiceProcess(name string) *ServiceProcess {
 	return NewService(name)
 }
 
+// EndpointOpt is a functional option for Endpoint configuration.
+type EndpointOpt func(*serviceEndpoint)
+
+// WithImpl sets the handler implementation for an endpoint.
+func WithImpl(impl HandlerImpl) EndpointOpt {
+	return func(ep *serviceEndpoint) {
+		ep.Impl = &impl
+	}
+}
+
 // Endpoint adds an endpoint to this service.
-func (sp *ServiceProcess) Endpoint(method, path string, handler ...string) *ServiceProcess {
+// Optional handler name can be passed as the first variadic string arg.
+// Optional EndpointOpt values configure additional endpoint properties.
+func (sp *ServiceProcess) Endpoint(method, path string, args ...interface{}) *ServiceProcess {
 	h := ""
-	if len(handler) > 0 {
-		h = handler[0]
+	var opts []EndpointOpt
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case string:
+			h = v
+		case EndpointOpt:
+			opts = append(opts, v)
+		}
 	}
 	if h == "" {
 		slug := strings.TrimLeft(path, "/")
@@ -614,15 +713,27 @@ func (sp *ServiceProcess) Endpoint(method, path string, handler ...string) *Serv
 		}
 		h = fmt.Sprintf("%s_%s", strings.ToLower(method), slug)
 	}
-	sp.endpoints = append(sp.endpoints, serviceEndpoint{
+	ep := serviceEndpoint{
 		Method: method, Path: path, Handler: h,
-	})
+	}
+	for _, opt := range opts {
+		opt(&ep)
+	}
+	if ep.Impl == nil {
+		defaultImpl := Stub("")
+		ep.Impl = &defaultImpl
+	}
+	sp.endpoints = append(sp.endpoints, ep)
 	return sp
 }
 
 // EndpointWs adds a WebSocket endpoint (alias for Endpoint).
 func (sp *ServiceProcess) EndpointWs(method, path string, handler ...string) *ServiceProcess {
-	return sp.Endpoint(method, path, handler...)
+	args := make([]interface{}, len(handler))
+	for i, h := range handler {
+		args[i] = h
+	}
+	return sp.Endpoint(method, path, args...)
 }
 
 // SetState declares the managed state type (semantic contract).
@@ -896,6 +1007,7 @@ func (s *VilServer) ToYaml() string {
 					lines = append(lines, fmt.Sprintf("      - method: %s", ep.Method))
 					lines = append(lines, fmt.Sprintf("        path: %s", ep.Path))
 					lines = append(lines, fmt.Sprintf("        handler: %s", ep.Handler))
+					lines = append(lines, yamlHandlerImpl(ep.Impl, 8)...)
 				}
 			}
 		}

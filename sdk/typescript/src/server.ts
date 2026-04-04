@@ -32,6 +32,72 @@ import {
 import { UpstreamSpec } from './types';
 
 // ============================================================================
+// HandlerImpl — handler implementation descriptor
+// ============================================================================
+
+/** Describes how a handler endpoint is implemented. */
+export interface HandlerImpl {
+  mode: 'sidecar' | 'wasm' | 'stub' | 'inline';
+  command?: string;     // sidecar
+  protocol?: string;    // sidecar (shm|http)
+  timeout_ms?: number;  // sidecar
+  module?: string;      // wasm
+  function?: string;    // wasm
+  response?: string;    // stub
+  code?: string;        // inline
+}
+
+/** Create a sidecar handler implementation. */
+export function sidecar(command: string, protocol = 'shm', timeout_ms = 5000): HandlerImpl {
+  return { mode: 'sidecar', command, protocol, timeout_ms };
+}
+
+/** Create a WASM handler implementation. */
+export function wasm(module: string, fn = 'handle'): HandlerImpl {
+  return { mode: 'wasm', module, function: fn };
+}
+
+/** Create a stub handler implementation. */
+export function stub(response = '{"ok": true}'): HandlerImpl {
+  return { mode: 'stub', response };
+}
+
+/** Create an inline handler implementation. */
+export function inline(code: string): HandlerImpl {
+  return { mode: 'inline', code };
+}
+
+function yamlHandlerImpl(impl: HandlerImpl | undefined, indent: number): string[] {
+  if (!impl) return [];
+  const prefix = ' '.repeat(indent);
+  const lines: string[] = [`${prefix}impl:`];
+  lines.push(`${prefix}  mode: ${impl.mode}`);
+  switch (impl.mode) {
+    case 'inline':
+      if (impl.code) {
+        lines.push(`${prefix}  code: |`);
+        for (const cl of impl.code.split('\n')) {
+          lines.push(`${prefix}    ${cl}`);
+        }
+      }
+      break;
+    case 'wasm':
+      if (impl.module) lines.push(`${prefix}  module: ${impl.module}`);
+      if (impl.function) lines.push(`${prefix}  function: ${impl.function}`);
+      break;
+    case 'sidecar':
+      if (impl.command) lines.push(`${prefix}  command: ${impl.command}`);
+      if (impl.protocol) lines.push(`${prefix}  protocol: ${impl.protocol}`);
+      if (impl.timeout_ms != null) lines.push(`${prefix}  timeout_ms: ${impl.timeout_ms}`);
+      break;
+    case 'stub':
+      if (impl.response) lines.push(`${prefix}  response: '${impl.response}'`);
+      break;
+  }
+  return lines;
+}
+
+// ============================================================================
 // ServiceProcess
 // ============================================================================
 
@@ -39,6 +105,7 @@ interface EndpointEntry {
   method: string;
   path: string;
   handler: string;
+  impl?: HandlerImpl;
 }
 
 export class ServiceProcess {
@@ -55,13 +122,13 @@ export class ServiceProcess {
   }
 
   /** Add an endpoint to this service. */
-  endpoint(method: string, path: string, handlerName?: string): this {
+  endpoint(method: string, path: string, handlerName?: string, impl?: HandlerImpl): this {
     if (!handlerName) {
       let slug = path.replace(/^\/+|\/+$/g, '').replace(/\//g, '_').replace(/:/g, '');
       if (!slug) slug = 'index';
       handlerName = `${method.toLowerCase()}_${slug}`;
     }
-    this._endpoints.push({ method, path, handler: handlerName });
+    this._endpoints.push({ method, path, handler: handlerName, impl: impl ?? stub() });
     return this;
   }
 
@@ -414,6 +481,7 @@ export class VilServer {
             lines.push(`      - method: ${ep.method}`);
             lines.push(`        path: ${ep.path}`);
             lines.push(`        handler: ${ep.handler}`);
+            lines.push(...yamlHandlerImpl(ep.impl, 8));
           }
         }
       }
