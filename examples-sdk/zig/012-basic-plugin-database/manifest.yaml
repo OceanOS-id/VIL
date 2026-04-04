@@ -11,24 +11,292 @@ services:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: inline
+          code: |
+            "VIL Plugin Database Example (REAL connections)\n\
+             ====================================================\n\n\
+             Connected to real PostgreSQL and Redis.\n\n\
+             Endpoints:\n\
+             - GET  /api/plugin-db/plugins    — available DB plugins and their status\n\
+             - GET  /api/plugin-db/config     — database configuration (secrets masked)\n\
+             - GET  /api/plugin-db/products   — query real products table\n\
+             - POST /api/plugin-db/tasks      — create a task (real INSERT)\n\
+             - GET  /api/plugin-db/tasks      — list all tasks (real SELECT)\n\
+             - GET  /api/plugin-db/pool-stats — REAL connection pool metrics\n\
+             - GET  /api/plugin-db/redis-ping — ping Redis + cache demo\n\n\
+             Built-in:\n\
+             - GET  /health, /ready, /metrics, /info\n"
       - method: GET
         path: /plugins
         handler: list_plugins
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<DbState>().expect("state type mismatch");
+
+            // Check real connectivity for status
+            let pg_status = if state.pg_pool.inner().size() > 0 {
+                "connected"
+            } else {
+                "disconnected"
+            };
+
+            let redis_status = match redis::Client::open(state.redis_url.as_str()) {
+                Ok(_) => "available",
+                Err(_) => "unavailable",
+            };
+
+            let plugins = vec![
+                PluginInfo {
+                    name: "vil_db_sqlx".to_string(),
+                    version: "0.1.0".to_string(),
+                    description: "sqlx connection pool — PostgreSQL (REAL connection)".to_string(),
+                    status: pg_status.to_string(),
+                    features: vec![
+                        "Multi-pool manager (per-service pools)".into(),
+                        "Connection metrics (queries, latency, errors)".into(),
+                        "Health check integration".into(),
+                        "Config hot-reload".into(),
+                        "DbConn extractor for handlers".into(),
+                    ],
+                    supported_drivers: Some(vec!["postgres".into(), "mysql".into(), "sqlite".into()]),
+                    manifest: PluginManifest {
+                        plugin_type: "database".to_string(),
+                        admin_ui: true,
+                        config_schema: Some("SqlxConfig".to_string()),
+                        health_endpoint: Some("/health/db".to_string()),
+                        metrics_endpoint: Some("/metrics/db".to_string()),
+                    },
+                },
+                PluginInfo {
+                    name: "vil_db_redis".to_string(),
+                    version: "0.1.0".to_string(),
+                    description: "Redis adapter — caching, sessions, pub/sub (REAL connection)".to_string(),
+                    status: redis_status.to_string(),
+                    features: vec![
+                        "Connection pool".into(),
+                        "Pub/Sub support".into(),
+                        "Cluster mode".into(),
+                        "Session store".into(),
+                    ],
+                    supported_drivers: None,
+                    manifest: PluginManifest {
+                        plugin_type: "cache".to_string(),
+                        admin_ui: true,
+                        config_schema: None,
+                        health_endpoint: None,
+                        metrics_endpoint: None,
+                    },
+                },
+            ];
+
+            VilResponse::ok(PluginListResponse {
+                total_plugins: plugins.len(),
+                plugins,
+            })
       - method: GET
         path: /config
         handler: show_config
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<DbState>().expect("state type mismatch");
+
+            // Mask the password in the URL for display
+            let masked_url = mask_url(&state.pg_config.url);
+            let masked_redis = mask_url(&state.redis_url);
+
+            let configs = vec![DatabaseConfigInfo {
+                pool_name: "primary".to_string(),
+                driver: state.pg_config.driver.clone(),
+                url: masked_url,
+                max_connections: state.pg_config.max_connections,
+                min_connections: state.pg_config.min_connections,
+                connect_timeout_secs: state.pg_config.connect_timeout_secs,
+                idle_timeout_secs: state.pg_config.idle_timeout_secs,
+                ssl_mode: state.pg_config.ssl_mode.clone(),
+                services: state.pg_config.services.clone(),
+            }];
+
+            VilResponse::ok(ConfigResponse {
+                pool_count: configs.len(),
+                database_configs: configs,
+                redis_url: masked_redis,
+                note: "REAL connections — PostgreSQL and Redis are live.".to_string(),
+            })
       - method: GET
         path: /products
         handler: list_products
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<DbState>().expect("state type mismatch");
+
+            let products = ProductRow::q()
+                .select(&["id", "name", "category", "price::float8 as price", "stock"])
+                .order_by_asc("id")
+                .fetch_all::<ProductRow>(state.pg_pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("PostgreSQL query failed: {}", e)))?;
+
+            let count = products.len();
+            Ok(VilResponse::ok(ProductsResponse {
+                products,
+                count,
+                source: "PostgreSQL (vil_demo.products) via VilQuery".to_string(),
+            }))
       - method: POST
         path: /tasks
         handler: create_task
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<DbState>().expect("state type mismatch");
+            let req: CreateTaskRequest = body.json().expect("invalid JSON body");
+
+            if req.title.trim().is_empty() {
+                return Err(VilError::bad_request("title must not be empty"));
+            }
+
+            let title = req.title;
+            let description = req.description.unwrap_or_default();
+
+            // PostgreSQL RETURNING via raw query (VilQuery doesn't support RETURNING yet)
+            // But we showcase VilQuery insert for the write path:
+            TaskRow::q()
+                .insert_columns(&["title", "description"])
+                .value(title.clone())
+                .value(description.clone())
+                .execute(state.pg_pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("PostgreSQL insert failed: {}", e)))?;
+
+            // Fetch back via VilQuery
+            let task = TaskRow::q()
+                .select(&["id", "title", "description", "done"])
+                .where_eq("title", &title)
+                .order_by_desc("id")
+                .limit(1)
+                .fetch_optional::<TaskRow>(state.pg_pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::internal("insert succeeded but fetch failed"))?;
+
+            Ok(VilResponse::ok(CreateTaskResponse {
+                id: task.id,
+                title: task.title,
+                description: task.description,
+                done: task.done,
+                message: "Task created in PostgreSQL via VilQuery".to_string(),
+            }))
       - method: GET
         path: /tasks
         handler: list_tasks
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<DbState>().expect("state type mismatch");
+
+            let tasks = TaskRow::q()
+                .select(&["id", "title", "description", "done"])
+                .order_by_asc("id")
+                .fetch_all::<TaskRow>(state.pg_pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("PostgreSQL query failed: {}", e)))?;
+
+            let count = tasks.len();
+            Ok(VilResponse::ok(TasksResponse {
+                tasks,
+                count,
+                source: "PostgreSQL (vil_demo.tasks) via VilQuery".to_string(),
+            }))
       - method: GET
         path: /pool-stats
         handler: pool_stats
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<DbState>().expect("state type mismatch");
+            let mut pools = std::collections::HashMap::new();
+
+            let size_info = state.pg_pool.size_info();
+            let metrics_snap = state.pg_pool.metrics().snapshot();
+
+            pools.insert(
+                "primary".to_string(),
+                PoolDetail {
+                    driver: "postgres".to_string(),
+                    size: PoolSize {
+                        max: size_info.max,
+                        min: size_info.min,
+                        current: size_info.current,
+                        idle: size_info.idle,
+                    },
+                    metrics: PoolMetricsInfo {
+                        queries_total: metrics_snap.queries_total,
+                        query_errors: metrics_snap.query_errors,
+                        avg_query_ns: metrics_snap.avg_query_ns,
+                        acquires_total: metrics_snap.acquires_total,
+                        health_checks_ok: metrics_snap.health_checks_ok,
+                        health_checks_fail: metrics_snap.health_checks_fail,
+                    },
+                    status: "healthy".to_string(),
+                },
+            );
+
+            VilResponse::ok(PoolStatsResponse {
+                total_pools: pools.len(),
+                pools,
+                is_demo: false,
+                prometheus_hint: "GET /metrics for Prometheus-format pool metrics".to_string(),
+            })
       - method: GET
         path: /redis-ping
         handler: redis_ping
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<DbState>().expect("state type mismatch");
+
+            let mut conn = state
+                .redis_client
+                .get_multiplexed_async_connection()
+                .await
+                .map_err(|e| VilError::internal(format!("Redis connection failed: {}", e)))?;
+
+            // PING
+            let pong: String = redis::cmd("PING")
+                .query_async(&mut conn)
+                .await
+                .map_err(|e| VilError::internal(format!("Redis PING failed: {}", e)))?;
+
+            // Cache demo: SET with TTL, then GET
+            let cache_key = "vil:demo:greeting";
+            let cache_value = "Hello from VIL + Redis!";
+
+            let _: () = redis::cmd("SET")
+                .arg(cache_key)
+                .arg(cache_value)
+                .arg("EX")
+                .arg(60)
+                .query_async(&mut conn)
+                .await
+                .map_err(|e| VilError::internal(format!("Redis SET failed: {}", e)))?;
+
+            let read_back: String = redis::cmd("GET")
+                .arg(cache_key)
+                .query_async(&mut conn)
+                .await
+                .map_err(|e| VilError::internal(format!("Redis GET failed: {}", e)))?;
+
+            Ok(VilResponse::ok(RedisPingResponse {
+                connected: true,
+                pong,
+                cache_demo: CacheDemo {
+                    key: cache_key.to_string(),
+                    value_written: cache_value.to_string(),
+                    value_read: read_back,
+                    ttl_secs: 60,
+                },
+            }))

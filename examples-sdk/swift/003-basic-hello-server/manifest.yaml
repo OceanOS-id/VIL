@@ -11,9 +11,47 @@ services:
       - method: POST
         path: /transform
         handler: transform
+        impl:
+          mode: inline
+          code: |
+            let req: TransformRequest = body.json().unwrap_or(TransformRequest {
+                data: String::new(),
+                value: 0.0,
+            });
+
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs();
+
+            VilResponse::ok(TransformResponse {
+                transformed: req.data.to_uppercase(),
+                original: req.data,
+                value_doubled: req.value * 2.0,
+                timestamp,
+            })
       - method: POST
         path: /echo
         handler: echo
+        impl:
+          mode: inline
+          code: |
+            let len = body.len();
+            let json: serde_json::Value = body.json().unwrap_or(serde_json::json!(null));
+
+            VilResponse::ok(EchoResponse {
+                received_bytes: len,
+                body: json,
+                zero_copy: true,
+            })
       - method: GET
         path: /health
         handler: health
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(HealthResponse {
+                status: "healthy",
+                service: "vil-api",
+                shm: shm.available,
+            })

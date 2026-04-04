@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /safe-rag
         handler: safe_rag_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

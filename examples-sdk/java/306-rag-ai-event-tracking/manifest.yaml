@@ -11,3 +11,9 @@ services:
       - method: POST
         path: /support/ask
         handler: answer_question
+        impl:
+          mode: inline
+          code: |
+            let req: SupportQuestion = body
+                .json()
+                .map_err(|_| VilError::bad_request("Invalid JSON — expected {\"question\":\"...\"}

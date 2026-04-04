@@ -11,3 +11,74 @@ services:
       - method: POST
         path: /cited-rag
         handler: cited_rag_handler
+        impl:
+          mode: inline
+          code: |
+            let req: CitedRagRequest = body.json().expect("invalid JSON body");
+            // Step 1: Build context from all indexed legal document sections
+            let context: String = LEGAL_DOCS
+                .iter()
+                .map(|d| {
+                    format!(
+                        "[{}] Section {} — {}: {}",
+                        d.id, d.section, d.title, d.content
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("\n\n");
+
+            // Step 3: Build the research prompt — instruct LLM to cite sources as [DocN]
+            let system_prompt = format!(
+                "You are a legal document assistant. Answer using ONLY the clauses below. \
+                 You MUST cite every source used as [DocN] inline in your answer. \
+                 For example: 'According to [Doc1], termination requires...' \
+                 Cite every relevant document.\n\nContract Clauses:\n{}",
+                context
+            );
+
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            // Use real API key for production; simulator mode for local dev testing
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+            // Configure SSE collector to stream from LLM and extract generated text
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .json_tap("choices[0].delta.content")
+                .body(body);
+
+            // Add Bearer token authentication if API key is configured
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            let answer = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            // Step 2: POST-PROCESS — extract citations from LLM output
+            // Step 4: Post-process LLM output to extract structured [DocN] citations
+            let citations = extract_citations(&answer);
+            let citation_count = citations.len() as u32;
+
+            // Semantic audit
+            let _event = RagQueryEvent {
+                question: req.prompt,
+                chunks_retrieved: LEGAL_DOCS.len() as u32,
+                answer_length: answer.len() as u32,
+                latency_ms: 0,
+                model: "gpt-4".into(),
+            };
+
+            Ok(VilResponse::ok(CitedRagResponse {
+                answer,
+                citations,
+                total_docs_in_context: LEGAL_DOCS.len() as u32,
+                citation_count,
+            }))

@@ -11,6 +11,12 @@ services:
       - method: GET
         path: /stream
         handler: ticker_stream
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /info
         handler: ticker_info
+        impl:
+          mode: stub
+          response: '{"ok": true}'

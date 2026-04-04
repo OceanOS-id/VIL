@@ -11,6 +11,12 @@ services:
       - method: POST
         path: /catalog/search
         handler: catalog_search
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /catalog/health
         handler: catalog_health
+        impl:
+          mode: stub
+          response: '{"ok": true}'

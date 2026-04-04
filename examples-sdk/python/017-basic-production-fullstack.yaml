@@ -11,20 +11,35 @@ services:
       - method: GET
         path: /stack
         handler: stack_info
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /config
         handler: full_config
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /sprints
         handler: sprints
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /middleware
         handler: middleware_info
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: admin
     prefix: /api/admin
     endpoints:
       - method: GET
         path: /config
         handler: full_config
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: root
     prefix: /api/root

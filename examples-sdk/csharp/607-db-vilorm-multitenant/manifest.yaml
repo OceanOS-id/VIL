@@ -11,24 +11,199 @@ services:
       - method: POST
         path: /tenants
         handler: create_tenant
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let req: CreateTenant = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+            let id = uuid::Uuid::new_v4().to_string();
+            let plan = req.plan.unwrap_or_else(|| "free".to_string());
+
+            Tenant::q()
+                .insert_columns(&["id", "name", "plan", "is_active"])
+                .value(id.clone())
+                .value(req.name)
+                .value(plan)
+                .value(1_i64)
+                .execute(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            let tenant = Tenant::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::internal("created but not found"))?;
+
+            Ok(VilResponse::created(tenant))
       - method: GET
         path: /tenants/:id
         handler: get_tenant
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            let tenant = Tenant::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found("Tenant not found"))?;
+
+            Ok(VilResponse::ok(tenant))
       - method: PUT
         path: /tenants/:id
         handler: update_tenant
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let req: UpdateTenant = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+
+            // Pattern: update().set_optional() -- partial tenant update, skips None fields
+            Tenant::q()
+                .update()
+                .set_optional("name", req.name.as_deref())
+                .set_optional("plan", req.plan.as_deref())
+                .set_optional_i64("is_active", req.is_active)
+                .where_eq("id", &id)
+                .execute(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            let tenant = Tenant::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found("Tenant not found"))?;
+
+            Ok(VilResponse::ok(tenant))
       - method: POST
         path: /tenants/:id/users
         handler: add_user
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let req: AddUser = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+            let id = uuid::Uuid::new_v4().to_string();
+            let role = req.role.unwrap_or_else(|| "member".to_string());
+
+            // Pattern: on_conflict_nothing("tenant_id, email") -- idempotent user add
+            TenantUser::q()
+                .insert_columns(&["id", "tenant_id", "email", "role"])
+                .value(id)
+                .value(tenant_id.clone())
+                .value(req.email.clone())
+                .value(role)
+                .on_conflict_nothing("tenant_id, email")
+                .execute(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(serde_json::json!({
+                "ok": true,
+                "tenant_id": tenant_id,
+                "email": req.email,
+            })))
       - method: GET
         path: /tenants/:id/users
         handler: list_users
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            // Pattern: select().where_eq().and_eq() -- scoped queries (tenant isolation)
+            // Here we use where_eq for tenant_id scoping
+            let users = TenantUser::q()
+                .select(&["id", "tenant_id", "email", "role", "created_at"])
+                .where_eq("tenant_id", &tenant_id)
+                .order_by_desc("created_at")
+                .fetch_all::<TenantUser>(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(users))
       - method: POST
         path: /tenants/:id/settings
         handler: upsert_setting
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let req: UpsertSetting = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+            let id = uuid::Uuid::new_v4().to_string();
+
+            // Pattern: on_conflict("tenant_id, key").do_update(&["value"]) -- upsert settings
+            TenantSetting::q()
+                .insert_columns(&["id", "tenant_id", "key", "value"])
+                .value(id)
+                .value(tenant_id.clone())
+                .value(req.key.clone())
+                .value_opt_str(req.value.clone())
+                .on_conflict("tenant_id, key")
+                .do_update(&["value"])
+                .execute(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(serde_json::json!({
+                "ok": true,
+                "tenant_id": tenant_id,
+                "key": req.key,
+                "value": req.value,
+            })))
       - method: GET
         path: /tenants/:id/settings
         handler: list_settings
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            // Pattern: where_eq() for tenant isolation
+            let settings = TenantSetting::q()
+                .select(&["id", "tenant_id", "key", "value"])
+                .where_eq("tenant_id", &tenant_id)
+                .order_by_asc("key")
+                .fetch_all::<TenantSetting>(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(settings))
       - method: GET
         path: /tenants/:id/stats
         handler: tenant_stats
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let pool = state.pool.inner();
+
+            // Verify tenant exists
+            let tenant = Tenant::find_by_id(pool, &tenant_id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found("Tenant not found"))?;
+
+            // Pattern: select_expr("COUNT(*)").where_eq().scalar::<i64>() -- count per tenant
+            let user_count: i64 = TenantUser::q()
+                .select_expr("CAST(COUNT(*) AS INTEGER)")
+                .where_eq("tenant_id", &tenant_id)
+                .scalar::<i64>(pool)
+                .await
+                .unwrap_or(0);
+
+            let setting_count: i64 = TenantSetting::q()
+                .select_expr("CAST(COUNT(*) AS INTEGER)")
+                .where_eq("tenant_id", &tenant_id)
+                .scalar::<i64>(pool)
+                .await
+                .unwrap_or(0);
+
+            Ok(VilResponse::ok(serde_json::json!({
+                "tenant_id": tenant_id,
+                "tenant_name": tenant.name,
+                "plan": tenant.plan,
+                "is_active": tenant.is_active == 1,
+                "user_count": user_count,
+                "setting_count": setting_count,
+            })))

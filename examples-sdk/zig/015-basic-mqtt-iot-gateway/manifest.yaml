@@ -11,14 +11,203 @@ services:
       - method: POST
         path: /sensors/data
         handler: receive_sensor_data
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<MqttState>().expect("state type mismatch");
+            let reading: SensorReading = body.json().expect("invalid JSON body");
+            // Validate sensor_id
+            if reading.sensor_id.trim().is_empty() {
+                return Err(VilError::bad_request("sensor_id must not be empty"));
+            }
+
+            // Build the MQTT topic for this sensor.
+            // Topic hierarchy: sensors/{type}/{id} enables wildcard subscriptions —
+            // e.g., "sensors/temperature/+" subscribes to ALL temperature sensors.
+            let mqtt_topic = format!("sensors/{}/{}", reading.sensor_type, reading.sensor_id);
+
+            // Serialize payload for MQTT
+            let payload = serde_json::to_vec(&reading)
+                .map_err(|e| VilError::internal(format!("Serialization failed: {}", e)))?;
+
+            // Publish to MQTT (implementation mode)
+            state
+                .client
+                .publish(&mqtt_topic, &payload, QoS::AtLeastOnce)
+                .await
+                .map_err(|e| VilError::internal(format!("MQTT publish failed: {}", e)))?;
+
+            // Bridge to Tri-Lane SHM
+            state.bridge.bridge(&mqtt_topic, &payload).await;
+
+            // Update sensor registry
+            {
+                let mut sensors = state.sensors.write().await;
+                let entry = sensors
+                    .entry(reading.sensor_id.clone())
+                    .or_insert_with(|| SensorInfo {
+                        sensor_id: reading.sensor_id.clone(),
+                        sensor_type: reading.sensor_type.clone(),
+                        location: "unknown".into(),
+                        mqtt_topic: mqtt_topic.clone(),
+                        last_value: None,
+                        last_unit: None,
+                        readings_count: 0,
+                    });
+                entry.last_value = Some(reading.value);
+                entry.last_unit = Some(reading.unit.clone());
+                entry.readings_count += 1;
+            }
+
+            Ok(VilResponse::ok(SensorDataResponse {
+                status: "published".into(),
+                mqtt_topic,
+                qos: "AtLeastOnce".into(),
+                payload_size: payload.len(),
+                total_published: state.client.published_count(),
+                bridged_to_shm: true,
+            }))
       - method: GET
         path: /sensors
         handler: list_sensors
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<MqttState>().expect("state type mismatch");
+            let sensors = state.sensors.read().await;
+            let live_sensors: Vec<SensorInfo> = sensors.values().cloned().collect();
+
+            // Combine pre-registered sensors with any live data
+            let seed_sensors = vec![
+                SensorInfo {
+                    sensor_id: "temp-001".into(),
+                    sensor_type: "temperature".into(),
+                    location: "Building A, Floor 2, Room 201".into(),
+                    mqtt_topic: "sensors/temperature/temp-001".into(),
+                    last_value: Some(22.5),
+                    last_unit: Some("celsius".into()),
+                    readings_count: 1842,
+                },
+                SensorInfo {
+                    sensor_id: "hum-003".into(),
+                    sensor_type: "humidity".into(),
+                    location: "Building A, Floor 2, Room 201".into(),
+                    mqtt_topic: "sensors/humidity/hum-003".into(),
+                    last_value: Some(45.2),
+                    last_unit: Some("percent".into()),
+                    readings_count: 1840,
+                },
+                SensorInfo {
+                    sensor_id: "pres-007".into(),
+                    sensor_type: "pressure".into(),
+                    location: "Building B, Roof".into(),
+                    mqtt_topic: "sensors/pressure/pres-007".into(),
+                    last_value: Some(1013.25),
+                    last_unit: Some("hPa".into()),
+                    readings_count: 920,
+                },
+                SensorInfo {
+                    sensor_id: "motion-012".into(),
+                    sensor_type: "motion".into(),
+                    location: "Building A, Floor 1, Entrance".into(),
+                    mqtt_topic: "sensors/motion/motion-012".into(),
+                    last_value: Some(1.0),
+                    last_unit: Some("boolean".into()),
+                    readings_count: 4510,
+                },
+            ];
+
+            let total_pre_registered = seed_sensors.len();
+            let total_live = live_sensors.len();
+
+            VilResponse::ok(SensorListResponse {
+                pre_registered_sensors: seed_sensors,
+                live_sensors,
+                total_pre_registered,
+                total_live,
+                note: "Pre-registered sensors are seed data. Live sensors appear after POST /api/sensors/data.".into(),
+            })
       - method: GET
         path: /mqtt/config
         handler: mqtt_config
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<MqttState>().expect("state type mismatch");
+            VilResponse::ok(MqttConfigResponse {
+                connection: MqttConnectionInfo {
+                    broker_url: state.config.broker_url.clone(),
+                    port: state.config.port,
+                    client_id: state.config.client_id.clone(),
+                    connected: state.client.is_connected(),
+                    tls: state.config.tls,
+                    keepalive_secs: state.config.keepalive_secs,
+                    qos: format!("{:?}", state.config.qos),
+                },
+                metrics: MqttMetrics {
+                    messages_published: state.client.published_count(),
+                    messages_received: state.client.received_count(),
+                },
+                bridge: MqttBridgeInfo {
+                    target_service: "sensor-analytics".into(),
+                    messages_bridged: state.bridge.bridged_count(),
+                    description: "MqttBridge forwards MQTT messages to Tri-Lane SHM mesh".into(),
+                },
+                qos_levels: QosLevels {
+                    at_most_once: "Fire and forget — no acknowledgment".into(),
+                    at_least_once: "Guaranteed delivery — may have duplicates (default)".into(),
+                    exactly_once: "Guaranteed exactly once — highest overhead".into(),
+                },
+                note: "Stub mode — no real MQTT broker connected.".into(),
+            })
       - method: GET
         path: /mqtt/topics
         handler: mqtt_topics
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<MqttState>().expect("state type mismatch");
+            VilResponse::ok(MqttTopicsResponse {
+                subscribed_topics: (*state.subscribed_topics).clone(),
+                topic_patterns: vec![
+                    TopicPattern {
+                        pattern: "sensors/+/+".into(),
+                        description: "All sensor readings (wildcard: type and sensor_id)".into(),
+                        example_matches: vec![
+                            "sensors/temperature/temp-001".into(),
+                            "sensors/humidity/hum-003".into(),
+                            "sensors/pressure/pres-007".into(),
+                        ],
+                    },
+                    TopicPattern {
+                        pattern: "sensors/temperature/#".into(),
+                        description: "All temperature sensor readings (multi-level wildcard)".into(),
+                        example_matches: vec![
+                            "sensors/temperature/temp-001".into(),
+                            "sensors/temperature/building-a/floor-2".into(),
+                        ],
+                    },
+                    TopicPattern {
+                        pattern: "commands/+/+".into(),
+                        description: "Device control commands (type and device_id)".into(),
+                        example_matches: vec![
+                            "commands/hvac/unit-001".into(),
+                            "commands/lighting/zone-a".into(),
+                        ],
+                    },
+                    TopicPattern {
+                        pattern: "$SYS/#".into(),
+                        description: "Broker system topics (connection stats, etc.)".into(),
+                        example_matches: vec![],
+                    },
+                ],
+                gateway_pattern: GatewayPattern {
+                    description: "IoT Gateway: REST ↔ MQTT bidirectional bridge".into(),
+                    inbound: "REST POST /api/sensors/data → MQTT publish to sensors/{type}/{id}".into(),
+                    outbound: "MQTT subscribe sensors/+/+ → internal processing → REST GET /api/sensors"
+                        .into(),
+                    bridge: "MQTT → MqttBridge → Tri-Lane SHM → analytics-service".into(),
+                },
+            })
   - name: root
     prefix: /api/root

@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /trigger
         handler: trigger_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

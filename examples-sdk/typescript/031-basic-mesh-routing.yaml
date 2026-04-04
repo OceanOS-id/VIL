@@ -11,24 +11,39 @@ services:
       - method: GET
         path: /ping
         handler: teller_ping
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /submit
         handler: teller_submit
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: fraud_check
     prefix: /api/fraud_check
     endpoints:
       - method: POST
         path: /analyze
         handler: fraud_process
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: core_banking
     prefix: /api/core_banking
     endpoints:
       - method: POST
         path: /post
         handler: core_banking_post
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: notification
     prefix: /api/notification
     endpoints:
       - method: GET
         path: /send
         handler: notification_send
+        impl:
+          mode: stub
+          response: '{"ok": true}'

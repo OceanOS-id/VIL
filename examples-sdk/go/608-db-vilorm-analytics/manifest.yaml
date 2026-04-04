@@ -11,18 +11,36 @@ services:
       - method: POST
         path: /events
         handler: log_event
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /events/recent
         handler: recent_events
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /events/by-type
         handler: events_by_type
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /stats/daily
         handler: daily_stats
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /stats/unique-users
         handler: unique_users
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /stats/summary
         handler: stats_summary
+        impl:
+          mode: stub
+          response: '{"ok": true}'

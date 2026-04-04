@@ -11,14 +11,208 @@ services:
       - method: GET
         path: /nats/config
         handler: nats_config
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<NatsState>().expect("state type mismatch");
+            VilResponse::ok(NatsConfigResponse {
+                connection: NatsConnectionInfo {
+                    url: state.config.url.clone(),
+                    client_name: state.config.client_name.clone(),
+                    connected: state.client.is_connected(),
+                    tls: state.config.tls,
+                    max_reconnects: state.config.max_reconnects,
+                    buffer_size: state.config.buffer_size,
+                },
+                metrics: NatsMetrics {
+                    messages_published: state.client.published_count(),
+                    messages_received: state.client.received_count(),
+                },
+                bridge: BridgeInfo {
+                    target_service: state.bridge.target().to_string(),
+                    messages_bridged: state.bridge.bridged_count(),
+                    description: "NatsBridge forwards NATS messages to Tri-Lane SHM mesh".into(),
+                },
+                jetstream: JetStreamSummary {
+                    streams: state.jetstream.streams(),
+                    stream_count: state.jetstream.stream_count(),
+                },
+                kv: KvSummary {
+                    bucket: state.kv.bucket().to_string(),
+                    keys: state.kv.len().await,
+                },
+            })
       - method: POST
         path: /nats/publish
         handler: nats_publish
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<NatsState>().expect("state type mismatch");
+            let req: PublishRequest = body.json().expect("invalid JSON body");
+            let payload_bytes = serde_json::to_vec(&req.payload)
+                .map_err(|e| VilError::bad_request(format!("Invalid payload: {}", e)))?;
+
+            // Publish via NATS client (in-memory implementation)
+            state
+                .client
+                .publish(&req.subject, &payload_bytes)
+                .await
+                .map_err(|e| VilError::internal(format!("Publish failed: {}", e)))?;
+
+            // Also bridge to Tri-Lane SHM
+            state.bridge.bridge(&req.subject, &payload_bytes).await;
+
+            Ok(VilResponse::ok(PublishResponse {
+                status: "published".into(),
+                subject: req.subject,
+                payload_size: payload_bytes.len(),
+                total_published: state.client.published_count(),
+                bridged_to_shm: true,
+            }))
       - method: GET
         path: /nats/jetstream
         handler: jetstream_info
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<NatsState>().expect("state type mismatch");
+            let mut api_surface = std::collections::HashMap::new();
+            api_surface.insert(
+                "JetStreamClient::create_stream".into(),
+                "Create a persistent stream".into(),
+            );
+            api_surface.insert(
+                "JetStreamClient::create_consumer".into(),
+                "Create a durable consumer on a stream".into(),
+            );
+            api_surface.insert(
+                "JetStreamClient::publish".into(),
+                "Publish to a JetStream subject (returns sequence number)".into(),
+            );
+            api_surface.insert(
+                "JsMessage::ack()".into(),
+                "Acknowledge message (removes from redelivery queue)".into(),
+            );
+            api_surface.insert(
+                "JsMessage::nack()".into(),
+                "Negative-ack (request redelivery)".into(),
+            );
+
+            VilResponse::ok(JetStreamInfoResponse {
+                jetstream: JetStreamDetail {
+                    description: "JetStream provides persistent streaming with at-least-once delivery"
+                        .into(),
+                    streams: state.jetstream.streams(),
+                    stream_count: state.jetstream.stream_count(),
+                    stream_configs: vec![
+                        StreamConfigInfo {
+                            name: "ORDERS".into(),
+                            subjects: vec!["events.order.>".into()],
+                            retention: "limits".into(),
+                            max_msgs: -1,
+                            max_bytes: -1,
+                            description: "All order lifecycle events".into(),
+                        },
+                        StreamConfigInfo {
+                            name: "NOTIFICATIONS".into(),
+                            subjects: vec!["notifications.>".into()],
+                            retention: "limits".into(),
+                            max_msgs: 100000,
+                            max_bytes: 104857600,
+                            description: "User notification events (100k msg limit)".into(),
+                        },
+                    ],
+                    consumer_pattern: ConsumerPattern {
+                        durable_name: "order-processor".into(),
+                        filter_subject: "events.order.created".into(),
+                        ack_policy: "explicit".into(),
+                        deliver_policy: "all".into(),
+                        description: "Durable consumer processes order creation events".into(),
+                    },
+                },
+                api_surface,
+            })
       - method: GET
         path: /nats/kv
         handler: kv_demo
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<NatsState>().expect("state type mismatch");
+            // Demonstrate put/get cycle — real-world uses:
+            //   feature_flags: toggle checkout flow A/B test
+            //   session: track user auth tokens (fast lookup vs DB round-trip)
+            //   rate_limit: API key throttling counters
+            let _ = state
+                .kv
+                .put(
+                    "config:feature_flags",
+                    b"{\"dark_mode\":true,\"beta\":false}",
+                )
+                .await;
+            let _ = state
+                .kv
+                .put(
+                    "session:user-101",
+                    b"{\"token\":\"abc123\",\"expires\":3600}",
+                )
+                .await;
+            let _ = state
+                .kv
+                .put(
+                    "rate_limit:api-key-xyz",
+                    b"{\"remaining\":98,\"reset\":1700000000}",
+                )
+                .await;
+
+            // Read back
+            let feature_flags = state.kv.get("config:feature_flags").await;
+            let session = state.kv.get("session:user-101").await;
+
+            let mut demo_entries = std::collections::HashMap::new();
+            demo_entries.insert(
+                "config:feature_flags".to_string(),
+                feature_flags.as_ref().map(|e| KvEntryInfo {
+                    value: String::from_utf8_lossy(&e.value).to_string(),
+                    revision: e.revision,
+                }),
+            );
+            demo_entries.insert(
+                "session:user-101".to_string(),
+                session.as_ref().map(|e| KvEntryInfo {
+                    value: String::from_utf8_lossy(&e.value).to_string(),
+                    revision: e.revision,
+                }),
+            );
+
+            let mut api_surface = std::collections::HashMap::new();
+            api_surface.insert(
+                "KvStore::put(key, value)".into(),
+                "Store a key-value pair (returns revision)".into(),
+            );
+            api_surface.insert(
+                "KvStore::get(key)".into(),
+                "Get value by key (returns KvEntry with revision)".into(),
+            );
+            api_surface.insert("KvStore::delete(key)".into(), "Delete a key".into());
+            api_surface.insert(
+                "KvStore::keys()".into(),
+                "List all keys in the bucket".into(),
+            );
+            api_surface.insert(
+                "KvStore::watch()".into(),
+                "Watch for changes (broadcast receiver)".into(),
+            );
+
+            VilResponse::ok(KvDemoResponse {
+                kv_store: KvStoreInfo {
+                    bucket: state.kv.bucket().to_string(),
+                    total_keys: state.kv.len().await,
+                    keys: state.kv.keys().await,
+                },
+                demo_entries,
+                api_surface,
+            })
   - name: root
     prefix: /api/root

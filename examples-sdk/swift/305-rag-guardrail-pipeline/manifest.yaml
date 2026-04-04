@@ -11,3 +11,97 @@ services:
       - method: POST
         path: /safe-rag
         handler: safe_rag_handler
+        impl:
+          mode: inline
+          code: |
+            let req: SafeRagRequest = body.json().expect("invalid JSON body");
+            // Step 1: Build RAG context
+            let context: String = MEDICAL_DOCS
+                .iter()
+                .map(|(id, content)| format!("{} {}", id, content))
+                .collect::<Vec<_>>()
+                .join("\n\n");
+
+            let system_prompt = format!(
+                "You are a medical information assistant. Answer using ONLY the guidelines below. \
+                 Cite as [DocN]. Include the disclaimer. Do NOT provide personal medical advice.\n\n\
+                 Guidelines:\n{}",
+                context
+            );
+
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .json_tap("choices[0].delta.content")
+                .body(body);
+
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            let raw_answer = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            // Step 2: GUARDRAIL PIPELINE
+            // 2a. PII check + redaction
+            let (redacted_answer, pii_detections) = check_and_redact_pii(&raw_answer);
+
+            // 2b. Hallucination check
+            let (hallucination_score, hallucination_markers) = check_hallucination(&raw_answer);
+
+            // 2c. Determine guardrail status.
+            // Decision matrix: >= 0.75 hallucination = BLOCKED (too risky for patients)
+            //                  PII found or >= 0.25 = REDACTED (safe after cleanup)
+            //                  otherwise = PASS (clean answer)
+            let guardrail_status = if hallucination_score >= 0.75 {
+                "BLOCKED".to_string()
+            } else if !pii_detections.is_empty() || hallucination_score >= 0.25 {
+                "REDACTED".to_string()
+            } else {
+                "PASS".to_string()
+            };
+
+            // 2d. Compute confidence
+            let confidence_score =
+                compute_confidence(pii_detections.len(), hallucination_score, raw_answer.len());
+            let confidence_score = (confidence_score * 100.0).round() / 100.0;
+
+            // 2e. Choose final content
+            let content = if guardrail_status == "BLOCKED" {
+                "Response blocked by guardrail. The generated answer contained too many \
+                 hallucination markers and cannot be safely returned."
+                    .to_string()
+            } else {
+                redacted_answer
+            };
+
+            // Semantic audit
+            let _event = RagQueryEvent {
+                question: req.prompt,
+                chunks_retrieved: MEDICAL_DOCS.len() as u32,
+                answer_length: content.len() as u32,
+                latency_ms: 0,
+                model: "gpt-4".into(),
+            };
+
+            Ok(VilResponse::ok(SafeRagResponse {
+                content,
+                guardrail_status,
+                confidence_score,
+                pii_detections,
+                hallucination_markers,
+                hallucination_score: (hallucination_score * 100.0).round() / 100.0,
+                disclaimer: "For educational purposes only. NOT medical advice. \
+                              Consult a qualified healthcare professional."
+                    .to_string(),
+            }))

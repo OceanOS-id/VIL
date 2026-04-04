@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /cited-rag
         handler: cited_rag_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

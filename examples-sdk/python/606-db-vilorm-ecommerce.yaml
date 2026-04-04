@@ -11,21 +11,42 @@ services:
       - method: POST
         path: /products
         handler: create_product
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /products
         handler: list_products
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /products/:id
         handler: get_product
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /orders
         handler: create_order
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /orders
         handler: list_orders
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /orders/:id/total
         handler: order_total
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: DELETE
         path: /orders/:id
         handler: cancel_order
+        impl:
+          mode: stub
+          response: '{"ok": true}'

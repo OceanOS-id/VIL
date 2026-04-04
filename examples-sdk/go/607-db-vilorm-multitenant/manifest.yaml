@@ -11,24 +11,48 @@ services:
       - method: POST
         path: /tenants
         handler: create_tenant
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /tenants/:id
         handler: get_tenant
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: PUT
         path: /tenants/:id
         handler: update_tenant
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /tenants/:id/users
         handler: add_user
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /tenants/:id/users
         handler: list_users
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /tenants/:id/settings
         handler: upsert_setting
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /tenants/:id/settings
         handler: list_settings
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /tenants/:id/stats
         handler: tenant_stats
+        impl:
+          mode: stub
+          response: '{"ok": true}'

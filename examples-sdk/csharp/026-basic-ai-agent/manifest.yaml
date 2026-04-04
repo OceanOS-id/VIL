@@ -11,3 +11,65 @@ services:
       - method: POST
         path: /agent
         handler: agent_handler
+        impl:
+          mode: inline
+          code: |
+            let req: AgentRequest = body.json().expect("invalid JSON body");
+
+            // Build the agent system prompt with available IT diagnostic tools.
+            // The instruction to "show reasoning step by step" ensures an
+            // audit trail for IT compliance and quality review.
+            let system_prompt = format!(
+                "You are an AI agent with access to the following tools:\n\n{}\n\n\
+                 When the user asks a question, decide which tool to use, execute it, \
+                 and provide the final answer. Show your reasoning step by step.",
+                TOOLS
+                    .iter()
+                    .map(|t| format!("- {}", t))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            );
+
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            // Read API key from env (empty = simulator mode, no auth needed)
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+
+            // json_tap for precise content extraction from the agent's
+            // streaming response — captures both reasoning and final answer.
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .json_tap("choices[0].delta.content")
+                .body(body);
+
+            // Add auth if API key is set (skip for local simulator)
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            let content = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            // Semantic audit: record the agent completion event for IT metrics.
+            // In production, this feeds into dashboards tracking:
+            // - Tools used per query (tool utilization rates)
+            // - Iteration count (reasoning complexity indicator)
+            // - Resolution time (MTTR measurement)
+            // - Escalation rate (queries the agent couldn't resolve)
+            let _event = AgentCompletionEvent {
+                query_summary: req.prompt,
+                answer_length: content.len() as u32,
+                tools_used: vec![],
+                iterations: 1,
+                total_ms: 0,
+            };
+
+            Ok(VilResponse::ok(AgentResponse { content }))

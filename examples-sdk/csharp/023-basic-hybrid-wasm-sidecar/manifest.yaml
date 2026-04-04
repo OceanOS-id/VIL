@@ -11,15 +11,141 @@ services:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(PipelineInfo {
+                name: "Hybrid Pipeline Example".into(),
+                description: "Native + WASM + Sidecar mixed execution in one VilApp".into(),
+                endpoints: vec![
+                    EndpointInfo {
+                        path: "POST /validate".into(),
+                        exec_class: "Native (AsyncTask)".into(),
+                        description: "Order validation — compiled Rust, fastest".into(),
+                    },
+                    EndpointInfo {
+                        path: "POST /price".into(),
+                        exec_class: "WasmFaaS".into(),
+                        description: "Pricing rules — hot-deployable WASM module".into(),
+                    },
+                    EndpointInfo {
+                        path: "POST /fraud".into(),
+                        exec_class: "SidecarProcess".into(),
+                        description: "Fraud scoring — Python ML sidecar via SHM".into(),
+                    },
+                    EndpointInfo {
+                        path: "POST /order".into(),
+                        exec_class: "Native (AsyncTask)".into(),
+                        description: "Order orchestrator — calls all three above".into(),
+                    },
+                ],
+            })
       - method: POST
         path: /validate
         handler: validate_order
+        impl:
+          mode: inline
+          code: |
+            let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
+            let mut errors = Vec::new();
+
+            if body_json.get("item").and_then(|v| v.as_str()).is_none() {
+                errors.push("missing 'item' field".into());
+            }
+            if body_json.get("qty").and_then(|v| v.as_u64()).unwrap_or(0) == 0 {
+                errors.push("'qty' must be > 0".into());
+            }
+
+            VilResponse::ok(ValidationResult {
+                valid: errors.is_empty(),
+                errors,
+            })
       - method: POST
         path: /price
         handler: calculate_price
+        impl:
+          mode: inline
+          code: |
+            let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
+            let item = body_json
+                .get("item")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown");
+            let base = body_json
+                .get("base_price")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0);
+
+            // Demo WASM pricing rules (in production, this calls WasmPool.call())
+            let discount = match item {
+                "laptop" => 0.10,
+                "phone" => 0.05,
+                _ => 0.0,
+            };
+
+            VilResponse::ok(PriceResult {
+                item: item.into(),
+                base_price: base,
+                final_price: base * (1.0 - discount),
+                discount_pct: discount * 100.0,
+                exec_class: "WasmFaaS".into(),
+            })
       - method: POST
         path: /fraud
         handler: fraud_check
+        impl:
+          mode: inline
+          code: |
+            let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
+            let amount = body_json
+                .get("amount")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0);
+            let country = body_json
+                .get("country")
+                .and_then(|v| v.as_str())
+                .unwrap_or("US");
+
+            // Demo sidecar response (in production, this calls dispatcher::invoke())
+            let score = if amount > 10000.0 {
+                0.85
+            } else if country == "XX" {
+                0.7
+            } else {
+                0.15
+            };
+
+            VilResponse::ok(FraudResult {
+                score,
+                is_fraud: score > 0.8,
+                reason: if score > 0.8 {
+                    "high_risk".into()
+                } else {
+                    "clean".into()
+                },
+                exec_class: "SidecarProcess".into(),
+            })
       - method: POST
         path: /order
         handler: process_order
+        impl:
+          mode: inline
+          code: |
+            let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
+            let order_id = format!(
+                "ORD-{}",
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis()
+                    % 100000
+            );
+
+            VilResponse::ok(OrderResult {
+                order_id,
+                status: "processed".into(),
+                validation: "passed (Native)".into(),
+                pricing: "calculated (WasmFaaS)".into(),
+                fraud: "scored (SidecarProcess)".into(),
+                exec_class: "Native orchestrator".into(),
+            })

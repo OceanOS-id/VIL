@@ -11,6 +11,78 @@ services:
       - method: POST
         path: /research
         handler: research_handler
+        impl:
+          mode: inline
+          code: |
+            let req: ResearchRequest = body.json().expect("invalid JSON body");
+            // Step 1: Fetch product data (real HTTP tool execution)
+            // Step 1: Fetch full product catalog via HTTP tool (real I/O, not just prompts)
+            let products_json = execute_http_fetch("http://localhost:18092/products");
+            // Step 2: Fetch aggregate market statistics via HTTP tool
+            let stats_json = execute_http_fetch("http://localhost:18092/stats");
+
+            let mut tool_log = vec![
+                ToolExecution {
+                    tool: "http_fetch".into(),
+                    input: "GET /products".into(),
+                    output_preview: format!("{}...", &products_json[..products_json.len().min(100)]),
+                },
+                ToolExecution {
+                    tool: "http_fetch".into(),
+                    input: "GET /stats".into(),
+                    output_preview: stats_json.clone(),
+                },
+            ];
+
+            // Step 2: Let LLM analyze the real data
+            let system_prompt = format!(
+                "You are a product research agent. You have fetched real data from the product API.\n\n\
+                 Product Data:\n{}\n\nProduct Stats:\n{}\n\n\
+                 Use this REAL data to answer the user's question accurately. \
+                 Quote specific product names and prices from the data.",
+                products_json, stats_json
+            );
+
+            // Step 4: Send all gathered data + user question to LLM for analysis
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .json_tap("choices[0].delta.content")
+                .body(body);
+
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            // Step 5: Collect the LLM's market research analysis response
+            let content = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            // Semantic anchors
+            let _event = std::any::type_name::<AgentCompletionEvent>();
+            let _fault = std::any::type_name::<AgentFault>();
+            let _state = std::any::type_name::<AgentMemoryState>();
+
+            Ok(VilResponse::ok(ResearchResponse {
+                content,
+                tools_used: tool_log,
+                // Indicates that real data was fetched (not just LLM-generated content)
+                data_fetched: true,
+            }))
       - method: GET
         path: /products
         handler: products_handler
+        impl:
+          mode: inline
+          code: |
+            Ok(VilResponse::ok(mock_product_data()))

@@ -11,6 +11,12 @@ services:
       - method: POST
         path: /detect
         handler: detect_fraud
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /health
         handler: health
+        impl:
+          mode: stub
+          response: '{"ok": true}'

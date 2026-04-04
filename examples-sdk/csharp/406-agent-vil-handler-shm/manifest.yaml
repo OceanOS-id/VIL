@@ -11,6 +11,76 @@ services:
       - method: POST
         path: /detect
         handler: detect_fraud
+        impl:
+          mode: inline
+          code: |
+            // Parse transaction from SHM bytes (zero-copy — no heap allocation).
+            // The ShmSlice points directly to shared memory written by the payment gateway.
+            let txn: TransactionData = body.json()
+                .map_err(|_| VilError::bad_request("Invalid transaction — need card_token, merchant, amount_cents, country, city, transactions_last_hour"))?;
+
+            // ── Run all three analysis tools ────────────────────────────────
+            let (velocity_score, velocity_reason) = velocity_checker(txn.transactions_last_hour);
+            let (geo_score, geo_reason) = geo_analyzer(&txn.country, &txn.city);
+            let (amount_score, amount_reason) = amount_calculator(txn.amount_cents);
+
+            let tool_results = vec![
+                ToolResult {
+                    tool: "velocity_checker",
+                    score: velocity_score,
+                    reasoning: velocity_reason,
+                },
+                ToolResult {
+                    tool: "geo_analyzer",
+                    score: geo_score,
+                    reasoning: geo_reason,
+                },
+                ToolResult {
+                    tool: "amount_calculator",
+                    score: amount_score,
+                    reasoning: amount_reason,
+                },
+            ];
+
+            // ── Combine scores into final fraud assessment ──────────────────
+            // Weighted average: velocity (40%), geo (35%), amount (25%)
+            // These weights reflect real-world fraud patterns where velocity
+            // is the strongest signal, followed by geographic anomalies.
+            let fraud_score = velocity_score * 0.40 + geo_score * 0.35 + amount_score * 0.25;
+            let fraud_score = (fraud_score * 1000.0).round() / 1000.0;
+            let is_fraud = fraud_score > 0.7;
+
+            let recommendation = match fraud_score {
+                s if s < 0.3 => "APPROVE — low risk, proceed with transaction",
+                s if s < 0.5 => "APPROVE_WITH_NOTE — monitor for follow-up transactions",
+                s if s < 0.7 => "REVIEW — flag for manual review by fraud analyst",
+                _ => "BLOCK — decline transaction and alert cardholder immediately",
+            };
+
+            Ok(VilResponse::ok(FraudAssessment {
+                card_token: txn.card_token,
+                merchant: txn.merchant,
+                amount_cents: txn.amount_cents,
+                fraud_score,
+                is_fraud,
+                recommendation,
+                tool_results,
+                tools_used: FRAUD_TOOLS.to_vec(),
+                handler_mode:
+                    "#[vil_handler(shm)] — ShmSlice zero-copy extraction + auto RequestId + tracing",
+            }))
       - method: GET
         path: /health
         handler: health
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(serde_json::json!({
+                "status": "ok",
+                "service": "fraud-detection-agent",
+                "tools_available": FRAUD_TOOLS,
+                "handler_modes": {
+                    "detect": "#[vil_handler(shm)] — ShmSlice + RequestId + tracing",
+                    "health": "plain async fn — no macro, minimal overhead"
+                }
+            }))

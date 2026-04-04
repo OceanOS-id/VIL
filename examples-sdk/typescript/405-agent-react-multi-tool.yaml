@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /react
         handler: react_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

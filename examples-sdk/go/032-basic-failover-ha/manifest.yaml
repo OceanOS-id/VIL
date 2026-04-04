@@ -11,15 +11,27 @@ services:
       - method: GET
         path: /health
         handler: primary_health
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /charge
         handler: primary_charge
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: backup
     prefix: /api/backup
     endpoints:
       - method: GET
         path: /health
         handler: backup_health
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /charge
         handler: backup_charge
+        impl:
+          mode: stub
+          response: '{"ok": true}'

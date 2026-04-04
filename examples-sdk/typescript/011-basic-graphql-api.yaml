@@ -11,12 +11,24 @@ services:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /schema
         handler: schema_info
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /entities
         handler: list_entities
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /query
         handler: graphql_query
+        impl:
+          mode: stub
+          response: '{"ok": true}'

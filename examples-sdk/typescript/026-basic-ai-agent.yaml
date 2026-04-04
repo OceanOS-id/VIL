@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /agent
         handler: agent_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

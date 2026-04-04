@@ -11,3 +11,48 @@ services:
       - method: POST
         path: /trigger
         handler: trigger_handler
+        impl:
+          mode: inline
+          code: |
+            // ShmSlice provides zero-copy access to the request body from
+            // VIL's ExchangeHeap — avoids allocation per request at the gateway.
+            let req: TriggerRequest = body.json().expect("invalid JSON body");
+
+            // Build the upstream LLM request. The gateway decides which model
+            // to use — clients never specify the model directly. This gives
+            // the ops team control over cost and quality without client changes.
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            // Read API key from env (empty = simulator mode, no auth needed)
+            // In production, this key is injected via secrets management (Vault/K8s).
+            // The gateway centralizes API key handling so individual clients
+            // never need direct access to the upstream provider's credentials.
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+
+            // SseCollect: VIL's built-in SSE client that streams from upstream
+            // and collects tokens into a single response. The OpenAI dialect
+            // knows how to parse `data: [DONE]` and extract `choices[0].delta.content`.
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .dialect(SseDialect::openai())
+                .body(body);
+
+            // Add auth if API key is set (skip for local simulator)
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            // Collect all SSE chunks into a single string — the gateway
+            // shields downstream clients from the complexity of streaming.
+            // Clients get a simple JSON response instead of raw SSE events.
+            let content = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            Ok(VilResponse::ok(TriggerResponse { content }))

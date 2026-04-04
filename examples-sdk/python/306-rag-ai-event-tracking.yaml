@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /support/ask
         handler: answer_question
+        impl:
+          mode: stub
+          response: '{"ok": true}'

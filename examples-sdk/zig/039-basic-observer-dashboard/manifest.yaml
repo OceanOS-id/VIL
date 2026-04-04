@@ -11,6 +11,22 @@ services:
       - method: GET
         path: /hello
         handler: hello
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(HelloResponse {
+                message: "Hello from observer-enabled server!",
+                server: "example-039",
+            })
       - method: POST
         path: /echo
         handler: echo
+        impl:
+          mode: inline
+          code: |
+            let bytes_len = body.len();
+            let json: serde_json::Value = body.json().unwrap_or(serde_json::json!(null));
+            VilResponse::ok(EchoResponse {
+                received_bytes: bytes_len,
+                echo: json,
+            })

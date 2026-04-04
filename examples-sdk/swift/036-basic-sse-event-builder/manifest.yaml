@@ -11,6 +11,99 @@ services:
       - method: GET
         path: /stream
         handler: ticker_stream
+        impl:
+          mode: inline
+          code: |
+            let stream = async_stream::stream! {
+                // ── VARIANT 1: SseEvent::data() ─────────────────────────────
+                // Raw price tick — no event name, no JSON.
+                // Used for high-frequency data where every byte counts.
+                // Trading algorithms consume these at microsecond speeds.
+                yield Ok::<_, Infallible>(SseEvent::data("AAPL:182.50|GOOGL:141.20|MSFT:415.80").unwrap());
+                tokio::time::sleep(Duration::from_millis(500)).await;
+
+                // ── VARIANT 2: SseEvent::named() ────────────────────────────
+                // Trade execution notification with an event type.
+                // Dashboard JavaScript uses EventSource.addEventListener("trade", ...)
+                // to filter and display only trade events in the execution blotter.
+                yield Ok::<_, Infallible>(SseEvent::named("trade", "AAPL buy 100@182.50 via NASDAQ").unwrap());
+                tokio::time::sleep(Duration::from_millis(500)).await;
+
+                yield Ok::<_, Infallible>(SseEvent::named("trade", "GOOGL sell 50@141.20 via NYSE").unwrap());
+                tokio::time::sleep(Duration::from_millis(500)).await;
+
+                // ── VARIANT 3: SseEvent::json() ─────────────────────────────
+                // Full stock quote as JSON — no event name.
+                // Dashboard parses this to update price charts, volume bars,
+                // and bid/ask spread indicators.
+                yield Ok::<_, Infallible>(SseEvent::json(&StockQuote {
+                    symbol: "AAPL",
+                    price: 182.75,
+                    volume: 1_250_000,
+                    bid: 182.70,
+                    ask: 182.80,
+                    change_percent: 1.34,
+                }).unwrap());
+                tokio::time::sleep(Duration::from_millis(500)).await;
+
+                yield Ok::<_, Infallible>(SseEvent::json(&StockQuote {
+                    symbol: "GOOGL",
+                    price: 141.55,
+                    volume: 890_000,
+                    bid: 141.50,
+                    ask: 141.60,
+                    change_percent: -0.42,
+                }).unwrap());
+                tokio::time::sleep(Duration::from_millis(500)).await;
+
+                // ── VARIANT 4: SseEvent::named_json() ──────────────────────
+                // Price alert — named event + JSON payload.
+                // Alert systems subscribe to EventSource.addEventListener("alert", ...)
+                // and trigger notifications (push, SMS, email) when thresholds are crossed.
+                yield Ok::<_, Infallible>(SseEvent::named_json("alert", &TradeAlert {
+                    symbol: "AAPL",
+                    threshold: 182.00,
+                    current_price: 182.75,
+                    direction: "above",
+                    message: "AAPL crossed above $182.00 — consider taking profit".into(),
+                }).unwrap());
+                tokio::time::sleep(Duration::from_millis(500)).await;
+
+                // Simulate continuous price updates (as in a real market feed)
+                let prices = [183.10, 183.25, 182.90, 183.50, 184.00];
+                for (i, price) in prices.iter().enumerate() {
+                    yield Ok::<_, Infallible>(SseEvent::named_json("quote", &StockQuote {
+                        symbol: "AAPL",
+                        price: *price,
+                        volume: 1_250_000 + (i as u64 * 50_000),
+                        bid: price - 0.05,
+                        ask: price + 0.05,
+                        change_percent: (price - 180.33) / 180.33 * 100.0,
+                    }).unwrap());
+                    tokio::time::sleep(Duration::from_millis(300)).await;
+                }
+
+                // Market close signal
+                yield Ok::<_, Infallible>(SseEvent::named("status", "market_closed — stream ending").unwrap());
+            };
+
+            // sse_stream wraps the stream with automatic keep-alive pings (15s default).
+            // This prevents proxies/load balancers from closing idle connections.
+            sse_stream(stream)
       - method: GET
         path: /info
         handler: ticker_info
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(serde_json::json!({
+                "service": "Stock Market Ticker",
+                "stream_url": "/api/ticker/stream",
+                "event_types": [
+                    "SseEvent::data(text) → raw price tick (SYMBOL:PRICE format)",
+                    "SseEvent::named('trade', text) → trade execution notification",
+                    "SseEvent::json(&StockQuote) → full quote object",
+                    "SseEvent::named_json('alert', &TradeAlert) → price threshold alert",
+                ],
+                "client_example": "const es = new EventSource('/api/ticker/stream'); es.addEventListener('alert', e => console.log(e.data));"
+            }))

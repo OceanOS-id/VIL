@@ -11,6 +11,12 @@ services:
       - method: POST
         path: /claims/submit
         handler: submit_claim
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /claims/sample
         handler: sample_claim
+        impl:
+          mode: stub
+          response: '{"ok": true}'

@@ -11,24 +11,48 @@ services:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /plugins
         handler: list_plugins
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /config
         handler: show_config
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /products
         handler: list_products
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /tasks
         handler: create_task
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /tasks
         handler: list_tasks
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /pool-stats
         handler: pool_stats
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /redis-ping
         handler: redis_ping
+        impl:
+          mode: stub
+          response: '{"ok": true}'

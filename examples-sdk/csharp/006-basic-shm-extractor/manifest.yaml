@@ -11,12 +11,105 @@ services:
       - method: POST
         path: /ingest
         handler: ingest
+        impl:
+          mode: inline
+          code: |
+            let len = body.len();
+            let region_id = body.region_id();
+
+            // Try to interpret as UTF-8 text for display
+            let preview = match body.text() {
+                Ok(text) => {
+                    let truncated: String = text.chars().take(100).collect();
+                    truncated
+                }
+                Err(_) => format!("<binary {} bytes>", len),
+            };
+
+            // Try to deserialize as JSON (zero-copy read from SHM)
+            let is_json = body.json::<serde_json::Value>().is_ok();
+
+            VilResponse::ok(IngestResponse {
+                status: "ingested",
+                bytes_received: len,
+                shm_region_id: format!("{:?}", region_id),
+                preview,
+                is_valid_json: is_json,
+                transport: "SHM zero-copy",
+                copies: "1 (kernel → SHM), then 0 for handler read",
+            })
       - method: POST
         path: /compute
         handler: compute
+        impl:
+          mode: inline
+          code: |
+            let req: ComputeRequest = body.json().expect("invalid JSON body");
+            let iterations = req.iterations.min(100_000_000); // cap at 100M
+
+            blocking_with(move || {
+                let start = std::time::Instant::now();
+
+                // Simulate CPU-bound work (e.g., ML inference, crypto, compression)
+                let mut result: u64 = 0;
+                for i in 0..iterations {
+                    result = result.wrapping_add(i.wrapping_mul(17).wrapping_add(31));
+                }
+
+                let elapsed = start.elapsed();
+
+                VilResponse::ok(ComputeResponse {
+                    status: "computed",
+                    iterations,
+                    result_hash: result,
+                    elapsed_ms: elapsed.as_secs_f64() * 1000.0,
+                    thread: "blocking_pool (not async executor)",
+                    note: "CPU-bound work runs on spawn_blocking, freeing async threads for I/O",
+                })
+            })
+            .await
       - method: GET
         path: /shm-stats
         handler: shm_stats
+        impl:
+          mode: inline
+          code: |
+            let regions: Vec<RegionInfo> = shm
+                .region_stats()
+                .iter()
+                .map(|s| {
+                    let utilization = if s.capacity > 0 {
+                        (s.used as f64 / s.capacity as f64) * 100.0
+                    } else {
+                        0.0
+                    };
+                    RegionInfo {
+                        region_id: format!("{:?}", s.region_id),
+                        capacity_bytes: s.capacity,
+                        used_bytes: s.used,
+                        remaining_bytes: s.remaining,
+                        utilization_pct: format!("{:.1}", utilization),
+                    }
+                })
+                .collect();
+
+            VilResponse::ok(ShmStatsResponse {
+                shm_available: shm.available,
+                region_count: shm.region_count(),
+                regions,
+                note: "Regions are created on-demand by ShmSlice and ShmResponse",
+            })
       - method: GET
         path: /benchmark
         handler: benchmark
+        impl:
+          mode: inline
+          code: |
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default();
+
+            VilResponse::ok(BenchmarkResponse {
+                ok: true,
+                timestamp_ns: now.as_nanos() as u64,
+            })

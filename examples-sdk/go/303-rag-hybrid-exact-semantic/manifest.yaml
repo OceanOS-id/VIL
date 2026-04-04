@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /hybrid
         handler: hybrid_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

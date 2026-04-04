@@ -11,12 +11,24 @@ services:
       - method: POST
         path: /ingest
         handler: ingest
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /compute
         handler: compute
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /shm-stats
         handler: shm_stats
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /benchmark
         handler: benchmark
+        impl:
+          mode: stub
+          response: '{"ok": true}'

@@ -11,6 +11,44 @@ services:
       - method: POST
         path: /catalog/search
         handler: catalog_search
+        impl:
+          mode: inline
+          code: |
+            let req: CatalogSearchRequest = body.json().expect("Invalid search JSON");
+
+            // Filter products by category and price
+            let products: Vec<Product> = mock_catalog()
+                .into_iter()
+                .filter(|p| p.category == req.category && p.price_cents <= req.max_price_cents)
+                .collect();
+
+            let products_returned = products.len();
+
+            // Build the response — this goes to the customer via HTTP
+            let response = CatalogResponse {
+                products,
+                products_returned,
+                category_searched: req.category,
+                shm_available: shm.available,
+                analytics_note: "Response also written to SHM for co-located analytics sidecar",
+            };
+
+            // with_shm() does TWO things in one call:
+            // 1. Serializes response as JSON → sends to customer via HTTP
+            // 2. Writes the same bytes to ExchangeHeap → analytics sidecar reads at memory speed
+            // Without VIL, you'd need: HTTP response + Kafka publish or Redis write = two hops.
+            // With VIL: one call, zero network overhead for the analytics path.
+            VilResponse::ok(response).with_shm(state.shm().clone())
       - method: GET
         path: /catalog/health
         handler: catalog_health
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(CatalogResponse {
+                products: vec![],
+                products_returned: 0,
+                category_searched: "n/a".into(),
+                shm_available: shm.available,
+                analytics_note: "Health check — plain VilResponse without SHM write-through",
+            })

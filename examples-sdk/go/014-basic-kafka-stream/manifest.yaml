@@ -11,14 +11,26 @@ services:
       - method: GET
         path: /kafka/config
         handler: kafka_config
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /kafka/produce
         handler: kafka_produce
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /kafka/consumer
         handler: consumer_info
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /kafka/bridge
         handler: bridge_status
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: root
     prefix: /api/root

@@ -11,3 +11,81 @@ services:
       - method: POST
         path: /rag
         handler: rag_handler
+        impl:
+          mode: inline
+          code: |
+            let req: RagRequest = body.json().expect("invalid JSON body");
+            // Step 1: Embed query and compute similarities
+            let query_emb = mock_embed_query(&req.prompt);
+            // Step 1: Compute similarity scores between query and all documents in the wiki index
+            let mut scored: Vec<(usize, f64)> = DOCS
+                .iter()
+                .enumerate()
+                .map(|(i, doc)| (i, cosine_similarity(&query_emb, &doc.embedding)))
+                .collect();
+            scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+            // Step 2: Take top-2 documents
+            let top_k = 2;
+            // Step 2: Select top-k most relevant documents for LLM context augmentation
+            let top_docs: Vec<&Document> = scored.iter().take(top_k).map(|(i, _)| &DOCS[*i]).collect();
+            let scores: Vec<f64> = scored
+                .iter()
+                .take(top_k)
+                .map(|(_, s)| (*s * 100.0).round() / 100.0)
+                .collect();
+            let doc_ids: Vec<String> = top_docs.iter().map(|d| d.id.to_string()).collect();
+
+            // Step 3: Build context for LLM
+            let context: String = top_docs
+                .iter()
+                .map(|d| format!("[{}] {}: {}", d.id, d.title, d.content))
+                .collect::<Vec<_>>()
+                .join("\n\n");
+
+            // Step 3: Build the RAG prompt — system instructions + retrieved document context
+            let system_prompt = format!(
+                "You are a helpful RAG assistant. Answer the user's question using ONLY the \
+                 context documents below. Cite sources as [DocN].\n\nContext:\n{}",
+                context
+            );
+
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .json_tap("choices[0].delta.content")
+                .body(body);
+
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            // Step 4: Collect the full SSE response into a single text string for the client
+            let content = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            // Semantic audit
+            let _event = RagQueryEvent {
+                question: req.prompt,
+                chunks_retrieved: top_k as u32,
+                answer_length: content.len() as u32,
+                latency_ms: 0,
+                model: "gpt-4".into(),
+            };
+
+            // Return the grounded answer with provenance (which docs were used and their relevance)
+            Ok(VilResponse::ok(RagResponse {
+                content,
+                docs_used: doc_ids,
+                similarity_scores: scores,
+            }))

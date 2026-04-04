@@ -11,15 +11,30 @@ services:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /wasm/modules
         handler: list_modules
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /wasm/pricing
         handler: invoke_pricing
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /wasm/validation
         handler: invoke_validation
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /wasm/transform
         handler: invoke_transform
+        impl:
+          mode: stub
+          response: '{"ok": true}'

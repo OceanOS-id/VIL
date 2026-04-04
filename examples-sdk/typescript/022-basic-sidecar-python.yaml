@@ -11,12 +11,21 @@ services:
       - method: GET
         path: /status
         handler: fraud_status
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /check
         handler: fraud_check
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: root
     prefix: /api/root
     endpoints:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: stub
+          response: '{"ok": true}'

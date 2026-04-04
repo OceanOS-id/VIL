@@ -11,15 +11,30 @@ services:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /validate
         handler: validate_order
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /price
         handler: calculate_price
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /fraud
         handler: fraud_check
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /order
         handler: process_order
+        impl:
+          mode: stub
+          response: '{"ok": true}'

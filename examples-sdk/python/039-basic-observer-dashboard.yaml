@@ -11,6 +11,12 @@ services:
       - method: GET
         path: /hello
         handler: hello
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /echo
         handler: echo
+        impl:
+          mode: stub
+          response: '{"ok": true}'

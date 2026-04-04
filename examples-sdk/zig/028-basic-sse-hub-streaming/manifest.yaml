@@ -11,9 +11,59 @@ services:
       - method: POST
         path: /publish
         handler: publish
+        impl:
+          mode: inline
+          code: |
+            // ServiceCtx carries shared state injected during service setup.
+            // Here it provides access to the SseHub for broadcast fan-out.
+            let hub = ctx.state::<Arc<SseHub>>().expect("SseHub");
+            let msg: serde_json::Value = body
+                .json()
+                .map_err(|_| VilError::bad_request("invalid JSON"))?;
+            let text = serde_json::to_string(&msg).unwrap_or_default();
+
+            // Broadcast to ALL connected bidders on the "events" topic.
+            // SseHub handles fan-out internally — no per-client iteration needed.
+            hub.broadcast("events", text);
+
+            Ok(VilResponse::ok(PublishResult {
+                published: true,
+                clients: hub.connected_clients(),
+            }))
       - method: GET
         path: /stream
         handler: stream
+        impl:
+          mode: inline
+          code: |
+            let hub = ctx.state::<Arc<SseHub>>().expect("SseHub");
+
+            // Subscribe to the SseHub's broadcast channel. Each subscriber
+            // gets an independent receiver — backpressure is per-client.
+            let mut rx = hub.subscribe();
+
+            // Convert SseHub events to axum SSE events for HTTP streaming.
+            // The async_stream crate provides zero-allocation streaming.
+            let stream = async_stream::stream! {
+                while let Ok(event) = rx.recv().await {
+                    // Convert streaming::SseEvent -> axum SSE Event
+                    yield Ok::<_, Infallible>(
+                        axum::response::sse::Event::default()
+                            .event(&event.topic)
+                            .data(event.data)
+                    );
+                }
+            };
+
+            sse_stream(stream)
       - method: GET
         path: /stats
         handler: stats
+        impl:
+          mode: inline
+          code: |
+            let hub = ctx.state::<Arc<SseHub>>().expect("SseHub");
+            VilResponse::ok(StatsResult {
+                connected_clients: hub.connected_clients(),
+                total_events: hub.total_events(),
+            })

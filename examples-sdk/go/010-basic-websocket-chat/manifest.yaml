@@ -11,9 +11,18 @@ services:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /ws
         handler: ws_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /stats
         handler: stats
+        impl:
+          mode: stub
+          response: '{"ok": true}'

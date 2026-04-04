@@ -11,15 +11,122 @@ services:
       - method: POST
         path: /infer
         handler: infer
+        impl:
+          mode: inline
+          code: |
+            let req: InferRequest = body.json().expect("invalid JSON body");
+            let state = ctx.state::<Arc<AbState>>().expect("AbState");
+            let start = std::time::Instant::now();
+            state.total.fetch_add(1, Ordering::Relaxed);
+
+            // Route to model A (stable) or model B (canary) based on traffic split
+            let use_model_a = state.route();
+            let (model_name, model_version, ab_group) = if use_model_a {
+                state.model_a_count.fetch_add(1, Ordering::Relaxed);
+                ("gpt-stable", "v2.1", "A")
+            } else {
+                state.model_b_count.fetch_add(1, Ordering::Relaxed);
+                ("gpt-canary", "v3.0-beta", "B")
+            };
+
+            // Simulate inference (in production, forward to actual model endpoint)
+            let max_tokens = req.max_tokens.unwrap_or(50);
+            let response_text = format!(
+                "[{}] Response to: '{}' (max_tokens={})",
+                model_name, req.prompt, max_tokens
+            );
+
+            let latency = start.elapsed().as_millis() as u64;
+            if use_model_a {
+                state
+                    .model_a_latency_sum
+                    .fetch_add(latency, Ordering::Relaxed);
+            } else {
+                state
+                    .model_b_latency_sum
+                    .fetch_add(latency, Ordering::Relaxed);
+            }
+
+            VilResponse::ok(InferResponse {
+                model: model_name.into(),
+                model_version: model_version.into(),
+                response: response_text,
+                tokens_used: max_tokens.min(100),
+                latency_ms: latency,
+                ab_group: ab_group.into(),
+            })
       - method: GET
         path: /metrics
         handler: metrics
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<Arc<AbState>>().expect("AbState");
+            let pct_a = state.model_a_pct.load(Ordering::Relaxed);
+            let a_count = state.model_a_count.load(Ordering::Relaxed);
+            let b_count = state.model_b_count.load(Ordering::Relaxed);
+            let a_latency = state.model_a_latency_sum.load(Ordering::Relaxed);
+            let b_latency = state.model_b_latency_sum.load(Ordering::Relaxed);
+
+            VilResponse::ok(AbMetrics {
+                total_requests: state.total.load(Ordering::Relaxed),
+                model_a: ModelMetrics {
+                    name: "gpt-stable".into(),
+                    requests: a_count,
+                    errors: state.model_a_errors.load(Ordering::Relaxed),
+                    avg_latency_ms: if a_count > 0 { a_latency / a_count } else { 0 },
+                    traffic_pct: pct_a,
+                },
+                model_b: ModelMetrics {
+                    name: "gpt-canary".into(),
+                    requests: b_count,
+                    errors: state.model_b_errors.load(Ordering::Relaxed),
+                    avg_latency_ms: if b_count > 0 { b_latency / b_count } else { 0 },
+                    traffic_pct: 100 - pct_a,
+                },
+                current_split: format!("{}% A / {}% B", pct_a, 100 - pct_a),
+            })
       - method: POST
         path: /config
         handler: update_config
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<Arc<AbState>>().expect("AbState");
+            let config: ConfigUpdate = body.json().expect("invalid JSON body");
+            if config.model_a_pct > 100 {
+                return Err(VilError::bad_request("model_a_pct must be 0-100"));
+            }
+            state
+                .model_a_pct
+                .store(config.model_a_pct, Ordering::Relaxed);
+            Ok(VilResponse::ok(ConfigResult {
+                model_a_pct: config.model_a_pct,
+                model_b_pct: 100 - config.model_a_pct,
+                status: "updated".into(),
+            }))
   - name: root
     prefix: /api/root
     endpoints:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<Arc<AbState>>().expect("AbState");
+            let pct_a = state.model_a_pct.load(Ordering::Relaxed);
+            VilResponse::ok(GatewayInfo {
+                name: "A/B Testing AI Gateway".into(),
+                description: "Weighted traffic split between model versions".into(),
+                model_a: ModelConfig {
+                    name: "gpt-stable".into(),
+                    version: "v2.1".into(),
+                    traffic_pct: pct_a,
+                },
+                model_b: ModelConfig {
+                    name: "gpt-canary".into(),
+                    version: "v3.0-beta".into(),
+                    traffic_pct: 100 - pct_a,
+                },
+            })

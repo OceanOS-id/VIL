@@ -11,9 +11,39 @@ services:
       - method: GET
         path: /plain
         handler: plain_handler
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(PlainResponse {
+                message: "Plain handler — no macro, just VilResponse".into(),
+                style: "plain",
+            })
       - method: GET
         path: /handled
         handler: handled_handler
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(HandledResponse {
+                message: "Auto RequestId + tracing span via #[vil_handler]".into(),
+                request_id: "auto-injected".into(),
+                style: "vil_handler",
+            })
       - method: POST
         path: /endpoint
         handler: endpoint_handler
+        impl:
+          mode: inline
+          code: |
+            // Zero-copy JSON parsing from ExchangeHeap — the developer
+            // playground demonstrates this as the recommended pattern for
+            // all POST/PUT endpoints in VIL applications.
+            let input: ComputeInput = body
+                .json()
+                .map_err(|_| VilError::bad_request("invalid JSON"))?;
+            let result = input.value * input.value; // compute square
+            Ok(VilResponse::ok(ComputeOutput {
+                input: input.value,
+                result,
+                style: "vil_endpoint",
+            }))

@@ -11,18 +11,36 @@ services:
       - method: GET
         path: /tasks
         handler: list_tasks
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /tasks
         handler: create_task
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /tasks/stats
         handler: task_stats
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /tasks/:id
         handler: get_task
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: PUT
         path: /tasks/:id
         handler: update_task
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: DELETE
         path: /tasks/:id
         handler: delete_task
+        impl:
+          mode: stub
+          response: '{"ok": true}'

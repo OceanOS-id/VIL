@@ -11,18 +11,140 @@ services:
       - method: GET
         path: /tasks
         handler: list_tasks
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let tasks = Task::q()
+                .select(&["id", "title", "done", "created_at"])
+                .order_by_desc("created_at")
+                .limit(100)
+                .fetch_all::<TaskListItem>(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+            Ok(VilResponse::ok(tasks))
       - method: POST
         path: /tasks
         handler: create_task
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let req: CreateTask = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+
+            if req.title.trim().is_empty() {
+                return Err(VilError::bad_request("title must not be empty"));
+            }
+
+            let id = uuid::Uuid::new_v4().to_string();
+            let title = req.title;
+            let desc = req.description.unwrap_or_default();
+
+            Task::q()
+                .insert_columns(&["id", "title", "description"])
+                .value(id.clone())
+                .value(title)
+                .value(desc)
+                .execute(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            // Fetch back full record
+            let task = Task::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::internal("insert succeeded but fetch failed"))?;
+
+            Ok(VilResponse::created(task))
       - method: GET
         path: /tasks/stats
         handler: task_stats
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let pool = state.pool.inner();
+
+            let total = Task::count(pool)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            let done: i64 = Task::q()
+                .select_expr("CAST(COUNT(*) AS INTEGER)")
+                .where_eq_val("done", 1_i64)
+                .scalar::<i64>(pool)
+                .await
+                .unwrap_or(0);
+
+            Ok(VilResponse::ok(serde_json::json!({
+                "total": total,
+                "done": done,
+                "pending": total - done,
+            })))
       - method: GET
         path: /tasks/:id
         handler: get_task
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let task = Task::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found(format!("Task {id} not found")))?;
+            Ok(VilResponse::ok(task))
       - method: PUT
         path: /tasks/:id
         handler: update_task
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let req: UpdateTask = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+
+            // Validate title if provided
+            if let Some(ref t) = req.title {
+                if t.trim().is_empty() {
+                    return Err(VilError::bad_request("title must not be empty"));
+                }
+            }
+
+            // Build UPDATE dynamically — only SET provided fields
+            let mut q = Task::q()
+                .update()
+                .set_optional("title", req.title.as_deref())
+                .set_optional("description", req.description.as_deref())
+                .set_raw("updated_at", "datetime('now')");
+
+            if let Some(done) = req.done {
+                q = q.set("done", if done { 1_i64 } else { 0_i64 });
+            }
+
+            q.where_eq("id", &id)
+                .execute(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            let task = Task::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found(format!("Task {id} not found")))?;
+
+            Ok(VilResponse::ok(task))
       - method: DELETE
         path: /tasks/:id
         handler: delete_task
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let task = Task::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found(format!("Task {id} not found")))?;
+
+            Task::delete(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(task))

@@ -11,14 +11,26 @@ services:
       - method: GET
         path: /nats/config
         handler: nats_config
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /nats/publish
         handler: nats_publish
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /nats/jetstream
         handler: jetstream_info
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /nats/kv
         handler: kv_demo
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: root
     prefix: /api/root

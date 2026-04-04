@@ -11,15 +11,27 @@ services:
       - method: POST
         path: /infer
         handler: infer
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /metrics
         handler: metrics
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /config
         handler: update_config
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: root
     prefix: /api/root
     endpoints:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: stub
+          response: '{"ok": true}'

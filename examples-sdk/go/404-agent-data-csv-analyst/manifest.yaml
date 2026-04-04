@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /csv-analyze
         handler: csv_analyze_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

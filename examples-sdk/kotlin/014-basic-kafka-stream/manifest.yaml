@@ -11,14 +11,201 @@ services:
       - method: GET
         path: /kafka/config
         handler: kafka_config
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<KafkaState>().expect("state type mismatch");
+            VilResponse::ok(KafkaConfigResponse {
+                broker: BrokerInfo {
+                    brokers: state.config.brokers.clone(),
+                    acks: state.config.acks.clone(),
+                    timeout_ms: state.config.timeout_ms,
+                    security_protocol: state.config.security_protocol.clone(),
+                    sasl_mechanism: state.config.sasl_mechanism.clone(),
+                },
+                producer: ProducerInfo {
+                    messages_sent: state.producer.messages_sent(),
+                    errors: state.producer.errors(),
+                    status: "ready".into(),
+                },
+                // Topic topology: partition count reflects expected throughput.
+                // orders (6 partitions) — highest volume, supports 6 parallel consumers
+                // payments (3 partitions) — lower volume, must match order processing rate
+                // notifications (3 partitions, RF=2) — non-critical, lower replication
+                topics: vec![
+                    TopicInfo {
+                        name: "events.orders".into(),
+                        partitions: 6,
+                        replication_factor: 3,
+                        description: "Order lifecycle events".into(),
+                    },
+                    TopicInfo {
+                        name: "events.payments".into(),
+                        partitions: 3,
+                        replication_factor: 3,
+                        description: "Payment processing events".into(),
+                    },
+                    TopicInfo {
+                        name: "events.notifications".into(),
+                        partitions: 3,
+                        replication_factor: 2,
+                        description: "User notification events".into(),
+                    },
+                ],
+                note: "Stub mode — no real Kafka broker connected. Messages are processed in-memory."
+                    .into(),
+            })
       - method: POST
         path: /kafka/produce
         handler: kafka_produce
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<KafkaState>().expect("state type mismatch");
+            let req: ProduceRequest = body.json().expect("invalid JSON body");
+            let payload_bytes = serde_json::to_vec(&req.payload)
+                .map_err(|e| VilError::bad_request(format!("Invalid payload: {}", e)))?;
+
+            // Produce with or without key.
+            // Key-based partitioning ensures all events for the same customer/order
+            // land on the same partition — critical for maintaining event ordering
+            // in the financial audit trail.
+            let result = if let Some(ref key) = req.key {
+                state
+                    .producer
+                    .publish_keyed(&req.topic, key, &payload_bytes)
+                    .await
+            } else {
+                state.producer.publish(&req.topic, &payload_bytes).await
+            };
+
+            result.map_err(|e| VilError::internal(format!("Produce failed: {}", e)))?;
+
+            Ok(VilResponse::ok(ProduceResponse {
+                status: "produced".into(),
+                topic: req.topic,
+                key: req.key.clone(),
+                payload_size: payload_bytes.len(),
+                total_produced: state.producer.messages_sent(),
+                partitioning: if req.key.is_some() {
+                    "key-based".into()
+                } else {
+                    "round-robin".into()
+                },
+            }))
       - method: GET
         path: /kafka/consumer
         handler: consumer_info
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<KafkaState>().expect("state type mismatch");
+            let mut consumer_api = std::collections::HashMap::new();
+            consumer_api.insert(
+                "KafkaConsumer::new(config)".into(),
+                "Create a consumer for a group/topic".into(),
+            );
+            consumer_api.insert("consumer.start()".into(), "Start consuming messages".into());
+            consumer_api.insert("consumer.stop()".into(), "Graceful stop".into());
+            consumer_api.insert(
+                "consumer.take_receiver()".into(),
+                "Take mpsc receiver for bridge integration".into(),
+            );
+            consumer_api.insert(
+                "consumer.inject_message(msg)".into(),
+                "Inject test message (for testing)".into(),
+            );
+
+            VilResponse::ok(ConsumerInfoResponse {
+                consumer_group: ConsumerGroupInfo {
+                    group_id: state.consumer_config.group_id.clone(),
+                    brokers: state.consumer_config.brokers.clone(),
+                    topic: state.consumer_config.topic.clone(),
+                    acks: state.consumer_config.acks.clone(),
+                },
+                stream_processing_pipeline: StreamProcessingPipeline {
+                    description: "Consumer → Process → Produce pattern".into(),
+                    steps: vec![
+                        PipelineStep {
+                            step: 1,
+                            name: "Consume".into(),
+                            description: "KafkaConsumer reads from input topic (events.orders)".into(),
+                            code_pattern: "let msg = consumer.take_receiver().unwrap().recv().await;"
+                                .into(),
+                        },
+                        PipelineStep {
+                            step: 2,
+                            name: "Process".into(),
+                            description: "Apply business logic, transform, enrich, or filter the message"
+                                .into(),
+                            code_pattern: "let enriched = process(msg.payload).await;".into(),
+                        },
+                        PipelineStep {
+                            step: 3,
+                            name: "Produce".into(),
+                            description: "Write processed result to output topic (events.notifications)"
+                                .into(),
+                            code_pattern:
+                                "producer.publish_keyed(\"events.notifications\", &key, &enriched).await;"
+                                    .into(),
+                        },
+                        PipelineStep {
+                            step: 4,
+                            name: "Bridge (optional)".into(),
+                            description: "Forward to Tri-Lane SHM for zero-copy inter-service delivery"
+                                .into(),
+                            code_pattern: "bridge.bridge(&kafka_msg).await;".into(),
+                        },
+                    ],
+                },
+                consumer_api,
+            })
       - method: GET
         path: /kafka/bridge
         handler: bridge_status
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<KafkaState>().expect("state type mismatch");
+            let mut api = std::collections::HashMap::new();
+            api.insert(
+                "KafkaBridge::new(target)".into(),
+                "Create bridge targeting a service".into(),
+            );
+            api.insert(
+                "bridge.bridge(&msg)".into(),
+                "Forward a KafkaMessage to Tri-Lane SHM".into(),
+            );
+            api.insert(
+                "bridge.bridged_count()".into(),
+                "Total messages bridged".into(),
+            );
+
+            VilResponse::ok(BridgeStatusResponse {
+                bridge: KafkaBridgeInfo {
+                    target_service: state.bridge.target_service().to_string(),
+                    messages_bridged: state.bridge.bridged_count(),
+                    status: "active".into(),
+                },
+                tri_lane_architecture: TriLaneArchitecture {
+                    description: "Kafka messages are forwarded to the Tri-Lane SHM mesh for zero-copy inter-service delivery".into(),
+                    lanes: vec![
+                        TriLaneLane {
+                            name: "Data Lane".into(),
+                            description: "Large payload transfer via shared memory (zero-copy)".into(),
+                        },
+                        TriLaneLane {
+                            name: "Trigger Lane".into(),
+                            description: "Lightweight notification that data is ready".into(),
+                        },
+                        TriLaneLane {
+                            name: "Control Lane".into(),
+                            description: "Backpressure and flow control signals".into(),
+                        },
+                    ],
+                    flow: "Kafka Consumer → KafkaBridge → SHM Data Lane → Target Service".into(),
+                },
+                api,
+            })
   - name: root
     prefix: /api/root

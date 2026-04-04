@@ -11,18 +11,160 @@ services:
       - method: POST
         path: /events
         handler: log_event
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let req: LogEvent = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+            let pool = state.pool.inner();
+            let id = uuid::Uuid::new_v4().to_string();
+
+            // Pattern: insert_columns().value() -- log events
+            Event::q()
+                .insert_columns(&["id", "event_type", "user_id", "payload"])
+                .value(id.clone())
+                .value(req.event_type.clone())
+                .value_opt_str(req.user_id)
+                .value_opt_str(req.payload)
+                .execute(pool)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            // Pattern: on_conflict().do_update_raw("count = count + 1") -- increment counter
+            let agg_id = uuid::Uuid::new_v4().to_string();
+            DailyAggregate::q()
+                .insert_columns(&["id", "date", "event_type", "count"])
+                .value(agg_id)
+                .value(chrono_today())
+                .value(req.event_type)
+                .value(1_i64)
+                .on_conflict("date, event_type")
+                .do_update_raw("count = daily_aggregates.count + 1")
+                .execute(pool)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            let event = Event::find_by_id(pool, &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::internal("created but not found"))?;
+
+            Ok(VilResponse::created(event))
       - method: GET
         path: /events/recent
         handler: recent_events
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            // Pattern: where_raw("created_at > datetime('now', '-1 hour')") -- time-based filter
+            // Also: order_by_desc().limit() -- recent events
+            let events = Event::q()
+                .select(&["id", "event_type", "user_id", "payload", "created_at"])
+                .where_raw("1=1")
+                .order_by_desc("created_at")
+                .limit(50)
+                .fetch_all::<Event>(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(events))
       - method: GET
         path: /events/by-type
         handler: events_by_type
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            // Pattern: select_expr("COUNT(*),...").group_by().having() -- grouped aggregates
+            let counts = Event::q()
+                .select(&["event_type", "CAST(COUNT(*) AS INTEGER) as event_count"])
+                .where_raw("1=1")
+                .group_by("event_type")
+                .having("COUNT(*) > 0")
+                .order_by_desc("event_count")
+                .fetch_all::<EventTypeCount>(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(counts))
       - method: GET
         path: /stats/daily
         handler: daily_stats
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            // Pattern: select_expr("date, COUNT(*)").group_by("date").order_by_asc("date") -- time series
+            let daily = DailyAggregate::q()
+                .select(&["date", "CAST(SUM(count) AS INTEGER) as event_count"])
+                .where_raw("1=1")
+                .group_by("date")
+                .order_by_asc("date")
+                .limit(30)
+                .fetch_all::<DailyCount>(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(daily))
       - method: GET
         path: /stats/unique-users
         handler: unique_users
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            // Pattern: select_expr("COUNT(DISTINCT user_id)").scalar::<i64>() -- unique users
+            let count: i64 = Event::q()
+                .select_expr("CAST(COUNT(DISTINCT user_id) AS INTEGER)")
+                .where_not_null("user_id")
+                .scalar::<i64>(state.pool.inner())
+                .await
+                .unwrap_or(0);
+
+            Ok(VilResponse::ok(serde_json::json!({
+                "unique_users": count,
+            })))
       - method: GET
         path: /stats/summary
         handler: stats_summary
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let pool = state.pool.inner();
+
+            let total_events = Event::count(pool).await.unwrap_or(0);
+
+            let unique_users: i64 = Event::q()
+                .select_expr("CAST(COUNT(DISTINCT user_id) AS INTEGER)")
+                .where_not_null("user_id")
+                .scalar::<i64>(pool)
+                .await
+                .unwrap_or(0);
+
+            let event_types: i64 = Event::q()
+                .select_expr("CAST(COUNT(DISTINCT event_type) AS INTEGER)")
+                .where_raw("1=1")
+                .scalar::<i64>(pool)
+                .await
+                .unwrap_or(0);
+
+            // Recent events (last hour) using where_raw time filter
+            let recent_count: i64 = Event::q()
+                .select_expr("CAST(COUNT(*) AS INTEGER)")
+                .where_raw("created_at > datetime('now', '-1 hour')")
+                .scalar::<i64>(pool)
+                .await
+                .unwrap_or(0);
+
+            Ok(VilResponse::ok(serde_json::json!({
+                "total_events": total_events,
+                "unique_users": unique_users,
+                "event_types": event_types,
+                "events_last_hour": recent_count,
+            })))

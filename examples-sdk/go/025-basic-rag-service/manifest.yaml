@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /rag
         handler: rag_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

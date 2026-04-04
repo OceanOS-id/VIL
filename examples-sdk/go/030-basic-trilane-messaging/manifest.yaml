@@ -13,3 +13,6 @@ services:
       - method: GET
         path: /status
         handler: fulfillment_status
+        impl:
+          mode: stub
+          response: '{"ok": true}'

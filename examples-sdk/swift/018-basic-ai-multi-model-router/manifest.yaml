@@ -11,3 +11,50 @@ services:
       - method: POST
         path: /route
         handler: route_handler
+        impl:
+          mode: inline
+          code: |
+            let req: RouteRequest = body.json().expect("invalid JSON body");
+
+            // Build the inference request. The system prompt specializes the
+            // model for technical analysis — in a real router, different system
+            // prompts would be configured per-model to maximize quality.
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are model gpt-4. Respond as a helpful assistant \
+                                    specializing in technical analysis."
+                    },
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            // Read API key from env (empty = simulator mode, no auth needed)
+            // Cost optimizer services need provider API keys to route requests
+            // across multiple model providers (OpenAI, Anthropic, local).
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+
+            // json_tap extracts content from each SSE chunk at the specified
+            // JSON path. This is more flexible than dialect() — supports custom
+            // model providers with non-standard response formats.
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .json_tap("choices[0].delta.content")
+                .body(body);
+
+            // Add auth if API key is set (skip for local simulator)
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            // Collect the full streamed response. In the cost optimizer,
+            // we also track token usage here to update per-tenant budgets
+            // and trigger alerts when spending exceeds thresholds.
+            let content = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            Ok(VilResponse::ok(RouteResponse { content }))

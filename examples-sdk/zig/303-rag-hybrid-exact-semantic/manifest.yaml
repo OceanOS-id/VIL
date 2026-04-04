@@ -11,3 +11,92 @@ services:
       - method: POST
         path: /hybrid
         handler: hybrid_handler
+        impl:
+          mode: inline
+          code: |
+            let req: HybridRequest = body.json().expect("invalid JSON body");
+            // ── Tier 1: Exact match (no LLM needed) ─────────────────────────
+            if let Some(entry) = exact_match(&req.prompt) {
+                return Ok(VilResponse::ok(HybridResponse {
+                    content: format!("Q: {}\n\nA: {}", entry.question, entry.answer),
+                    // Tier 1 hit — answered from FAQ database without LLM call
+                    search_tier: "exact".into(),
+                    llm_used: false,
+                    matched_faq: Some(entry.id.into()),
+                }));
+            }
+
+            // ── Tier 2: Semantic search + LLM ───────────────────────────────
+            // Tier 2: No exact match — fall back to semantic keyword search + LLM generation
+            let semantic_results = semantic_search(&req.prompt);
+
+            let context = if semantic_results.is_empty() {
+                "No relevant FAQ entries found.".to_string()
+            } else {
+                semantic_results
+                    .iter()
+                    .take(3)
+                    .map(|(entry, score)| {
+                        format!(
+                            "[{}] (relevance: {:.0}%) Q: {} A: {}",
+                            entry.id,
+                            score * 100.0,
+                            entry.question,
+                            entry.answer
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n\n")
+            };
+
+            let matched_id = semantic_results.first().map(|(e, _)| e.id.to_string());
+
+            // Build the LLM prompt with the best-matching FAQ content as context
+            let system_prompt = format!(
+                "You are a support assistant. Answer the user's question using the FAQ entries below. \
+                 If the FAQ does not cover the question, say so.\n\nFAQ Entries:\n{}",
+                context
+            );
+
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            // Use real API key for production; simulator mode for local dev testing
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .json_tap("choices[0].delta.content")
+                .body(body);
+
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            // Stream the LLM response and collect into a single text for the client
+            let content = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            // Log the search event for analytics — tracks exact vs semantic usage ratio
+            // Semantic audit
+            let _event = RagQueryEvent {
+                question: req.prompt,
+                chunks_retrieved: semantic_results.len() as u32,
+                answer_length: content.len() as u32,
+                latency_ms: 0,
+                model: "gpt-4".into(),
+            };
+
+            Ok(VilResponse::ok(HybridResponse {
+                content,
+                // Tier 2 fallback — required LLM generation with semantic context
+                search_tier: "semantic+llm".into(),
+                llm_used: true,
+                matched_faq: matched_id,
+            }))

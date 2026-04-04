@@ -11,9 +11,18 @@ services:
       - method: POST
         path: /transform
         handler: transform
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /echo
         handler: echo
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /health
         handler: health
+        impl:
+          mode: stub
+          response: '{"ok": true}'

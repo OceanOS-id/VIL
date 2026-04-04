@@ -11,6 +11,55 @@ services:
       - method: POST
         path: /risk/assess
         handler: assess_risk
+        impl:
+          mode: inline
+          code: |
+            let req: RiskAssessmentRequest = body.json()
+                .map_err(|_| VilError::bad_request("Invalid risk assessment JSON — need applicant_id, annual_income_cents, debt_cents, credit_history_months, simulations"))?;
+
+            let applicant_id = req.applicant_id;
+            let income = req.annual_income_cents;
+            let debt = req.debt_cents;
+            let history = req.credit_history_months;
+            let sims = req.simulations.min(10_000_000); // Cap at 10M to prevent abuse
+
+            // Move the CPU-intensive simulation to the blocking thread pool.
+            // Without spawn_blocking(), this would freeze all other HTTP handlers.
+            let (score, confidence, default_prob) = tokio::task::spawn_blocking(move || {
+                monte_carlo_risk_simulation(income, debt, history, sims)
+            })
+            .await
+            .map_err(|e| VilError::internal(format!("Risk simulation failed: {}", e)))?;
+
+            // Classify into risk tiers based on score (bank policy)
+            let risk_tier = match score {
+                s if s < 0.3 => "LOW_RISK — approve with standard rate",
+                s if s < 0.5 => "MEDIUM_RISK — approve with higher rate",
+                s if s < 0.7 => "HIGH_RISK — manual review required",
+                _ => "VERY_HIGH_RISK — decline recommended",
+            };
+
+            Ok(VilResponse::ok(RiskScore {
+                applicant_id,
+                score,
+                confidence,
+                default_probability: default_prob,
+                simulations_run: sims,
+                risk_tier,
+                exec_class: "BlockingTask — ran on spawn_blocking pool",
+            }))
       - method: GET
         path: /risk/health
         handler: risk_health
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(RiskScore {
+                applicant_id: 0,
+                score: 0.0,
+                confidence: 0.0,
+                default_probability: 0.0,
+                simulations_run: 0,
+                risk_tier: "N/A — health check",
+                exec_class: "AsyncTask — runs on async executor (fast, no blocking)",
+            })

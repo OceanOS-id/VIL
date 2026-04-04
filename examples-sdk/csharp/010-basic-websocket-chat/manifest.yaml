@@ -11,9 +11,97 @@ services:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: inline
+          code: |
+                Html(
+                    r#"<!DOCTYPE html>
+            <html>
+            <head>
+                <title>VLang WebSocket Chat</title>
+                <style>
+                    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
+                    #messages { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; margin-bottom: 10px; }
+                    .msg { margin: 4px 0; }
+                    .system { color: #888; font-style: italic; }
+                    input, button { padding: 8px; font-size: 14px; }
+                    #msg { width: 70%; }
+                </style>
+            </head>
+            <body>
+                <h2>VLang WebSocket Chat</h2>
+                <div id="messages"></div>
+                <div>
+                    <input id="username" placeholder="Username" value="" style="width: 25%; margin-bottom: 8px;" />
+                </div>
+                <div>
+                    <input id="msg" placeholder="Type a message..." />
+                    <button onclick="send()">Send</button>
+                </div>
+                <script>
+                    const messages = document.getElementById('messages');
+                    const msgInput = document.getElementById('msg');
+                    const usernameInput = document.getElementById('username');
+
+                    usernameInput.value = 'user_' + Math.random().toString(36).substr(2, 5);
+
+                    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const ws = new WebSocket(proto + '//' + location.host + '/ws');
+
+                    ws.onopen = () => addMessage('Connected to chat', 'system');
+                    ws.onclose = () => addMessage('Disconnected', 'system');
+                    ws.onerror = () => addMessage('Connection error', 'system');
+
+                    ws.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            addMessage(data.from + ': ' + data.message, 'msg');
+                        } catch (e) {
+                            addMessage(event.data, 'msg');
+                        }
+                    };
+
+                    function send() {
+                        const text = msgInput.value.trim();
+                        if (!text) return;
+                        const payload = JSON.stringify({
+                            username: usernameInput.value || 'anonymous',
+                            message: text
+                        });
+                        ws.send(payload);
+                        msgInput.value = '';
+                    }
+
+                    msgInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') send();
+                    });
+
+                    function addMessage(text, cls) {
+                        const div = document.createElement('div');
+                        div.className = cls;
+                        div.textContent = text;
+                        messages.appendChild(div);
+                        messages.scrollTop = messages.scrollHeight;
+                    }
+                </script>
+            </body>
+            </html>"#,
+                )
       - method: GET
         path: /ws
         handler: ws_handler
+        impl:
+          mode: inline
+          code: |
+            ws.on_upgrade(handle_socket)
       - method: GET
         path: /stats
         handler: stats
+        impl:
+          mode: inline
+          code: |
+            let state = chat_state();
+            VilResponse::ok(ChatStats {
+                connected_clients: state.connected.load(Ordering::Relaxed),
+                total_messages: state.total_messages.load(Ordering::Relaxed),
+            })

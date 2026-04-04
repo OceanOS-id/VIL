@@ -11,9 +11,18 @@ services:
       - method: GET
         path: /plain
         handler: plain_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /handled
         handler: handled_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: POST
         path: /endpoint
         handler: endpoint_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

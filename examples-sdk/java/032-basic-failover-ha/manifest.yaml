@@ -11,15 +11,76 @@ services:
       - method: GET
         path: /health
         handler: primary_health
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(PaymentResult {
+                gateway: "stripe".into(),
+                role: "Primary payment gateway — handles all traffic by default".into(),
+                charge_id: "n/a".into(),
+                amount_cents: 0,
+                currency: "USD".into(),
+                status: "healthy",
+                retry_strategy: "Retry(3) with exponential backoff before failover to backup".into(),
+            })
       - method: POST
         path: /charge
         handler: primary_charge
+        impl:
+          mode: inline
+          code: |
+            let req: PaymentRequest = body.json().map_err(|_| {
+                VilError::bad_request("Invalid payment JSON — need card_token, amount_cents, currency")
+            })?;
+
+            // Simulate charge processing (in production: call Stripe API)
+            let charge_id = format!("ch_stripe_{}", req.amount_cents);
+
+            Ok(VilResponse::ok(PaymentResult {
+                gateway: "stripe".into(),
+                role: "Primary — processed successfully".into(),
+                charge_id,
+                amount_cents: req.amount_cents,
+                currency: req.currency,
+                status: "charged",
+                retry_strategy: "Did not need retry — primary succeeded on first attempt".into(),
+            }))
   - name: backup
     prefix: /api/backup
     endpoints:
       - method: GET
         path: /health
         handler: backup_health
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(PaymentResult {
+                gateway: "adyen".into(),
+                role: "Hot standby — activates only after primary exhausts all retries".into(),
+                charge_id: "n/a".into(),
+                amount_cents: 0,
+                currency: "USD".into(),
+                status: "standby",
+                retry_strategy: "Immediate takeover — no additional retries on backup".into(),
+            })
       - method: POST
         path: /charge
         handler: backup_charge
+        impl:
+          mode: inline
+          code: |
+            let req: PaymentRequest = body
+                .json()
+                .map_err(|_| VilError::bad_request("Invalid payment JSON"))?;
+
+            let charge_id = format!("ch_adyen_{}", req.amount_cents);
+
+            Ok(VilResponse::ok(PaymentResult {
+                gateway: "adyen".into(),
+                role: "Backup — activated after primary failed 3 retries".into(),
+                charge_id,
+                amount_cents: req.amount_cents,
+                currency: req.currency,
+                status: "charged_via_failover",
+                retry_strategy: "Failover completed — customer saw no interruption".into(),
+            }))

@@ -11,15 +11,133 @@ services:
       - method: GET
         path: /
         handler: index
+        impl:
+          mode: inline
+          code: |
+            let registry = ctx
+                .state::<Arc<WasmFaaSRegistry>>()
+                .expect("WasmFaaSRegistry");
+            VilResponse::ok(ServerInfo {
+                name: "WASM FaaS Example — Real Execution".into(),
+                description: "Loads real .wasm modules and executes functions via wasmtime".into(),
+                wasm_modules: registry.names(),
+            })
       - method: GET
         path: /wasm/modules
         handler: list_modules
+        impl:
+          mode: inline
+          code: |
+            let registry = ctx
+                .state::<Arc<WasmFaaSRegistry>>()
+                .expect("WasmFaaSRegistry");
+            let modules: Vec<WasmModuleInfo> = registry
+                .names()
+                .into_iter()
+                .filter_map(|name| {
+                    registry.get(&name).map(|pool| WasmModuleInfo {
+                        name,
+                        pool_size: pool.size(),
+                        memory_limit_mb: pool.config.memory_limit_bytes() / (1024 * 1024),
+                        timeout_ms: pool.config.timeout_ms,
+                    })
+                })
+                .collect();
+            VilResponse::ok(modules)
       - method: POST
         path: /wasm/pricing
         handler: invoke_pricing
+        impl:
+          mode: inline
+          code: |
+            let req: InvokeArgsRequest = body.json().expect("invalid JSON body");
+            let registry = ctx
+                .state::<Arc<WasmFaaSRegistry>>()
+                .expect("WasmFaaSRegistry");
+            let pool = registry
+                .get("pricing")
+                .ok_or_else(|| VilError::not_found("pricing module not loaded"))?;
+
+            let arg0 = req.args.first().copied().unwrap_or(0);
+            let arg1 = req.args.get(1).copied().unwrap_or(0);
+
+            let result = pool
+                .call_i32(&req.function, arg0, arg1)
+                .map_err(|e| VilError::internal(format!("WASM execution failed: {}", e)))?;
+
+            Ok(VilResponse::ok(InvokeResult {
+                module: "pricing".into(),
+                function: req.function,
+                result: serde_json::json!({ "value": result, "args": [arg0, arg1] }),
+                execution: "wasm-precompiled".into(),
+            }))
       - method: POST
         path: /wasm/validation
         handler: invoke_validation
+        impl:
+          mode: inline
+          code: |
+            let req: InvokeArgsRequest = body.json().expect("invalid JSON body");
+            let registry = ctx
+                .state::<Arc<WasmFaaSRegistry>>()
+                .expect("WasmFaaSRegistry");
+            let pool = registry
+                .get("validation")
+                .ok_or_else(|| VilError::not_found("validation module not loaded"))?;
+
+            let arg0 = req.args.first().copied().unwrap_or(0);
+            let arg1 = req.args.get(1).copied().unwrap_or(0);
+
+            let result = pool
+                .call_i32(&req.function, arg0, arg1)
+                .map_err(|e| VilError::internal(format!("WASM execution failed: {}", e)))?;
+
+            Ok(VilResponse::ok(InvokeResult {
+                module: "validation".into(),
+                function: req.function,
+                result: serde_json::json!({ "valid": result == 1, "raw": result, "args": [arg0, arg1] }),
+                execution: "wasm-precompiled".into(),
+            }))
       - method: POST
         path: /wasm/transform
         handler: invoke_transform
+        impl:
+          mode: inline
+          code: |
+            let req: InvokeMemoryRequest = body.json().expect("invalid JSON body");
+            let registry = ctx
+                .state::<Arc<WasmFaaSRegistry>>()
+                .expect("WasmFaaSRegistry");
+            let pool = registry
+                .get("transform")
+                .ok_or_else(|| VilError::not_found("transform module not loaded"))?;
+
+            // Level 1 zero-copy: input bytes written directly to WASM linear memory
+            // via memory.data_mut() slice. Response read as direct slice reference.
+            let output_bytes = pool
+                .call_with_memory(&req.function, req.input.as_bytes())
+                .map_err(|e| VilError::internal(format!("WASM memory execution failed: {}", e)))?;
+
+            let output_str = String::from_utf8_lossy(&output_bytes).to_string();
+
+            Ok(VilResponse::ok(InvokeResult {
+                module: "transform".into(),
+                function: req.function.clone(),
+                result: if req.function == "count_vowels" {
+                    // count_vowels returns a number, not transformed text
+                    let count = if output_bytes.len() >= 4 {
+                        i32::from_le_bytes([
+                            output_bytes[0],
+                            output_bytes[1],
+                            output_bytes[2],
+                            output_bytes[3],
+                        ])
+                    } else {
+                        output_bytes.len() as i32
+                    };
+                    serde_json::json!({ "input": req.input, "vowel_count": count })
+                } else {
+                    serde_json::json!({ "input": req.input, "output": output_str })
+                },
+                execution: "wasm-memory-io".into(),
+            }))

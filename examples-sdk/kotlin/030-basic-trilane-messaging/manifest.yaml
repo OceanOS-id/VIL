@@ -13,3 +13,12 @@ services:
       - method: GET
         path: /status
         handler: fulfillment_status
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(FulfillmentStatus {
+                service: "fulfillment",
+                role: "Internal warehouse service — receives orders via Tri-Lane mesh",
+                warehouse_region: "us-west-2",
+                capacity_percent: 73,
+            })

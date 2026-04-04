@@ -11,3 +11,6 @@ services:
       - method: POST
         path: /code-review
         handler: code_review_handler
+        impl:
+          mode: stub
+          response: '{"ok": true}'

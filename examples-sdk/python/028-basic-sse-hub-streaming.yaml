@@ -11,9 +11,18 @@ services:
       - method: POST
         path: /publish
         handler: publish
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /stream
         handler: stream
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /stats
         handler: stats
+        impl:
+          mode: stub
+          response: '{"ok": true}'

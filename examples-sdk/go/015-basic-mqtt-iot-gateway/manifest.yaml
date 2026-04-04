@@ -11,14 +11,26 @@ services:
       - method: POST
         path: /sensors/data
         handler: receive_sensor_data
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /sensors
         handler: list_sensors
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /mqtt/config
         handler: mqtt_config
+        impl:
+          mode: stub
+          response: '{"ok": true}'
       - method: GET
         path: /mqtt/topics
         handler: mqtt_topics
+        impl:
+          mode: stub
+          response: '{"ok": true}'
   - name: root
     prefix: /api/root
