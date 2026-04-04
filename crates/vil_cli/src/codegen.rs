@@ -419,6 +419,29 @@ fn generate_handler(ep: &EndpointManifest) -> String {
     let input_type = format!("{}Input", to_pascal_case(fn_name));
     let output_type = format!("{}Output", to_pascal_case(fn_name));
 
+    // ── Check impl mode first ──
+    if let Some(ref imp) = ep.r#impl {
+        return match imp.mode.as_str() {
+            "inline" => generate_handler_inline(fn_name, imp.code.as_deref().unwrap_or("")),
+            "wasm" => generate_handler_wasm(
+                fn_name,
+                imp.module.as_deref().unwrap_or("handler.wasm"),
+                imp.function.as_deref().unwrap_or("handle"),
+            ),
+            "sidecar" => generate_handler_sidecar(
+                fn_name,
+                imp.command.as_deref().unwrap_or("echo"),
+                imp.protocol.as_deref().unwrap_or("shm"),
+                imp.timeout_ms.unwrap_or(5000),
+            ),
+            "stub" => generate_handler_stub(
+                fn_name,
+                imp.response.as_deref().unwrap_or(r#"{"ok": true}"#),
+            ),
+            _ => generate_handler_stub(fn_name, r#"{"ok": true}"#),
+        };
+    }
+
     let mut s = String::new();
 
     // Exec class annotation (#6)
@@ -2665,4 +2688,112 @@ endpoints:
             "generated code must NOT contain .observer(true) when disabled"
         );
     }
+}
+
+// =============================================================================
+// Handler implementation generators (inline, wasm, sidecar, stub)
+// =============================================================================
+
+/// Generate handler with inline Rust code from YAML manifest.
+fn generate_handler_inline(fn_name: &str, code: &str) -> String {
+    let mut s = String::new();
+    s.push_str("#[vil_endpoint]\n");
+    s.push_str(&format!(
+        "async fn {}(ctx: ServiceCtx, body: ShmSlice) -> Result<VilResponse<serde_json::Value>, VilError> {{\n",
+        fn_name
+    ));
+    // Embed inline code directly
+    for line in code.lines() {
+        s.push_str(&format!("    {}\n", line));
+    }
+    s.push_str("}\n");
+    s
+}
+
+/// Generate handler that delegates to a WASM module.
+fn generate_handler_wasm(fn_name: &str, module: &str, function: &str) -> String {
+    let mut s = String::new();
+    s.push_str("#[vil_endpoint]\n");
+    s.push_str(&format!(
+        "async fn {}(ctx: ServiceCtx, body: ShmSlice) -> Result<VilResponse<serde_json::Value>, VilError> {{\n",
+        fn_name
+    ));
+    s.push_str(&format!(
+        "    // WASM handler: module={}, function={}\n", module, function
+    ));
+    s.push_str(&format!(
+        "    let wasm_module = ctx.state::<WasmRuntime>().map_err(|_| VilError::internal(\"WASM runtime not configured\"))?;\n"
+    ));
+    s.push_str(&format!(
+        "    let input_bytes = body.as_bytes();\n"
+    ));
+    s.push_str(&format!(
+        "    let output_bytes = wasm_module.call(\"{}\", \"{}\", input_bytes)\n",
+        module, function
+    ));
+    s.push_str("        .await\n");
+    s.push_str("        .map_err(|e| VilError::internal(format!(\"WASM call failed: {}\", e)))?;\n");
+    s.push_str("    let result: serde_json::Value = serde_json::from_slice(&output_bytes)\n");
+    s.push_str("        .map_err(|e| VilError::internal(format!(\"WASM output not JSON: {}\", e)))?;\n");
+    s.push_str("    Ok(VilResponse::ok(result))\n");
+    s.push_str("}\n");
+    s
+}
+
+/// Generate handler that delegates to a sidecar process via SHM or HTTP.
+fn generate_handler_sidecar(fn_name: &str, command: &str, protocol: &str, timeout_ms: u64) -> String {
+    let mut s = String::new();
+    s.push_str("#[vil_endpoint]\n");
+    s.push_str(&format!(
+        "async fn {}(ctx: ServiceCtx, body: ShmSlice) -> Result<VilResponse<serde_json::Value>, VilError> {{\n",
+        fn_name
+    ));
+    s.push_str(&format!(
+        "    // Sidecar handler: command=\"{}\", protocol={}, timeout={}ms\n",
+        command, protocol, timeout_ms
+    ));
+
+    if protocol == "shm" {
+        s.push_str("    let sidecar = ctx.state::<SidecarPool>().map_err(|_| VilError::internal(\"Sidecar pool not configured\"))?;\n");
+        s.push_str(&format!(
+            "    let result = sidecar.call_shm(\"{}\", body.as_bytes(), std::time::Duration::from_millis({}))\n",
+            fn_name, timeout_ms
+        ));
+        s.push_str("        .await\n");
+        s.push_str("        .map_err(|e| VilError::internal(format!(\"Sidecar call failed: {}\", e)))?;\n");
+    } else {
+        // HTTP protocol
+        s.push_str("    let client = reqwest::Client::new();\n");
+        s.push_str(&format!(
+            "    let result = client.post(\"http://localhost:0/{}\") // sidecar port resolved at runtime\n",
+            fn_name
+        ));
+        s.push_str("        .body(body.as_bytes().to_vec())\n");
+        s.push_str(&format!("        .timeout(std::time::Duration::from_millis({}))\n", timeout_ms));
+        s.push_str("        .send().await\n");
+        s.push_str("        .map_err(|e| VilError::internal(format!(\"Sidecar HTTP failed: {}\", e)))?\n");
+        s.push_str("        .bytes().await\n");
+        s.push_str("        .map_err(|e| VilError::internal(format!(\"Sidecar read failed: {}\", e)))?;\n");
+    }
+
+    s.push_str("    let parsed: serde_json::Value = serde_json::from_slice(&result)\n");
+    s.push_str("        .map_err(|e| VilError::internal(format!(\"Sidecar output not JSON: {}\", e)))?;\n");
+    s.push_str("    Ok(VilResponse::ok(parsed))\n");
+    s.push_str("}\n");
+    s
+}
+
+/// Generate stub handler that returns a static response.
+fn generate_handler_stub(fn_name: &str, response: &str) -> String {
+    let mut s = String::new();
+    s.push_str("#[vil_endpoint]\n");
+    s.push_str(&format!(
+        "async fn {}(_ctx: ServiceCtx) -> Result<VilResponse<serde_json::Value>, VilError> {{\n",
+        fn_name
+    ));
+    s.push_str(&format!(
+        "    Ok(VilResponse::ok(serde_json::json!({})))\n", response
+    ));
+    s.push_str("}\n");
+    s
 }

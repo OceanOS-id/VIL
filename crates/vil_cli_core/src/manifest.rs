@@ -101,6 +101,36 @@ pub struct EndpointManifest {
     pub upstream: Option<UpstreamManifest>,
     #[serde(default = "default_exec_class")]
     pub exec_class: String,
+    /// Handler implementation: inline, wasm, sidecar, or stub
+    #[serde(default)]
+    pub r#impl: Option<ImplManifest>,
+}
+
+/// Handler implementation descriptor in YAML manifest.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ImplManifest {
+    #[serde(default)]
+    pub mode: String,
+    /// Inline Rust code (mode=inline)
+    #[serde(default)]
+    pub code: Option<String>,
+    /// WASM module path (mode=wasm)
+    #[serde(default)]
+    pub module: Option<String>,
+    /// WASM function name (mode=wasm)
+    pub function: Option<String>,
+    /// Sidecar command (mode=sidecar)
+    #[serde(default)]
+    pub command: Option<String>,
+    /// Sidecar protocol: shm|http (mode=sidecar)
+    #[serde(default)]
+    pub protocol: Option<String>,
+    /// Sidecar timeout in ms (mode=sidecar)
+    #[serde(default)]
+    pub timeout_ms: Option<u64>,
+    /// Stub response body (mode=stub)
+    #[serde(default)]
+    pub response: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

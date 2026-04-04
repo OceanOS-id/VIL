@@ -101,6 +101,27 @@ pub struct EndpointManifest {
     pub upstream: Option<UpstreamManifest>,
     #[serde(default = "default_exec_class")]
     pub exec_class: String,
+    #[serde(default)]
+    pub r#impl: Option<ImplManifest>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ImplManifest {
+    #[serde(default)]
+    pub mode: String,
+    #[serde(default)]
+    pub code: Option<String>,
+    #[serde(default)]
+    pub module: Option<String>,
+    pub function: Option<String>,
+    #[serde(default)]
+    pub command: Option<String>,
+    #[serde(default)]
+    pub protocol: Option<String>,
+    #[serde(default)]
+    pub timeout_ms: Option<u64>,
+    #[serde(default)]
+    pub response: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
