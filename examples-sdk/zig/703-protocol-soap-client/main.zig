@@ -1,0 +1,9 @@
+// 703-protocol-soap-client — Zig SDK equivalent
+// Compile: vil compile --from zig --input 703-protocol-soap-client/main.zig --release
+
+const vil = @import("vil");
+
+pub fn main() void {
+    var server = vil.Server.init("app", 8080);
+    server.compile();
+}

@@ -1,0 +1,20 @@
+// 105-pipeline-multi-workflow — Swift SDK equivalent
+// Compile: vil compile --from swift --input 105-pipeline-multi-workflow/main.swift --release
+
+let p = VilPipeline(name: "AiGatewayWorkflow", port: 3097)
+p.sink(name: "ai_gateway_sink", port: 3097, path: "/ai")
+p.source(name: "ai_sse_source", url: "http://127.0.0.1:4545/v1/chat/completions", format: "sse")
+p.sink(name: "credit_sink", port: 3098, path: "/credit")
+p.source(name: "credit_ndjson_source", url: "http://localhost:18081/api/v1/credits/ndjson?count=100", format: "json")
+p.sink(name: "inventory_sink", port: 3099, path: "/inventory")
+p.source(name: "inventory_rest_source", url: "http://localhost:18092/api/v1/products")
+p.route(from: "ai_sink.trigger_out", to: "ai_source.trigger_in", mode: "LoanWrite")
+p.route(from: "ai_source.response_data_out", to: "ai_sink.response_data_in", mode: "LoanWrite")
+p.route(from: "ai_source.response_ctrl_out", to: "ai_sink.response_ctrl_in", mode: "Copy")
+p.route(from: "credit_sink.trigger_out", to: "credit_source.trigger_in", mode: "LoanWrite")
+p.route(from: "credit_source.response_data_out", to: "credit_sink.response_data_in", mode: "LoanWrite")
+p.route(from: "credit_source.response_ctrl_out", to: "credit_sink.response_ctrl_in", mode: "Copy")
+p.route(from: "inventory_sink.trigger_out", to: "inventory_source.trigger_in", mode: "LoanWrite")
+p.route(from: "inventory_source.response_data_out", to: "inventory_sink.response_data_in", mode: "LoanWrite")
+p.route(from: "inventory_source.response_ctrl_out", to: "inventory_sink.response_ctrl_in", mode: "Copy")
+p.compile()
