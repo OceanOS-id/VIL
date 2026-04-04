@@ -11,21 +11,205 @@ services:
       - method: POST
         path: /products
         handler: create_product
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let req: CreateProduct = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+            let id = uuid::Uuid::new_v4().to_string();
+            let stock = req.stock.unwrap_or(0);
+
+            // Pattern: insert with value_opt_str for nullable columns
+            Product::q()
+                .insert_columns(&["id", "name", "description", "price", "stock", "category"])
+                .value(id.clone())
+                .value(req.name)
+                .value_opt_str(req.description)
+                .value(req.price)
+                .value(stock)
+                .value_opt_str(req.category)
+                .execute(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            let product = Product::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::internal("created but not found"))?;
+
+            Ok(VilResponse::created(product))
       - method: GET
         path: /products
         handler: list_products
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            // Pattern: select().where_raw("1=1").order_by_desc().limit()
+            let products = Product::q()
+                .select(&["id", "name", "description", "price", "stock", "category", "created_at"])
+                .where_raw("1=1")
+                .order_by_desc("created_at")
+                .limit(50)
+                .fetch_all::<Product>(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(products))
       - method: GET
         path: /products/:id
         handler: get_product
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            // Pattern: T::find_by_id()
+            let product = Product::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found("Product not found"))?;
+
+            Ok(VilResponse::ok(product))
       - method: POST
         path: /orders
         handler: create_order
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let req: CreateOrder = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
+            let pool = state.pool.inner();
+
+            if req.items.is_empty() {
+                return Err(VilError::bad_request("order must have at least one item"));
+            }
+
+            let order_id = uuid::Uuid::new_v4().to_string();
+
+            // Create order
+            Order::q()
+                .insert_columns(&["id", "customer_name", "status"])
+                .value(order_id.clone())
+                .value(req.customer_name)
+                .value("pending".to_string())
+                .execute(pool)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            // Create order items and decrement stock
+            for item in &req.items {
+                // Lookup product price
+                let product = Product::find_by_id(pool, &item.product_id)
+                    .await
+                    .map_err(|e| VilError::internal(format!("{e}")))?
+                    .ok_or_else(|| VilError::bad_request(format!("product {} not found", item.product_id)))?;
+
+                let item_id = uuid::Uuid::new_v4().to_string();
+
+                OrderItem::q()
+                    .insert_columns(&["id", "order_id", "product_id", "quantity", "unit_price"])
+                    .value(item_id)
+                    .value(order_id.clone())
+                    .value(item.product_id.clone())
+                    .value(item.quantity)
+                    .value(product.price)
+                    .execute(pool)
+                    .await
+                    .map_err(|e| VilError::internal(format!("{e}")))?;
+
+                // Pattern: set_expr("stock", "stock - ?", qty) -- atomic stock decrement
+                Product::q()
+                    .update()
+                    .set_expr("stock", "stock - ?", item.quantity)
+                    .where_eq("id", &item.product_id)
+                    .execute(pool)
+                    .await
+                    .map_err(|e| VilError::internal(format!("{e}")))?;
+            }
+
+            let order = Order::find_by_id(pool, &order_id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::internal("created but not found"))?;
+
+            Ok(VilResponse::created(order))
       - method: GET
         path: /orders
         handler: list_orders
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+
+            // Pattern: select().join().group_by().fetch_all() -- JOINed aggregate listing
+            let orders = Order::q()
+                .select(&[
+                    "o.id",
+                    "o.customer_name",
+                    "o.status",
+                    "o.created_at",
+                    "CAST(COALESCE(COUNT(oi.id), 0) AS INTEGER) as item_count",
+                ])
+                .alias("o")
+                .left_join("order_items oi", "oi.order_id = o.id")
+                .group_by("o.id")
+                .order_by_desc("o.created_at")
+                .limit(50)
+                .fetch_all::<OrderListItem>(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            Ok(VilResponse::ok(orders))
       - method: GET
         path: /orders/:id/total
         handler: order_total
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let pool = state.pool.inner();
+
+            // Verify order exists
+            let _order = Order::find_by_id(pool, &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found("Order not found"))?;
+
+            // Pattern: select_expr("SUM(quantity * unit_price)").scalar::<f64>()
+            let total: f64 = OrderItem::q()
+                .select_expr("COALESCE(SUM(quantity * unit_price), 0.0)")
+                .where_eq("order_id", &id)
+                .scalar::<f64>(pool)
+                .await
+                .unwrap_or(0.0);
+
+            Ok(VilResponse::ok(serde_json::json!({
+                "order_id": id,
+                "total": total,
+            })))
       - method: DELETE
         path: /orders/:id
         handler: cancel_order
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let pool = state.pool.inner();
+
+            // Delete order items first
+            OrderItem::delete_where(pool, "order_id = ?", &[&id])
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            // Pattern: T::delete()
+            let deleted = Order::delete(pool, &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+
+            if deleted {
+                Ok(VilResponse::ok(serde_json::json!({"deleted": true, "id": id})))
+            } else {
+                Err(VilError::not_found("Order not found"))
+            }

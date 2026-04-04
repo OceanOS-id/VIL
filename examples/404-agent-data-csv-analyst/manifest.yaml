@@ -11,3 +11,90 @@ services:
       - method: POST
         path: /csv-analyze
         handler: csv_analyze_handler
+        impl:
+          mode: inline
+          code: |
+            let req: CsvAnalyzeRequest = body.json().expect("invalid JSON body");
+            // Step 1: Parse CSV
+            let (record, parse_summary) = tool_parse_csv(&req.csv_data);
+            if record.rows.is_empty() {
+                return Err(VilError::bad_request("CSV data is empty or invalid"));
+            }
+
+            // Step 2: Compute stats for all numeric columns
+            let mut all_stats = Vec::new();
+            let mut numeric_cols = Vec::new();
+            let label_col = record
+                .headers
+                .first()
+                .map(|s| s.as_str())
+                .unwrap_or("index");
+
+            for header in &record.headers[1..] {
+                // Skip first column (usually labels/dates)
+                if let Some(stats) = tool_compute_stats(&record, header) {
+                    all_stats.push(stats);
+                    numeric_cols.push(header.as_str());
+                }
+            }
+
+            // Step 3: Generate chart data
+            let chart = tool_chart_data(&record, label_col, &numeric_cols);
+
+            // Step 4: Build context for LLM
+            let stats_text: String = all_stats
+                .iter()
+                .map(|s| {
+                    format!(
+                        "Column '{}': mean={}, median={}, std_dev={}, min={}, max={}, growth={}%",
+                        s.column, s.mean, s.median, s.std_dev, s.min, s.max, s.growth_rate_pct
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+
+            let system_prompt = format!(
+                "You are a data analyst agent. The following CSV data has been parsed and analyzed.\n\n\
+                 Parse Summary: {}\n\n\
+                 Raw Data:\n{}\n\n\
+                 Computed Statistics:\n{}\n\n\
+                 Provide insightful analysis answering the user's question. \
+                 Reference specific numbers from the statistics. \
+                 Identify trends, outliers, and actionable insights.",
+                parse_summary, req.csv_data, stats_text
+            );
+
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": req.question}
+                ],
+                "stream": true
+            });
+
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .json_tap("choices[0].delta.content")
+                .body(body);
+
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            let analysis = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            // Semantic anchors
+            let _event = std::any::type_name::<AgentCompletionEvent>();
+            let _fault = std::any::type_name::<AgentFault>();
+            let _state = std::any::type_name::<AgentMemoryState>();
+
+            Ok(VilResponse::ok(CsvAnalyzeResponse {
+                analysis,
+                stats: all_stats,
+                chart_data: chart,
+                rows_processed: record.rows.len(),
+            }))

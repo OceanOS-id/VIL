@@ -11,24 +11,98 @@ services:
       - method: GET
         path: /ping
         handler: teller_ping
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(serde_json::json!({
+                "service": "teller",
+                "role": "Bank teller counter — submits customer transactions",
+                "mesh_routes": "teller → fraud_check (Data), fraud_check → core_banking (Data), core_banking → notification (Control)"
+            }))
       - method: POST
         path: /submit
         handler: teller_submit
+        impl:
+          mode: inline
+          code: |
+            let txn: TransactionRequest = body
+                .json()
+                .map_err(|_| VilError::bad_request("Invalid transaction JSON"))?;
+
+            // Generate a reference number for tracking
+            let txn_ref = format!("TXN-{}-{}", txn.from_account, txn.amount_cents);
+
+            // Forward transaction to fraud detection via Data Lane.
+            // The full transaction payload travels zero-copy through SHM.
+            ctx.send("fraud_check", body.as_bytes()).await?;
+
+            // Simple fraud scoring (in production: ML model + rule engine)
+            let fraud_score = if txn.amount_cents > 1_000_000 { 75 } else { 12 };
+            let is_approved = fraud_score < 50;
+
+            Ok(VilResponse::ok(FraudCheckResult {
+                service: "fraud_check",
+                transaction_ref: txn_ref,
+                fraud_score,
+                is_approved,
+                rule_triggered: if is_approved {
+                    "none"
+                } else {
+                    "high_value_transfer"
+                },
+            }))
   - name: fraud_check
     prefix: /api/fraud_check
     endpoints:
       - method: POST
         path: /analyze
         handler: fraud_process
+        impl:
+          mode: inline
+          code: |
+            let data = body.as_bytes();
+            // After fraud analysis passes, forward to core banking for ledger posting
+            ctx.send("core_banking", data).await?;
+            Ok(VilResponse::ok(FraudCheckResult {
+                service: "fraud_check",
+                transaction_ref: "analyzed".into(),
+                fraud_score: 8,
+                is_approved: true,
+                rule_triggered: "none",
+            }))
   - name: core_banking
     prefix: /api/core_banking
     endpoints:
       - method: POST
         path: /post
         handler: core_banking_post
+        impl:
+          mode: inline
+          code: |
+            // After posting to ledger, send notification via Control Lane.
+            // Control Lane is chosen because customer notifications are critical
+            // and must not be delayed by bulk data transfers (e.g., end-of-day batch).
+            ctx.control("notification", b"txn_completed").await?;
+
+            Ok(VilResponse::ok(TransactionResult {
+                service: "core_banking",
+                status: "posted_to_ledger",
+                ledger_entry_id: 98765,
+                from_account: "ACC-1001".into(),
+                to_account: "ACC-2002".into(),
+                amount_cents: 50000,
+            }))
   - name: notification
     prefix: /api/notification
     endpoints:
       - method: GET
         path: /send
         handler: notification_send
+        impl:
+          mode: inline
+          code: |
+            VilResponse::ok(NotificationAck {
+                service: "notification",
+                channel: "sms+push",
+                customer_notified: true,
+            })

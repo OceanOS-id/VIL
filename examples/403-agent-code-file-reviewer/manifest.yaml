@@ -11,3 +11,95 @@ services:
       - method: POST
         path: /code-review
         handler: code_review_handler
+        impl:
+          mode: inline
+          code: |
+            let req: CodeReviewRequest = body.json().expect("invalid JSON body");
+            // Step 1: Pre-execute tools based on query.
+            // Business strategy: eagerly gather ALL available data before calling LLM.
+            // This reduces LLM round-trips (cheaper, faster) vs. letting the LLM
+            // decide which files to read one at a time.
+            let mut tool_results = Vec::new();
+
+            // Always read the files mentioned in the prompt, or all files
+            let files_to_read: Vec<&str> = MOCK_FILES
+                .iter()
+                .filter(|f| {
+                    req.prompt.to_lowercase().contains(&f.path.to_lowercase())
+                        || req.prompt.contains("all")
+                        || req.prompt.contains("review")
+                })
+                .map(|f| f.path)
+                .collect();
+
+            let files_to_read = if files_to_read.is_empty() {
+                vec![MOCK_FILES[0].path] // Default to first file
+            } else {
+                files_to_read
+            };
+
+            for path in &files_to_read {
+                // Read file
+                tool_results.push(tool_read_file(path));
+                // Count lines
+                tool_results.push(tool_count_lines(path));
+                // Search for common issues — these patterns correlate with
+                // production incidents: unwrap() panics, TODO = incomplete logic,
+                // unsafe = memory safety risks, clone() = performance concerns.
+                tool_results.push(tool_find_pattern(path, "unwrap()"));
+                tool_results.push(tool_find_pattern(path, "TODO"));
+                tool_results.push(tool_find_pattern(path, "unsafe"));
+                tool_results.push(tool_find_pattern(path, "clone()"));
+            }
+
+            // Step 2: Build context from tool results for LLM
+            let tool_context: String = tool_results
+                .iter()
+                .map(|r| format!("[{}] {}\n{}", r.tool, r.input, r.output))
+                .collect::<Vec<_>>()
+                .join("\n\n");
+
+            let system_prompt = format!(
+                "You are a code review agent. The following tool results contain file contents \
+                 and analysis from the project. Provide a thorough code review including:\n\
+                 1. Summary of each file\n\
+                 2. Issues found (unwrap usage, TODO items, potential bugs)\n\
+                 3. Improvement suggestions\n\
+                 4. Overall quality rating (1-5 stars)\n\n\
+                 Tool Results:\n{}",
+                tool_context
+            );
+
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .json_tap("choices[0].delta.content")
+                .body(body);
+
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            let content = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            // Semantic anchors
+            let _event = std::any::type_name::<AgentCompletionEvent>();
+            let _fault = std::any::type_name::<AgentFault>();
+            let _state = std::any::type_name::<AgentMemoryState>();
+
+            Ok(VilResponse::ok(CodeReviewResponse {
+                content,
+                tools_executed: tool_results,
+                files_available: MOCK_FILES.iter().map(|f| f.path.to_string()).collect(),
+            }))

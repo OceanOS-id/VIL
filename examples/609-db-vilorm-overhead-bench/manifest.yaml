@@ -11,24 +11,99 @@ services:
       - method: GET
         path: /raw/items/:id
         handler: raw_find_by_id
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let item = sqlx::query_as::<_, Item>("SELECT * FROM items WHERE id = $1")
+                .bind(&id)
+                .fetch_optional(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found("not found"))?;
+            Ok(VilResponse::ok(item))
       - method: GET
         path: /raw/items
         handler: raw_list
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let items = sqlx::query_as::<_, Item>("SELECT * FROM items ORDER BY id DESC LIMIT 100")
+                .fetch_all(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+            Ok(VilResponse::ok(items))
       - method: GET
         path: /raw/count
         handler: raw_count
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let count: i64 = sqlx::query_scalar("SELECT CAST(COUNT(*) AS INTEGER) FROM items")
+                .fetch_one(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+            Ok(VilResponse::ok(serde_json::json!({"count": count})))
       - method: GET
         path: /raw/cols
         handler: raw_select_cols
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let rows = sqlx::query_as::<_, (String, i64)>("SELECT name, value FROM items ORDER BY value DESC LIMIT 20")
+                .fetch_all(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+            Ok(VilResponse::ok(rows))
       - method: GET
         path: /orm/items/:id
         handler: orm_find_by_id
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let item = Item::find_by_id(state.pool.inner(), &id)
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?
+                .ok_or_else(|| VilError::not_found("not found"))?;
+            Ok(VilResponse::ok(item))
       - method: GET
         path: /orm/items
         handler: orm_list
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let items = Item::find_all(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+            Ok(VilResponse::ok(items))
       - method: GET
         path: /orm/count
         handler: orm_count
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let count = Item::count(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+            Ok(VilResponse::ok(serde_json::json!({"count": count})))
       - method: GET
         path: /orm/cols
         handler: orm_select_cols
+        impl:
+          mode: inline
+          code: |
+            let state = ctx.state::<AppState>().expect("state");
+            let rows = Item::q()
+                .select(&["name", "value"])
+                .order_by_desc("value")
+                .limit(20)
+                .fetch_all::<(String, i64)>(state.pool.inner())
+                .await
+                .map_err(|e| VilError::internal(format!("{e}")))?;
+            Ok(VilResponse::ok(rows))

@@ -11,3 +11,47 @@ services:
       - method: POST
         path: /chat
         handler: chat_handler
+        impl:
+          mode: inline
+          code: |
+            // ShmSlice: zero-copy body extraction from VIL's ExchangeHeap.
+            // Critical for customer service portals during peak hours
+            // (e.g., product launches, outage notifications).
+            let req: ChatRequest = body.json().expect("invalid JSON body");
+
+            // The system prompt sets the chatbot's persona. In production,
+            // this would be loaded from a prompt registry and A/B tested
+            // for optimal customer satisfaction scores (CSAT).
+            let body = serde_json::json!({
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": req.prompt}
+                ],
+                "stream": true
+            });
+
+            // Read API key from env (empty = simulator mode, no auth needed)
+            let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+
+            // SseCollect with OpenAI dialect: the standard pattern for
+            // consuming streaming LLM responses. The dialect automatically
+            // handles token-by-token extraction and [DONE] detection.
+            let mut collector = SseCollect::post_to(UPSTREAM_URL)
+                .dialect(SseDialect::openai())
+                .body(body);
+
+            // Add auth if API key is set (skip for local simulator)
+            if !api_key.is_empty() {
+                collector = collector.bearer_token(&api_key);
+            }
+
+            // Collect the full response. In a ticket deflection system,
+            // the complete answer is needed before sending to the customer
+            // (vs. streaming partial tokens to the UI).
+            let content = collector
+                .collect_text()
+                .await
+                .map_err(|e| VilError::internal(e.to_string()))?;
+
+            Ok(VilResponse::ok(ChatResponse { content }))

@@ -56,6 +56,20 @@ pub struct ParsedEndpoint {
     pub method: String,
     pub path: String,
     pub handler: String,
+    pub implementation: HandlerImpl,
+}
+
+/// Handler implementation mode.
+#[derive(Debug, Clone)]
+pub enum HandlerImpl {
+    /// Rust code embedded inline in YAML. Compiled directly into binary.
+    Inline { code: String },
+    /// WASM module. Loaded at runtime. For non-Rust languages compiled to WASM.
+    Wasm { module: String, function: String },
+    /// Sidecar process. Communicates via SHM or HTTP. For heavy ML, Python, etc.
+    Sidecar { command: String, protocol: String, timeout_ms: u64 },
+    /// Auto-generated stub. Returns static response. For scaffolding.
+    Stub { response: String },
 }
 
 /// Parse a Rust source file and extract VilApp structure.
@@ -67,9 +81,21 @@ pub fn parse_rust_source(path: &Path) -> Result<ParsedApp, String> {
     let constants = extract_constants(&source);
     let resolved = resolve_constants(&source, &constants);
 
-    let services = extract_services(&resolved);
+    let mut services = extract_services(&resolved);
     let nodes = extract_pipeline_nodes(&resolved);
     let routes = extract_pipeline_routes(&resolved);
+
+    // Extract handler function bodies and attach to endpoints
+    let handler_bodies = extract_handler_bodies(&source);
+    for svc in &mut services {
+        for ep in &mut svc.endpoints {
+            // Handler name might be "module::func" — use last part
+            let fn_name = ep.handler.split("::").last().unwrap_or(&ep.handler).to_string();
+            if let Some(body) = handler_bodies.get(&fn_name) {
+                ep.implementation = HandlerImpl::Inline { code: body.clone() };
+            }
+        }
+    }
 
     let is_pipeline = !nodes.is_empty() || source.contains("vil_workflow!");
     let mode = if is_pipeline { AppMode::Pipeline } else { AppMode::Server };
@@ -139,6 +165,7 @@ pub fn to_manifest_yaml(app: &ParsedApp) -> String {
                             lines.push(format!("      - method: {}", ep.method));
                             lines.push(format!("        path: {}", ep.path));
                             lines.push(format!("        handler: {}", ep.handler));
+                            emit_impl(&mut lines, &ep.implementation, 8);
                         }
                     }
                 }
@@ -147,6 +174,43 @@ pub fn to_manifest_yaml(app: &ParsedApp) -> String {
     }
 
     lines.join("\n") + "\n"
+}
+
+/// Emit handler implementation YAML section.
+fn emit_impl(lines: &mut Vec<String>, imp: &HandlerImpl, indent: usize) {
+    let pad = " ".repeat(indent);
+    match imp {
+        HandlerImpl::Inline { code } => {
+            lines.push(format!("{}impl:", pad));
+            lines.push(format!("{}  mode: inline", pad));
+            lines.push(format!("{}  code: |", pad));
+            for line in code.lines() {
+                if line.trim().is_empty() {
+                    lines.push(String::new());
+                } else {
+                    lines.push(format!("{}    {}", pad, line));
+                }
+            }
+        }
+        HandlerImpl::Wasm { module, function } => {
+            lines.push(format!("{}impl:", pad));
+            lines.push(format!("{}  mode: wasm", pad));
+            lines.push(format!("{}  module: {}", pad, module));
+            lines.push(format!("{}  function: {}", pad, function));
+        }
+        HandlerImpl::Sidecar { command, protocol, timeout_ms } => {
+            lines.push(format!("{}impl:", pad));
+            lines.push(format!("{}  mode: sidecar", pad));
+            lines.push(format!("{}  command: {}", pad, command));
+            lines.push(format!("{}  protocol: {}", pad, protocol));
+            lines.push(format!("{}  timeout_ms: {}", pad, timeout_ms));
+        }
+        HandlerImpl::Stub { response } => {
+            lines.push(format!("{}impl:", pad));
+            lines.push(format!("{}  mode: stub", pad));
+            lines.push(format!("{}  response: '{}'", pad, response));
+        }
+    }
 }
 
 // ── Source Parsing Helpers ──
@@ -260,6 +324,7 @@ fn parse_endpoint_line(line: &str) -> Option<ParsedEndpoint> {
         method: method.to_string(),
         path,
         handler,
+        implementation: HandlerImpl::Stub { response: r#"{"ok": true}"#.into() },
     })
 }
 
@@ -446,6 +511,132 @@ fn extract_pipeline_routes(source: &str) -> Vec<ParsedRoute> {
     routes
 }
 
+/// Extract all async fn bodies from Rust source.
+/// Returns HashMap of function_name → body_code.
+fn extract_handler_bodies(source: &str) -> std::collections::HashMap<String, String> {
+    let mut bodies = std::collections::HashMap::new();
+    let lines: Vec<&str> = source.lines().collect();
+    let mut i = 0;
+
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+
+        // Match: async fn name(...) -> ReturnType {
+        // Also match: pub async fn name(...)
+        // Also match: #[vil_handler] on previous line
+        if (trimmed.contains("async fn ") || trimmed.contains("fn "))
+            && !trimmed.starts_with("//")
+            && !trimmed.starts_with("*")
+            && !trimmed.contains("fn main()")
+        {
+            // Extract function name
+            let fn_name = extract_fn_name(trimmed);
+            if fn_name.is_empty() || fn_name == "main" {
+                i += 1;
+                continue;
+            }
+
+            // Find opening brace
+            let mut brace_line = i;
+            while brace_line < lines.len() && !lines[brace_line].contains('{') {
+                brace_line += 1;
+            }
+            if brace_line >= lines.len() {
+                i += 1;
+                continue;
+            }
+
+            // Extract body between { and matching }
+            let mut depth = 0;
+            let mut body_lines = Vec::new();
+            let mut j = brace_line;
+
+            while j < lines.len() {
+                let line = lines[j];
+                for ch in line.chars() {
+                    if ch == '{' { depth += 1; }
+                    if ch == '}' { depth -= 1; }
+                }
+
+                if j == brace_line {
+                    // First line — skip everything before {
+                    if let Some(pos) = line.find('{') {
+                        let after = &line[pos + 1..];
+                        if !after.trim().is_empty() && after.trim() != "}" {
+                            body_lines.push(after.to_string());
+                        }
+                    }
+                } else if depth <= 0 {
+                    // Last line — skip the closing }
+                    let before_close = line.rfind('}').unwrap_or(line.len());
+                    let content = &line[..before_close];
+                    if !content.trim().is_empty() {
+                        body_lines.push(content.to_string());
+                    }
+                    break;
+                } else {
+                    body_lines.push(line.to_string());
+                }
+
+                j += 1;
+            }
+
+            // Clean up body: dedent to minimum indentation
+            let body = dedent_body(&body_lines);
+            if !body.trim().is_empty() {
+                bodies.insert(fn_name, body);
+            }
+
+            i = j + 1;
+            continue;
+        }
+        i += 1;
+    }
+
+    bodies
+}
+
+/// Extract function name from "async fn name(" or "pub async fn name("
+fn extract_fn_name(line: &str) -> String {
+    let patterns = ["async fn ", "pub async fn ", "fn "];
+    for pat in patterns {
+        if let Some(pos) = line.find(pat) {
+            let after = &line[pos + pat.len()..];
+            let end = after.find(|c: char| c == '(' || c == '<' || c == ' ').unwrap_or(after.len());
+            let name = after[..end].trim();
+            if !name.is_empty() {
+                return name.to_string();
+            }
+        }
+    }
+    String::new()
+}
+
+/// Dedent body lines to remove common leading whitespace.
+fn dedent_body(lines: &[String]) -> String {
+    if lines.is_empty() { return String::new(); }
+
+    // Find minimum indentation (ignoring empty lines)
+    let min_indent = lines.iter()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| l.len() - l.trim_start().len())
+        .min()
+        .unwrap_or(0);
+
+    lines.iter()
+        .map(|l| {
+            if l.trim().is_empty() {
+                String::new()
+            } else if l.len() >= min_indent {
+                l[min_indent..].to_string()
+            } else {
+                l.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// Convert PascalCase/camelCase to snake_case.
 fn to_snake(s: &str) -> String {
     let trimmed = s.trim();
@@ -532,8 +723,8 @@ VilApp::new("my-server")
             services: vec![ParsedService {
                 name: "tasks".to_string(),
                 endpoints: vec![
-                    ParsedEndpoint { method: "GET".into(), path: "/list".into(), handler: "list".into() },
-                    ParsedEndpoint { method: "POST".into(), path: "/create".into(), handler: "create".into() },
+                    ParsedEndpoint { method: "GET".into(), path: "/list".into(), handler: "list".into(), implementation: HandlerImpl::Stub { response: "{\"ok\": true}".into() } },
+                    ParsedEndpoint { method: "POST".into(), path: "/create".into(), handler: "create".into(), implementation: HandlerImpl::Stub { response: "{\"ok\": true}".into() } },
                 ],
             }],
         };
