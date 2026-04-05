@@ -1,6 +1,6 @@
 [package]
 name = "vil_db_macros"
-version = "0.1.2"
+version.workspace = true
 edition = "2021"
 description = "VIL DB Macros — derive macros for VlangEntity and vil_repository"
 license = "MIT OR Apache-2.0"

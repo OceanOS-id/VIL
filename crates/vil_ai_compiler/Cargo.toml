@@ -17,8 +17,8 @@ serde_json = { workspace = true }
 rmp-serde = "1.3"
 vil_log = { workspace = true }
 tracing = { workspace = true }
-vil_macros = { version = "0.1.0", path = "../vil_macros" }
-vil_server_core = { version = "0.1.0", path = "../vil_server_core" }
-vil_sdk = { version = "0.1.0", path = "../vil_sdk" }
-vil_server = { version = "0.1.0", path = "../vil_server" }
+vil_macros = { version = "0.2", path = "../vil_macros" }
+vil_server_core = { version = "0.2", path = "../vil_server_core" }
+vil_sdk = { version = "0.2", path = "../vil_sdk" }
+vil_server = { version = "0.2", path = "../vil_server" }
 axum = { version = "0.7", features = ["macros"] }

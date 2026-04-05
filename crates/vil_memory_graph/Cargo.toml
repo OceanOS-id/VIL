@@ -1,6 +1,6 @@
 [package]
 name = "vil_memory_graph"
-version = "0.1.2"
+version.workspace = true
 edition = "2021"
 description = "VIL Memory Graph — persistent knowledge graph for agent long-term memory"
 repository = "https://github.com/OceanOS-id/VIL"
@@ -14,8 +14,8 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dashmap = "5.5"
 parking_lot = "0.12"
-vil_macros = { version = "0.1.0", path = "../vil_macros" }
-vil_server_core = { version = "0.1.0", path = "../vil_server_core" }
-vil_sdk = { version = "0.1.0", path = "../vil_sdk" }
-vil_server = { version = "0.1.0", path = "../vil_server" }
+vil_macros = { version = "0.2", path = "../vil_macros" }
+vil_server_core = { version = "0.2", path = "../vil_server_core" }
+vil_sdk = { version = "0.2", path = "../vil_sdk" }
+vil_server = { version = "0.2", path = "../vil_server" }
 axum = { version = "0.7", features = ["macros"] }

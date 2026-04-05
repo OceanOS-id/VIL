@@ -1,6 +1,6 @@
 [package]
 name = "vil_db_sqlx"
-version = "0.1.3"
+version.workspace = true
 edition = "2021"
 description = "VIL Database Plugin — PostgreSQL, MySQL, SQLite via sqlx"
 repository = "https://github.com/OceanOS-id/VIL"
@@ -17,8 +17,8 @@ sqlite = ["sqlx/sqlite"]
 all = ["postgres", "mysql", "sqlite"]
 
 [dependencies]
-vil_server_db = { version = "0.1.0", path = "../vil_server_db" }
-vil_server_core = { version = "0.1.0", path = "../vil_server_core" }
+vil_server_db = { version = "0.2", path = "../vil_server_db" }
+vil_server_core = { version = "0.2", path = "../vil_server_core" }
 
 sqlx = { version = "0.8", features = ["runtime-tokio", "any"] }
 tokio = { version = "1", features = ["full"] }

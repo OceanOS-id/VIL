@@ -14,7 +14,7 @@ readme = "README.md"
 vil_log              = { workspace = true }
 tracing = { workspace = true }
 vil_connector_macros = { workspace = true }
-vil_trigger_core  = { version = "0.1.0", path = "../vil_trigger_core" }
+vil_trigger_core  = { version = "0.2", path = "../vil_trigger_core" }
 tokio             = { workspace = true }
 async-imap        = { version = "0.10", default-features = false, features = ["runtime-tokio"] }
 async-native-tls  = "0.5"

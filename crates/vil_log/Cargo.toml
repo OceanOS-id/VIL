@@ -2,7 +2,7 @@
 name = "vil_log"
 description = "VIL Semantic Log System — zero-copy, non-blocking, structured logging with pluggable drains"
 edition.workspace = true
-version = "0.1.5"
+version.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true

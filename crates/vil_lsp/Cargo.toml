@@ -1,6 +1,6 @@
 [package]
 name = "vil_lsp"
-version = "0.1.2"
+version.workspace = true
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL Language Server — diagnostics, completions, and hover for VIL macros"

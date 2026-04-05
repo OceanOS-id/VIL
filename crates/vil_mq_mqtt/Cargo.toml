@@ -1,6 +1,6 @@
 [package]
 name = "vil_mq_mqtt"
-version = "0.1.2"
+version.workspace = true
 edition = "2021"
 description = "VIL MQTT Adapter — publish, subscribe, Tri-Lane bridge"
 repository = "https://github.com/OceanOS-id/VIL"

@@ -2,7 +2,7 @@
 name = "vil_new_http"
 description = "Thin HTTP adapter for VIL using core reactive session primitives (VL-RFC-0003)"
 edition.workspace = true
-version = "0.1.6"
+version.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
@@ -14,7 +14,7 @@ readme = "README.md"
 crate-type = ["rlib", "staticlib"]
 
 [dependencies]
-vil_json = { version = "0.1.0", path = "../vil_json", features = ["simd"] }
+vil_json = { version = "0.2", path = "../vil_json", features = ["simd"] }
 vil_types = { workspace = true }
 vil_rt    = { workspace = true }
 vil_ir    = { workspace = true }

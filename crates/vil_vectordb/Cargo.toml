@@ -1,6 +1,6 @@
 [package]
 name = "vil_vectordb"
-version = "0.1.2"
+version.workspace = true
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL VectorDB — native HNSW vector index for single-binary RAG"
@@ -16,8 +16,8 @@ dashmap = "5.5"
 rand = "0.8"
 parking_lot = "0.12"
 thiserror = "1.0"
-vil_sdk = { version = "0.1.0", path = "../vil_sdk" }
-vil_server_core = { version = "0.1.0", path = "../vil_server_core" }
-vil_server = { version = "0.1.0", path = "../vil_server" }
-vil_macros = { version = "0.1.0", path = "../vil_macros" }
+vil_sdk = { version = "0.2", path = "../vil_sdk" }
+vil_server_core = { version = "0.2", path = "../vil_server_core" }
+vil_server = { version = "0.2", path = "../vil_server" }
+vil_macros = { version = "0.2", path = "../vil_macros" }
 axum = { version = "0.7", features = ["macros"] }

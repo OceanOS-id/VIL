@@ -1,6 +1,6 @@
 [package]
 name = "vil_mq_nats"
-version = "0.1.2"
+version.workspace = true
 edition = "2021"
 description = "VIL NATS Adapter — Core pub/sub, JetStream, KV Store, Tri-Lane bridge"
 repository = "https://github.com/OceanOS-id/VIL"

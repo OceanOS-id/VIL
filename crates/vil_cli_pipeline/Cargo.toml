@@ -1,6 +1,6 @@
 [package]
 name = "vil_cli_pipeline"
-version = "0.1.0"
+version.workspace = true
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL CLI Pipeline — run, viz, check, hot-reload, test runner"
@@ -9,15 +9,15 @@ homepage = "https://vastar.id/products/vil"
 documentation = "https://vastar.id/docs/vil"
 
 [dependencies]
-vil_cli_core = { version = "0.1.0", path = "../vil_cli_core" }
-vil_rt = { version = "0.1.0", path = "../vil_rt" }
-vil_shm = { version = "0.1.0", path = "../vil_shm" }
-vil_registry = { version = "0.1.0", path = "../vil_registry" }
-vil_types = { version = "0.1.0", path = "../vil_types" }
-vil_net = { version = "0.1.0", path = "../vil_net" }
-vil_sdk = { version = "0.1.0", path = "../vil_sdk" }
-vil_obs = { version = "0.1.0", path = "../vil_obs" }
-vil_viz = { version = "0.1.2", path = "../vil_viz" }
+vil_cli_core = { version = "0.2", path = "../vil_cli_core" }
+vil_rt = { version = "0.2", path = "../vil_rt" }
+vil_shm = { version = "0.2", path = "../vil_shm" }
+vil_registry = { version = "0.2", path = "../vil_registry" }
+vil_types = { version = "0.2", path = "../vil_types" }
+vil_net = { version = "0.2", path = "../vil_net" }
+vil_sdk = { version = "0.2", path = "../vil_sdk" }
+vil_obs = { version = "0.2", path = "../vil_obs" }
+vil_viz = { version = "0.2", path = "../vil_viz" }
 clap = { version = "4.4", features = ["derive"] }
 tiny_http = "0.12"
 serde = { version = "1.0", features = ["derive"] }
@@ -27,6 +27,6 @@ colored = "2.0"
 tokio = { version = "1", features = ["full"] }
 notify = { version = "7", features = ["macos_kqueue"] }
 anyhow = "1.0"
-vil_cli_compile = { version = "0.1.0", path = "../vil_cli_compile" }
+vil_cli_compile = { version = "0.2", path = "../vil_cli_compile" }
 rand = "0.8"
 regex = "1"

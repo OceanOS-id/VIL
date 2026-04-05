@@ -14,8 +14,8 @@ description = "N03 — RLHF/DPO Pipeline: preference pairs, dataset management, 
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-vil_sdk = { version = "0.1.0", path = "../vil_sdk" }
-vil_server_core = { version = "0.1.0", path = "../vil_server_core" }
-vil_server = { version = "0.1.0", path = "../vil_server" }
-vil_macros = { version = "0.1.0", path = "../vil_macros" }
+vil_sdk = { version = "0.2", path = "../vil_sdk" }
+vil_server_core = { version = "0.2", path = "../vil_server_core" }
+vil_server = { version = "0.2", path = "../vil_server" }
+vil_macros = { version = "0.2", path = "../vil_macros" }
 axum = { version = "0.7", features = ["macros"] }

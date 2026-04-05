@@ -1,6 +1,6 @@
 [package]
 name = "vil_migrate"
-version = "0.1.0"
+version.workspace = true
 edition = "2021"
 description = "VIL Migration — SQL database migration runner with up/down support"
 repository = "https://github.com/OceanOS-id/VIL"

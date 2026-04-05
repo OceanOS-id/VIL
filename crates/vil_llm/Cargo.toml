@@ -1,6 +1,6 @@
 [package]
 name = "vil_llm"
-version = "0.1.3"
+version.workspace = true
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "VIL LLM Plugin — multi-provider LLM abstraction (chat, streaming, embeddings)"
@@ -10,11 +10,11 @@ documentation = "https://vastar.id/docs/vil"
 readme = "README.md"
 
 [dependencies]
-vil_sdk = { version = "0.1.0", path = "../vil_sdk" }
-vil_server_core = { version = "0.1.0", path = "../vil_server_core" }
-vil_server = { version = "0.1.0", path = "../vil_server" }
-vil_json = { version = "0.1.0", path = "../vil_json" }
-vil_macros = { version = "0.1.0", path = "../vil_macros" }
+vil_sdk = { version = "0.2", path = "../vil_sdk" }
+vil_server_core = { version = "0.2", path = "../vil_server_core" }
+vil_server = { version = "0.2", path = "../vil_server" }
+vil_json = { version = "0.2", path = "../vil_json" }
+vil_macros = { version = "0.2", path = "../vil_macros" }
 vil_log = { workspace = true }
 tracing = { workspace = true }
 
