@@ -172,11 +172,10 @@ async fn place_order(body: ShmSlice) -> Result<VilResponse<OrderConfirmation>, V
 
 /// Check order status by ID.
 /// In production: look up from database or kitchen display system.
-async fn order_status(body: ShmSlice) -> Result<VilResponse<OrderStatus>, VilError> {
-    // For path param extraction, we accept the ID from the URL path
-    let _data = body.as_bytes();
+async fn order_status(Path(id): Path<String>) -> Result<VilResponse<OrderStatus>, VilError> {
+    let order_id = id;
     Ok(VilResponse::ok(OrderStatus {
-        order_id: "7042".into(),
+        order_id,
         status: "cooking — your pizza is in the oven",
         progress_percent: 65,
         estimated_remaining_minutes: 8,
@@ -186,12 +185,13 @@ async fn order_status(body: ShmSlice) -> Result<VilResponse<OrderStatus>, VilErr
 /// Current kitchen status — shows workload and wait times.
 /// Restaurant managers use this to decide if they need more staff.
 async fn kitchen_status() -> VilResponse<KitchenStatus> {
+    // Demo values — in production: query kitchen display system or order queue
     VilResponse::ok(KitchenStatus {
-        orders_in_queue: 5,
-        orders_cooking: 3,
-        chefs_on_duty: 2,
-        avg_wait_minutes: 18,
-        kitchen_load_percent: 75,
+        orders_in_queue: 5,     // demo value
+        orders_cooking: 3,      // demo value
+        chefs_on_duty: 2,       // demo value
+        avg_wait_minutes: 18,   // demo value
+        kitchen_load_percent: 75, // demo value
     })
 }
 

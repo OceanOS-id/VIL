@@ -20,8 +20,8 @@
 //       risk assessment, enriched with collectability categories (kolektabilitas
 //       1-5) and LTV ratios in real-time
 //     Workflow 3 (Inventory) — Product catalog for cross-sell/upsell engine
-//   Sharing one ExchangeHeap means the AI advisor can reference credit data
-//   without network round-trips — zero-copy cross-workflow data access.
+//   All 3 workflows share one VastarRuntimeWorld for SHM allocation,
+//   but without cross-workflow data reads (each workflow is independent).
 //
 // Demonstrates the most advanced multi-workflow pattern: THREE
 // independent workflows running concurrently in a single binary,
@@ -214,9 +214,9 @@ fn configure_inventory_source() -> HttpSourceBuilder {
 // ── Main ────────────────────────────────────────────────────────────────
 
 fn main() {
-    // Single shared ExchangeHeap for ALL three workflows.
-    // Business advantage: the AI advisor workflow can read credit data enriched
-    // by the credit ingest workflow without serialization — zero-copy IPC.
+    // Single shared VastarRuntimeWorld for ALL three workflows.
+    // Workflows share the SHM allocator but do NOT read each other's data —
+    // each workflow is an independent pipeline with its own data flow.
     let world = Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to init VIL SHM Runtime"));
 
     // ── Workflow 1: AI Gateway (SSE) ────────────────────────────────────

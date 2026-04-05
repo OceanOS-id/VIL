@@ -1,0 +1,12 @@
+[package]
+name = "vil-trigger-email"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+vil_trigger_email = { workspace = true }
+vil_trigger_core  = { workspace = true }
+vil_log           = { workspace = true }
+tokio             = { workspace = true }

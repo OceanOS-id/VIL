@@ -1,3 +1,4 @@
+// NOTE: Uses in-memory mock filesystem for demo. Production: wire to real fs.
 // ╔════════════════════════════════════════════════════════════╗
 // ║  403 — DevOps Incident Responder                         ║
 // ╠════════════════════════════════════════════════════════════╣

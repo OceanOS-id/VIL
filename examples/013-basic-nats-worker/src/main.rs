@@ -20,7 +20,7 @@
 // Demonstrates vil_mq_nats integration for NATS Core pub/sub, JetStream
 // persistent streaming, and KV store using the VX Process-Oriented architecture
 // (VilApp + ServiceProcess). The NATS client uses an in-memory implementation, so
-// this example runs without a real NATS server.
+// Requires: NATS server (testsuite: NATS_URL=nats://localhost:19222, or default :4222).
 //
 // Features demonstrated:
 //   - NatsConfig — connection setup with auth options
@@ -416,13 +416,15 @@ async fn kv_demo(ctx: ServiceCtx) -> VilResponse<KvDemoResponse> {
 
 #[tokio::main]
 async fn main() {
-    // Configure NATS connection
-    let nats_cfg = NatsConfig::new("nats://localhost:4222").name("vil-nats-worker");
+    // Configure NATS connection (testsuite: port 19222, default: 4222)
+    let nats_url = std::env::var("NATS_URL")
+        .unwrap_or_else(|_| "nats://localhost:4222".into());
+    let nats_cfg = NatsConfig::new(&nats_url).name("vil-nats-worker");
 
-    // Create NATS client (in-memory implementation — connects without a real server)
+    // Connect to NATS server. Graceful degradation if unreachable.
     let client = NatsClient::connect(nats_cfg.clone())
         .await
-        .expect("NATS client creation should succeed (in-memory mode)");
+        .expect("NATS connection failed — start NATS: cd vil-testsuite/infra && ./up.sh");
 
     // Create JetStream client and register streams.
     // ORDERS stream: captures all order lifecycle events (created, paid, shipped, delivered).

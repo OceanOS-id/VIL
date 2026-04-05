@@ -1,6 +1,6 @@
-# 004 — REST CRUD (Task Management)
+# 004 — REST CRUD (Task Management with SQLite + VilORM)
 
-Full CRUD REST API with in-memory storage using the VX Process-Oriented architecture with ShmSlice body extraction and ServiceCtx state access.
+Full CRUD REST API with **SQLite database via VilORM** (VilEntity derive, VilQuery fluent builder) using the VX Process-Oriented architecture with ShmSlice body extraction and ServiceCtx state access.
 
 | Property | Value |
 |----------|-------|
@@ -28,6 +28,9 @@ DELETE /api/tasks/:id   -> delete
 - `VilError::bad_request()`, `VilError::not_found()` structured errors
 - `#[derive(VilModel)]` for domain types
 - `ServiceProcess::new().state(store)` for dependency injection
+- `#[derive(VilEntity)]` ORM with auto CRUD methods
+- `VilQuery` fluent SQL builder (`.select()`, `.insert_columns()`, `.set_optional()`, `.scalar()`)
+- `SqlxPool::connect()` real SQLite database (not in-memory mock)
 
 ## Run
 

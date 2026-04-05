@@ -7,6 +7,7 @@
 // Feature gate: enable the `wasm` feature to activate the wasmtime runtime.
 // =============================================================================
 
+pub mod bridge;
 pub mod host;
 pub mod pool;
 pub mod runner;

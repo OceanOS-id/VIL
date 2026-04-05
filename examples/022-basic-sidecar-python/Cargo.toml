@@ -8,6 +8,7 @@ publish = false
 [dependencies]
 vil_server = { path = "../../crates/vil_server" }
 vil_server_core = { path = "../../crates/vil_server_core" }
+vil_server_macros = { path = "../../crates/vil_server_macros" }
 vil_sidecar = { path = "../../crates/vil_sidecar" }
 vil_json = { path = "../../crates/vil_json" }
 bytes = "1"

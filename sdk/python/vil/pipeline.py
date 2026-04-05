@@ -66,9 +66,79 @@ def http(url, method="POST", body=None):
 # =============================================================================
 
 
-def sidecar(command, protocol="shm", timeout_ms=5000):
-    """Declare a sidecar handler implementation."""
-    return {"mode": "sidecar", "command": command, "protocol": protocol, "timeout_ms": timeout_ms}
+def sidecar(function, protocol="shm", source=None):
+    """Declare a sidecar handler implementation (Opsi B: function reference).
+
+    If source is omitted, the function is assumed to be in the current file.
+    Only specify source when the handler lives in a different file.
+    """
+    d = {"mode": "sidecar", "function": function, "protocol": protocol}
+    if source:
+        d["source"] = source
+    return d
+
+
+MODE_SIDECAR = "sidecar"
+MODE_WASM = "wasm"
+
+
+def mode_from_env():
+    """Read VIL_MODE env variable. Default: 'sidecar'."""
+    return os.environ.get("VIL_MODE", MODE_SIDECAR)
+
+
+def sidecar_mode():
+    """Return sidecar mode constant."""
+    return MODE_SIDECAR
+
+
+def wasm_mode():
+    """Return wasm mode constant."""
+    return MODE_WASM
+
+
+def activity(mode, protocol="shm"):
+    """Decorator: register a function as a VIL activity (custom business logic).
+
+    VIL handles the endpoint (HTTP, routing, SHM). The activity is called
+    within the endpoint to execute custom business logic via sidecar or wasm.
+
+    Args:
+        mode: use mode_from_env(), sidecar_mode(), or wasm_mode().
+        protocol: used for sidecar mode (e.g. "shm", "http"), ignored for wasm.
+
+    Usage:
+        mode = mode_from_env()
+
+        @activity(mode, protocol="shm")
+        def handle_ingest(body: bytes) -> dict:
+            ...
+
+        svc.endpoint("POST", "/ingest", "ingest", activity=handle_ingest)
+    """
+    import inspect
+
+    def decorator(fn):
+        source_file = inspect.getfile(fn)
+        base = os.path.basename(source_file)
+        if mode == MODE_WASM:
+            fn._vil_activity = {
+                "mode": "wasm",
+                "function": fn.__name__,
+                "module": os.path.splitext(base)[0] + ".wasm",
+            }
+        else:  # sidecar (default)
+            fn._vil_activity = {
+                "mode": "sidecar",
+                "function": fn.__name__,
+                "source": base,
+                "protocol": protocol,
+            }
+        return fn
+    return decorator
+
+# Backward compat alias
+handler = activity
 
 
 def wasm(module, function="handle"):
@@ -178,12 +248,12 @@ def _yaml_events(events, section_name):
     return lines
 
 
-def _yaml_impl(impl_dict, indent=8):
-    """Emit handler impl section as YAML lines."""
+def _yaml_activity(impl_dict, indent=8):
+    """Emit activity section as YAML lines."""
     if not impl_dict:
         return []
     prefix = " " * indent
-    lines = [f"{prefix}impl:"]
+    lines = [f"{prefix}activity:"]
     mode = impl_dict.get("mode", "stub")
     lines.append(f"{prefix}  mode: {mode}")
     if mode == "inline" and impl_dict.get("code"):
@@ -196,12 +266,12 @@ def _yaml_impl(impl_dict, indent=8):
         if impl_dict.get("function"):
             lines.append(f"{prefix}  function: {impl_dict['function']}")
     elif mode == "sidecar":
-        if impl_dict.get("command"):
-            lines.append(f"{prefix}  command: {impl_dict['command']}")
+        if impl_dict.get("source"):
+            lines.append(f"{prefix}  source: {impl_dict['source']}")
+        if impl_dict.get("function"):
+            lines.append(f"{prefix}  function: {impl_dict['function']}")
         if impl_dict.get("protocol"):
             lines.append(f"{prefix}  protocol: {impl_dict['protocol']}")
-        if impl_dict.get("timeout_ms") is not None:
-            lines.append(f"{prefix}  timeout_ms: {impl_dict['timeout_ms']}")
     elif mode == "stub":
         if impl_dict.get("response"):
             lines.append(f"{prefix}  response: '{impl_dict['response']}'")
@@ -527,28 +597,39 @@ class ServiceProcess:
         self._faults_type = None
         self._semantic_types = []
 
-    def endpoint(self, method, path, handler_name=None, impl=None):
+    def endpoint(self, method, path, handler=None, activity=None):
         """Add an endpoint to this service.
 
         Args:
             method: HTTP method (GET, POST, PUT, DELETE).
             path: URL path (appended to prefix).
-            handler_name: Handler function name for codegen.
-            impl: Handler implementation spec from sidecar(), wasm(),
-                  stub(), or inline(). Defaults to stub().
+            handler: Either a string (handler name) or a callable decorated
+                     with @activity(). When callable, handler name and activity
+                     are auto-resolved from the function.
+            activity: Activity spec — a decorated callable or dict from sidecar()/wasm().
+                      VIL handles the endpoint; the activity runs custom business logic.
 
         Returns:
             self for chaining.
         """
-        if handler_name is None:
+        act = activity
+        if callable(handler) and hasattr(handler, "_vil_activity"):
+            handler_name = handler.__name__
+            act = handler._vil_activity
+        elif isinstance(handler, str):
+            handler_name = handler
+        elif handler is None:
             handler_name = path.strip("/").replace("/", "_").replace(":", "")
             if not handler_name:
                 handler_name = "index"
             handler_name = f"{method.lower()}_{handler_name}"
-        self._endpoints.append({
-            "method": method, "path": path, "handler": handler_name,
-            "impl": impl or stub(),
-        })
+        else:
+            handler_name = str(handler)
+
+        ep = {"method": method, "path": path, "handler": handler_name}
+        if act:
+            ep["activity"] = act
+        self._endpoints.append(ep)
         return self
 
     def state(self, type_name):
@@ -628,48 +709,40 @@ class VilServer:
     # ── HTTP method registration ─────────────────────────────────────────
 
     def get(self, path, input=None, output=None, upstream=None,
-            handler=None, exec_class=None):
-        """Register a GET endpoint.
-
-        Args:
-            path: URL path.
-            input: Input schema dict.
-            output: Output schema dict.
-            upstream: Upstream spec (from sse() or http()).
-            handler: Handler function name (auto-generated if None).
-            exec_class: Execution class override.
-
-        Returns:
-            self for chaining.
-        """
+            handler=None, exec_class=None, impl=None):
+        """Register a GET endpoint."""
         self._add_endpoint("GET", path, input, output, upstream,
-                           handler, exec_class)
+                           handler, exec_class, impl)
         return self
 
     def post(self, path, input=None, output=None, upstream=None,
-             handler=None, exec_class=None):
+             handler=None, exec_class=None, impl=None):
         """Register a POST endpoint."""
         self._add_endpoint("POST", path, input, output, upstream,
-                           handler, exec_class)
+                           handler, exec_class, impl)
         return self
 
     def put(self, path, input=None, output=None, upstream=None,
-            handler=None, exec_class=None):
+            handler=None, exec_class=None, impl=None):
         """Register a PUT endpoint."""
         self._add_endpoint("PUT", path, input, output, upstream,
-                           handler, exec_class)
+                           handler, exec_class, impl)
         return self
 
-    def delete(self, path, handler=None, exec_class=None):
+    def delete(self, path, handler=None, exec_class=None, impl=None):
         """Register a DELETE endpoint."""
         self._add_endpoint("DELETE", path, None, None, None,
-                           handler, exec_class)
+                           handler, exec_class, impl)
         return self
 
     def _add_endpoint(self, method, path, input, output, upstream,
-                      handler, exec_class):
+                      handler, exec_class, activity=None):
         """Internal: add an endpoint to the manifest."""
-        if handler is None:
+        act = activity
+        if callable(handler) and hasattr(handler, "_vil_activity"):
+            act = handler._vil_activity
+            handler = handler.__name__
+        elif handler is None:
             slug = path.strip("/").replace("/", "_").replace(":", "")
             if not slug:
                 slug = "index"
@@ -682,6 +755,8 @@ class VilServer:
             "output": _build_schema(output) if output else None,
             "upstream": upstream,
         }
+        if act:
+            ep["activity"] = act
         if exec_class:
             ep["exec_class"] = exec_class
         self._endpoints.append(ep)
@@ -833,6 +908,8 @@ class VilServer:
                 lines.append(f"  - method: {ep['method']}")
                 lines.append(f'    path: "{ep["path"]}"')
                 lines.append(f"    handler: {ep['handler']}")
+                if ep.get("activity"):
+                    lines.extend(_yaml_activity(ep.get("activity"), indent=4))
                 if ep.get("exec_class"):
                     lines.append(f"    exec_class: {ep['exec_class']}")
                 if ep.get("input"):
@@ -879,8 +956,8 @@ class VilServer:
                         lines.append(f"      - method: {ep['method']}")
                         lines.append(f"        path: {ep['path']}")
                         lines.append(f"        handler: {ep['handler']}")
-                        if ep.get("impl"):
-                            lines.extend(_yaml_impl(ep["impl"], indent=8))
+                        if ep.get("activity"):
+                            lines.extend(_yaml_activity(ep.get("activity"), indent=8))
 
         return "\n".join(lines) + "\n"
 
@@ -1005,8 +1082,8 @@ class VilApp:
                     lines.append(f"      - method: {ep['method']}")
                     lines.append(f'        path: "{ep["path"]}"')
                     lines.append(f"        handler: {ep['handler']}")
-                    if ep.get("impl"):
-                        lines.extend(_yaml_impl(ep["impl"], indent=8))
+                    if ep.get("activity"):
+                        lines.extend(_yaml_activity(ep.get("activity"), indent=8))
 
         return "\n".join(lines) + "\n"
 

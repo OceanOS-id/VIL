@@ -143,8 +143,8 @@ fn main() {
         ]
     };
 
-    // Verify that #[process] generated IR builders for both traced stages.
-    // These builders are used by the VIL compiler to emit observability hooks.
+    // Note: #[process] IR builders generated. Pipeline integration pending VX Phase 2.
+    // These builders will be consumed by the VIL compiler to emit observability hooks.
     let _warehouse_ir = WarehouseScanProcess::get_process_builder();
     let _carrier_ir = CarrierHandoffProcess::get_process_builder();
 

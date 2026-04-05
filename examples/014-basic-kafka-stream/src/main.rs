@@ -20,8 +20,7 @@
 //
 // Demonstrates vil_mq_kafka integration for Kafka-based stream processing
 // using the VX Process-Oriented architecture (VilApp + ServiceProcess).
-// The Kafka producer and consumer use in-memory implementations, so this example runs
-// without a real Kafka cluster.
+// Requires: Kafka cluster (testsuite: KAFKA_BROKERS=localhost:19092, or default :9092).
 //
 // Features demonstrated:
 //   - KafkaConfig — broker connection, SASL auth, consumer groups
@@ -232,8 +231,7 @@ async fn kafka_config(ctx: ServiceCtx) -> VilResponse<KafkaConfigResponse> {
                 description: "User notification events".into(),
             },
         ],
-        note: "Stub mode — no real Kafka broker connected. Messages are processed in-memory."
-            .into(),
+        note: "Requires Kafka broker. Testsuite: KAFKA_BROKERS=localhost:19092".into(),
     })
 }
 

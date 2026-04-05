@@ -5,6 +5,12 @@
 // ║  Pattern:  VX_APP                                         ║
 // ║  Token:    N/A (HTTP server)                              ║
 // ║  Features: ShmSlice, VilResponse, SseCollect, RAG semantic║
+// ║            RagQueryEvent, RagFault, RagIndexState          ║
+// ╠════════════════════════════════════════════════════════════╣
+// ║  Business: RAG-powered product documentation search.       ║
+// ║  Every query produces RagQueryEvent (Data Lane) for        ║
+// ║  retrieval quality audit. RagIndexState tracks index       ║
+// ║  health for operations dashboards.                         ║
 // ╚════════════════════════════════════════════════════════════╝
 //
 // Business Context:
@@ -32,6 +38,10 @@
 //   curl -X POST -H "Content-Type: application/json" \
 //     -d '{"prompt": "What is Rust ownership?"}' \
 //     http://localhost:3091/api/rag
+//   curl http://localhost:3091/api/usage
+
+use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 use vil_server::prelude::*;
 
@@ -47,7 +57,6 @@ const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 // In production, these would come from a vector database (e.g., Qdrant,
 // Pinecone) after semantic similarity search. Here we use embedded
 // documents to demonstrate the RAG pattern without external dependencies.
-// Each document represents a page from the product documentation.
 
 const CONTEXT_DOCS: &[&str] = &[
     "[Doc1] Rust is a systems programming language focused on safety, speed, and \
@@ -60,39 +69,53 @@ const CONTEXT_DOCS: &[&str] = &[
 ];
 
 // ── Request / Response ───────────────────────────────────────────────
-// The RAG API: customers ask product questions, get documentation-grounded answers.
 
-// RagRequest: the customer's product question. In a full knowledge base,
-// this would also include product_id, customer_tier, and language preference.
 #[derive(Debug, Deserialize)]
 struct RagRequest {
     prompt: String,
 }
 
-// RagResponse: the AI answer with embedded citations. VilModel enables
-// zero-copy serialization for high-throughput knowledge base queries.
 #[derive(Debug, Clone, Serialize, Deserialize, VilModel)]
 struct RagResponse {
     content: String,
+    chunks_used: u32,
+    latency_ms: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct UsageResponse {
+    total_queries: u64,
+    total_chunks_retrieved: u64,
+    avg_latency_ms: f64,
+    index_doc_count: u64,
+    index_chunk_count: u64,
+}
+
+// ── Shared state ────────────────────────────────────────────────────
+
+struct AppState {
+    index: Mutex<RagIndexState>,
+    total_queries: Mutex<u64>,
+    total_chunks_retrieved: Mutex<u64>,
+    latency_sum_ms: Mutex<f64>,
 }
 
 // ── Handler: RAG query — retrieve context + generate answer ─────────
-// This handler implements the full RAG pipeline:
-// 1. Parse the customer's product question
-// 2. Retrieve relevant documentation (here: all embedded docs)
-// 3. Build a context-augmented prompt with citation instructions
-// 4. Send to LLM for grounded answer generation
-// 5. Return the cited answer to the customer
-//
-// In production, step 2 would use vector similarity search to find
-// only the most relevant documents from thousands of product pages.
 
-async fn rag_handler(body: ShmSlice) -> HandlerResult<VilResponse<RagResponse>> {
-    let req: RagRequest = body.json().expect("invalid JSON body");
+async fn rag_handler(
+    ctx: ServiceCtx,
+    body: ShmSlice,
+) -> HandlerResult<VilResponse<RagResponse>> {
+    let req: RagRequest = body.json()
+        .map_err(|_| VilError::bad_request("invalid JSON"))?;
 
-    // Build the RAG system prompt. The key instruction: "Answer using ONLY
-    // the context documents" prevents hallucination. Citation format [DocN]
-    // enables support agents to verify AI answers against source material.
+    if req.prompt.trim().is_empty() {
+        return Err(VilError::bad_request("prompt is required"));
+    }
+
+    let start = Instant::now();
+
+    // Build the RAG system prompt with context documents.
     let system_prompt = format!(
         "You are a helpful RAG assistant. Answer the user's question using ONLY the \
          context documents below. Cite sources as [DocN].\n\n\
@@ -114,16 +137,12 @@ async fn rag_handler(body: ShmSlice) -> HandlerResult<VilResponse<RagResponse>> 
         "stream": true
     });
 
-    // Read API key from env (empty = simulator mode, no auth needed)
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
 
-    // json_tap for precise SSE content extraction — ensures we only
-    // capture the generated answer text, not metadata or tool calls.
     let mut collector = SseCollect::post_to(UPSTREAM_URL)
         .json_tap("choices[0].delta.content")
         .body(body);
 
-    // Add auth if API key is set (skip for local simulator)
     if !api_key.is_empty() {
         collector = collector.bearer_token(&api_key);
     }
@@ -133,40 +152,80 @@ async fn rag_handler(body: ShmSlice) -> HandlerResult<VilResponse<RagResponse>> 
         .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
-    // Semantic audit: record the RAG query event for observability.
-    // In production, this feeds into dashboards showing:
-    // - Average chunks retrieved per query (knowledge coverage)
-    // - Answer length distribution (quality indicator)
-    // - Latency percentiles (customer experience metric)
-    // - Model usage (cost tracking per knowledge base query)
-    let _event = RagQueryEvent {
-        question: req.prompt,
-        chunks_retrieved: CONTEXT_DOCS.len() as u32,
+    let latency_ms = start.elapsed().as_millis() as u64;
+    let chunks_retrieved = CONTEXT_DOCS.len() as u32;
+
+    // ── Construct RagQueryEvent (from vil_rag::semantic) ──
+    // Semantic audit record for retrieval quality monitoring.
+    let event = RagQueryEvent {
+        question: req.prompt.clone(),
+        chunks_retrieved,
         answer_length: content.len() as u32,
-        latency_ms: 0,
+        latency_ms,
         model: "gpt-4".into(),
     };
 
-    Ok(VilResponse::ok(RagResponse { content }))
+    // ── Update query tracking state ──
+    let state = ctx.state::<Arc<AppState>>()
+        .map_err(|_| VilError::internal("state not found"))?;
+    {
+        *state.total_queries.lock().unwrap() += 1;
+        *state.total_chunks_retrieved.lock().unwrap() += event.chunks_retrieved as u64;
+        *state.latency_sum_ms.lock().unwrap() += event.latency_ms as f64;
+    }
+
+    // Log RAG query for observability
+    eprintln!(
+        "[RAG] query={} chunks={} answer_len={} latency_ms={} model=gpt-4",
+        req.prompt.chars().take(50).collect::<String>(),
+        chunks_retrieved,
+        content.len(),
+        latency_ms,
+    );
+
+    Ok(VilResponse::ok(RagResponse {
+        content,
+        chunks_used: chunks_retrieved,
+        latency_ms,
+    }))
+}
+
+// ── Handler: usage stats ─────────────────────────────────────────────
+// Exposes RagIndexState and query metrics for monitoring dashboards.
+
+async fn usage_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<UsageResponse>> {
+    let state = ctx.state::<Arc<AppState>>()
+        .map_err(|_| VilError::internal("state not found"))?;
+
+    let total_queries = *state.total_queries.lock().unwrap();
+    let total_chunks = *state.total_chunks_retrieved.lock().unwrap();
+    let latency_sum = *state.latency_sum_ms.lock().unwrap();
+    let index = state.index.lock().unwrap();
+
+    let avg_latency_ms = if total_queries > 0 {
+        latency_sum / total_queries as f64
+    } else {
+        0.0
+    };
+
+    Ok(VilResponse::ok(UsageResponse {
+        total_queries,
+        total_chunks_retrieved: total_chunks,
+        avg_latency_ms,
+        index_doc_count: index.doc_count,
+        index_chunk_count: index.chunk_count,
+    }))
 }
 
 // ── Main ─────────────────────────────────────────────────────────────
-// Bootstrap the product knowledge base RAG service.
 
 #[tokio::main]
 async fn main() {
-    // Log semantic type registration — compile-time validation ensures
-    // the RAG service's event/fault/state types are compatible with
-    // the observability infrastructure.
-    let _ = std::any::type_name::<RagQueryEvent>();
-    let _ = std::any::type_name::<RagFault>();
-    let _ = std::any::type_name::<RagIndexState>();
-
-    println!("======================================================================");
-    println!("  Example 024: RAG Service — VilApp (Layer F)");
-    println!("  Semantic: RagQueryEvent / RagFault / RagIndexState");
-    println!("  Context: 3 embedded docs (Rust ownership)");
-    println!("======================================================================");
+    println!("╔══════════════════════════════════════════════════════════════╗");
+    println!("║  025 — RAG Service (VilApp + SseCollect + RAG Semantic)    ║");
+    println!("║  Events: RagQueryEvent | Faults: RagFault                   ║");
+    println!("║  State: RagIndexState (index health tracking)               ║");
+    println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
     println!(
@@ -177,22 +236,36 @@ async fn main() {
             "OPENAI_API_KEY (Bearer)"
         }
     );
-    println!("  Listening on http://localhost:3091/api/rag");
+    println!("  RAG:   http://localhost:3091/api/rag");
+    println!("  Usage: http://localhost:3091/api/usage");
     println!("  Upstream: {} (stream: true)", UPSTREAM_URL);
     println!();
 
+    let app_state = Arc::new(AppState {
+        index: Mutex::new(RagIndexState {
+            doc_count: CONTEXT_DOCS.len() as u64,
+            chunk_count: CONTEXT_DOCS.len() as u64,
+            store_type: "embedded".into(),
+            ..Default::default()
+        }),
+        total_queries: Mutex::new(0),
+        total_chunks_retrieved: Mutex::new(0),
+        latency_sum_ms: Mutex::new(0.0),
+    });
+
     // The "rag" ServiceProcess handles all product knowledge base queries.
-    // Semantic types enable automatic tracking of retrieval quality,
-    // index health, and query fault rates across the product catalog.
     let svc = ServiceProcess::new("rag")
-        .emits::<RagQueryEvent>() // Data lane: query + retrieval metrics
-        .faults::<RagFault>() // Fault lane: retrieval/LLM failures
-        .manages::<RagIndexState>() // Control lane: index health status
+        .emits::<RagQueryEvent>()
+        .faults::<RagFault>()
+        .manages::<RagIndexState>()
         .prefix("/api")
-        .endpoint(Method::POST, "/rag", post(rag_handler));
+        .endpoint(Method::POST, "/rag", post(rag_handler))
+        .endpoint(Method::GET, "/usage", get(usage_handler))
+        .state(app_state);
 
     VilApp::new("rag-service")
         .port(3091)
+        .observer(true)
         .service(svc)
         .run()
         .await;

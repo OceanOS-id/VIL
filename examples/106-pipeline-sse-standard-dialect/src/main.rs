@@ -1,14 +1,14 @@
 // ╔════════════════════════════════════════════════════════════════════════╗
-// ║  106 — IoT Sensor Dashboard (Pipeline SSE Standard Dialect)         ║
+// ║  106 — SSE Standard Dialect Demo (W3C Spec)                         ║
 // ╠════════════════════════════════════════════════════════════════════════╣
 // ║  Pattern:  SDK_PIPELINE                                              ║
 // ║  Token:    ShmToken                                                  ║
 // ║  Features: SseSourceDialect::Standard, done_marker("[END]")          ║
 // ╠════════════════════════════════════════════════════════════════════════╣
-// ║  Business: An IoT gateway collects sensor readings from factory      ║
-// ║  floor devices (temperature, humidity, pressure sensors). The        ║
-// ║  readings stream via standard W3C SSE format to a real-time          ║
-// ║  monitoring dashboard.                                               ║
+// ║  Business: Demonstrates W3C-compliant SSE Standard dialect with      ║
+// ║  done_marker support. Upstream is a banking credit data simulator    ║
+// ║  (not IoT sensors). The SSE pattern itself is domain-agnostic and   ║
+// ║  works with any W3C SSE-compatible source.                           ║
 // ║                                                                      ║
 // ║  Why Standard SSE dialect:                                           ║
 // ║    - W3C spec-compliant: works with any browser's EventSource API   ║
@@ -136,7 +136,7 @@ fn main() {
     };
 
     println!("╔════════════════════════════════════════════════════════════════════════╗");
-    println!("║  106 — IoT Sensor Dashboard (Pipeline SSE Standard Dialect)          ║");
+    println!("║  106 — SSE Standard Dialect Demo (W3C Spec)                          ║");
     println!("╠════════════════════════════════════════════════════════════════════════╣");
     println!("║  Dialect: SseSourceDialect::Standard (W3C SSE — no JSON envelope)    ║");
     println!("║  Done:    [END] marker signals batch completion                      ║");

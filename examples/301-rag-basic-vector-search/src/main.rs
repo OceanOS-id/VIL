@@ -6,9 +6,9 @@
 // ║  Token:    N/A (HTTP server)                              ║
 // ║  Macros:   ShmSlice, ServiceCtx, VilResponse, #[vil_fault]║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Business: Semantic search over internal wiki/docs.        ║
-// ║  Flow: embed query -> cosine similarity -> top-k docs ->  ║
-// ║  augment LLM prompt with context -> grounded answer.       ║
+// ║  Business: Keyword-scored retrieval over internal wiki/docs. ║
+// ║  Flow: mock embed -> cosine similarity (mock embeddings) -> ║
+// ║  top-k docs -> augment LLM prompt -> grounded answer.       ║
 // ║  Reduces time-to-answer for engineering questions from     ║
 // ║  minutes (manual search) to seconds (RAG-powered).        ║
 // ╚════════════════════════════════════════════════════════════╝

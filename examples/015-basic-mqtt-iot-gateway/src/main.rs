@@ -23,7 +23,7 @@
 // the VX Process-Oriented architecture (VilApp + ServiceProcess): REST
 // endpoints receive sensor data and bridge it to MQTT topics, while MQTT
 // subscriptions feed back into the REST API. The MQTT client uses an
-// in-memory implementation, so this example runs without a real MQTT broker.
+// Requires: MQTT broker (testsuite: MQTT_URL=localhost:19883, or default :1883).
 //
 // Features demonstrated:
 //   - MqttConfig — broker connection, QoS levels, TLS, keepalive
@@ -353,7 +353,7 @@ async fn mqtt_config(ctx: ServiceCtx) -> VilResponse<MqttConfigResponse> {
             at_least_once: "Guaranteed delivery — may have duplicates (default)".into(),
             exactly_once: "Guaranteed exactly once — highest overhead".into(),
         },
-        note: "Stub mode — no real MQTT broker connected.".into(),
+        note: "Requires MQTT broker. Testsuite: MQTT_URL=localhost:19883".into(),
     })
 }
 

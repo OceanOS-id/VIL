@@ -138,8 +138,8 @@ async fn place_order(
         quantity: order.quantity,
         amount_cents: order.amount_cents,
         bytes_sent_to_fulfillment: bytes_sent,
-        fulfillment_notified: true,
-        inventory_reserved: true,
+        fulfillment_notified: true,  // ctx.trigger() succeeded (? propagates errors)
+        inventory_reserved: true,   // ctx.control() succeeded (? propagates errors)
     }))
 }
 

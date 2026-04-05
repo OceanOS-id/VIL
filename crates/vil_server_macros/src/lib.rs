@@ -1526,3 +1526,323 @@ pub fn derive_vil_http_error(input: TokenStream) -> TokenStream {
 
     TokenStream::from(expanded)
 }
+
+// =============================================================================
+// #[vil_wasm] — Flag a function for WASM execution
+// =============================================================================
+//
+// Transforms a regular Rust function into a WASM-backed function:
+// - The original function body is preserved for separate WASM compilation
+//   (wasm32-unknown-unknown target)
+// - A bridge function is generated that calls WasmPool at runtime
+// - Developer calls the function like normal; VIL handles all plumbing
+//
+// Usage:
+//   #[vil_wasm(module = "pricing")]
+//   fn calculate_price(base_cents: i32, qty: i32) -> i32 { ... }
+
+struct VilWasmAttr {
+    module: String,
+    pool_size: Option<usize>,
+    timeout_ms: Option<u64>,
+}
+
+impl Parse for VilWasmAttr {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut module = String::new();
+        let mut pool_size = None;
+        let mut timeout_ms = None;
+
+        loop {
+            if input.is_empty() { break; }
+            let ident: Ident = input.parse()?;
+            input.parse::<Token![=]>()?;
+            if ident == "module" {
+                let lit: LitStr = input.parse()?;
+                module = lit.value();
+            } else if ident == "pool_size" {
+                let lit: LitInt = input.parse()?;
+                pool_size = Some(lit.base10_parse()?);
+            } else if ident == "timeout_ms" {
+                let lit: LitInt = input.parse()?;
+                timeout_ms = Some(lit.base10_parse()?);
+            } else {
+                return Err(syn::Error::new_spanned(ident, "expected `module`, `pool_size`, or `timeout_ms`"));
+            }
+            if input.peek(Token![,]) { input.parse::<Token![,]>()?; }
+        }
+        if module.is_empty() {
+            return Err(input.error("vil_wasm requires `module = \"name\"`"));
+        }
+        Ok(VilWasmAttr { module, pool_size, timeout_ms })
+    }
+}
+
+/// Flag a function for WASM sandboxed execution.
+///
+/// The function body is the actual business logic — compiled to WASM separately.
+/// At runtime, VIL generates a bridge that calls WasmPool.
+/// Developer calls the function like normal code.
+///
+/// ```ignore
+/// #[vil_wasm(module = "pricing")]
+/// fn calculate_price(base_cents: i32, qty: i32) -> i32 {
+///     let discount = if qty >= 100 { 20 } else { 0 };
+///     base_cents * qty * (100 - discount) / 100
+/// }
+///
+/// // In handler — called like any function:
+/// let price = calculate_price(1000, 50);
+/// ```
+#[proc_macro_attribute]
+pub fn vil_wasm(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let attrs = parse_macro_input!(attr as VilWasmAttr);
+    let input_fn = parse_macro_input!(item as ItemFn);
+
+    let fn_name = &input_fn.sig.ident;
+    let fn_name_str = fn_name.to_string();
+    let module_name = &attrs.module;
+    let vis = &input_fn.vis;
+    let ret_ty = &input_fn.sig.output;
+
+    let params: Vec<_> = input_fn.sig.inputs.iter().filter_map(|arg| {
+        if let FnArg::Typed(pt) = arg {
+            if let Pat::Ident(pi) = &*pt.pat {
+                return Some((pi.ident.clone(), &*pt.ty));
+            }
+        }
+        None
+    }).collect();
+
+    let param_names: Vec<_> = params.iter().map(|(n, _)| n).collect();
+    let param_types: Vec<_> = params.iter().map(|(_, t)| *t).collect();
+
+    // i32 function detection
+    let is_i32 = params.iter().all(|(_, ty)| quote!(#ty).to_string().trim() == "i32");
+
+    let wasm_body_fn_ident = format_ident!("__vil_wasm_body_{}", fn_name);
+
+    let bridge = if is_i32 && params.len() == 2 {
+        let a0 = &param_names[0];
+        let a1 = &param_names[1];
+        quote! {
+            #vis fn #fn_name(#a0: i32, #a1: i32) #ret_ty {
+                // Try WASM execution; fallback to native body if unavailable
+                if let Some(result) = ::vil_capsule::bridge::try_call_wasm_i32(
+                    #module_name, #fn_name_str, #a0, #a1
+                ) {
+                    result
+                } else {
+                    #wasm_body_fn_ident(#a0, #a1)
+                }
+            }
+        }
+    } else if is_i32 && params.len() == 1 {
+        let a0 = &param_names[0];
+        quote! {
+            #vis fn #fn_name(#a0: i32) #ret_ty {
+                if let Some(result) = ::vil_capsule::bridge::try_call_wasm_i32(
+                    #module_name, #fn_name_str, #a0, 0
+                ) {
+                    result
+                } else {
+                    #wasm_body_fn_ident(#a0)
+                }
+            }
+        }
+    } else {
+        let a0 = &param_names[0];
+        quote! {
+            #vis fn #fn_name(#(#param_names: #param_types),*) #ret_ty {
+                let result = ::vil_capsule::bridge::try_call_wasm_memory(
+                    #module_name, #fn_name_str, #a0
+                );
+                if let Some(bytes) = result {
+                    bytes
+                } else {
+                    #wasm_body_fn_ident(#(#param_names),*)
+                }
+            }
+        }
+    };
+
+    // Preserve original body for WASM compilation
+    let wasm_body_fn = format_ident!("__vil_wasm_body_{}", fn_name);
+    let body = &input_fn.block;
+    let wasm_source = quote! {
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        fn #wasm_body_fn(#(#param_names: #param_types),*) #ret_ty #body
+    };
+
+    // Registration metadata
+    let meta_fn = format_ident!("__vil_wasm_meta_{}", fn_name);
+    let pool_sz = attrs.pool_size.unwrap_or(4);
+    let timeout = attrs.timeout_ms.unwrap_or(5000);
+    let metadata = quote! {
+        #[doc(hidden)]
+        pub fn #meta_fn() -> ::vil_capsule::bridge::WasmFnMeta {
+            ::vil_capsule::bridge::WasmFnMeta {
+                module_name: #module_name,
+                function_name: #fn_name_str,
+                pool_size: #pool_sz,
+                timeout_ms: #timeout,
+            }
+        }
+    };
+
+    TokenStream::from(quote! { #bridge #wasm_source #metadata })
+}
+
+// =============================================================================
+// #[vil_sidecar] — Flag a function for sidecar execution
+// =============================================================================
+//
+// The function body is optional (implementation lives in sidecar source file).
+// A bridge function is generated that calls dispatcher::invoke() via SHM+UDS.
+//
+// Usage:
+//   #[vil_sidecar(target = "fraud-checker", source = "sidecars/fraud.py")]
+//   fn check_fraud(data: &[u8]) -> FraudResult;
+
+struct VilSidecarAttr {
+    target: String,
+    method: Option<String>,
+    source: Option<String>,
+    timeout_ms: Option<u64>,
+}
+
+impl Parse for VilSidecarAttr {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut target = String::new();
+        let mut method = None;
+        let mut source = None;
+        let mut timeout_ms = None;
+
+        loop {
+            if input.is_empty() { break; }
+            let ident: Ident = input.parse()?;
+            input.parse::<Token![=]>()?;
+            if ident == "target" {
+                let lit: LitStr = input.parse()?;
+                target = lit.value();
+            } else if ident == "method" {
+                let lit: LitStr = input.parse()?;
+                method = Some(lit.value());
+            } else if ident == "source" {
+                let lit: LitStr = input.parse()?;
+                source = Some(lit.value());
+            } else if ident == "timeout_ms" {
+                let lit: LitInt = input.parse()?;
+                timeout_ms = Some(lit.base10_parse()?);
+            } else {
+                return Err(syn::Error::new_spanned(ident, "expected `target`, `method`, `source`, or `timeout_ms`"));
+            }
+            if input.peek(Token![,]) { input.parse::<Token![,]>()?; }
+        }
+        if target.is_empty() {
+            return Err(input.error("vil_sidecar requires `target = \"name\"`"));
+        }
+        Ok(VilSidecarAttr { target, method, source, timeout_ms })
+    }
+}
+
+/// Flag a function for sidecar process execution.
+///
+/// Implementation lives in an external source file (Python/Go/Java).
+/// At runtime, VIL generates a bridge that calls dispatcher::invoke().
+/// Developer calls the function like normal async code.
+///
+/// ```ignore
+/// #[vil_sidecar(target = "fraud-checker", source = "sidecars/fraud.py")]
+/// async fn check_fraud(data: &[u8]) -> FraudResult;
+///
+/// // In handler:
+/// let result = check_fraud(&order_bytes).await;
+/// ```
+#[proc_macro_attribute]
+pub fn vil_sidecar(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let attrs = parse_macro_input!(attr as VilSidecarAttr);
+    let input_fn = parse_macro_input!(item as ItemFn);
+
+    let fn_name = &input_fn.sig.ident;
+    let fn_name_str = fn_name.to_string();
+    let target_name = &attrs.target;
+    let method_name = attrs.method.as_deref().unwrap_or(&fn_name_str);
+    let vis = &input_fn.vis;
+    let ret_ty = &input_fn.sig.output;
+
+    let params: Vec<_> = input_fn.sig.inputs.iter().filter_map(|arg| {
+        if let FnArg::Typed(pt) = arg {
+            if let Pat::Ident(pi) = &*pt.pat {
+                return Some((pi.ident.clone(), &*pt.ty));
+            }
+        }
+        None
+    }).collect();
+
+    let param_names: Vec<_> = params.iter().map(|(n, _)| n).collect();
+    let param_types: Vec<_> = params.iter().map(|(_, t)| *t).collect();
+
+    let source_str = attrs.source.as_deref().unwrap_or("");
+    let timeout_val = attrs.timeout_ms.unwrap_or(30000);
+
+    let sidecar_body_fn = format_ident!("__vil_sidecar_body_{}", fn_name);
+    let original_body = &input_fn.block;
+
+    // Bridge: try sidecar, fallback to native body if unavailable
+    let bridge = if params.len() == 1 {
+        let a0 = &param_names[0];
+        quote! {
+            #vis async fn #fn_name(#a0: #(#param_types)*) #ret_ty {
+                ::vil_sidecar::bridge::ensure_target(#target_name, #source_str, #timeout_val);
+                if let Some(result) = ::vil_sidecar::bridge::try_call_sidecar(
+                    #target_name, #method_name, #a0
+                ).await {
+                    result
+                } else {
+                    // Native fallback — run function body directly
+                    #sidecar_body_fn(#a0)
+                }
+            }
+        }
+    } else {
+        quote! {
+            #vis async fn #fn_name(#(#param_names: #param_types),*) #ret_ty {
+                ::vil_sidecar::bridge::ensure_target(#target_name, #source_str, #timeout_val);
+                let __payload = ::serde_json::json!({ #(stringify!(#param_names): #param_names),* });
+                let __bytes = ::serde_json::to_vec(&__payload).expect("serialize");
+                if let Some(result) = ::vil_sidecar::bridge::try_call_sidecar(
+                    #target_name, #method_name, &__bytes
+                ).await {
+                    result
+                } else {
+                    #sidecar_body_fn(#(#param_names),*)
+                }
+            }
+        }
+    };
+
+    // Preserve original body for native fallback
+    let sidecar_source = quote! {
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        fn #sidecar_body_fn(#(#param_names: #param_types),*) #ret_ty #original_body
+    };
+
+    // Registration metadata
+    let meta_fn = format_ident!("__vil_sidecar_meta_{}", fn_name);
+    let metadata = quote! {
+        #[doc(hidden)]
+        pub fn #meta_fn() -> ::vil_sidecar::bridge::SidecarFnMeta {
+            ::vil_sidecar::bridge::SidecarFnMeta {
+                target_name: #target_name,
+                method_name: #method_name,
+                source_file: #source_str,
+                timeout_ms: #timeout_val,
+            }
+        }
+    };
+
+    TokenStream::from(quote! { #bridge #sidecar_source #metadata })
+}

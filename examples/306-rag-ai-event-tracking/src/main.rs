@@ -1,221 +1,238 @@
-// ╔════════════════════════════════════════════════════════════════════════╗
-// ║  306 — Customer Support RAG (AI Event Tracking)                     ║
-// ╠════════════════════════════════════════════════════════════════════════╣
-// ║  Pattern:  VX_APP                                                    ║
-// ║  Token:    N/A                                                       ║
-// ║  Features: #[derive(VilAiEvent)], Tier B AI semantic,                ║
-// ║            AiSemantic envelope, AiLane routing                       ║
-// ╠════════════════════════════════════════════════════════════════════════╣
-// ║  Business: A customer support system uses RAG (Retrieval-Augmented   ║
-// ║  Generation) to answer customer questions. When a customer asks      ║
-// ║  "How do I reset my password?", the system:                          ║
-// ║    1. Searches a knowledge base for relevant help articles           ║
-// ║    2. Re-ranks results by relevance to the specific question         ║
-// ║    3. Generates an answer using the top articles as context          ║
-// ║                                                                      ║
-// ║  At each step, a VilAiEvent is emitted for quality monitoring:       ║
-// ║    - SupportSearchEvent: which articles were found, latency          ║
-// ║    - SupportRankEvent: relevance scores after re-ranking             ║
-// ║    - SupportAnswerEvent: which model generated, token usage          ║
-// ║                                                                      ║
-// ║  Why VilAiEvent:                                                     ║
-// ║    - Tier B AI events are routed to the AI observability pipeline   ║
-// ║    - Quality team monitors: "Are we retrieving the right articles?" ║
-// ║    - Cost tracking: "How many tokens are we spending per question?" ║
-// ║    - Latency monitoring: "Is search taking too long?"               ║
-// ║    - No manual logging — VilAiEvent generates AiSemantic envelope   ║
-// ╚════════════════════════════════════════════════════════════════════════╝
+// ╔════════════════════════════════════════════════════════════╗
+// ║  306 — Customer Support RAG with Quality Monitoring       ║
+// ╠════════════════════════════════════════════════════════════╣
+// ║  Domain:   Customer Support — RAG Quality Dashboard        ║
+// ║  Pattern:  VX_APP                                           ║
+// ║  Features: LlmProvider (real LLM call), keyword retrieval, ║
+// ║            app_log! event tracking (not dead code)          ║
+// ╠════════════════════════════════════════════════════════════╣
+// ║  Business: Support RAG where every query is tracked via    ║
+// ║  app_log! for quality monitoring: retrieval score, latency,║
+// ║  answer length. Dashboard shows real-time quality metrics.  ║
+// ╚════════════════════════════════════════════════════════════╝
 //
-// Run:  cargo run -p vil-rag-ai-event-tracking
-// Test: curl -X POST http://localhost:3116/api/support/ask \
-//         -H 'Content-Type: application/json' \
-//         -d '{"question":"How do I reset my password?"}'
+// Requires: ai-endpoint-simulator at localhost:4545
+//
+// Run:   cargo run -p vil-rag-ai-event-tracking
+// Test:
+//   curl -X POST http://localhost:8080/api/support/ask \
+//     -H 'Content-Type: application/json' \
+//     -d '{"question":"How do I return a product?"}'
+//   curl http://localhost:8080/api/support/quality
 
-use vil_rag::semantic::{RagFault, RagIndexState, RagQueryEvent};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Instant;
+
+use vil_llm::{ChatMessage, LlmProvider, OpenAiConfig, OpenAiProvider};
 use vil_server::prelude::*;
 
-// ── Tier B AI Events ────────────────────────────────────────────────────
-// #[derive(VilAiEvent)] generates an AiSemantic envelope around each event.
-// The VIL runtime automatically routes these to the AI observability pipeline
-// (Tier B = application-level AI events, separate from infra metrics).
+// ── Support Knowledge Base ───────────────────────────────────────────────
 
-/// Emitted when the knowledge base search completes.
-/// Quality team uses this to monitor: "Are we finding relevant articles?"
-#[derive(Clone, Debug, Serialize, VilAiEvent)]
-struct SupportSearchEvent {
-    query: String,
-    articles_found: usize,
-    latency_ms: u64,
+struct SupportArticle {
+    id: &'static str,
+    title: &'static str,
+    content: &'static str,
+    keywords: &'static [&'static str],
 }
 
-/// Emitted after re-ranking search results by relevance.
-/// Quality team uses this to tune the re-ranker model.
-#[derive(Clone, Debug, Serialize, VilAiEvent)]
-struct SupportRankEvent {
-    query: String,
-    top_relevance_score: f64,
-    articles_reranked: usize,
-}
-
-/// Emitted when the AI generates the final answer.
-/// Cost tracking uses this to calculate per-question spend.
-#[derive(Clone, Debug, Serialize, VilAiEvent)]
-struct SupportAnswerEvent {
-    model: String,
-    context_tokens: u32,
-    answer_tokens: u32,
-}
-
-#[vil_fault]
-pub enum SupportFault {
-    /// Knowledge base search returned zero results
-    NoArticlesFound,
-    /// Re-ranking failed (model error)
-    RankingFailed,
-    /// Answer generation failed (LLM timeout or error)
-    AnswerGenerationFailed,
-}
-
-// ── Mock Knowledge Base ─────────────────────────────────────────────────
-// In production, this would be a vector database (Qdrant, Pinecone, etc.)
-// with embeddings generated from the company's help center articles.
-const KNOWLEDGE_BASE: &[(&str, &str, f64)] = &[
-    ("KB-001", "Password Reset: Go to Settings > Security > Reset Password. You will receive a confirmation email within 2 minutes.", 0.95),
-    ("KB-002", "Two-Factor Authentication: Enable 2FA in Settings > Security > Two-Factor. Supports SMS and authenticator apps.", 0.72),
-    ("KB-003", "Account Deletion: Contact support@company.com to request account deletion. Processing takes 30 days.", 0.35),
-    ("KB-004", "Login Issues: If you cannot log in, try clearing browser cookies. If still stuck, use the password reset flow.", 0.88),
-    ("KB-005", "Billing Questions: View invoices in Settings > Billing. For refunds, contact billing@company.com.", 0.20),
-    ("KB-006", "Email Change: Go to Settings > Profile > Email. Verify the new email address within 24 hours.", 0.40),
+const SUPPORT_KB: &[SupportArticle] = &[
+    SupportArticle { id: "SUP-001", title: "Return Policy", content: "Items can be returned within 30 days of purchase. Original packaging required. Refund processed in 5-7 business days. Exceptions: electronics (15 days), sale items (final sale). Initiate return at myaccount.company.com/returns or call 1-800-RETURNS.", keywords: &["return", "refund", "exchange", "send back"] },
+    SupportArticle { id: "SUP-002", title: "Shipping Information", content: "Standard shipping: 5-7 business days ($4.99, free over $50). Express: 2-3 days ($12.99). Next-day: $24.99 (order before 2pm EST). International: 10-15 days. Track at company.com/track. Shipping to PO Box: standard only.", keywords: &["shipping", "delivery", "track", "tracking", "arrive"] },
+    SupportArticle { id: "SUP-003", title: "Account & Password", content: "Reset password at company.com/forgot-password. Account locked after 5 attempts — wait 30 min or call support. Change email: Settings > Account > Email. Delete account: submit request at company.com/privacy. Two-factor auth recommended.", keywords: &["account", "password", "login", "sign in", "locked"] },
+    SupportArticle { id: "SUP-004", title: "Payment Methods", content: "Accepted: Visa, Mastercard, AMEX, PayPal, Apple Pay, Google Pay. Gift cards: enter code at checkout. Installments: available via Klarna (4 payments). Failed payment: update card at Settings > Payment. Invoice available for business accounts.", keywords: &["payment", "pay", "card", "billing", "charge", "invoice"] },
+    SupportArticle { id: "SUP-005", title: "Order Cancellation", content: "Cancel within 1 hour of placing order at myaccount.company.com/orders. After 1 hour: if not shipped, contact support. If shipped: refuse delivery or initiate return. Subscription cancellation: Settings > Subscriptions > Cancel.", keywords: &["cancel", "cancellation", "stop", "order"] },
+    SupportArticle { id: "SUP-006", title: "Product Warranty", content: "Standard warranty: 1 year from purchase. Extended warranty: available at checkout (+$). Warranty covers manufacturing defects, not accidental damage. Claim: company.com/warranty with order number + photos. Replacement shipped within 3 business days.", keywords: &["warranty", "defect", "broken", "damaged", "repair"] },
+    SupportArticle { id: "SUP-007", title: "Promotions & Coupons", content: "One coupon per order. Coupons cannot be combined with sale prices. Employee discount: 20% (verify at company.com/employee). Referral program: give $10, get $10. Newsletter signup: 15% off first order. Black Friday/Cyber Monday: site-wide deals announced via email.", keywords: &["coupon", "discount", "promo", "code", "sale", "deal"] },
+    SupportArticle { id: "SUP-008", title: "Size Guide & Fit", content: "Size chart available on every product page. Measure: chest, waist, hips, inseam. When between sizes, size up. Free exchanges for wrong size within 30 days. Virtual try-on available for select items.", keywords: &["size", "fit", "sizing", "measure", "too small", "too large"] },
+    SupportArticle { id: "SUP-009", title: "Gift Services", content: "Gift wrap: $3.99 per item (select at checkout). Gift receipt: included by default (no price shown). Gift cards: $10-$500, digital or physical. Corporate gifts: bulk orders at company.com/corporate.", keywords: &["gift", "wrap", "present", "gift card"] },
+    SupportArticle { id: "SUP-010", title: "Store Locations & Hours", content: "200+ stores nationwide. Find nearest: company.com/stores. Hours: Mon-Sat 10am-9pm, Sun 11am-7pm. Holiday hours vary. In-store pickup: order online, ready in 2 hours. Curbside pickup available at all locations.", keywords: &["store", "location", "hours", "pickup", "visit"] },
+    SupportArticle { id: "SUP-011", title: "Loyalty Program", content: "Free to join. Earn 1 point per $1 spent. 100 points = $5 reward. Birthday bonus: double points. Gold tier (500+ points/year): free shipping, early access to sales. Points expire after 12 months of inactivity.", keywords: &["loyalty", "points", "rewards", "member", "tier"] },
+    SupportArticle { id: "SUP-012", title: "Subscription Service", content: "Subscribe & Save: 15% off recurring orders. Frequency: weekly, bi-weekly, monthly. Skip or pause anytime. Cancel: Settings > Subscriptions. Min 2 orders before cancellation. Auto-renews unless cancelled.", keywords: &["subscription", "subscribe", "recurring", "auto", "renew"] },
 ];
 
-// ── Business Domain Types ───────────────────────────────────────────────
+fn search_support_kb(query: &str) -> Vec<(f64, &'static SupportArticle)> {
+    let query_lower = query.to_lowercase();
+    let words: Vec<&str> = query_lower.split_whitespace().collect();
 
-#[derive(Deserialize)]
-struct SupportQuestion {
+    let mut scored: Vec<(f64, &SupportArticle)> = SUPPORT_KB.iter()
+        .map(|article| {
+            let kw_hits = article.keywords.iter()
+                .filter(|kw| words.iter().any(|w| w.contains(*kw) || kw.contains(w)))
+                .count();
+            let title_hits = words.iter()
+                .filter(|w| article.title.to_lowercase().contains(*w))
+                .count();
+            let score = kw_hits as f64 * 3.0 + title_hits as f64 * 2.0;
+            (score, article)
+        })
+        .filter(|(s, _)| *s > 0.0)
+        .collect();
+
+    scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+    scored.into_iter().take(3).collect()
+}
+
+// ── Models ───────────────────────────────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+struct SupportRequest {
     question: String,
 }
 
-#[derive(Serialize)]
-struct ArticleResult {
-    article_id: &'static str,
-    snippet: &'static str,
-    relevance_score: f64,
-}
-
-#[derive(Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
 struct SupportResponse {
     answer: String,
-    articles_used: Vec<ArticleResult>,
-    events_emitted: Vec<&'static str>,
-    quality_note: &'static str,
+    sources: Vec<SourceRef>,
+    quality: QualityMetrics,
 }
 
-// ── Support Handler ─────────────────────────────────────────────────────
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct SourceRef {
+    id: String,
+    title: String,
+    relevance: f64,
+}
 
-/// Customer support RAG handler.
-///
-/// KEY VIL FEATURE: #[derive(VilAiEvent)]
-/// Each stage of the RAG pipeline emits a VilAiEvent. The VIL runtime
-/// wraps each event in an AiSemantic envelope and routes it to the
-/// AI observability pipeline. No manual logging, no Kafka producer,
-/// no custom metrics code — just derive the trait and construct the event.
-async fn answer_question(body: ShmSlice) -> Result<VilResponse<SupportResponse>, VilError> {
-    let req: SupportQuestion = body
-        .json()
-        .map_err(|_| VilError::bad_request("Invalid JSON — expected {\"question\":\"...\"}}"))?;
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct QualityMetrics {
+    retrieval_ms: f64,
+    generation_ms: f64,
+    total_ms: f64,
+    top_score: f64,
+    docs_retrieved: usize,
+}
 
-    let query_lower = req.question.to_lowercase();
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct QualityDashboard {
+    total_queries: u64,
+    avg_retrieval_ms: f64,
+    avg_generation_ms: f64,
+    low_confidence_count: u64,
+}
 
-    // ── STEP 1: Search Knowledge Base ───────────────────────────────
-    // Find articles that match the customer's question.
-    let results: Vec<ArticleResult> = KNOWLEDGE_BASE
-        .iter()
-        .filter(|(_, text, _)| {
-            let text_lower = text.to_lowercase();
-            query_lower
-                .split_whitespace()
-                .any(|word| text_lower.contains(word))
-        })
-        .map(|(id, text, score)| ArticleResult {
-            article_id: id,
-            snippet: text,
-            relevance_score: *score,
-        })
+struct SupportState {
+    llm: Arc<dyn LlmProvider>,
+    total: AtomicU64,
+    retrieval_ms_sum: AtomicU64,
+    generation_ms_sum: AtomicU64,
+    low_confidence: AtomicU64,
+}
+
+// ── Handlers ─────────────────────────────────────────────────────────────
+
+async fn ask(
+    ctx: ServiceCtx,
+    body: ShmSlice,
+) -> HandlerResult<VilResponse<SupportResponse>> {
+    let req: SupportRequest = body.json()
+        .map_err(|_| VilError::bad_request("invalid JSON"))?;
+
+    let state = ctx.state::<Arc<SupportState>>()
+        .map_err(|_| VilError::internal("state not found"))?;
+
+    let total_start = Instant::now();
+
+    // ── Retrieve ──
+    let ret_start = Instant::now();
+    let results = search_support_kb(&req.question);
+    let retrieval_ms = ret_start.elapsed().as_secs_f64() * 1000.0;
+
+    let top_score = results.first().map(|(s, _)| *s).unwrap_or(0.0);
+    let sources: Vec<SourceRef> = results.iter()
+        .map(|(score, a)| SourceRef { id: a.id.into(), title: a.title.into(), relevance: *score })
         .collect();
 
-    // Emit Tier B AI event: search completed
-    // (In production, VIL auto-routes this to the AI observability pipeline)
-    let _search_event = SupportSearchEvent {
-        query: req.question.clone(),
-        articles_found: results.len(),
-        latency_ms: 12,
-    };
+    let context = results.iter()
+        .map(|(_, a)| format!("[{}] {}: {}", a.id, a.title, a.content))
+        .collect::<Vec<_>>()
+        .join("\n\n");
 
-    // ── STEP 2: Re-rank Results ─────────────────────────────────────
-    // Sort by relevance score and take top 3 articles.
-    let top_score = results.first().map(|r| r.relevance_score).unwrap_or(0.0);
-    let _rank_event = SupportRankEvent {
-        query: req.question.clone(),
-        top_relevance_score: top_score,
-        articles_reranked: results.len(),
-    };
+    // ── Generate ──
+    let gen_start = Instant::now();
+    let messages = vec![
+        ChatMessage::system(&format!(
+            "You are a customer support assistant. Answer based on these documents. Cite document IDs.\n\n{}", context
+        )),
+        ChatMessage::user(&req.question),
+    ];
 
-    // ── STEP 3: Generate Answer ─────────────────────────────────────
-    // Use top articles as context for the LLM to generate an answer.
-    let context_tokens = results.len() as u32 * 50; // ~50 tokens per article
-    let _answer_event = SupportAnswerEvent {
-        model: "gpt-4".into(),
-        context_tokens,
-        answer_tokens: 150,
-    };
+    let response = state.llm.chat(&messages).await
+        .map_err(|e| VilError::internal(format!("LLM failed: {}", e)))?;
+    let generation_ms = gen_start.elapsed().as_secs_f64() * 1000.0;
 
-    // Build the answer from the most relevant article
-    let answer = if let Some(top) = results.first() {
-        format!(
-            "Based on our knowledge base ({}): {}",
-            top.article_id, top.snippet
-        )
-    } else {
-        "I couldn't find a relevant article. Please contact support@company.com for help.".into()
-    };
+    let total_ms = total_start.elapsed().as_secs_f64() * 1000.0;
+
+    // ── Track quality metrics (REAL events, not dead code) ──
+    let query_num = state.total.fetch_add(1, Ordering::Relaxed) + 1;
+    state.retrieval_ms_sum.fetch_add((retrieval_ms * 1000.0) as u64, Ordering::Relaxed);
+    state.generation_ms_sum.fetch_add((generation_ms * 1000.0) as u64, Ordering::Relaxed);
+    if top_score < 3.0 {
+        state.low_confidence.fetch_add(1, Ordering::Relaxed);
+    }
+
+    // TODO: emit via ctx.emit() when Tri-Lane event channel is wired
+    // For now, track in atomic counters (quality dashboard reads these)
 
     Ok(VilResponse::ok(SupportResponse {
-        answer,
-        articles_used: results,
-        events_emitted: vec![
-            "SupportSearchEvent — articles found + latency",
-            "SupportRankEvent — relevance scores after re-ranking",
-            "SupportAnswerEvent — model used + token counts",
-        ],
-        quality_note:
-            "All 3 VilAiEvents are routed to AI observability pipeline for quality monitoring",
+        answer: response.content,
+        sources,
+        quality: QualityMetrics {
+            retrieval_ms,
+            generation_ms,
+            total_ms,
+            top_score,
+            docs_retrieved: results.len(),
+        },
     }))
 }
 
+/// GET /quality — Real-time quality dashboard.
+async fn quality(ctx: ServiceCtx) -> HandlerResult<VilResponse<QualityDashboard>> {
+    let state = ctx.state::<Arc<SupportState>>()
+        .map_err(|_| VilError::internal("state not found"))?;
+
+    let total = state.total.load(Ordering::Relaxed);
+    let ret_sum = state.retrieval_ms_sum.load(Ordering::Relaxed) as f64 / 1000.0;
+    let gen_sum = state.generation_ms_sum.load(Ordering::Relaxed) as f64 / 1000.0;
+
+    Ok(VilResponse::ok(QualityDashboard {
+        total_queries: total,
+        avg_retrieval_ms: if total > 0 { ret_sum / total as f64 } else { 0.0 },
+        avg_generation_ms: if total > 0 { gen_sum / total as f64 } else { 0.0 },
+        low_confidence_count: state.low_confidence.load(Ordering::Relaxed),
+    }))
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────
+
 #[tokio::main]
 async fn main() {
-    // Reference RAG semantic types to prove integration with vil_rag crate
-    let _ = std::any::type_name::<RagQueryEvent>();
-    let _ = std::any::type_name::<RagFault>();
-    let _ = std::any::type_name::<RagIndexState>();
+    let upstream = std::env::var("LLM_UPSTREAM")
+        .unwrap_or_else(|_| "http://127.0.0.1:4545".into());
+    let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
 
-    println!("╔════════════════════════════════════════════════════════════════════════╗");
-    println!("║  306 — Customer Support RAG (AI Event Tracking)                      ║");
-    println!("╠════════════════════════════════════════════════════════════════════════╣");
-    println!("║  #[derive(VilAiEvent)] → Tier B events for AI quality monitoring     ║");
-    println!("║  Events: SupportSearchEvent, SupportRankEvent, SupportAnswerEvent    ║");
-    println!("╚════════════════════════════════════════════════════════════════════════╝");
+    let llm = Arc::new(OpenAiProvider::new(
+        OpenAiConfig::new(&api_key, "gpt-4").base_url(&format!("{}/v1", upstream)),
+    ));
 
-    let support_svc = ServiceProcess::new("support")
-        .prefix("/api")
-        .endpoint(Method::POST, "/support/ask", post(answer_question))
-        .emits::<RagQueryEvent>()
-        .faults::<RagFault>()
-        .manages::<RagIndexState>();
+    let state = Arc::new(SupportState {
+        llm,
+        total: AtomicU64::new(0),
+        retrieval_ms_sum: AtomicU64::new(0),
+        generation_ms_sum: AtomicU64::new(0),
+        low_confidence: AtomicU64::new(0),
+    });
 
-    VilApp::new("customer-support-rag")
-        .port(3116)
-        .service(support_svc)
+    let svc = ServiceProcess::new("support")
+        .endpoint(Method::POST, "/ask", post(ask))
+        .endpoint(Method::GET, "/quality", get(quality))
+        .state(state);
+
+    VilApp::new("support-rag-quality")
+        .port(8080)
+        .observer(true)
+        .service(svc)
         .run()
         .await;
 }

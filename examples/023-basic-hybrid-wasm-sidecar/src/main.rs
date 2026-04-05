@@ -1,229 +1,224 @@
 // ╔════════════════════════════════════════════════════════════╗
-// ║  023 — Order Validation + ML Pricing Pipeline             ║
+// ║  023 — E-Commerce Order Processing Pipeline               ║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Domain:   E-Commerce — Order Processing Pipeline          ║
+// ║  Domain:   E-Commerce — Full Order Lifecycle               ║
 // ║  Pattern:  VX_APP                                           ║
-// ║  Token:    N/A (HTTP server)                                ║
-// ║  Features: ShmSlice, VilResponse, WASM+Sidecar hybrid     ║
+// ║  Features: #[vil_wasm], #[vil_sidecar], ServiceCtx,       ║
+// ║            ShmSlice, VilResponse, Mixed Execution Modes    ║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Business: Full order lifecycle combining three execution  ║
-// ║  classes in a single pipeline:                              ║
-// ║    1. Native Rust  — order validation (<100us latency)    ║
-// ║    2. WASM FaaS    — price calculation (sandboxed rules)  ║
-// ║    3. Python Sidecar — ML fraud scoring (XGBoost model)   ║
-// ║  Demonstrates that VIL unifies native, WASM, and          ║
-// ║  polyglot workloads under one process-oriented topology.  ║
+// ║  Business: Single POST /order endpoint orchestrating       ║
+// ║  three execution modes within one handler:                  ║
+// ║    1. Native Rust  — order validation                       ║
+// ║    2. #[vil_wasm]  — pricing rules (WASM sandbox)          ║
+// ║    3. #[vil_sidecar] — fraud scoring (process isolation)   ║
+// ║                                                             ║
+// ║  NOTE: This example is pure Rust. In production, native     ║
+// ║  Rust does NOT need WASM or sidecar — those add overhead.   ║
+// ║  This example demonstrates the PATTERN for when you need:   ║
+// ║    - WASM: sandboxed execution of untrusted/hot-deploy code ║
+// ║    - Sidecar: polyglot integration (Python ML, Go service)  ║
+// ║  For pure Rust, use native functions directly (fastest).    ║
 // ╚════════════════════════════════════════════════════════════╝
-// Order Validation + ML Pricing — Native + WASM + Sidecar Mixed Execution
-// =============================================================================
 //
-// Demonstrates the Hybrid execution model where different endpoints use
-// different execution strategies within the same VilApp:
-//
-//   - Native Rust handlers (ExecClass::AsyncTask) — fastest, compiled
-//   - WASM FaaS modules (ExecClass::WasmFaaS) — hot-deployable, sandboxed
-//   - Sidecar processes (ExecClass::SidecarProcess) — polyglot, full runtime
-//
-// Architecture:
-//   ┌─────────────────────────────────────────┐
-//   │              VilApp                    │
-//   │                                         │
-//   │  GET /validate   → [Native Rust]        │
-//   │  POST /price     → [WASM FaaS]          │
-//   │  POST /fraud     → [Sidecar Python]     │
-//   │  POST /order     → [Native Rust]        │
-//   │                                         │
-//   │  Failover: fraud → fraud-backup → WASM  │
-//   └─────────────────────────────────────────┘
-//
-// Endpoints:
-//   GET  /               — pipeline overview with execution classes
-//   GET  /health         — health check
-//   POST /validate       — validate order (Native Rust)
-//   POST /price          — calculate price (WASM FaaS — demo)
-//   POST /fraud          — fraud check (Sidecar — demo)
-//   POST /order          — process order (Native Rust orchestrator)
-//
-// Run:
-//   cargo run -p basic-usage-hybrid-pipeline
-//
+// Run:   cargo run -p vil-basic-hybrid-wasm-sidecar
 // Test:
-//   curl http://localhost:8080/
-//   curl -X POST http://localhost:8080/validate -H 'Content-Type: application/json' -d '{"item":"laptop","qty":1}'
-//   curl -X POST http://localhost:8080/price -H 'Content-Type: application/json' -d '{"item":"laptop","base_price":999.99}'
-//   curl -X POST http://localhost:8080/fraud -H 'Content-Type: application/json' -d '{"amount":5000,"country":"US"}'
-//   curl -X POST http://localhost:8080/order -H 'Content-Type: application/json' -d '{"item":"laptop","qty":1,"amount":999.99}'
+//   curl http://localhost:8080/api/orders/health
+//   curl -X POST http://localhost:8080/api/orders/order \
+//     -H 'Content-Type: application/json' \
+//     -d '{"item":"laptop","qty":5,"base_cents":99999,"customer_id":"C-001"}'
 
-use std::sync::Arc;
-use vil_capsule::{WasmFaaSConfig, WasmFaaSRegistry};
 use vil_server::prelude::*;
-use vil_sidecar::{SidecarConfig, SidecarRegistry};
+use vil_server_macros::{vil_sidecar, vil_wasm};
 
-// ── Domain Models ────────────────────────────────────────────────────────
+// ── Models ───────────────────────────────────────────────────────────────
 
-#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
-struct PipelineInfo {
-    name: String,
-    description: String,
-    endpoints: Vec<EndpointInfo>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
-struct EndpointInfo {
-    path: String,
-    exec_class: String,
-    description: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
-struct ValidationResult {
-    valid: bool,
-    errors: Vec<String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
-struct PriceResult {
+#[derive(Clone, Debug, Deserialize)]
+struct OrderRequest {
     item: String,
-    base_price: f64,
-    final_price: f64,
-    discount_pct: f64,
-    exec_class: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
-struct FraudResult {
-    score: f64,
-    is_fraud: bool,
-    reason: String,
-    exec_class: String,
+    qty: i32,
+    base_cents: i32,
+    customer_id: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
 struct OrderResult {
     order_id: String,
-    status: String,
-    validation: String,
-    pricing: String,
-    fraud: String,
-    exec_class: String,
+    item: String,
+    qty: i32,
+    subtotal_cents: i32,
+    tax_cents: i32,
+    total_cents: i32,
+    fraud_score: f64,
+    fraud_decision: String,
+    execution: ExecutionTrace,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct ExecutionTrace {
+    validate_mode: String,
+    pricing_mode: String,
+    fraud_mode: String,
+    validate_ms: f64,
+    pricing_ms: f64,
+    fraud_ms: f64,
+    total_ms: f64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct FraudScore {
+    score: f64,
+    decision: String,
+    factors: Vec<String>,
+}
+
+// ── WASM Functions ───────────────────────────────────────────────────────
+// Pure Rust business logic flagged for WASM sandbox execution.
+// VIL auto-compiles to .wasm and manages the pool.
+// In production: use this pattern when pricing rules come from
+// untrusted sources or need hot-deployment without server restart.
+
+/// Volume discount pricing engine.
+/// Tiers: qty >= 100 → 20% off, >= 50 → 10%, >= 10 → 5%.
+#[vil_wasm(module = "pricing")]
+fn calculate_price(base_cents: i32, qty: i32) -> i32 {
+    let discount = if qty >= 100 {
+        20 // wholesale
+    } else if qty >= 50 {
+        10 // bulk
+    } else if qty >= 10 {
+        5 // multi-pack
+    } else {
+        0 // retail
+    };
+    let subtotal = base_cents as i64 * qty as i64;
+    (subtotal - subtotal * discount as i64 / 100) as i32
+}
+
+/// Indonesian PPN tax calculation.
+/// tax_bps: basis points (1100 = 11% PPN).
+#[vil_wasm(module = "pricing")]
+fn calculate_tax(price_cents: i32, tax_bps: i32) -> i32 {
+    (price_cents as i64 * tax_bps as i64 / 10000) as i32
+}
+
+// ── Sidecar Function ─────────────────────────────────────────────────────
+// Pure Rust business logic flagged for sidecar (process isolation).
+// VIL auto-spawns as separate process, communicates via SHM+UDS.
+// In production: use this pattern for Python ML models, Go microservices,
+// or any polyglot workload that needs its own runtime.
+
+/// Fraud scoring engine.
+/// Velocity, amount anomaly, high-risk items, new customer detection.
+#[vil_sidecar(target = "fraud-scorer")]
+async fn score_fraud(data: &[u8]) -> FraudScore {
+    let parsed: serde_json::Value = serde_json::from_slice(data).unwrap_or_default();
+    let amount = parsed["amount_cents"].as_i64().unwrap_or(0);
+    let qty = parsed["qty"].as_i64().unwrap_or(1);
+    let item = parsed["item"].as_str().unwrap_or("");
+
+    let mut score: f64 = 0.0;
+    let mut factors = Vec::new();
+
+    // Amount anomaly: > $5,000
+    if amount > 500_000 {
+        score += 25.0;
+        factors.push(format!("high_amount:{}", amount));
+    } else if amount > 200_000 {
+        score += 10.0;
+        factors.push(format!("elevated_amount:{}", amount));
+    }
+
+    // Bulk quantity anomaly
+    if qty > 50 {
+        score += 15.0;
+        factors.push(format!("bulk_qty:{}", qty));
+    }
+
+    // High-risk item categories
+    let high_risk = ["gpu", "gaming-laptop", "iphone-pro", "macbook-pro"];
+    let item_lower = item.to_lowercase();
+    if high_risk.iter().any(|&h| item_lower.contains(h)) {
+        score += 20.0;
+        factors.push(format!("high_risk_item:{}", item));
+    }
+
+    if factors.is_empty() {
+        factors.push("clean".into());
+    }
+
+    let decision = if score > 80.0 {
+        "BLOCK"
+    } else if score > 50.0 {
+        "REVIEW"
+    } else {
+        "PASS"
+    };
+
+    FraudScore {
+        score: score.min(100.0),
+        decision: decision.into(),
+        factors,
+    }
 }
 
 // ── Handlers ─────────────────────────────────────────────────────────────
 
-/// GET / — Pipeline overview
-async fn index() -> VilResponse<PipelineInfo> {
-    VilResponse::ok(PipelineInfo {
-        name: "Hybrid Pipeline Example".into(),
-        description: "Native + WASM + Sidecar mixed execution in one VilApp".into(),
-        endpoints: vec![
-            EndpointInfo {
-                path: "POST /validate".into(),
-                exec_class: "Native (AsyncTask)".into(),
-                description: "Order validation — compiled Rust, fastest".into(),
-            },
-            EndpointInfo {
-                path: "POST /price".into(),
-                exec_class: "WasmFaaS".into(),
-                description: "Pricing rules — hot-deployable WASM module".into(),
-            },
-            EndpointInfo {
-                path: "POST /fraud".into(),
-                exec_class: "SidecarProcess".into(),
-                description: "Fraud scoring — Python ML sidecar via SHM".into(),
-            },
-            EndpointInfo {
-                path: "POST /order".into(),
-                exec_class: "Native (AsyncTask)".into(),
-                description: "Order orchestrator — calls all three above".into(),
-            },
-        ],
-    })
-}
+/// POST /order — Full order lifecycle.
+///
+/// Three execution modes in one handler — called like normal functions.
+/// validate (native) → calculate_price (WASM) → score_fraud (sidecar)
+async fn process_order(
+    _ctx: ServiceCtx,
+    body: ShmSlice,
+) -> HandlerResult<VilResponse<OrderResult>> {
+    let start = std::time::Instant::now();
+    let order: OrderRequest = body
+        .json()
+        .map_err(|_| VilError::bad_request("invalid JSON"))?;
 
-/// POST /validate — Native Rust validation (ExecClass::AsyncTask)
-async fn validate_order(body: ShmSlice) -> VilResponse<ValidationResult> {
-    let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
-    let mut errors = Vec::new();
-
-    if body_json.get("item").and_then(|v| v.as_str()).is_none() {
-        errors.push("missing 'item' field".into());
+    // ── 1. Native validation ──────────────────────────
+    let v_start = std::time::Instant::now();
+    if order.item.trim().is_empty() {
+        return Err(VilError::bad_request("item is required"));
     }
-    if body_json.get("qty").and_then(|v| v.as_u64()).unwrap_or(0) == 0 {
-        errors.push("'qty' must be > 0".into());
+    if order.qty <= 0 {
+        return Err(VilError::bad_request("qty must be > 0"));
+    }
+    if order.base_cents <= 0 {
+        return Err(VilError::bad_request("base_cents must be > 0"));
+    }
+    if order.customer_id.is_empty() {
+        return Err(VilError::bad_request("customer_id is required"));
+    }
+    let v_ms = v_start.elapsed().as_secs_f64() * 1000.0;
+
+    // ── 2. WASM pricing — called like normal functions ──
+    let p_start = std::time::Instant::now();
+    let subtotal = calculate_price(order.base_cents, order.qty);
+    let tax = calculate_tax(subtotal, 1100); // 11% PPN Indonesia
+    let p_ms = p_start.elapsed().as_secs_f64() * 1000.0;
+
+    // ── 3. Sidecar fraud — called like normal async fn ──
+    let f_start = std::time::Instant::now();
+    let fraud_input = serde_json::json!({
+        "customer_id": order.customer_id,
+        "item": order.item,
+        "amount_cents": subtotal + tax,
+        "qty": order.qty,
+    });
+    let fraud = score_fraud(&serde_json::to_vec(&fraud_input).unwrap()).await;
+    let f_ms = f_start.elapsed().as_secs_f64() * 1000.0;
+
+    if fraud.decision == "BLOCK" {
+        return Err(VilError::forbidden(format!(
+            "blocked: score={:.0}, factors={:?}",
+            fraud.score, fraud.factors
+        )));
     }
 
-    VilResponse::ok(ValidationResult {
-        valid: errors.is_empty(),
-        errors,
-    })
-}
-
-/// POST /price — WASM FaaS pricing (demo, ExecClass::WasmFaaS)
-async fn calculate_price(body: ShmSlice) -> VilResponse<PriceResult> {
-    let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
-    let item = body_json
-        .get("item")
-        .and_then(|v| v.as_str())
-        .unwrap_or("unknown");
-    let base = body_json
-        .get("base_price")
-        .and_then(|v| v.as_f64())
-        .unwrap_or(0.0);
-
-    // Demo WASM pricing rules (in production, this calls WasmPool.call())
-    let discount = match item {
-        "laptop" => 0.10,
-        "phone" => 0.05,
-        _ => 0.0,
-    };
-
-    VilResponse::ok(PriceResult {
-        item: item.into(),
-        base_price: base,
-        final_price: base * (1.0 - discount),
-        discount_pct: discount * 100.0,
-        exec_class: "WasmFaaS".into(),
-    })
-}
-
-/// POST /fraud — Sidecar fraud check (demo, ExecClass::SidecarProcess)
-async fn fraud_check(body: ShmSlice) -> VilResponse<FraudResult> {
-    let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
-    let amount = body_json
-        .get("amount")
-        .and_then(|v| v.as_f64())
-        .unwrap_or(0.0);
-    let country = body_json
-        .get("country")
-        .and_then(|v| v.as_str())
-        .unwrap_or("US");
-
-    // Demo sidecar response (in production, this calls dispatcher::invoke())
-    let score = if amount > 10000.0 {
-        0.85
-    } else if country == "XX" {
-        0.7
-    } else {
-        0.15
-    };
-
-    VilResponse::ok(FraudResult {
-        score,
-        is_fraud: score > 0.8,
-        reason: if score > 0.8 {
-            "high_risk".into()
-        } else {
-            "clean".into()
-        },
-        exec_class: "SidecarProcess".into(),
-    })
-}
-
-/// POST /order — Native orchestrator (calls validate + price + fraud)
-async fn process_order(body: ShmSlice) -> VilResponse<OrderResult> {
-    let body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
+    // ── 4. Native finalization ────────────────────────
     let order_id = format!(
-        "ORD-{}",
+        "ORD-{:05}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
@@ -231,43 +226,47 @@ async fn process_order(body: ShmSlice) -> VilResponse<OrderResult> {
             % 100000
     );
 
-    VilResponse::ok(OrderResult {
+    Ok(VilResponse::ok(OrderResult {
         order_id,
-        status: "processed".into(),
-        validation: "passed (Native)".into(),
-        pricing: "calculated (WasmFaaS)".into(),
-        fraud: "scored (SidecarProcess)".into(),
-        exec_class: "Native orchestrator".into(),
-    })
+        item: order.item,
+        qty: order.qty,
+        subtotal_cents: subtotal,
+        tax_cents: tax,
+        total_cents: subtotal + tax,
+        fraud_score: fraud.score,
+        fraud_decision: fraud.decision,
+        execution: ExecutionTrace {
+            validate_mode: "native".into(),
+            pricing_mode: "wasm".into(),
+            fraud_mode: "sidecar".into(),
+            validate_ms: v_ms,
+            pricing_ms: p_ms,
+            fraud_ms: f_ms,
+            total_ms: start.elapsed().as_secs_f64() * 1000.0,
+        },
+    }))
 }
+
+/// GET /health
+async fn health() -> VilResponse<serde_json::Value> {
+    VilResponse::ok(serde_json::json!({
+        "status": "healthy",
+        "service": "hybrid-pipeline",
+    }))
+}
+
+// ── Main — zero plumbing ─────────────────────────────────────────────────
 
 #[tokio::main]
 async fn main() {
-    // WASM FaaS registry
-    let wasm_registry = Arc::new(WasmFaaSRegistry::new());
-    wasm_registry.register(
-        WasmFaaSConfig::new("pricing", vec![0x00, 0x61, 0x73, 0x6d])
-            .pool_size(4)
-            .timeout_ms(5000),
-    );
-
-    // Sidecar registry
-    let sidecar_registry = Arc::new(SidecarRegistry::new());
-    sidecar_registry.register(SidecarConfig::new("fraud-checker").timeout(30000));
-
-    let pipeline = ServiceProcess::new("pipeline")
-        .endpoint(Method::GET, "/", get(index))
-        .endpoint(Method::POST, "/validate", post(validate_order))
-        .endpoint(Method::POST, "/price", post(calculate_price))
-        .endpoint(Method::POST, "/fraud", post(fraud_check))
+    let orders = ServiceProcess::new("orders")
         .endpoint(Method::POST, "/order", post(process_order))
-        .state(wasm_registry)
-        .state(sidecar_registry);
+        .endpoint(Method::GET, "/health", get(health));
 
     VilApp::new("hybrid-pipeline")
         .port(8080)
-        .sidecar(SidecarConfig::new("fraud-checker").timeout(30000))
-        .service(pipeline)
+        .observer(true)
+        .service(orders)
         .run()
         .await;
 }

@@ -1,181 +1,182 @@
 // ╔════════════════════════════════════════════════════════════╗
-// ║  022 — ML Fraud Scoring Sidecar                           ║
+// ║  022 — Credit Scoring Sidecar (Process Isolation)         ║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Domain:   FinTech — Fraud Detection & Prevention          ║
+// ║  Domain:   FinTech — Credit Risk Assessment                ║
 // ║  Pattern:  VX_APP                                           ║
-// ║  Token:    N/A (HTTP server)                                ║
-// ║  Features: ShmSlice, ServiceCtx, VilResponse, Sidecar      ║
+// ║  Features: #[vil_sidecar], ServiceCtx, ShmSlice            ║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Business: Real-time fraud scoring for payment             ║
-// ║  transactions. Python sidecar runs ML models (XGBoost,    ║
-// ║  scikit-learn) trained on historical fraud patterns.       ║
-// ║  Rust host manages HTTP routing and SHM transport;         ║
-// ║  Python sidecar performs inference. SHM bridge avoids      ║
-// ║  serialization overhead for large transaction batches.     ║
+// ║  Business: Credit scoring for loan applications.           ║
+// ║  #[vil_sidecar] isolates scoring logic in a separate       ║
+// ║  process — communicates via SHM+UDS zero-copy IPC.         ║
+// ║                                                             ║
+// ║  NOTE: This example is pure Rust. In production, sidecar   ║
+// ║  is for polyglot integration (Python ML, Go service).      ║
+// ║  For pure Rust, use native functions (no sidecar overhead). ║
+// ║  This example demonstrates the PATTERN for when you need   ║
+// ║  process isolation or polyglot workloads.                   ║
 // ╚════════════════════════════════════════════════════════════╝
-// ML Fraud Scoring Sidecar — Python ML Integration
-// =============================================================================
 //
-// Demonstrates the Sidecar execution model:
-//   - SidecarConfig: define sidecar with socket path, SHM size, timeout
-//   - SidecarRegistry: register and manage sidecar connections
-//   - VilApp::sidecar(): register sidecar config in the topology
-//   - ExecClass::SidecarProcess: route endpoints to external processes
-//
-// The sidecar (Python fraud checker) communicates via:
-//   - Unix Domain Socket (descriptors only, ~48 bytes per message)
-//   - /dev/shm/vil_sc_fraud (zero-copy data via mmap)
-//
-// Endpoints:
-//   GET  /                    — server info with sidecar status
-//   GET  /health              — health check
-//   POST /api/fraud/check     — fraud check (routed to Python sidecar)
-//   GET  /api/fraud/status    — sidecar connection status
-//
-// Run:
-//   # Terminal 1: Start the Rust host
-//   cargo run -p basic-usage-sidecar-python
-//
-//   # Terminal 2: Start the Python sidecar
-//   python examples-sdk/sidecar/python/fraud_checker.py
-//
+// Run:   cargo run -p basic-usage-sidecar-python
 // Test:
-//   curl http://localhost:8080/
-//   curl http://localhost:8080/api/fraud/status
-//   curl -X POST http://localhost:8080/api/fraud/check \
+//   curl http://localhost:8080/api/credit/health
+//   curl -X POST http://localhost:8080/api/credit/score \
 //     -H 'Content-Type: application/json' \
-//     -d '{"amount": 15000, "merchant_category": "gambling", "country": "US"}'
+//     -d '{"nik":"3201234567890001","income":15000000,"loan_amount":50000000,"employment_years":3,"existing_debt":5000000}'
 
-use std::sync::Arc;
-use vil_server::axum::extract::Extension;
 use vil_server::prelude::*;
-use vil_sidecar::{SidecarConfig, SidecarRegistry};
+use vil_server_macros::vil_sidecar;
 
-#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
-struct ServerInfo {
-    name: String,
-    description: String,
-    sidecars: Vec<SidecarStatus>,
+// ── Models ───────────────────────────────────────────────────────────────
+
+#[derive(Clone, Debug, Deserialize)]
+struct CreditScoreRequest {
+    nik: String,
+    income: i64,
+    loan_amount: i64,
+    employment_years: i32,
+    existing_debt: i64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
-struct SidecarStatus {
-    name: String,
-    health: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
-struct FraudResult {
+struct CreditScoreResult {
+    nik: String,
     score: f64,
-    is_fraud: bool,
-    reason: String,
-    model_version: String,
+    risk_class: String,
+    dti_ratio: f64,
+    ltv_ratio: f64,
+    employment_score: f64,
+    recommendation: String,
+    factors: Vec<String>,
 }
 
-async fn index(ctx: ServiceCtx) -> VilResponse<ServerInfo> {
-    let registry = ctx
-        .state::<Arc<SidecarRegistry>>()
-        .expect("SidecarRegistry");
-    let sidecars = registry
-        .status_list()
-        .into_iter()
-        .map(|(name, health)| SidecarStatus {
-            name,
-            health: health.to_string(),
-        })
-        .collect();
+// ── Sidecar Functions ────────────────────────────────────────────────────
+// Process-isolated credit scoring. In production, this would be a Python
+// model (XGBoost/LightGBM) trained on historical loan data.
+// #[vil_sidecar] handles: process spawn, SHM+UDS, invoke, timeout.
 
-    VilResponse::ok(ServerInfo {
-        name: "Sidecar Python Example".into(),
-        description: "Demonstrates Python ML sidecar with SHM zero-copy IPC".into(),
-        sidecars,
-    })
-}
+/// Comprehensive credit scoring — DTI, LTV, employment stability,
+/// combined weighted score → risk classification.
+#[vil_sidecar(target = "credit-scorer")]
+async fn score_credit(data: &[u8]) -> CreditScoreResult {
+    let req: CreditScoreRequest = serde_json::from_slice(data).unwrap_or_else(|_| {
+        CreditScoreRequest {
+            nik: String::new(),
+            income: 0,
+            loan_amount: 0,
+            employment_years: 0,
+            existing_debt: 0,
+        }
+    });
 
-async fn fraud_status(ctx: ServiceCtx) -> VilResponse<SidecarStatus> {
-    let registry = ctx
-        .state::<Arc<SidecarRegistry>>()
-        .expect("SidecarRegistry");
-    let health = registry
-        .get("fraud-checker")
-        .map(|e| e.health.to_string())
-        .unwrap_or_else(|| "not_registered".to_string());
+    let mut factors = Vec::new();
 
-    VilResponse::ok(SidecarStatus {
-        name: "fraud-checker".into(),
-        health,
-    })
-}
-
-async fn fraud_check(
-    ctx: ServiceCtx,
-    body: ShmSlice,
-) -> Result<VilResponse<FraudResult>, VilError> {
-    let _body_json: serde_json::Value = body.json().unwrap_or(serde_json::json!({}));
-    let registry = ctx
-        .state::<Arc<SidecarRegistry>>()
-        .expect("SidecarRegistry");
-    // In full integration, this would use:
-    //   dispatcher::invoke(&registry, "fraud-checker", "fraud_check", &data).await
-    //
-    // For this example, we check sidecar status and return a demo response
-    let health = registry
-        .get("fraud-checker")
-        .map(|e| e.health.to_string())
-        .unwrap_or_else(|| "disconnected".to_string());
-
-    if health == "healthy" {
-        // Would invoke sidecar here
-        Err(VilError::internal(
-            "sidecar invoke not yet wired in example",
-        ))
+    // ── Debt-to-Income ratio (weight: 40%) ──
+    let dti = if req.income > 0 {
+        (req.existing_debt + req.loan_amount) as f64 / (req.income as f64 * 12.0)
     } else {
-        // Return fallback response when sidecar not connected
-        let amount = _body_json
-            .get("amount")
-            .and_then(|v| v.as_f64())
-            .unwrap_or(0.0);
-        let score = if amount > 10000.0 { 0.8 } else { 0.2 };
+        1.0
+    };
+    let dti_score = if dti < 0.30 {
+        factors.push("dti:excellent(<30%)".into());
+        100.0
+    } else if dti < 0.40 {
+        factors.push(format!("dti:good({:.0}%)", dti * 100.0));
+        80.0
+    } else if dti < 0.50 {
+        factors.push(format!("dti:moderate({:.0}%)", dti * 100.0));
+        60.0
+    } else {
+        factors.push(format!("dti:high({:.0}%)", dti * 100.0));
+        30.0
+    };
 
-        Ok(VilResponse::ok(FraudResult {
-            score,
-            is_fraud: score > 0.7,
-            reason: format!("fallback (sidecar {})", health),
-            model_version: "fallback-v1.0".into(),
-        }))
+    // ── Loan-to-Value / income coverage (weight: 30%) ──
+    let ltv = if req.income > 0 {
+        req.loan_amount as f64 / (req.income as f64 * 12.0 * 5.0) // 5-year capacity
+    } else {
+        1.0
+    };
+    let ltv_score = if ltv < 0.50 {
+        factors.push("ltv:conservative".into());
+        100.0
+    } else if ltv < 0.80 {
+        factors.push(format!("ltv:moderate({:.0}%)", ltv * 100.0));
+        70.0
+    } else {
+        factors.push(format!("ltv:stretched({:.0}%)", ltv * 100.0));
+        40.0
+    };
+
+    // ── Employment stability (weight: 30%) ──
+    let emp_score = if req.employment_years >= 5 {
+        factors.push(format!("employment:stable({}yr)", req.employment_years));
+        100.0
+    } else if req.employment_years >= 2 {
+        factors.push(format!("employment:moderate({}yr)", req.employment_years));
+        70.0
+    } else {
+        factors.push(format!("employment:new({}yr)", req.employment_years));
+        40.0
+    };
+
+    // ── Combined weighted score ──
+    let combined = dti_score * 0.40 + ltv_score * 0.30 + emp_score * 0.30;
+
+    let (risk_class, recommendation) = if combined >= 80.0 {
+        ("A", "Approve — low risk, standard rate")
+    } else if combined >= 65.0 {
+        ("B", "Approve — moderate risk, +1% premium")
+    } else if combined >= 50.0 {
+        ("C", "Review — borderline, require collateral")
+    } else {
+        ("D", "Decline — high risk, insufficient capacity")
+    };
+
+    CreditScoreResult {
+        nik: req.nik,
+        score: combined,
+        risk_class: risk_class.into(),
+        dti_ratio: dti,
+        ltv_ratio: ltv,
+        employment_score: emp_score,
+        recommendation: recommendation.into(),
+        factors,
     }
 }
 
+// ── Handlers ─────────────────────────────────────────────────────────────
+
+/// POST /score — Credit scoring via sidecar-isolated process.
+async fn credit_score(
+    _ctx: ServiceCtx,
+    body: ShmSlice,
+) -> HandlerResult<VilResponse<CreditScoreResult>> {
+    let input_bytes = body.as_bytes();
+    let result = score_credit(input_bytes).await;
+    Ok(VilResponse::ok(result))
+}
+
+/// GET /health
+async fn health() -> VilResponse<serde_json::Value> {
+    VilResponse::ok(serde_json::json!({
+        "status": "healthy",
+        "service": "credit-scorer",
+        "execution_mode": "sidecar (process isolation)",
+    }))
+}
+
+// ── Main — zero plumbing ─────────────────────────────────────────────────
+
 #[tokio::main]
 async fn main() {
-    // Create sidecar registry
-    let registry = Arc::new(SidecarRegistry::new());
-    registry.register(
-        SidecarConfig::new("fraud-checker")
-            .command("python examples-sdk/sidecar/python/fraud_checker.py")
-            .timeout(30000)
-            .shm_size(64 * 1024 * 1024),
-    );
+    let credit = ServiceProcess::new("credit")
+        .endpoint(Method::POST, "/score", post(credit_score))
+        .endpoint(Method::GET, "/health", get(health));
 
-    let fraud_svc = ServiceProcess::new("fraud")
-        .prefix("/api/fraud")
-        .endpoint(Method::GET, "/status", get(fraud_status))
-        .endpoint(Method::POST, "/check", post(fraud_check))
-        .state(registry.clone());
-
-    let root_svc = ServiceProcess::new("root")
-        .endpoint(Method::GET, "/", get(index))
-        .state(registry.clone());
-
-    VilApp::new("sidecar-python-example")
+    VilApp::new("sidecar-credit-scorer")
         .port(8080)
-        .sidecar(
-            SidecarConfig::new("fraud-checker")
-                .command("python examples-sdk/sidecar/python/fraud_checker.py")
-                .timeout(30000),
-        )
-        .service(root_svc)
-        .service(fraud_svc)
+        .observer(true)
+        .service(credit)
         .run()
         .await;
 }

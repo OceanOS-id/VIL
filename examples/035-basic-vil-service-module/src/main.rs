@@ -3,7 +3,7 @@
 // ╠════════════════════════════════════════════════════════════════════════╣
 // ║  Pattern:  VX_APP                                                    ║
 // ║  Token:    N/A                                                       ║
-// ║  Features: vil_app! macro, #[vil_service] module-level declaration   ║
+// ║  Features: vil_app! macro — generates main() with endpoint wiring    ║
 // ╠════════════════════════════════════════════════════════════════════════╣
 // ║  Business: A hospital needs two core services:                       ║
 // ║    1. Patient Registration — new patients fill out intake forms      ║

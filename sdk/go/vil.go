@@ -8,9 +8,12 @@
 package vil
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -282,18 +285,24 @@ func compile(name, yaml string, release bool) {
 // HandlerImpl describes how a handler endpoint is implemented.
 type HandlerImpl struct {
 	Mode      string // "sidecar", "wasm", "stub", "inline"
-	Command   string // sidecar
+	Source    string // sidecar — source file containing the handler
+	Function  string // sidecar/wasm — function name to invoke
 	Protocol  string // sidecar (shm|http)
 	TimeoutMs int    // sidecar
 	Module    string // wasm
-	Function  string // wasm
 	Response  string // stub
 	Code      string // inline
 }
 
-// Sidecar creates a sidecar handler implementation.
-func Sidecar(command string, protocol string, timeoutMs int) HandlerImpl {
-	return HandlerImpl{Mode: "sidecar", Command: command, Protocol: protocol, TimeoutMs: timeoutMs}
+// Sidecar creates a sidecar handler implementation referencing a function in the current file.
+// Source is auto-resolved to the calling file at YAML emission time.
+func Sidecar(function string, protocol string) HandlerImpl {
+	return HandlerImpl{Mode: "sidecar", Function: function, Protocol: protocol}
+}
+
+// SidecarFrom creates a sidecar handler referencing a function in a different source file.
+func SidecarFrom(source string, function string, protocol string) HandlerImpl {
+	return HandlerImpl{Mode: "sidecar", Source: source, Function: function, Protocol: protocol}
 }
 
 // Wasm creates a WASM handler implementation.
@@ -314,13 +323,126 @@ func Inline(code string) HandlerImpl {
 	return HandlerImpl{Mode: "inline", Code: code}
 }
 
-// yamlHandlerImpl emits the impl section for a handler.
-func yamlHandlerImpl(impl *HandlerImpl, indent int) []string {
+// ---------------------------------------------------------------------------
+// VilActivity — custom code registration at activity level (sidecar/wasm)
+// ---------------------------------------------------------------------------
+
+// Mode constants.
+const (
+	ModeSidecar = "sidecar"
+	ModeWasm    = "wasm"
+)
+
+// ModeFromEnv reads VIL_MODE env variable. Default: "sidecar".
+func ModeFromEnv() string {
+	m := os.Getenv("VIL_MODE")
+	if m == "" {
+		return ModeSidecar
+	}
+	return m
+}
+
+// SidecarMode returns the sidecar mode constant.
+func SidecarMode() string { return ModeSidecar }
+
+// WasmMode returns the wasm mode constant.
+func WasmMode() string { return ModeWasm }
+
+// ActivityFunc is the activity function signature (pure business logic).
+type ActivityFunc func(body []byte) interface{}
+
+// VilActivity bundles a custom function with its execution metadata.
+// VIL handles the endpoint (HTTP, routing, SHM). The activity is called
+// within the endpoint to execute custom business logic via sidecar or wasm.
+type VilActivity struct {
+	Name string       // function name (used in YAML + dispatch)
+	Fn   ActivityFunc // the actual business logic
+	Impl HandlerImpl  // sidecar/wasm metadata
+}
+
+// Activity registers a named custom function at activity level.
+//
+// mode: use ModeFromEnv(), SidecarMode(), or WasmMode().
+// protocol: used for sidecar mode (e.g. "shm", "http"), ignored for wasm.
+//
+// Usage:
+//
+//	mode := vil.ModeFromEnv()
+//	var Ingest = vil.Activity("HandleIngest", mode, "shm", handlers.HandleIngest)
+//	svc.Endpoint("POST", "/ingest", "ingest", vil.WithActivity(Ingest))
+func Activity(name string, mode string, protocol string, fn ActivityFunc) *VilActivity {
+	_, file, _, _ := runtime.Caller(1)
+
+	var impl HandlerImpl
+	switch mode {
+	case ModeWasm:
+		base := filepath.Base(file)
+		module := strings.TrimSuffix(base, filepath.Ext(base)) + ".wasm"
+		impl = HandlerImpl{
+			Mode:     ModeWasm,
+			Module:   module,
+			Function: name,
+		}
+	default: // sidecar
+		impl = HandlerImpl{
+			Mode:     ModeSidecar,
+			Source:   filepath.Base(file),
+			Function: name,
+			Protocol: protocol,
+		}
+	}
+
+	return &VilActivity{
+		Name: name,
+		Fn:   fn,
+		Impl: impl,
+	}
+}
+
+// Run dispatches VIL_HANDLER to registered activities (sidecar mode) and exits.
+// In wasm mode or when VIL_HANDLER is not set, this is a no-op.
+//
+//	vil.Run(Ingest, Compute, ShmStats, Benchmark)
+func Run(activities ...*VilActivity) {
+	handlerName := os.Getenv("VIL_HANDLER")
+	if handlerName == "" {
+		return
+	}
+	mode := os.Getenv("VIL_MODE")
+	if mode == ModeWasm {
+		return
+	}
+	var body []byte
+	buf := make([]byte, 4096)
+	for {
+		n, err := os.Stdin.Read(buf)
+		if n > 0 {
+			body = append(body, buf[:n]...)
+		}
+		if err != nil {
+			break
+		}
+	}
+	for _, a := range activities {
+		if a.Name == handlerName {
+			result := a.Fn(body)
+			out, _ := json.Marshal(result)
+			fmt.Println(string(out))
+			os.Exit(0)
+		}
+	}
+	out, _ := json.Marshal(map[string]interface{}{"error": "unknown activity", "name": handlerName})
+	fmt.Println(string(out))
+	os.Exit(1)
+}
+
+// yamlActivity emits the activity section for an endpoint.
+func yamlActivity(impl *HandlerImpl, indent int) []string {
 	if impl == nil {
 		return nil
 	}
 	prefix := strings.Repeat(" ", indent)
-	lines := []string{fmt.Sprintf("%simpl:", prefix)}
+	lines := []string{fmt.Sprintf("%sactivity:", prefix)}
 	lines = append(lines, fmt.Sprintf("%s  mode: %s", prefix, impl.Mode))
 	switch impl.Mode {
 	case "inline":
@@ -338,8 +460,14 @@ func yamlHandlerImpl(impl *HandlerImpl, indent int) []string {
 			lines = append(lines, fmt.Sprintf("%s  function: %s", prefix, impl.Function))
 		}
 	case "sidecar":
-		if impl.Command != "" {
-			lines = append(lines, fmt.Sprintf("%s  command: %s", prefix, impl.Command))
+		source := impl.Source
+		if source == "" {
+			// Auto-resolve: handler is in the current source file
+			source = filepath.Base(os.Args[1]) // os.Args[1] is the input file passed to `go run`
+		}
+		lines = append(lines, fmt.Sprintf("%s  source: %s", prefix, source))
+		if impl.Function != "" {
+			lines = append(lines, fmt.Sprintf("%s  function: %s", prefix, impl.Function))
 		}
 		if impl.Protocol != "" {
 			lines = append(lines, fmt.Sprintf("%s  protocol: %s", prefix, impl.Protocol))
@@ -651,10 +779,10 @@ func (p *VilPipeline) Compile() {
 // ---------------------------------------------------------------------------
 
 type serviceEndpoint struct {
-	Method  string
-	Path    string
-	Handler string
-	Impl    *HandlerImpl
+	Method   string
+	Path     string
+	Handler  string
+	Activity *HandlerImpl // activity-level custom code (sidecar/wasm)
 }
 
 // ServiceProcess is a VX service builder for VilServer.
@@ -683,10 +811,10 @@ func NewServiceProcess(name string) *ServiceProcess {
 // EndpointOpt is a functional option for Endpoint configuration.
 type EndpointOpt func(*serviceEndpoint)
 
-// WithImpl sets the handler implementation for an endpoint.
-func WithImpl(impl HandlerImpl) EndpointOpt {
+// WithActivity sets the activity (custom code) for an endpoint.
+func WithActivity(act *VilActivity) EndpointOpt {
 	return func(ep *serviceEndpoint) {
-		ep.Impl = &impl
+		ep.Activity = &act.Impl
 	}
 }
 
@@ -695,11 +823,19 @@ func WithImpl(impl HandlerImpl) EndpointOpt {
 // Optional EndpointOpt values configure additional endpoint properties.
 func (sp *ServiceProcess) Endpoint(method, path string, args ...interface{}) *ServiceProcess {
 	h := ""
+	var activity *HandlerImpl
 	var opts []EndpointOpt
 	for _, arg := range args {
 		switch v := arg.(type) {
 		case string:
 			h = v
+		case *VilActivity:
+			// Activity-level custom code: auto-resolve handler name
+			if h == "" {
+				h = v.Name
+			}
+			cp := v.Impl
+			activity = &cp
 		case EndpointOpt:
 			opts = append(opts, v)
 		}
@@ -716,12 +852,11 @@ func (sp *ServiceProcess) Endpoint(method, path string, args ...interface{}) *Se
 	ep := serviceEndpoint{
 		Method: method, Path: path, Handler: h,
 	}
+	if activity != nil {
+		ep.Activity = activity
+	}
 	for _, opt := range opts {
 		opt(&ep)
-	}
-	if ep.Impl == nil {
-		defaultImpl := Stub("")
-		ep.Impl = &defaultImpl
 	}
 	sp.endpoints = append(sp.endpoints, ep)
 	return sp
@@ -1007,7 +1142,7 @@ func (s *VilServer) ToYaml() string {
 					lines = append(lines, fmt.Sprintf("      - method: %s", ep.Method))
 					lines = append(lines, fmt.Sprintf("        path: %s", ep.Path))
 					lines = append(lines, fmt.Sprintf("        handler: %s", ep.Handler))
-					lines = append(lines, yamlHandlerImpl(ep.Impl, 8)...)
+					lines = append(lines, yamlActivity(ep.Activity, 8)...)
 				}
 			}
 		}

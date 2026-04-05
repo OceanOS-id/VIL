@@ -142,10 +142,10 @@ const FAQ_DOCS: &[FaqDoc] = &[
 
 // ── Relevance Scoring ───────────────────────────────────────────────
 
-/// Score a document against query using keyword overlap.
-/// Business: in production, this would be replaced with vector cosine
-/// similarity (embedding-based). Keyword scoring is used here as a
-/// zero-dependency approximation for the demo.
+/// Score a document against query using keyword overlap (keyword-scored retrieval).
+/// Note: this is keyword matching, not vector/semantic search.
+/// In production, replace with embedding-based cosine similarity
+/// for true semantic search. Keyword scoring suffices for this demo.
 fn keyword_score(query: &str, keywords: &[&str]) -> f64 {
     let q = query.to_lowercase();
     let q_words: Vec<&str> = q.split_whitespace().collect();

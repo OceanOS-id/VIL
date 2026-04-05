@@ -98,6 +98,25 @@ fn configure_source() -> HttpSourceBuilder {
         .format(HttpFormat::NDJSON)
         .transform(|line: &[u8]| {
             let record: serde_json::Value = serde_json::from_slice(line).ok()?;
+
+            // -- Basic Validation (OJK compliance checks) --
+            // NIK must be exactly 16 digits
+            let nik_valid = record["nik"]
+                .as_str()
+                .map(|s| s.len() == 16 && s.chars().all(|c| c.is_ascii_digit()))
+                .unwrap_or(false);
+            // Saldo outstanding must be non-negative
+            let saldo_valid = record["saldo_outstanding"]
+                .as_f64()
+                .map(|v| v >= 0.0)
+                .unwrap_or(false);
+            // Kolektabilitas must be 1-5 (OJK quality rating)
+            let kolek_valid = record["kolektabilitas"]
+                .as_u64()
+                .map(|v| (1..=5).contains(&v))
+                .unwrap_or(false);
+            let validated = nik_valid && saldo_valid && kolek_valid;
+
             // Map to SLIK reporting format (OJK regulatory schema)
             let slik = serde_json::json!({
                 "no_rekening": record["id"],
@@ -112,6 +131,7 @@ fn configure_source() -> HttpSourceBuilder {
                 "tanggal_mulai": record["tanggal_mulai"],
                 "tanggal_jatuh_tempo": record["tanggal_jatuh_tempo"],
                 "_slik_version": "v2.1",
+                "_validated": validated,
             });
             Some(serde_json::to_vec(&slik).unwrap_or_else(|_| line.to_vec()))
         })

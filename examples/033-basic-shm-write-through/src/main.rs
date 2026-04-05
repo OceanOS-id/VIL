@@ -30,6 +30,9 @@
 //         -H 'Content-Type: application/json' \
 //         -d '{"category":"electronics","max_price_cents":100000}'
 //       curl http://localhost:8080/api/catalog/health
+//
+// Note: SHM write-through demonstrated. Sidecar reader is a separate deployment.
+// This example shows the write side only (VilResponse::with_shm).
 
 use vil_server::prelude::*;
 

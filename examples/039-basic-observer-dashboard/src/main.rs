@@ -14,8 +14,7 @@
 //
 // Demonstrates:
 //   - VilApp::observer(true) to enable the dashboard
-//   - MetricsCollector auto-injected as Axum Extension
-//   - system_log! auto-emit on observer API calls
+//   - Built-in observer endpoints (/_vil/dashboard/, /_vil/api/*)
 //   - Zero-copy request body via ShmSlice
 //
 // Run:

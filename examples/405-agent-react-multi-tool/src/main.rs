@@ -2,8 +2,10 @@
 // ║  405 — Autonomous Research Agent                         ║
 // ╠════════════════════════════════════════════════════════════╣
 // ║  Pattern:  VX_APP                                        ║
+// ║  Note:    Tools are simplistic (mock data, basic calc).    ║
+// ║            ReAct loop pattern is real; tools are for demo.  ║
 // ║  Token:    N/A                                           ║
-// ║  Unique:   ReAct LOOP — Think -> Act -> Observe ->       ║
+// ║  Unique:   ReAct LOOP — Think -> Act -> Observe ->        ║
 // ║            Repeat. Multi-step stateful conversation      ║
 // ║            with explicit reasoning trace. Max 5 iters.   ║
 // ║            Full trace included in response.              ║

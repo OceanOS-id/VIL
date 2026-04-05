@@ -4,7 +4,13 @@
 // ║  Domain:   Customer Service / Ticket Deflection           ║
 // ║  Pattern:  VX_APP                                         ║
 // ║  Token:    N/A (HTTP server)                              ║
-// ║  Features: ShmSlice, VilResponse, SseCollect, SseDialect  ║
+// ║  Features: ShmSlice, VilResponse, SseCollect, SseDialect, ║
+// ║            LlmResponseEvent, LlmFault, LlmUsageState     ║
+// ╠════════════════════════════════════════════════════════════╣
+// ║  Business: AI-assisted customer ticket deflection.         ║
+// ║  Every interaction produces LlmResponseEvent (Data Lane)  ║
+// ║  for support quality audit. LlmUsageState tracks          ║
+// ║  cumulative token usage for budget compliance.             ║
 // ╚════════════════════════════════════════════════════════════╝
 //
 // Business Context:
@@ -22,12 +28,6 @@
 //   Customer Portal -> [This Chatbot :3090] -> [LLM Service :4545]
 //                                           -> [Ticket System] (on escalation)
 //
-// Why SseDialect::openai()?
-//   The OpenAI dialect handles the standard streaming format used by
-//   most LLM providers. It automatically parses `data: [DONE]` terminators
-//   and extracts `choices[0].delta.content` from each SSE chunk. This is
-//   the recommended approach when working with OpenAI-compatible APIs.
-//
 // Run:
 //   cargo run -p basic-usage-llm-chat
 //
@@ -35,6 +35,10 @@
 //   curl -X POST -H "Content-Type: application/json" \
 //     -d '{"prompt": "What is Rust?"}' \
 //     http://localhost:3090/api/chat
+//   curl http://localhost:3090/api/usage
+
+use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
 use vil_server::prelude::*;
@@ -47,45 +51,51 @@ const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
 // ── Request / Response ──────────────────────────────────────────────
 // The chatbot API: customers send their question, get an AI-generated answer.
 
-// ChatRequest represents a customer's support query. In a full system,
-// this would also include session_id (for conversation history),
-// customer_tier (for priority routing), and channel (web/mobile/email).
 #[derive(Debug, Deserialize)]
 struct ChatRequest {
     prompt: String,
 }
 
-// ChatResponse carries the AI-generated answer back to the customer.
-// VilModel enables zero-copy serialization for high-throughput
-// customer service portals handling thousands of concurrent sessions.
 #[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
 struct ChatResponse {
     content: String,
+    model: String,
+    prompt_tokens_approx: u32,
+    completion_tokens_approx: u32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct UsageResponse {
+    provider: String,
+    total_requests: u64,
+    total_tokens: u64,
+    total_errors: u64,
+    avg_latency_ms: f64,
+}
+
+// ── Shared state: LlmUsageState from vil_llm::semantic ──────────────
+
+struct AppState {
+    usage: Mutex<LlmUsageState>,
 }
 
 // ── Handler: Process customer query through LLM ──────────────────────
-// This is the core ticket deflection logic:
-// 1. Receive the customer's question
-// 2. Send to LLM with a support-oriented system prompt
-// 3. Stream the response via SSE and collect the full answer
-// 4. Return the answer to the customer portal
-//
-// In production, this handler would also:
-// - Check if the query matches a known FAQ (skip LLM call)
-// - Log the interaction for quality assurance review
-// - Detect escalation signals ("speak to a human", frustration)
-// - Track satisfaction metrics per response
 
-async fn chat_handler(body: ShmSlice) -> HandlerResult<VilResponse<ChatResponse>> {
-    // ShmSlice: zero-copy body extraction from VIL's ExchangeHeap.
-    // Critical for customer service portals during peak hours
-    // (e.g., product launches, outage notifications).
-    let req: ChatRequest = body.json().expect("invalid JSON body");
+async fn chat_handler(
+    ctx: ServiceCtx,
+    body: ShmSlice,
+) -> HandlerResult<VilResponse<ChatResponse>> {
+    let req: ChatRequest = body.json()
+        .map_err(|_| VilError::bad_request("invalid JSON"))?;
 
-    // The system prompt sets the chatbot's persona. In production,
-    // this would be loaded from a prompt registry and A/B tested
-    // for optimal customer satisfaction scores (CSAT).
-    let body = serde_json::json!({
+    if req.prompt.trim().is_empty() {
+        return Err(VilError::bad_request("prompt is required"));
+    }
+
+    let start = Instant::now();
+
+    // The system prompt sets the chatbot's persona.
+    let body_json = serde_json::json!({
         "model": "gpt-4",
         "messages": [
             {"role": "system", "content": "You are a helpful assistant."},
@@ -98,44 +108,77 @@ async fn chat_handler(body: ShmSlice) -> HandlerResult<VilResponse<ChatResponse>
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
 
     // SseCollect with OpenAI dialect: the standard pattern for
-    // consuming streaming LLM responses. The dialect automatically
-    // handles token-by-token extraction and [DONE] detection.
+    // consuming streaming LLM responses.
     let mut collector = SseCollect::post_to(UPSTREAM_URL)
         .dialect(SseDialect::openai())
-        .body(body);
+        .body(body_json);
 
     // Add auth if API key is set (skip for local simulator)
     if !api_key.is_empty() {
         collector = collector.bearer_token(&api_key);
     }
 
-    // Collect the full response. In a ticket deflection system,
-    // the complete answer is needed before sending to the customer
-    // (vs. streaming partial tokens to the UI).
     let content = collector
         .collect_text()
         .await
         .map_err(|e| VilError::internal(e.to_string()))?;
 
-    Ok(VilResponse::ok(ChatResponse { content }))
+    let latency_ms = start.elapsed().as_millis() as u64;
+    let prompt_tokens = req.prompt.split_whitespace().count() as u32;
+    let completion_tokens = content.split_whitespace().count() as u32;
+
+    // ── Construct LlmResponseEvent (from vil_llm::semantic) ──
+    // Semantic audit record — flows on Data Lane.
+    let event = LlmResponseEvent {
+        provider: "openai".into(),
+        model: "gpt-4".into(),
+        prompt_tokens,
+        completion_tokens,
+        total_tokens: prompt_tokens + completion_tokens,
+        latency_ms,
+        finish_reason: "stop".into(),
+        cached: false,
+    };
+
+    // ── Update LlmUsageState (from vil_llm::semantic) ──
+    // Cumulative tracking: total requests, tokens, avg latency.
+    let state = ctx.state::<Arc<AppState>>()
+        .map_err(|_| VilError::internal("state not found"))?;
+    state.usage.lock().unwrap().record(&event);
+
+    Ok(VilResponse::ok(ChatResponse {
+        content,
+        model: event.model,
+        prompt_tokens_approx: prompt_tokens,
+        completion_tokens_approx: completion_tokens,
+    }))
+}
+
+// ── Handler: usage stats ─────────────────────────────────────────────
+// Exposes LlmUsageState for monitoring dashboards.
+
+async fn usage_handler(ctx: ServiceCtx) -> HandlerResult<VilResponse<UsageResponse>> {
+    let state = ctx.state::<Arc<AppState>>()
+        .map_err(|_| VilError::internal("state not found"))?;
+    let usage = state.usage.lock().unwrap();
+
+    Ok(VilResponse::ok(UsageResponse {
+        provider: usage.provider.clone(),
+        total_requests: usage.total_requests,
+        total_tokens: usage.total_tokens,
+        total_errors: usage.total_errors,
+        avg_latency_ms: usage.avg_latency_ms,
+    }))
 }
 
 // ── Main ────────────────────────────────────────────────────────────
-// Bootstrap the customer support chatbot service.
 
 #[tokio::main]
 async fn main() {
-    // Semantic types from vil_llm (compile-time validation).
-    // These ensure the chatbot service correctly participates in
-    // the Tri-Lane protocol for observability and fault handling.
-    let _event = std::any::type_name::<LlmResponseEvent>();
-    let _fault = std::any::type_name::<LlmFault>();
-    let _state = std::any::type_name::<LlmUsageState>();
-
     println!("╔══════════════════════════════════════════════════════════════╗");
-    println!("║  Example 23: LLM Chat (VilApp — Layer F)                  ║");
-    println!("║  Semantic: LlmResponseEvent / LlmFault / LlmUsageState      ║");
-    println!("║  Transport: VilApp + ServiceProcess + SseCollect            ║");
+    println!("║  024 — LLM Chat (VilApp + SseCollect + LLM Semantic)       ║");
+    println!("║  Events: LlmResponseEvent | Faults: LlmFault               ║");
+    println!("║  State: LlmUsageState (cumulative token tracking)           ║");
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
@@ -147,24 +190,33 @@ async fn main() {
             "OPENAI_API_KEY (Bearer)"
         }
     );
-    println!("  Listening on http://localhost:3090/api/chat");
+    println!("  Chat:  http://localhost:3090/api/chat");
+    println!("  Usage: http://localhost:3090/api/usage");
     println!("  Upstream SSE: {}", UPSTREAM_URL);
     println!();
 
+    let app_state = Arc::new(AppState {
+        usage: Mutex::new(LlmUsageState {
+            provider: "openai".into(),
+            ..Default::default()
+        }),
+    });
+
     // The "chat" ServiceProcess handles all customer support interactions.
-    // Semantic declarations enable automatic metrics collection:
-    // - LlmResponseEvent: tracks response quality and latency
-    // - LlmFault: alerts on-call when the LLM backend fails
-    // - LlmUsageState: monitors token consumption against budget
     let svc = ServiceProcess::new("chat")
         .prefix("/api")
         .emits::<LlmResponseEvent>()
         .faults::<LlmFault>()
         .manages::<LlmUsageState>()
-        .endpoint(Method::POST, "/chat", post(chat_handler));
+        .endpoint(Method::POST, "/chat", post(chat_handler))
+        .endpoint(Method::GET, "/usage", get(usage_handler))
+        .state(app_state);
 
     // Port 3090: the customer support chatbot's internal service port.
-    // In production, an API gateway (like example 002) sits in front
-    // of this service to handle auth, rate limiting, and tenant routing.
-    VilApp::new("llm-chat").port(3090).service(svc).run().await;
+    VilApp::new("llm-chat")
+        .port(3090)
+        .observer(true)
+        .service(svc)
+        .run()
+        .await;
 }

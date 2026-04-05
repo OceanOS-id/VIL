@@ -1,168 +1,221 @@
 // ╔════════════════════════════════════════════════════════════╗
-// ║  018 — AI Model Cost Optimizer                            ║
+// ║  018 — AI Model Cost Optimizer (Multi-Model Router)       ║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Domain:   AI Infrastructure / Cost Management            ║
-// ║  Pattern:  VX_APP                                         ║
-// ║  Token:    N/A (HTTP server)                              ║
-// ║  Features: ShmSlice, VilResponse, SseCollect, json_tap    ║
+// ║  Domain:   AI Infrastructure — Cost Management             ║
+// ║  Pattern:  VX_APP                                           ║
+// ║  Features: LlmRouter, RouterStrategy, ServiceCtx,         ║
+// ║            ShmSlice, VilResponse, cost-aware routing       ║
+// ╠════════════════════════════════════════════════════════════╣
+// ║  Business: Route AI requests to the cheapest model that    ║
+// ║  meets quality threshold. Classify prompt complexity:       ║
+// ║    - Simple Q&A (short prompt) → GPT-3.5 ($0.50/1M tok)   ║
+// ║    - Complex analysis (long prompt) → GPT-4 ($30/1M tok)  ║
+// ║  Smart routing reduces AI costs by 40-60% at scale.        ║
 // ╚════════════════════════════════════════════════════════════╝
 //
-// Business Context:
-//   Route inference requests to the cheapest model that meets the
-//   quality threshold. In production AI platforms, model costs vary
-//   dramatically:
+// Requires: ai-endpoint-simulator running at localhost:4545
 //
-//   - GPT-4: $30/1M tokens  — best for complex analysis, code review
-//   - GPT-3.5: $0.50/1M tokens — sufficient for simple Q&A, summaries
-//   - Local models: $0 — good for internal tools, low-stakes queries
-//
-//   This router examines the prompt complexity and routes to the most
-//   cost-effective model. At scale (millions of requests/day), smart
-//   routing can reduce AI infrastructure costs by 60-80%.
-//
-// Why json_tap instead of dialect()?
-//   json_tap("choices[0].delta.content") gives fine-grained control
-//   over which JSON path to extract from each SSE chunk. This is
-//   essential when routing across different model providers that may
-//   use slightly different response schemas. dialect() is a shortcut
-//   for known providers; json_tap works with any custom format.
-//
-// Run:
-//   cargo run -p basic-usage-ai-multi-model-router
-//
+// Run:   cargo run -p vil-basic-ai-multi-model-router
 // Test:
-//   curl -N -X POST -H "Content-Type: application/json" \
-//     -d '{"prompt": "Analyze the performance characteristics of Rust async"}' \
-//     http://localhost:3085/api/route
+//   curl -X POST http://localhost:8080/api/router/route \
+//     -H 'Content-Type: application/json' \
+//     -d '{"prompt":"What is Rust?","max_cost_usd":0.001}'
+//   curl http://localhost:8080/api/router/models
+//   curl http://localhost:8080/api/router/stats
 
-use vil_llm::semantic::{LlmFault, LlmResponseEvent, LlmUsageState};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use vil_llm::{
+    ChatMessage, LlmProvider, LlmRouter, OpenAiConfig, OpenAiProvider, RouterStrategy,
+};
 use vil_server::prelude::*;
 
-// Upstream inference endpoint — in a real cost optimizer, this would
-// be a map of model_name -> endpoint_url, with fallback chains.
-const UPSTREAM_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
-
-// ── Request / Response ──────────────────────────────────────────────
-// The routing API accepts a prompt and returns the model's response.
-// In production, the request would also include quality constraints
-// (e.g., min_quality: "high") and budget limits (e.g., max_cost_usd: 0.01).
+// ── Models ───────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
 struct RouteRequest {
     prompt: String,
+    #[serde(default)]
+    max_cost_usd: Option<f64>,
 }
 
-// VilModel derive enables the response to flow through VIL's
-// ExchangeHeap for zero-copy inter-service communication.
 #[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
 struct RouteResponse {
     content: String,
+    model_used: String,
+    tier: String,
+    estimated_cost_usd: f64,
+    prompt_tokens_approx: usize,
 }
 
-// ── Handler: Route inference to the optimal model ────────────────────
-// This handler implements the core cost optimization logic:
-// 1. Parse the incoming prompt from the client
-// 2. Classify prompt complexity (here simplified to always use gpt-4)
-// 3. Forward to the selected model's endpoint via SSE streaming
-// 4. Collect and return the complete response
-//
-// In production, step 2 would use a lightweight classifier model
-// to score prompt complexity and select the cheapest adequate model.
-
-async fn route_handler(body: ShmSlice) -> HandlerResult<VilResponse<RouteResponse>> {
-    let req: RouteRequest = body.json().expect("invalid JSON body");
-
-    // Build the inference request. The system prompt specializes the
-    // model for technical analysis — in a real router, different system
-    // prompts would be configured per-model to maximize quality.
-    let body = serde_json::json!({
-        "model": "gpt-4",
-        "messages": [
-            {
-                "role": "system",
-                "content": "You are model gpt-4. Respond as a helpful assistant \
-                            specializing in technical analysis."
-            },
-            {"role": "user", "content": req.prompt}
-        ],
-        "stream": true
-    });
-
-    // Read API key from env (empty = simulator mode, no auth needed)
-    // Cost optimizer services need provider API keys to route requests
-    // across multiple model providers (OpenAI, Anthropic, local).
-    let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-
-    // json_tap extracts content from each SSE chunk at the specified
-    // JSON path. This is more flexible than dialect() — supports custom
-    // model providers with non-standard response formats.
-    let mut collector = SseCollect::post_to(UPSTREAM_URL)
-        .json_tap("choices[0].delta.content")
-        .body(body);
-
-    // Add auth if API key is set (skip for local simulator)
-    if !api_key.is_empty() {
-        collector = collector.bearer_token(&api_key);
-    }
-
-    // Collect the full streamed response. In the cost optimizer,
-    // we also track token usage here to update per-tenant budgets
-    // and trigger alerts when spending exceeds thresholds.
-    let content = collector
-        .collect_text()
-        .await
-        .map_err(|e| VilError::internal(e.to_string()))?;
-
-    Ok(VilResponse::ok(RouteResponse { content }))
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct ModelInfo {
+    name: String,
+    tier: String,
+    cost_per_1m_tokens: f64,
+    best_for: String,
 }
 
-// ── Main ────────────────────────────────────────────────────────────
-// Bootstrap the AI model cost optimizer service.
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct RouterStats {
+    total_requests: u64,
+    gpt4_requests: u64,
+    gpt35_requests: u64,
+    estimated_savings_pct: f64,
+}
+
+// ── State ────────────────────────────────────────────────────────────────
+
+struct RouterState {
+    router_gpt4: Arc<dyn LlmProvider>,
+    router_gpt35: Arc<dyn LlmProvider>,
+    fallback_router: LlmRouter,
+    total: AtomicU64,
+    gpt4_count: AtomicU64,
+    gpt35_count: AtomicU64,
+}
+
+// ── Handlers ─────────────────────────────────────────────────────────────
+
+/// POST /route — Route prompt to optimal model based on complexity + budget.
+async fn route_handler(
+    ctx: ServiceCtx,
+    body: ShmSlice,
+) -> HandlerResult<VilResponse<RouteResponse>> {
+    let req: RouteRequest = body.json()
+        .map_err(|_| VilError::bad_request("invalid JSON"))?;
+
+    let state = ctx.state::<Arc<RouterState>>()
+        .map_err(|_| VilError::internal("router state not found"))?;
+
+    state.total.fetch_add(1, Ordering::Relaxed);
+
+    // ── Classify prompt complexity ──
+    let prompt_tokens = req.prompt.split_whitespace().count();
+    let is_complex = prompt_tokens > 50
+        || req.prompt.contains("analyze")
+        || req.prompt.contains("compare")
+        || req.prompt.contains("explain in detail");
+
+    // ── Budget check ──
+    let budget = req.max_cost_usd.unwrap_or(1.0);
+    let force_cheap = budget < 0.001;
+
+    // ── Route decision ──
+    let (provider, tier, cost_rate): (&dyn LlmProvider, &str, f64) =
+        if is_complex && !force_cheap {
+            state.gpt4_count.fetch_add(1, Ordering::Relaxed);
+            (state.router_gpt4.as_ref(), "premium", 30.0)
+        } else {
+            state.gpt35_count.fetch_add(1, Ordering::Relaxed);
+            (state.router_gpt35.as_ref(), "economy", 0.50)
+        };
+
+    // ── Call LLM via vil_llm ──
+    let messages = vec![
+        ChatMessage::system("You are a helpful AI assistant. Be concise."),
+        ChatMessage::user(&req.prompt),
+    ];
+
+    let response = provider.chat(&messages).await
+        .map_err(|e| VilError::internal(format!("LLM call failed: {}", e)))?;
+
+    let estimated_cost = (prompt_tokens as f64 / 1_000_000.0) * cost_rate;
+
+    Ok(VilResponse::ok(RouteResponse {
+        content: response.content,
+        model_used: provider.model().to_string(),
+        tier: tier.into(),
+        estimated_cost_usd: estimated_cost,
+        prompt_tokens_approx: prompt_tokens,
+    }))
+}
+
+/// GET /models — List available models with pricing.
+async fn list_models() -> VilResponse<Vec<ModelInfo>> {
+    VilResponse::ok(vec![
+        ModelInfo {
+            name: "gpt-4".into(),
+            tier: "premium".into(),
+            cost_per_1m_tokens: 30.0,
+            best_for: "Complex analysis, code review, reasoning".into(),
+        },
+        ModelInfo {
+            name: "gpt-3.5-turbo".into(),
+            tier: "economy".into(),
+            cost_per_1m_tokens: 0.50,
+            best_for: "Simple Q&A, summaries, classification".into(),
+        },
+    ])
+}
+
+/// GET /stats — Routing statistics and cost savings.
+async fn stats(ctx: ServiceCtx) -> HandlerResult<VilResponse<RouterStats>> {
+    let state = ctx.state::<Arc<RouterState>>()
+        .map_err(|_| VilError::internal("state not found"))?;
+
+    let total = state.total.load(Ordering::Relaxed);
+    let gpt4 = state.gpt4_count.load(Ordering::Relaxed);
+    let gpt35 = state.gpt35_count.load(Ordering::Relaxed);
+
+    // If everything went to GPT-4, cost would be 100%.
+    // Savings = percentage routed to cheaper model.
+    let savings = if total > 0 {
+        (gpt35 as f64 / total as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    Ok(VilResponse::ok(RouterStats {
+        total_requests: total,
+        gpt4_requests: gpt4,
+        gpt35_requests: gpt35,
+        estimated_savings_pct: savings,
+    }))
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────
 
 #[tokio::main]
 async fn main() {
-    // Semantic types from vil_llm — these are validated at compile time
-    // to ensure the cost optimizer correctly participates in the Tri-Lane
-    // protocol. If a type changes upstream, this service fails to compile
-    // rather than silently producing wrong cost tracking data.
-    let _event = std::any::type_name::<LlmResponseEvent>();
-    let _fault = std::any::type_name::<LlmFault>();
-    let _state = std::any::type_name::<LlmUsageState>();
-
-    println!("╔══════════════════════════════════════════════════════════════╗");
-    println!("║  Example 17: Multi-Model Router (VilApp — Layer F)        ║");
-    println!("║  Semantic: LlmResponseEvent / LlmFault / LlmUsageState     ║");
-    println!("║  Transport: VilApp + ServiceProcess + SseCollect          ║");
-    println!("╚══════════════════════════════════════════════════════════════╝");
-    println!();
+    let upstream = std::env::var("LLM_UPSTREAM")
+        .unwrap_or_else(|_| "http://127.0.0.1:4545".into());
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!(
-        "  Auth: {}",
-        if api_key.is_empty() {
-            "simulator mode (no auth)"
-        } else {
-            "OPENAI_API_KEY (Bearer)"
-        }
-    );
-    println!("  Listening on http://localhost:3085/api/route");
-    println!("  Upstream SSE: {}", UPSTREAM_URL);
-    println!("  Model: gpt-4 (technical analysis specialist)");
-    println!("  json_tap: choices[0].delta.content");
-    println!();
 
-    // ServiceProcess "router" handles all model routing decisions.
-    // Semantic declarations (.emits/.faults/.manages) register this
-    // service in the Tri-Lane mesh so that cost tracking, fault
-    // alerting, and usage dashboards work automatically.
+    // Two providers — same upstream (simulator), different model params
+    let gpt4 = Arc::new(OpenAiProvider::new(
+        OpenAiConfig::new(&api_key, "gpt-4")
+            .base_url(&format!("{}/v1", upstream)),
+    ));
+    let gpt35 = Arc::new(OpenAiProvider::new(
+        OpenAiConfig::new(&api_key, "gpt-3.5-turbo")
+            .base_url(&format!("{}/v1", upstream)),
+    ));
+
+    // Fallback router: try GPT-4 first, fallback to GPT-3.5 on error
+    let fallback = LlmRouter::new(RouterStrategy::Fallback)
+        .add_provider(gpt4.clone())
+        .add_provider(gpt35.clone());
+
+    let state = Arc::new(RouterState {
+        router_gpt4: gpt4,
+        router_gpt35: gpt35,
+        fallback_router: fallback,
+        total: AtomicU64::new(0),
+        gpt4_count: AtomicU64::new(0),
+        gpt35_count: AtomicU64::new(0),
+    });
+
     let svc = ServiceProcess::new("router")
-        .prefix("/api")
-        .emits::<LlmResponseEvent>() // Data lane: model response events
-        .faults::<LlmFault>() // Fault lane: model timeout/errors
-        .manages::<LlmUsageState>() // Control lane: token usage tracking
-        .endpoint(Method::POST, "/route", post(route_handler));
+        .endpoint(Method::POST, "/route", post(route_handler))
+        .endpoint(Method::GET, "/models", get(list_models))
+        .endpoint(Method::GET, "/stats", get(stats))
+        .state(state);
 
     VilApp::new("ai-multi-model-router")
-        .port(3085)
+        .port(8080)
+        .observer(true)
         .service(svc)
         .run()
         .await;

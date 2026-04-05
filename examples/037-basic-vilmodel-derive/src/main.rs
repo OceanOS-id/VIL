@@ -3,8 +3,8 @@
 // ╠════════════════════════════════════════════════════════════════════════╣
 // ║  Pattern:  VX_APP                                                    ║
 // ║  Token:    N/A                                                       ║
-// ║  Features: #[derive(VilModel)], from_shm_bytes(), to_json_bytes(),   ║
-// ║            VilModelTrait — SHM-aware serialization                   ║
+// ║  Features: #[derive(VilModel)], from_shm_bytes(), to_json_bytes()    ║
+// ║            VilModelTrait — SHM-aware serialization (demo)            ║
 // ╠════════════════════════════════════════════════════════════════════════╣
 // ║  Business: An insurance company processes claims submitted by        ║
 // ║  policyholders. Claims arrive as JSON over HTTP, but internally     ║
@@ -14,15 +14,15 @@
 // ║  VilModel enables this by providing:                                 ║
 // ║    - from_shm_bytes(): deserialize directly from SHM region          ║
 // ║      (no copy from network buffer to heap — the struct reads SHM)   ║
-// ║    - to_json_bytes(): serialize to Bytes for mesh forwarding         ║
-// ║      (the bytes can be placed directly into ExchangeHeap)           ║
+// ║    - to_json_bytes(): serialize to JSON Bytes for response/storage   ║
+// ║      (can be placed into ExchangeHeap for co-located services)      ║
 // ║                                                                      ║
-// ║  Flow:                                                               ║
+// ║  Flow (demonstrated in this example):                                ║
 // ║    1. Policyholder POSTs claim JSON via HTTP                         ║
 // ║    2. VilModel::from_shm_bytes() deserializes from ShmSlice         ║
 // ║    3. Business logic validates and processes the claim               ║
-// ║    4. VilModel::to_json_bytes() serializes for mesh forwarding      ║
-// ║    5. Adjuster service reads claim from SHM (zero network hop)      ║
+// ║    4. VilModel::to_json_bytes() serializes for JSON response        ║
+// ║    5. Round-trip proves lossless SHM serialization                   ║
 // ╚════════════════════════════════════════════════════════════════════════╝
 //
 // Run:  cargo run -p vil-basic-vilmodel-derive
@@ -155,7 +155,7 @@ async fn main() {
     println!("║  037 — Insurance Claim Processing (#[derive(VilModel)])              ║");
     println!("╠════════════════════════════════════════════════════════════════════════╣");
     println!("║  from_shm_bytes() → zero-copy deserialization from SHM               ║");
-    println!("║  to_json_bytes()  → serialize to Bytes for mesh forwarding            ║");
+    println!("║  to_json_bytes()  → serialize to JSON Bytes for response              ║");
     println!("║  Round-trip: JSON → SHM → JSON is lossless                           ║");
     println!("╚════════════════════════════════════════════════════════════════════════╝");
 

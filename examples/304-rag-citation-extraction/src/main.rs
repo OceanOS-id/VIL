@@ -6,7 +6,7 @@
 // ║  Token:    N/A (HTTP server)                              ║
 // ║  Macros:   ShmSlice, ServiceCtx, VilResponse, #[vil_fault]║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Business: Generates answers with precise source           ║
+// ║  Business: Generates answers with precise source            ║
 // ║  citations in [DocN] format. Critical for research,        ║
 // ║  legal compliance, and audit scenarios where every claim  ║
 // ║  must be traceable to a specific source document.          ║

@@ -38,21 +38,95 @@ import { UpstreamSpec } from './types';
 /** Describes how a handler endpoint is implemented. */
 export interface HandlerImpl {
   mode: 'sidecar' | 'wasm' | 'stub' | 'inline';
-  command?: string;     // sidecar
+  source?: string;      // sidecar — source file containing handler
   protocol?: string;    // sidecar (shm|http)
-  timeout_ms?: number;  // sidecar
   module?: string;      // wasm
-  function?: string;    // wasm
+  function?: string;    // sidecar/wasm — function name
   response?: string;    // stub
   code?: string;        // inline
 }
 
-/** Create a sidecar handler implementation. */
-export function sidecar(command: string, protocol = 'shm', timeout_ms = 5000): HandlerImpl {
-  return { mode: 'sidecar', command, protocol, timeout_ms };
+export const MODE_SIDECAR = 'sidecar';
+export const MODE_WASM = 'wasm';
+
+/** Read VIL_MODE env variable. Default: 'sidecar'. */
+export function modeFromEnv(): string {
+  return process.env.VIL_MODE || MODE_SIDECAR;
 }
 
-/** Create a WASM handler implementation. */
+/** Return sidecar mode constant. */
+export function sidecarMode(): string { return MODE_SIDECAR; }
+
+/** Return wasm mode constant. */
+export function wasmMode(): string { return MODE_WASM; }
+
+/** Handler function signature. */
+export type HandlerFunc = (body: Buffer) => any;
+
+/** VilHandler bundles a handler function with its implementation metadata. */
+export interface VilHandler {
+  name: string;
+  fn: HandlerFunc;
+  impl: HandlerImpl;
+}
+
+/**
+ * Register a named handler. Mode (sidecar/wasm) determines YAML output.
+ *
+ * @param name - Handler name (used in YAML + dispatch)
+ * @param mode - Use modeFromEnv(), sidecarMode(), or wasmMode()
+ * @param protocol - Used for sidecar mode (e.g. "shm"), ignored for wasm
+ * @param fn - The handler function
+ * @param sourceFile - Source file for YAML (auto-set to caller filename)
+ */
+export function handler(name: string, mode: string, protocol: string, fn: HandlerFunc, sourceFile?: string): VilHandler {
+  const source = sourceFile || getCallerFile();
+  let impl: HandlerImpl;
+  if (mode === MODE_WASM) {
+    const module = source.replace(/\.[^.]+$/, '.wasm');
+    impl = { mode: 'wasm', module, function: name };
+  } else {
+    impl = { mode: 'sidecar', source, function: name, protocol };
+  }
+  return { name, fn, impl };
+}
+
+/** Dispatch VIL_HANDLER to registered handlers (sidecar mode). */
+export function run(...handlers: VilHandler[]): void {
+  const handlerName = process.env.VIL_HANDLER;
+  if (!handlerName) return;
+  const mode = process.env.VIL_MODE || MODE_SIDECAR;
+  if (mode === MODE_WASM) return;
+
+  const chunks: Buffer[] = [];
+  process.stdin.on('data', (chunk) => chunks.push(chunk));
+  process.stdin.on('end', () => {
+    const body = Buffer.concat(chunks);
+    const h = handlers.find(h => h.name === handlerName);
+    if (h) {
+      const result = h.fn(body);
+      console.log(JSON.stringify(result));
+      process.exit(0);
+    } else {
+      console.log(JSON.stringify({ error: 'unknown handler', handler: handlerName }));
+      process.exit(1);
+    }
+  });
+  process.stdin.resume();
+}
+
+function getCallerFile(): string {
+  const p = require('path');
+  // Best-effort: use process.argv[1] as the source file
+  return p.basename(process.argv[1] || 'main.ts');
+}
+
+/** Create a sidecar handler impl (low-level). */
+export function sidecar(fn: string, protocol = 'shm'): HandlerImpl {
+  return { mode: 'sidecar', function: fn, protocol };
+}
+
+/** Create a WASM handler impl (low-level). */
 export function wasm(module: string, fn = 'handle'): HandlerImpl {
   return { mode: 'wasm', module, function: fn };
 }
@@ -86,9 +160,9 @@ function yamlHandlerImpl(impl: HandlerImpl | undefined, indent: number): string[
       if (impl.function) lines.push(`${prefix}  function: ${impl.function}`);
       break;
     case 'sidecar':
-      if (impl.command) lines.push(`${prefix}  command: ${impl.command}`);
+      if (impl.source) lines.push(`${prefix}  source: ${impl.source}`);
+      if (impl.function) lines.push(`${prefix}  function: ${impl.function}`);
       if (impl.protocol) lines.push(`${prefix}  protocol: ${impl.protocol}`);
-      if (impl.timeout_ms != null) lines.push(`${prefix}  timeout_ms: ${impl.timeout_ms}`);
       break;
     case 'stub':
       if (impl.response) lines.push(`${prefix}  response: '${impl.response}'`);
@@ -121,9 +195,16 @@ export class ServiceProcess {
     this.prefix = `/api/${name}`;
   }
 
-  /** Add an endpoint to this service. */
-  endpoint(method: string, path: string, handlerName?: string, impl?: HandlerImpl): this {
-    if (!handlerName) {
+  /** Add an endpoint. Accepts a handler name (string) or a VilHandler object. */
+  endpoint(method: string, path: string, handlerOrName?: string | VilHandler, impl?: HandlerImpl): this {
+    let handlerName: string;
+    if (typeof handlerOrName === 'object' && handlerOrName !== null && 'impl' in handlerOrName) {
+      // VilHandler object
+      handlerName = (handlerOrName as VilHandler).name;
+      impl = (handlerOrName as VilHandler).impl;
+    } else if (typeof handlerOrName === 'string') {
+      handlerName = handlerOrName;
+    } else {
       let slug = path.replace(/^\/+|\/+$/g, '').replace(/\//g, '_').replace(/:/g, '');
       if (!slug) slug = 'index';
       handlerName = `${method.toLowerCase()}_${slug}`;

@@ -1,0 +1,19 @@
+[package]
+name = "vil-agent-multi-agent-orchestration"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+vil_server = { path = "../../crates/vil_server" }
+vil_server_core = { path = "../../crates/vil_server_core" }
+vil_agent = { path = "../../crates/vil_agent" }
+vil_llm = { path = "../../crates/vil_llm" }
+vil_multi_agent = { path = "../../crates/vil_multi_agent" }
+vil_json = { path = "../../crates/vil_json" }
+bytes = "1"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+async-trait = "0.1"

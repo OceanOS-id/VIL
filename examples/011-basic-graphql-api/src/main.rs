@@ -324,13 +324,13 @@ struct GraphQLRequest {
 
 /// POST /api/query — in-memory GraphQL query endpoint.
 /// Parses the query string and returns example data based on detected entity names.
+// Demo: pattern-based query resolution. Production: wire VilSchemaBuilder query compiler.
 async fn graphql_query(body: ShmSlice) -> HandlerResult<VilResponse<QueryResponse>> {
     let req: GraphQLRequest = body.json().expect("invalid JSON body");
     let query_lower = req.query.to_lowercase();
 
-    // InMemory responses based on query content.
-    // In production, VilSchemaBuilder compiles these into real DB queries.
-    // The example data below represents typical catalog query results.
+    // Demo: pattern-based query resolution (matches entity names in query string).
+    // Production: wire VilSchemaBuilder query compiler for real schema execution.
     if query_lower.contains("order") {
         Ok(VilResponse::ok(QueryResponse {
             data: serde_json::json!({

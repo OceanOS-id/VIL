@@ -4,7 +4,7 @@
 // ║  Domain:   Finance — Computation Agent                     ║
 // ║  Pattern:  VX_APP                                        ║
 // ║  Token:    N/A                                           ║
-// ║  Unique:   Simplest agent — single calculator tool with  ║
+// ║  Unique:   Tool schema sent to LLM. Local eval pending.   ║
 // ║            local expression evaluation, no multi-turn    ║
 // ╠════════════════════════════════════════════════════════════╣
 // ║  Business: AI agent for financial computations. Handles   ║
@@ -122,7 +122,8 @@ async fn calc_handler(body: ShmSlice) -> HandlerResult<VilResponse<CalcResponse>
         collector = collector.bearer_token(&api_key);
     }
 
-    // Collect the LLM response — may include calculator tool invocations and results
+    // Note: tool execution via LLM function calling. Local eval pending.
+    // The tool schema is sent to the LLM but tool calls are not executed locally.
     let content = collector
         .collect_text()
         .await

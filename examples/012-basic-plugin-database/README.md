@@ -1,6 +1,6 @@
 # 012 — Plugin Manager + Database
 
-Demonstrates vil_db_sqlx plugin with multi-pool management patterns, SqlxConfig, and simulated queries.
+Demonstrates vil_db_sqlx plugin with real **PostgreSQL + Redis** connections, multi-pool management, VilEntity CRUD, and pool health metrics.
 
 | Property | Value |
 |----------|-------|

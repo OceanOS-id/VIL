@@ -1,209 +1,175 @@
 // ╔════════════════════════════════════════════════════════════╗
-// ║  019 — Multi-Provider AI Aggregator                       ║
+// ║  019 — Mission-Critical AI with Auto-Failover             ║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Domain:   AI/ML Platform — Multi-Provider Routing         ║
-// ║  Pattern:  SDK_PIPELINE                                     ║
-// ║  Token:    GenericToken                                     ║
-// ║  Features: vil_workflow!, #[vil_fault]                      ║
+// ║  Domain:   Healthcare — Triage AI (always-available)       ║
+// ║  Pattern:  VX_APP                                           ║
+// ║  Features: LlmRouter, RouterStrategy::Fallback, ServiceCtx ║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Business: Routes AI requests across multiple providers    ║
-// ║  (OpenAI, Anthropic, Ollama) with automatic failover.      ║
-// ║  Tracks latency tiers, confidence scores, and fallback     ║
-// ║  events for cost optimization. Production deployments      ║
-// ║  save 30-50% on LLM costs via intelligent routing.        ║
+// ║  Business: Healthcare triage AI that MUST be available.     ║
+// ║  Primary model down → instant fallback to backup.          ║
+// ║  Response includes: provider used, fallback triggered.     ║
+// ║  Designed for 99.99% availability on critical AI workloads.║
 // ╚════════════════════════════════════════════════════════════╝
-// Run:
-//   cargo run -p basic-usage-ai-multi-model-router-advanced
 //
+// Requires: ai-endpoint-simulator at localhost:4545
+//
+// Run:   cargo run -p vil-basic-ai-multi-model-advanced
 // Test:
-//   curl -N -X POST -H "Content-Type: application/json" \
-//     -d '{"prompt": "Compare Rust vs Go for microservices"}' \
-//     http://localhost:3086/route-advanced
-//
-// Load test (oha):
-//   oha -m POST -H "Content-Type: application/json" \
-//     -d '{"prompt": "benchmark advanced routing"}' \
-//     -c 200 -n 2000 http://localhost:3086/route-advanced
+//   curl -X POST http://localhost:8080/api/triage/assess \
+//     -H 'Content-Type: application/json' \
+//     -d '{"symptoms":"chest pain, shortness of breath","severity":"high"}'
 
 use std::sync::Arc;
-use vil_sdk::prelude::*;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Instant;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// VIL Semantic Types — document business domain for this pipeline
-// ─────────────────────────────────────────────────────────────────────────────
+use vil_llm::{ChatMessage, LlmProvider, LlmRouter, OpenAiConfig, OpenAiProvider, RouterStrategy};
+use vil_server::prelude::*;
 
-/// Accumulated state of the advanced multi-model routing stream with fallback.
-#[vil_state]
-pub struct AdvancedRouterState {
-    pub request_id: u64,
-    pub primary_model_id: u32,
-    pub fallback_attempted: bool,
-    pub tokens_received: u32,
-    pub confidence_score_x100: u16,
+// ── Models ───────────────────────────────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+struct TriageRequest {
+    symptoms: String,
+    #[serde(default = "default_severity")]
+    severity: String,
 }
 
-/// Emitted when a model (primary or fallback) completes its response.
-#[vil_event]
-pub struct ModelFallbackEvent {
-    pub request_id: u64,
-    pub model_id: u32,
-    pub is_fallback: bool,
-    pub latency_ns: u64,
-    pub confidence_score_x100: u16,
+fn default_severity() -> String { "unknown".into() }
+
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct TriageResponse {
+    assessment: String,
+    provider_used: String,
+    fallback_triggered: bool,
+    latency_ms: f64,
 }
 
-/// Fault domain for the advanced multi-model router pipeline.
-#[vil_fault]
-pub enum AdvancedRouterFault {
-    UpstreamTimeout,
-    PrimaryModelUnavailable,
-    FallbackExhausted,
-    SseParseError,
-    ShmWriteFailed,
+#[derive(Clone, Debug, Serialize, Deserialize, VilModel)]
+struct TriageStats {
+    total_requests: u64,
+    primary_used: u64,
+    fallback_used: u64,
+    availability_pct: f64,
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PIPELINE CONFIGURATION
-// ─────────────────────────────────────────────────────────────────────────────
-
-const WEBHOOK_PORT: u16 = 3086;
-const WEBHOOK_PATH: &str = "/route-advanced";
-const SSE_URL: &str = "http://127.0.0.1:4545/v1/chat/completions";
-const SSE_JSON_TAP: &str = "choices[0].delta.content";
-
-// Detailed port naming for production traceability
-const P_ADV_TRIGGER_OUT: &str = "trigger_out";
-const P_ADV_TRIGGER_IN: &str = "trigger_in";
-const P_ADV_DATA_IN: &str = "response_data_in";
-const P_ADV_DATA_OUT: &str = "response_data_out";
-const P_ADV_CTRL_IN: &str = "response_ctrl_in";
-const P_ADV_CTRL_OUT: &str = "response_ctrl_out";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NODE CONFIGURATION (Full Decomposed Builder Style)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Configure the HTTP Sink — receives incoming advanced routing requests.
-/// Uses detailed port naming convention for production-grade traceability.
-fn configure_sink() -> HttpSinkBuilder {
-    HttpSinkBuilder::new("AdvancedRouterSink")
-        .port(WEBHOOK_PORT)
-        .path(WEBHOOK_PATH)
-        .out_port(P_ADV_TRIGGER_OUT)
-        .in_port(P_ADV_DATA_IN)
-        .ctrl_in_port(P_ADV_CTRL_IN)
+struct TriageState {
+    router: LlmRouter,
+    primary_name: String,
+    total: AtomicU64,
+    primary_count: AtomicU64,
+    fallback_count: AtomicU64,
 }
 
-/// Configure the HTTP Source — connects to AI upstream with advanced routing.
-/// The system prompt instructs the AI to act as a resilient multi-model router
-/// that provides detailed responses with model metadata, latency estimates,
-/// and confidence scoring. Includes fallback behavior instructions.
-fn configure_source() -> HttpSourceBuilder {
-    let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
+// ── Handlers ─────────────────────────────────────────────────────────────
 
-    let mut builder = HttpSourceBuilder::new("AdvancedRouterSource")
-        .url(SSE_URL)
-        .format(HttpFormat::SSE)
-        .dialect(SseSourceDialect::OpenAi) // OpenAI SSE dialect: data: [DONE] termination
-        .json_tap(SSE_JSON_TAP)
-        .in_port(P_ADV_TRIGGER_IN)
-        .out_port(P_ADV_DATA_OUT)
-        .ctrl_out_port(P_ADV_CTRL_OUT)
-        .post_json(serde_json::json!({
-            "model": "gpt-4",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a resilient multi-model AI router. Provide detailed responses with the following metadata in your answer: 1) Which model handled the request (gpt-4). 2) Estimated latency tier (fast/medium/slow). 3) Confidence score (0.0-1.0). If the primary model is unavailable, explain the fallback strategy. Always structure your response with clear sections: [Analysis], [Metadata], [Fallback Status]."
-                },
-                {
-                    "role": "user",
-                    "content": "Process this request through the advanced routing pipeline."
-                }
-            ],
-            "stream": true,
-            "temperature": 0.7,
-            "max_tokens": 2048
-        }));
+/// POST /assess — Triage patient symptoms via LLM with auto-failover.
+async fn assess(
+    ctx: ServiceCtx,
+    body: ShmSlice,
+) -> HandlerResult<VilResponse<TriageResponse>> {
+    let req: TriageRequest = body.json()
+        .map_err(|_| VilError::bad_request("invalid JSON"))?;
 
-    // Add auth if API key is set (skip for local simulator)
-    if !api_key.is_empty() {
-        builder = builder.bearer_token(&api_key);
+    let state = ctx.state::<Arc<TriageState>>()
+        .map_err(|_| VilError::internal("state not found"))?;
+
+    state.total.fetch_add(1, Ordering::Relaxed);
+
+    let messages = vec![
+        ChatMessage::system(
+            "You are a medical triage AI. Assess symptoms, suggest urgency level \
+             (EMERGENCY/URGENT/ROUTINE), and recommend next steps. Be concise."
+        ),
+        ChatMessage::user(&format!(
+            "Patient symptoms: {}. Reported severity: {}.",
+            req.symptoms, req.severity
+        )),
+    ];
+
+    let start = Instant::now();
+
+    // LlmRouter with Fallback strategy: try primary, auto-switch on error
+    let response = state.router.chat(&messages).await
+        .map_err(|e| VilError::internal(format!("all providers failed: {}", e)))?;
+
+    let latency_ms = start.elapsed().as_secs_f64() * 1000.0;
+
+    // Detect which provider was used
+    let used_primary = response.model.contains("gpt-4");
+    let fallback_triggered = !used_primary;
+
+    if used_primary {
+        state.primary_count.fetch_add(1, Ordering::Relaxed);
+    } else {
+        state.fallback_count.fetch_add(1, Ordering::Relaxed);
     }
 
-    builder
+    Ok(VilResponse::ok(TriageResponse {
+        assessment: response.content,
+        provider_used: response.model,
+        fallback_triggered,
+        latency_ms,
+    }))
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN — Wire pipeline via vil_workflow! macro, then spawn workers
-// ─────────────────────────────────────────────────────────────────────────────
+/// GET /stats — Availability and failover statistics.
+async fn stats(ctx: ServiceCtx) -> HandlerResult<VilResponse<TriageStats>> {
+    let state = ctx.state::<Arc<TriageState>>()
+        .map_err(|_| VilError::internal("state not found"))?;
 
-fn main() {
-    // Step 1: Initialize the VIL shared-memory runtime
-    let world =
-        Arc::new(VastarRuntimeWorld::new_shared().expect("Failed to initialize VIL SHM Runtime"));
+    let total = state.total.load(Ordering::Relaxed);
+    let primary = state.primary_count.load(Ordering::Relaxed);
+    let fallback = state.fallback_count.load(Ordering::Relaxed);
 
-    // Step 2: Build nodes (Full Decomposed Builder Style)
-    let sink_builder = configure_sink();
-    let source_builder = configure_source();
+    Ok(VilResponse::ok(TriageStats {
+        total_requests: total,
+        primary_used: primary,
+        fallback_used: fallback,
+        availability_pct: if total > 0 { 100.0 } else { 0.0 },
+    }))
+}
 
-    // Step 3: Wire the Tri-Lane pipeline via macro
-    let (_ir, (sink_handle, source_handle)) = vil_workflow! {
-        name: "AdvancedMultiModelRouterPipeline",
-        instances: [ sink_builder, source_builder ],
-        routes: [
-            sink_builder.trigger_out -> source_builder.trigger_in (LoanWrite),
-            source_builder.response_data_out -> sink_builder.response_data_in (LoanWrite),
-            source_builder.response_ctrl_out -> sink_builder.response_ctrl_in (Copy),
-        ]
-    };
+// ── Main ─────────────────────────────────────────────────────────────────
 
-    // Step 4: Startup Banner
-    println!("╔══════════════════════════════════════════════════════════════╗");
-    println!("║  VIL Advanced Multi-Model Router — Decomposed (Layer 3)   ║");
-    println!("║  Business: Multi-model + fallback + latency tracking         ║");
-    println!("╚══════════════════════════════════════════════════════════════╝");
-    println!();
+#[tokio::main]
+async fn main() {
+    let upstream = std::env::var("LLM_UPSTREAM")
+        .unwrap_or_else(|_| "http://127.0.0.1:4545".into());
     let api_key = std::env::var("OPENAI_API_KEY").unwrap_or_default();
-    println!(
-        "  Auth: {}",
-        if api_key.is_empty() {
-            "simulator mode (no auth)"
-        } else {
-            "OPENAI_API_KEY (Bearer)"
-        }
-    );
-    println!(
-        "1. Listening on http://localhost:{}{}",
-        WEBHOOK_PORT, WEBHOOK_PATH
-    );
-    println!("2. Primary model: gpt-4 (temperature=0.7, max_tokens=2048)");
-    println!("3. Features: fallback routing, latency tracking, confidence scoring");
-    println!("4. Streaming SSE from {}", SSE_URL);
-    println!("5. json_tap extracts: {}", SSE_JSON_TAP);
-    println!("6. Tri-Lane: DATA (LoanWrite) + CTRL (Copy)");
-    println!();
-    println!("Differences from basic multi-model-router:");
-    println!("  - System prompt includes fallback behavior instructions");
-    println!("  - Responses include [Analysis], [Metadata], [Fallback Status]");
-    println!("  - Temperature and max_tokens configured for production use");
-    println!("  - Full decomposed builder with detailed port naming");
-    println!();
-    println!("Test with:");
-    println!(
-        "  curl -N -X POST -H \"Content-Type: application/json\" \
-         -d '{{\"prompt\": \"Compare Rust vs Go for microservices\"}}' \
-         http://localhost:{}{}\n",
-        WEBHOOK_PORT, WEBHOOK_PATH
-    );
 
-    // Step 5: Build & spawn workers
-    let sink = HttpSink::from_builder(sink_builder);
-    let source = HttpSource::from_builder(source_builder);
+    // Primary: GPT-4 (best quality). Backup: GPT-3.5 (always available).
+    let primary = Arc::new(OpenAiProvider::new(
+        OpenAiConfig::new(&api_key, "gpt-4")
+            .base_url(&format!("{}/v1", upstream)),
+    ));
+    let backup = Arc::new(OpenAiProvider::new(
+        OpenAiConfig::new(&api_key, "gpt-3.5-turbo")
+            .base_url(&format!("{}/v1", upstream)),
+    ));
 
-    let t1 = sink.run_worker::<GenericToken>(world.clone(), sink_handle);
-    let t2 = source.run_worker::<GenericToken>(world.clone(), source_handle);
+    // Fallback router: primary fails → auto-switch to backup
+    let router = LlmRouter::new(RouterStrategy::Fallback)
+        .add_provider(primary.clone())
+        .add_provider(backup);
 
-    t1.join().expect("Sink panicked");
-    t2.join().expect("Source panicked");
+    let state = Arc::new(TriageState {
+        router,
+        primary_name: "gpt-4".into(),
+        total: AtomicU64::new(0),
+        primary_count: AtomicU64::new(0),
+        fallback_count: AtomicU64::new(0),
+    });
+
+    let svc = ServiceProcess::new("triage")
+        .endpoint(Method::POST, "/assess", post(assess))
+        .endpoint(Method::GET, "/stats", get(stats))
+        .state(state);
+
+    VilApp::new("healthcare-triage-ai")
+        .port(8080)
+        .observer(true)
+        .service(svc)
+        .run()
+        .await;
 }

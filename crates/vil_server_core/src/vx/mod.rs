@@ -30,6 +30,7 @@
 //! Raw bytes land in SHM at the TCP layer. The endpoint Process reads a
 //! RequestDescriptor from the Trigger Lane and parses the body itself.
 
+pub mod activity;
 pub mod app;
 pub mod cleanup;
 pub mod ctx;

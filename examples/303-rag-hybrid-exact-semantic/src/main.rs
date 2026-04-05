@@ -6,9 +6,9 @@
 // ║  Token:    N/A (HTTP server)                              ║
 // ║  Macros:   ShmSlice, ServiceCtx, VilResponse, #[vil_fault]║
 // ╠════════════════════════════════════════════════════════════╣
-// ║  Business: Two-tier hybrid search for support knowledge:  ║
+// ║  Business: Two-tier hybrid search for support knowledge:   ║
 // ║    Tier 1 — exact keyword match (FAQ DB, zero LLM cost)  ║
-// ║    Tier 2 — semantic similarity (vector search + LLM)     ║
+// ║    Tier 2 — keyword-scored retrieval (not vector search)   ║
 // ║  Exact hits bypass LLM entirely, saving latency + cost.   ║
 // ║  Fundamentally different control flow from pure RAG.       ║
 // ╚════════════════════════════════════════════════════════════╝
@@ -173,7 +173,7 @@ fn exact_match(query: &str) -> Option<&'static FaqEntry> {
         .find(|entry| entry.triggers.iter().any(|trigger| q.contains(trigger)))
 }
 
-/// Tier 2: Semantic keyword overlap scoring.
+/// Tier 2: Keyword overlap scoring (not true semantic/vector search).
 /// Falls back here when no exact FAQ trigger matches. Scores each FAQ entry
 /// by keyword overlap and returns ranked results for LLM augmentation.
 fn semantic_search(query: &str) -> Vec<(&'static FaqEntry, f64)> {

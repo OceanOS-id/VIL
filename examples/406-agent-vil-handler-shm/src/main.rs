@@ -1,9 +1,11 @@
 // ╔════════════════════════════════════════════════════════════════════════╗
-// ║  406 — Fraud Detection Agent (#[vil_handler(shm)] SHM Mode)         ║
+// ║  406 — Rule-Based Fraud Scorer (ShmSlice Demo)                       ║
 // ╠════════════════════════════════════════════════════════════════════════╣
 // ║  Pattern:  VX_APP                                                    ║
 // ║  Token:    N/A                                                       ║
 // ║  Features: #[vil_handler(shm)], ShmSlice, zero-copy body extraction  ║
+// ║  Note:    Rule-based scorer, no LLM. #[vil_handler] not yet wired.  ║
+// ║            Demonstrates ShmSlice zero-copy pattern for fraud scoring.║
 // ╠════════════════════════════════════════════════════════════════════════╣
 // ║  Business: A fraud detection agent receives credit card transactions ║
 // ║  via SHM (shared memory) for zero-copy processing. The agent uses   ║
@@ -220,7 +222,7 @@ async fn main() {
     let _ = std::any::type_name::<AgentMemoryState>();
 
     println!("╔════════════════════════════════════════════════════════════════════════╗");
-    println!("║  406 — Fraud Detection Agent (#[vil_handler(shm)] SHM Mode)          ║");
+    println!("║  406 — Rule-Based Fraud Scorer (ShmSlice Demo)                        ║");
     println!("╠════════════════════════════════════════════════════════════════════════╣");
     println!("║  Tools: velocity_checker, geo_analyzer, amount_calculator             ║");
     println!("║  ShmSlice: zero-copy transaction data from payment gateway            ║");
