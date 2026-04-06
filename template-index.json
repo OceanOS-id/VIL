@@ -2364,6 +2364,487 @@
         "README.md",
         "src/main.rs"
       ]
+    },
+    {
+      "id": "040-basic-auth-middleware-stack",
+      "title": "Basic Auth Middleware Stack",
+      "description": "Example 040-basic-auth-middleware-stack",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "040-basic-auth-middleware-stack",
+      "replace": {
+        "package_name": "vil-basic-auth-middleware-stack",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "041-basic-sidecar-failover",
+      "title": "Basic Sidecar Failover",
+      "description": "Example 041-basic-sidecar-failover",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "041-basic-sidecar-failover",
+      "replace": {
+        "package_name": "vil-basic-sidecar-failover",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "042-basic-scripting-sandbox",
+      "title": "Basic Scripting Sandbox",
+      "description": "Example 042-basic-scripting-sandbox",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "042-basic-scripting-sandbox",
+      "replace": {
+        "package_name": "vil-basic-scripting-sandbox",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "043-basic-integration-test",
+      "title": "Basic Integration Test",
+      "description": "Example 043-basic-integration-test",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "043-basic-integration-test",
+      "replace": {
+        "package_name": "vil-basic-integration-test",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "044-basic-graphql-subscriptions",
+      "title": "Basic Graphql Subscriptions",
+      "description": "Example 044-basic-graphql-subscriptions",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "044-basic-graphql-subscriptions",
+      "replace": {
+        "package_name": "vil-basic-graphql-subscriptions",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "045-basic-exec-class-pinned",
+      "title": "Basic Exec Class Pinned",
+      "description": "Example 045-basic-exec-class-pinned",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "045-basic-exec-class-pinned",
+      "replace": {
+        "package_name": "vil-basic-exec-class-pinned",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "046-basic-mesh-scatter-gather",
+      "title": "Basic Mesh Scatter Gather",
+      "description": "Example 046-basic-mesh-scatter-gather",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "046-basic-mesh-scatter-gather",
+      "replace": {
+        "package_name": "vil-basic-mesh-scatter-gather",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "047-basic-custom-error-stack",
+      "title": "Basic Custom Error Stack",
+      "description": "Example 047-basic-custom-error-stack",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "basic",
+      "example_dir": "047-basic-custom-error-stack",
+      "replace": {
+        "package_name": "vil-basic-custom-error-stack",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "108-workflow-dag-scheduler",
+      "title": "Workflow Dag Scheduler",
+      "description": "Example 108-workflow-dag-scheduler",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "pipeline",
+      "example_dir": "108-workflow-dag-scheduler",
+      "replace": {
+        "package_name": "vil-workflow-dag-scheduler",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "307-rag-vectordb-knowledge-index",
+      "title": "Rag Vectordb Knowledge Index",
+      "description": "Example 307-rag-vectordb-knowledge-index",
+      "default_port": 3107,
+      "default_upstream": "",
+      "category": "rag",
+      "example_dir": "307-rag-vectordb-knowledge-index",
+      "replace": {
+        "package_name": "vil-rag-vectordb-knowledge-index",
+        "port": "3107"
+      },
+      "test": {
+        "type": "simulator",
+        "port": 3107,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "308-rag-full-pipeline-ingest-query",
+      "title": "Rag Full Pipeline Ingest Query",
+      "description": "Example 308-rag-full-pipeline-ingest-query",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "rag",
+      "example_dir": "308-rag-full-pipeline-ingest-query",
+      "replace": {
+        "package_name": "vil-rag-full-pipeline-ingest-query",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "407-agent-multi-agent-orchestration",
+      "title": "Agent Multi Agent Orchestration",
+      "description": "Example 407-agent-multi-agent-orchestration",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "agent",
+      "example_dir": "407-agent-multi-agent-orchestration",
+      "replace": {
+        "package_name": "vil-agent-multi-agent-orchestration",
+        "port": "8080"
+      },
+      "test": {
+        "type": "simulator",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "609-db-vilorm-overhead-bench",
+      "title": "Db Vilorm Overhead Bench",
+      "description": "Example 609-db-vilorm-overhead-bench",
+      "default_port": 8099,
+      "default_upstream": "",
+      "category": "db",
+      "example_dir": "609-db-vilorm-overhead-bench",
+      "replace": {
+        "package_name": "vil-db-vilorm-overhead-bench",
+        "port": "8099"
+      },
+      "test": {
+        "type": "external:docker",
+        "port": 8099,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "manifest.yaml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "610-storage-multi-cloud",
+      "title": "Storage Multi Cloud",
+      "description": "Example 610-storage-multi-cloud",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "db",
+      "example_dir": "610-storage-multi-cloud",
+      "replace": {
+        "package_name": "vil-storage-multi-cloud",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "611-db-timeseries-iot",
+      "title": "Db Timeseries Iot",
+      "description": "Example 611-db-timeseries-iot",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "db",
+      "example_dir": "611-db-timeseries-iot",
+      "replace": {
+        "package_name": "vil-db-timeseries-iot",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:docker",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "705-protocol-grpc-gateway",
+      "title": "Protocol Grpc Gateway",
+      "description": "Example 705-protocol-grpc-gateway",
+      "default_port": 3705,
+      "default_upstream": "",
+      "category": "mq",
+      "example_dir": "705-protocol-grpc-gateway",
+      "replace": {
+        "package_name": "vil-protocol-grpc-gateway",
+        "port": "3705"
+      },
+      "test": {
+        "type": "external:docker",
+        "port": 3705,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "706-mq-pulsar-messaging",
+      "title": "Mq Pulsar Messaging",
+      "description": "Example 706-mq-pulsar-messaging",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "mq",
+      "example_dir": "706-mq-pulsar-messaging",
+      "replace": {
+        "package_name": "vil-mq-pulsar-messaging",
+        "port": "8080"
+      },
+      "test": {
+        "type": "external:docker",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "805-trigger-email",
+      "title": "Trigger Email",
+      "description": "Example 805-trigger-email",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "trigger",
+      "example_dir": "805-trigger-email",
+      "replace": {
+        "package_name": "vil-trigger-email",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "806-trigger-iot",
+      "title": "Trigger Iot",
+      "description": "Example 806-trigger-iot",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "trigger",
+      "example_dir": "806-trigger-iot",
+      "replace": {
+        "package_name": "vil-trigger-iot",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
+    },
+    {
+      "id": "807-trigger-evm-blockchain",
+      "title": "Trigger Evm Blockchain",
+      "description": "Example 807-trigger-evm-blockchain",
+      "default_port": 8080,
+      "default_upstream": "",
+      "category": "trigger",
+      "example_dir": "807-trigger-evm-blockchain",
+      "replace": {
+        "package_name": "vil-trigger-evm-blockchain",
+        "port": "8080"
+      },
+      "test": {
+        "type": "standalone",
+        "port": 8080,
+        "method": "GET",
+        "path": "/health",
+        "expect_status": 200
+      },
+      "files": [
+        "Cargo.toml",
+        "src/main.rs"
+      ]
     }
   ]
 }

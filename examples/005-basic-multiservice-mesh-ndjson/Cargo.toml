@@ -7,5 +7,5 @@ publish = false
 
 # 004 — Multi-Service Mesh (Core Banking SSE, ShmToken pipeline mode)
 [dependencies]
-vil_sdk  = { path = "../../crates/vil_sdk" }
+vil_sdk  = { version = "0.2" }
 serde_json = "1.0"

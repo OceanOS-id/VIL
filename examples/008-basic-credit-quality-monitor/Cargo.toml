@@ -7,5 +7,5 @@ publish = false
 
 # 007 — Credit Data Quality Monitor (Core Banking SSE, ShmToken pipeline)
 [dependencies]
-vil_sdk  = { path = "../../crates/vil_sdk" }
+vil_sdk  = { version = "0.2" }
 serde_json = "1.0"

@@ -64,6 +64,7 @@ impl LlmProvider for OpenAiProvider {
         let mut body = serde_json::json!({
             "model": self.config.model,
             "messages": messages,
+            "stream": false,
         });
 
         if let Some(max_tokens) = self.config.max_tokens {
@@ -200,6 +201,7 @@ impl LlmProvider for OpenAiProvider {
             "model": self.config.model,
             "messages": messages,
             "tools": tools,
+            "stream": false,
         });
 
         if let Some(max_tokens) = self.config.max_tokens {

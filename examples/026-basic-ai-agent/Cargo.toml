@@ -6,13 +6,13 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
-vil_sdk = { path = "../../crates/vil_sdk" }
-vil_json = { path = "../../crates/vil_json" }
+vil_sdk = { version = "0.2" }
+vil_json = { version = "0.2" }
 bytes = "1"
-vil_server = { path = "../../crates/vil_server" }
-vil_server_core = { path = "../../crates/vil_server_core" }
-vil_agent = { path = "../../crates/vil_agent" }
-vil_llm = { path = "../../crates/vil_llm" }
+vil_server = { version = "0.2" }
+vil_server_core = { version = "0.2" }
+vil_agent = { version = "0.2" }
+vil_llm = { version = "0.2" }
 async-trait = "0.1"
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
