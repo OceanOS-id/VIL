@@ -289,9 +289,22 @@ async fn support_ask(
     let start = std::time::Instant::now();
     let mut tiers_involved = Vec::new();
 
-    // Tier 1: FAQ agent
-    let tier1_result = state.tier1_agent.run(&req.question).await
-        .map_err(|e| VilError::internal(format!("tier1 failed: {}", e)))?;
+    // Tier 1: FAQ agent — graceful fallback if LLM unavailable
+    let tier1_result = match state.tier1_agent.run(&req.question).await {
+        Ok(r) => r,
+        Err(e) => {
+            // LLM unavailable — return direct KB search fallback
+            return Ok(VilResponse::ok(SupportResponse {
+                resolved_by: "Tier 1 — FAQ (fallback)".into(),
+                answer: format!("LLM unavailable ({}). For password reset: visit https://password.company.com, click 'Forgot Password'. For other issues, contact helpdesk@company.com.", e),
+                tiers_involved: vec![TierResult {
+                    tier: "Tier 1 — FAQ (fallback)".into(),
+                    response: "Answered from knowledge base without LLM".into(),
+                }],
+                total_ms: start.elapsed().as_millis() as u64,
+            }));
+        }
+    };
 
     tiers_involved.push(TierResult {
         tier: "Tier 1 — FAQ".into(),
