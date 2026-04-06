@@ -160,10 +160,13 @@ fn configure_source() -> HttpSourceBuilder {
         .format(HttpFormat::SSE)
         .dialect(SseSourceDialect::OpenAi)
         .json_tap(SSE_JSON_TAP)
+        // POST method — required for OpenAI-compatible SSE endpoints
+        .post_json(serde_json::json!({"model":"gpt-4","messages":[],"stream":true}))
         .in_port("trigger_in")
         .out_port("response_data_out")
         .ctrl_out_port("response_ctrl_out")
         // Transform: intercept incoming request, search KB, inject context into prompt
+        // Overrides the placeholder post_json body above with RAG-augmented prompt
         .transform(|body: &[u8]| {
             // Parse user query from incoming request body
             let req: serde_json::Value = serde_json::from_slice(body).ok()?;

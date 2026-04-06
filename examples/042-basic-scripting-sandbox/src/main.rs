@@ -163,8 +163,13 @@ async fn update_rule(
     let new_version = {
         let mut runtime = state.runtime.write().unwrap();
         runtime.load_inline(&req.rule);
-        runtime.hot_reload()
-            .map_err(|e| VilError::bad_request(format!("invalid script: {}", e)))?
+        // Validate: try executing with a dummy input to catch syntax errors
+        let test_input = serde_json::json!({
+            "product_id": "test", "base_price": 100, "quantity": 1, "customer_tier": "standard"
+        });
+        runtime.execute(test_input)
+            .map_err(|e| VilError::bad_request(format!("invalid script: {}", e)))?;
+        runtime.version()
     };
 
     Ok(VilResponse::ok(UpdateResult {
