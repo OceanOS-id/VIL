@@ -3310,52 +3310,52 @@ dependencies = [
 
 [[package]]
 name = "example-039-basic-observer-dashboard"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_log 0.2.0",
- "vil_observer 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_log 0.2.1",
+ "vil_observer 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
 name = "example-501-villog-stdout-dev"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-502-villog-file-rolling"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-503-villog-multi-drain"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-504-villog-benchmark-comparison"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3363,35 +3363,35 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-505-villog-tracing-bridge"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-506-villog-structured-events"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-507-villog-bench-file-drain"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3400,12 +3400,12 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-508-villog-bench-multithread"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3413,35 +3413,35 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-509-villog-phase1-integration"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-601-storage-s3-basic"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bytes",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_storage_s3",
 ]
 
 [[package]]
 name = "example-602-db-mongo-crud"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bson",
  "serde",
@@ -3449,114 +3449,114 @@ dependencies = [
  "tokio",
  "tracing",
  "vil_db_mongo",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-603-db-clickhouse-batch"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "clickhouse",
  "serde",
  "tokio",
  "tracing",
  "vil_db_clickhouse",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-604-db-elastic-search"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde_json",
  "tokio",
  "tracing",
  "vil_db_elastic",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "example-701-mq-rabbitmq-pubsub"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_mq_rabbitmq",
 ]
 
 [[package]]
 name = "example-702-mq-sqs-send-receive"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_mq_sqs",
 ]
 
 [[package]]
 name = "example-703-protocol-soap-client"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_soap",
 ]
 
 [[package]]
 name = "example-704-protocol-modbus-read"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_modbus",
 ]
 
 [[package]]
 name = "example-801-trigger-cron-basic"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_trigger_core",
  "vil_trigger_cron",
 ]
 
 [[package]]
 name = "example-802-trigger-fs-watcher"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_trigger_core",
  "vil_trigger_fs",
 ]
 
 [[package]]
 name = "example-803-trigger-webhook-receiver"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "reqwest 0.12.28",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_trigger_core",
  "vil_trigger_webhook",
 ]
 
 [[package]]
 name = "example-804-trigger-cdc-postgres"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_trigger_cdc",
  "vil_trigger_core",
 ]
@@ -10948,29 +10948,29 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vil"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "vil_ai_gateway",
  "vil_ai_trace",
  "vil_cache",
  "vil_cost_tracker",
  "vil_db_redis",
- "vil_db_semantic 0.2.0",
- "vil_db_sqlx 0.2.0",
+ "vil_db_semantic 0.2.1",
+ "vil_db_sqlx 0.2.1",
  "vil_guardrails",
- "vil_json 0.2.0",
- "vil_llm 0.2.0",
- "vil_log 0.2.0",
- "vil_orm 0.2.0",
+ "vil_json 0.2.1",
+ "vil_llm 0.2.1",
+ "vil_log 0.2.1",
+ "vil_orm 0.2.1",
  "vil_output_parser",
  "vil_prompt_shield",
  "vil_prompts",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_auth 0.2.0",
- "vil_server_core 0.2.0",
- "vil_server_db 0.2.0",
- "vil_server_web 0.2.0",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_auth 0.2.1",
+ "vil_server_core 0.2.1",
+ "vil_server_db 0.2.1",
+ "vil_server_web 0.2.1",
  "vil_ws",
 ]
 
@@ -10982,11 +10982,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_agent 0.2.0",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -10997,11 +10997,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_agent 0.2.0",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11012,11 +11012,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_agent 0.2.0",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11029,12 +11029,12 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_agent 0.2.0",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11046,12 +11046,12 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_multi_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_agent 0.2.0",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_multi_agent 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11062,11 +11062,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_agent 0.2.0",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11077,11 +11077,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_agent 0.2.0",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11092,10 +11092,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11107,12 +11107,12 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_agent 0.2.0",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11120,8 +11120,8 @@ name = "vil-basic-ai-gw-demo"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_observer 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_observer 0.2.0",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11132,10 +11132,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11146,11 +11146,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11158,7 +11158,7 @@ name = "vil-basic-ai-rag-gateway"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11169,9 +11169,9 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11181,8 +11181,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11190,7 +11190,7 @@ name = "vil-basic-credit-npl-filter"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11198,7 +11198,7 @@ name = "vil-basic-credit-quality-monitor"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11206,7 +11206,7 @@ name = "vil-basic-credit-regulatory-slik"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11217,10 +11217,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11231,10 +11231,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11244,8 +11244,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11256,11 +11256,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_graphql 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_graphql 0.2.0",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11272,10 +11272,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11286,9 +11286,9 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11299,13 +11299,13 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_capsule 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sidecar 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_capsule 0.2.0",
+ "vil_json 0.2.0",
+ "vil_log 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+ "vil_server_macros 0.2.0",
+ "vil_sidecar 0.2.0",
 ]
 
 [[package]]
@@ -11316,10 +11316,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_test 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+ "vil_server_test 0.2.0",
 ]
 
 [[package]]
@@ -11330,11 +11330,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_mq_kafka 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_mq_kafka 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11345,11 +11345,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11359,8 +11359,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11371,10 +11371,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11385,10 +11385,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_mq_mqtt 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_mq_mqtt 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11396,7 +11396,7 @@ name = "vil-basic-multiservice-mesh-ndjson"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11410,11 +11410,11 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_mq_nats 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_mq_nats 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11428,13 +11428,13 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "vil_db_sqlx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm_derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_db_sqlx 0.2.0",
+ "vil_json 0.2.0",
+ "vil_orm 0.2.0",
+ "vil_orm_derive 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11445,10 +11445,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_config 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_config 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11459,11 +11459,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rag 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_rag 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11476,12 +11476,12 @@ dependencies = [
  "sqlx",
  "tokio",
  "uuid",
- "vil_db_sqlx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm_derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_db_sqlx 0.2.0",
+ "vil_json 0.2.0",
+ "vil_orm 0.2.0",
+ "vil_orm_derive 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11492,10 +11492,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
  "vil_script_js",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11505,7 +11505,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11515,8 +11515,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11527,12 +11527,12 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_capsule 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sidecar 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_capsule 0.2.0",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+ "vil_server_macros 0.2.0",
+ "vil_sidecar 0.2.0",
 ]
 
 [[package]]
@@ -11543,11 +11543,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sidecar 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+ "vil_server_macros 0.2.0",
+ "vil_sidecar 0.2.0",
 ]
 
 [[package]]
@@ -11558,8 +11558,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11570,8 +11570,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11581,8 +11581,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11592,8 +11592,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11604,11 +11604,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+ "vil_server_macros 0.2.0",
 ]
 
 [[package]]
@@ -11618,8 +11618,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11630,11 +11630,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11645,10 +11645,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11658,8 +11658,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -11670,10 +11670,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_capsule 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_capsule 0.2.0",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11685,9 +11685,9 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11698,9 +11698,9 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11713,12 +11713,12 @@ dependencies = [
  "sqlx",
  "tokio",
  "uuid",
- "vil_db_sqlx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm_derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_db_sqlx 0.2.0",
+ "vil_json 0.2.0",
+ "vil_orm 0.2.0",
+ "vil_orm_derive 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11731,12 +11731,12 @@ dependencies = [
  "sqlx",
  "tokio",
  "uuid",
- "vil_db_sqlx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm_derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_db_sqlx 0.2.0",
+ "vil_json 0.2.0",
+ "vil_orm 0.2.0",
+ "vil_orm_derive 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11749,12 +11749,12 @@ dependencies = [
  "sqlx",
  "tokio",
  "uuid",
- "vil_db_sqlx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm_derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_db_sqlx 0.2.0",
+ "vil_json 0.2.0",
+ "vil_orm 0.2.0",
+ "vil_orm_derive 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11767,12 +11767,12 @@ dependencies = [
  "sqlx",
  "tokio",
  "uuid",
- "vil_db_sqlx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm_derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_db_sqlx 0.2.0",
+ "vil_json 0.2.0",
+ "vil_orm 0.2.0",
+ "vil_orm_derive 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11785,12 +11785,12 @@ dependencies = [
  "sqlx",
  "tokio",
  "uuid",
- "vil_db_sqlx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm_derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_db_sqlx 0.2.0",
+ "vil_json 0.2.0",
+ "vil_orm 0.2.0",
+ "vil_orm_derive 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11801,11 +11801,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11816,11 +11816,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11831,11 +11831,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11846,11 +11846,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11861,10 +11861,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11875,11 +11875,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11890,9 +11890,9 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11900,8 +11900,8 @@ name = "vil-multi-pipeline-benchmark"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_observer 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_observer 0.2.0",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11909,7 +11909,7 @@ name = "vil-pipeline-3node-transform-chain"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11917,7 +11917,7 @@ name = "vil-pipeline-diamond-topology"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11925,7 +11925,7 @@ name = "vil-pipeline-fanin-gather"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11933,7 +11933,7 @@ name = "vil-pipeline-fanout-scatter"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11941,7 +11941,7 @@ name = "vil-pipeline-multi-workflow"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11949,7 +11949,7 @@ name = "vil-pipeline-process-traced"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11957,7 +11957,7 @@ name = "vil-pipeline-sse-standard-dialect"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_sdk 0.2.0",
 ]
 
 [[package]]
@@ -11968,9 +11968,9 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11981,12 +11981,12 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rag 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_rag 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -11997,11 +11997,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rag 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_rag 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -12012,11 +12012,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rag 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_rag 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -12027,11 +12027,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_vectordb 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_llm 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+ "vil_vectordb 0.2.0",
 ]
 
 [[package]]
@@ -12042,11 +12042,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rag 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_rag 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -12057,11 +12057,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rag 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_rag 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -12072,11 +12072,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rag 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_rag 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -12087,10 +12087,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_vectordb 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+ "vil_vectordb 0.2.0",
 ]
 
 [[package]]
@@ -12102,37 +12102,37 @@ dependencies = [
  "serde_json",
  "tokio",
  "uuid",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
 name = "vil-trigger-email"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_trigger_core",
  "vil_trigger_email",
 ]
 
 [[package]]
 name = "vil-trigger-evm-blockchain"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_trigger_core",
  "vil_trigger_evm",
 ]
 
 [[package]]
 name = "vil-trigger-iot"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
  "vil_trigger_core",
  "vil_trigger_iot",
 ]
@@ -12144,7 +12144,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -12154,7 +12154,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_server 0.2.0",
 ]
 
 [[package]]
@@ -12165,15 +12165,15 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_workflow_v2 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+ "vil_workflow_v2 0.2.0",
 ]
 
 [[package]]
 name = "vil_ab_test"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -12181,15 +12181,17 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_agent"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36d5dacce27fe4766287d5c092ffae02dba2c68de5634195c6aa9370076dc9ed"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12211,9 +12213,7 @@ dependencies = [
 
 [[package]]
 name = "vil_agent"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36d5dacce27fe4766287d5c092ffae02dba2c68de5634195c6aa9370076dc9ed"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12223,19 +12223,19 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rag 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.1",
+ "vil_llm 0.2.1",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_rag 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_ai_compiler"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "rmp-serde",
@@ -12243,16 +12243,16 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_ai_gateway"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12263,80 +12263,69 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.0",
- "vil_log 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_llm 0.2.1",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_ai_trace"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_audio"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_bench_llm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_cache"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "serde",
  "serde_json",
  "tracing",
  "vil_db_redis",
- "vil_server_core 0.2.0",
-]
-
-[[package]]
-name = "vil_capsule"
-version = "0.2.0"
-dependencies = [
- "dashmap 5.5.3",
- "vil_ir 0.2.0",
- "vil_types 0.2.0",
- "wasmtime",
- "wasmtime-wasi",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -12346,29 +12335,40 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1751b6ecf460b6f315dc322eb7ebf160b03ac17adb48d8bc03f82521228134d"
 dependencies = [
  "dashmap 5.5.3",
- "vil_ir 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_ir 0.2.0",
+ "vil_types 0.2.0",
  "wasmtime",
 ]
 
 [[package]]
+name = "vil_capsule"
+version = "0.2.1"
+dependencies = [
+ "dashmap 5.5.3",
+ "vil_ir 0.2.1",
+ "vil_types 0.2.1",
+ "wasmtime",
+ "wasmtime-wasi",
+]
+
+[[package]]
 name = "vil_chunker"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
  "vil_tokenizer",
 ]
 
 [[package]]
 name = "vil_cli"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -12390,19 +12390,19 @@ dependencies = [
  "vil_cli_pipeline",
  "vil_cli_sdk",
  "vil_cli_server",
- "vil_net 0.2.0",
- "vil_obs 0.2.0",
- "vil_registry 0.2.0",
- "vil_rt 0.2.0",
- "vil_sdk 0.2.0",
- "vil_shm 0.2.0",
- "vil_types 0.2.0",
+ "vil_net 0.2.1",
+ "vil_obs 0.2.1",
+ "vil_registry 0.2.1",
+ "vil_rt 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_shm 0.2.1",
+ "vil_types 0.2.1",
  "vil_viz",
 ]
 
 [[package]]
 name = "vil_cli_compile"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -12412,14 +12412,14 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "vil_cli_core",
- "vil_rt 0.2.0",
- "vil_shm 0.2.0",
- "vil_types 0.2.0",
+ "vil_rt 0.2.1",
+ "vil_shm 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
 name = "vil_cli_core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -12435,7 +12435,7 @@ dependencies = [
 
 [[package]]
 name = "vil_cli_pipeline"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -12450,19 +12450,19 @@ dependencies = [
  "tokio",
  "vil_cli_compile",
  "vil_cli_core",
- "vil_net 0.2.0",
- "vil_obs 0.2.0",
- "vil_registry 0.2.0",
- "vil_rt 0.2.0",
- "vil_sdk 0.2.0",
- "vil_shm 0.2.0",
- "vil_types 0.2.0",
+ "vil_net 0.2.1",
+ "vil_obs 0.2.1",
+ "vil_registry 0.2.1",
+ "vil_rt 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_shm 0.2.1",
+ "vil_types 0.2.1",
  "vil_viz",
 ]
 
 [[package]]
 name = "vil_cli_sdk"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "clap",
  "colored",
@@ -12475,7 +12475,7 @@ dependencies = [
 
 [[package]]
 name = "vil_cli_server"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "clap",
  "colored",
@@ -12491,31 +12491,22 @@ dependencies = [
 
 [[package]]
 name = "vil_codegen_c"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
- "vil_ir 0.2.0",
- "vil_types 0.2.0",
+ "vil_ir 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
 name = "vil_codegen_rust"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "proc-macro2",
  "quote",
- "vil_ir 0.2.0",
- "vil_types 0.2.0",
-]
-
-[[package]]
-name = "vil_connector_macros"
-version = "0.2.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
+ "vil_ir 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
@@ -12530,8 +12521,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil_connector_macros"
+version = "0.2.1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "vil_consensus"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12540,47 +12540,47 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.0",
- "vil_log 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_llm 0.2.1",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_context_optimizer"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tracing",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
  "vil_tokenizer",
 ]
 
 [[package]]
 name = "vil_cost_tracker"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_crawler"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12592,68 +12592,68 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_data_prep"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_db_cassandra"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "scylla",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_db_clickhouse"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "clickhouse",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_db_dynamodb"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aws-config",
  "aws-sdk-dynamodb",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_db_elastic"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bytes",
  "elasticsearch",
@@ -12661,13 +12661,13 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_db_macros"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12676,7 +12676,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_mongo"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bson",
  "futures-util",
@@ -12685,25 +12685,25 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_db_neo4j"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "neo4rs",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_db_redis"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12711,13 +12711,13 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_server_core 0.2.0",
- "vil_server_db 0.2.0",
+ "vil_server_core 0.2.1",
+ "vil_server_db 0.2.1",
 ]
 
 [[package]]
 name = "vil_db_sea_orm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12725,23 +12725,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_server_core 0.2.0",
- "vil_server_db 0.2.0",
-]
-
-[[package]]
-name = "vil_db_semantic"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "dashmap 5.5.3",
- "rmp-serde",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "vil_log 0.2.0",
- "vil_server_db 0.2.0",
+ "vil_server_core 0.2.1",
+ "vil_server_db 0.2.1",
 ]
 
 [[package]]
@@ -12756,22 +12741,23 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_db 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_log 0.2.0",
+ "vil_server_db 0.2.0",
 ]
 
 [[package]]
-name = "vil_db_sqlx"
-version = "0.2.0"
+name = "vil_db_semantic"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
+ "rmp-serde",
  "serde",
  "serde_json",
- "sqlx",
  "tokio",
- "vil_server_core 0.2.0",
- "vil_server_db 0.2.0",
+ "tracing",
+ "vil_log 0.2.1",
+ "vil_server_db 0.2.1",
 ]
 
 [[package]]
@@ -12786,96 +12772,110 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tokio",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_db 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_server_core 0.2.0",
+ "vil_server_db 0.2.0",
+]
+
+[[package]]
+name = "vil_db_sqlx"
+version = "0.2.1"
+dependencies = [
+ "async-trait",
+ "dashmap 5.5.3",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "vil_server_core 0.2.1",
+ "vil_server_db 0.2.1",
 ]
 
 [[package]]
 name = "vil_db_timeseries"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "futures",
  "influxdb2",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_diag"
-version = "0.2.0"
+version = "0.2.1"
 
 [[package]]
 name = "vil_doc_extract"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_doc_layout"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_doc_parser"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_edge"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_edge_deploy"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_yaml",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_embedder"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12884,15 +12884,17 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_engine"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11432845d2ef911a15706229b815f93228a4c2b64e15ffb0b283b899b91ec929"
 dependencies = [
  "vil_obs 0.2.0",
  "vil_queue 0.2.0",
@@ -12904,78 +12906,60 @@ dependencies = [
 
 [[package]]
 name = "vil_engine"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11432845d2ef911a15706229b815f93228a4c2b64e15ffb0b283b899b91ec929"
+version = "0.2.1"
 dependencies = [
- "vil_obs 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_queue 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_registry 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rt 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_shm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_obs 0.2.1",
+ "vil_queue 0.2.1",
+ "vil_registry 0.2.1",
+ "vil_rt 0.2.1",
+ "vil_shm 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
 name = "vil_eval"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_llm 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_llm 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_feature_store"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_federated_rag"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
-]
-
-[[package]]
-name = "vil_graphql"
-version = "0.2.0"
-dependencies = [
- "async-graphql",
- "async-graphql-axum",
- "axum 0.7.9",
- "dashmap 5.5.3",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "vil_db_semantic 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -12992,13 +12976,29 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_db_semantic 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_db_semantic 0.2.0",
+ "vil_server_core 0.2.0",
+]
+
+[[package]]
+name = "vil_graphql"
+version = "0.2.1"
+dependencies = [
+ "async-graphql",
+ "async-graphql-axum",
+ "axum 0.7.9",
+ "dashmap 5.5.3",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "vil_db_semantic 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_graphrag"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13006,17 +13006,17 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_llm 0.2.0",
- "vil_macros 0.2.0",
+ "vil_llm 0.2.1",
+ "vil_macros 0.2.1",
  "vil_memory_graph",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_grpc"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "dashmap 5.5.3",
  "prost 0.13.5",
@@ -13029,37 +13029,37 @@ dependencies = [
 
 [[package]]
 name = "vil_guardrails"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aho-corasick",
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
+ "vil_macros 0.2.1",
  "vil_prompt_shield",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_index_updater"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_inference"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13069,23 +13069,11 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
-]
-
-[[package]]
-name = "vil_ir"
-version = "0.2.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "serde",
- "serde_json",
- "serde_yaml",
- "vil_types 0.2.0",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -13099,17 +13087,19 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_types 0.2.0",
 ]
 
 [[package]]
-name = "vil_json"
-version = "0.2.0"
+name = "vil_ir"
+version = "0.2.1"
 dependencies = [
- "bytes",
+ "proc-macro2",
+ "quote",
  "serde",
  "serde_json",
- "sonic-rs",
+ "serde_yaml",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
@@ -13125,8 +13115,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil_json"
+version = "0.2.1"
+dependencies = [
+ "bytes",
+ "serde",
+ "serde_json",
+ "sonic-rs",
+]
+
+[[package]]
 name = "vil_llm"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e5acd7c8499c3d45b57bc4dd241c695eca6d5486edbc5d606f025ceb5290bc6"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13148,9 +13150,7 @@ dependencies = [
 
 [[package]]
 name = "vil_llm"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e5acd7c8499c3d45b57bc4dd241c695eca6d5486edbc5d606f025ceb5290bc6"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13162,17 +13162,17 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.1",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_llm_cache"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -13180,15 +13180,15 @@ dependencies = [
  "serde",
  "serde_json",
  "vil_embedder",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_llm_proxy"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13197,31 +13197,11 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
-]
-
-[[package]]
-name = "vil_log"
-version = "0.2.0"
-dependencies = [
- "async-nats 0.38.0",
- "async-trait",
- "chrono",
- "clickhouse",
- "criterion",
- "rmp-serde",
- "rustc-hash 2.1.2",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "zerocopy",
+ "vil_llm 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -13243,8 +13223,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil_log"
+version = "0.2.1"
+dependencies = [
+ "async-nats 0.38.0",
+ "async-trait",
+ "chrono",
+ "clickhouse",
+ "criterion",
+ "rmp-serde",
+ "rustc-hash 2.1.2",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "zerocopy",
+]
+
+[[package]]
 name = "vil_lsp"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "regex",
  "serde",
@@ -13258,6 +13258,20 @@ dependencies = [
 [[package]]
 name = "vil_macros"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c7235b1e22a62711d0495c514b6f5ec51af4cc6722f19a1081e2ea8e7d3cebf"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+ "vil_ir 0.2.0",
+ "vil_types 0.2.0",
+ "vil_validate 0.2.0",
+]
+
+[[package]]
+name = "vil_macros"
+version = "0.2.1"
 dependencies = [
  "bytes",
  "proc-macro2",
@@ -13265,45 +13279,31 @@ dependencies = [
  "serde",
  "serde_json",
  "syn 2.0.117",
- "vil_ir 0.2.0",
- "vil_json 0.2.0",
- "vil_server_core 0.2.0",
- "vil_types 0.2.0",
- "vil_validate 0.2.0",
-]
-
-[[package]]
-name = "vil_macros"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c7235b1e22a62711d0495c514b6f5ec51af4cc6722f19a1081e2ea8e7d3cebf"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
- "vil_ir 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_validate 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_ir 0.2.1",
+ "vil_json 0.2.1",
+ "vil_server_core 0.2.1",
+ "vil_types 0.2.1",
+ "vil_validate 0.2.1",
 ]
 
 [[package]]
 name = "vil_memory_graph"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_migrate"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "sqlx",
@@ -13312,32 +13312,32 @@ dependencies = [
 
 [[package]]
 name = "vil_modbus"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "tokio",
  "tokio-modbus",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_model_registry"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_model_serving"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13348,28 +13348,12 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.0",
- "vil_log 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
-]
-
-[[package]]
-name = "vil_mq_kafka"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "bytes",
- "dashmap 5.5.3",
- "futures",
- "rdkafka",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "vil_log 0.2.0",
+ "vil_llm 0.2.1",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -13387,21 +13371,23 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_log 0.2.0",
 ]
 
 [[package]]
-name = "vil_mq_mqtt"
-version = "0.2.0"
+name = "vil_mq_kafka"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "bytes",
- "rumqttc",
+ "dashmap 5.5.3",
+ "futures",
+ "rdkafka",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
@@ -13417,24 +13403,21 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_log 0.2.0",
 ]
 
 [[package]]
-name = "vil_mq_nats"
-version = "0.2.0"
+name = "vil_mq_mqtt"
+version = "0.2.1"
 dependencies = [
- "async-nats 0.37.0",
  "async-trait",
  "bytes",
- "dashmap 5.5.3",
- "futures",
- "rmp-serde",
+ "rumqttc",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
@@ -13453,12 +13436,29 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_log 0.2.0",
+]
+
+[[package]]
+name = "vil_mq_nats"
+version = "0.2.1"
+dependencies = [
+ "async-nats 0.37.0",
+ "async-trait",
+ "bytes",
+ "dashmap 5.5.3",
+ "futures",
+ "rmp-serde",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_mq_pubsub"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "bytes",
@@ -13468,13 +13468,13 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_mq_pulsar"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "bytes",
@@ -13483,13 +13483,13 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_mq_rabbitmq"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "bytes",
@@ -13498,13 +13498,13 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_mq_sqs"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "aws-config",
@@ -13513,13 +13513,15 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_multi_agent"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b141ea5240b2f7183e667ac80595fafe3900eb26e4ba772cd23dceb2efd8564"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13540,9 +13542,7 @@ dependencies = [
 
 [[package]]
 name = "vil_multi_agent"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b141ea5240b2f7183e667ac80595fafe3900eb26e4ba772cd23dceb2efd8564"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13552,43 +13552,28 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_agent 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_agent 0.2.1",
+ "vil_llm 0.2.1",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_multimodal"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
  "vil_embedder",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
-]
-
-[[package]]
-name = "vil_net"
-version = "0.2.0"
-dependencies = [
- "bytes",
- "dashmap 5.5.3",
- "nix 0.27.1",
- "serde",
- "serde_json",
- "socket2 0.5.10",
- "tokio",
- "vil_shm 0.2.0",
- "vil_types 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -13604,32 +13589,23 @@ dependencies = [
  "serde_json",
  "socket2 0.5.10",
  "tokio",
- "vil_shm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_shm 0.2.0",
+ "vil_types 0.2.0",
 ]
 
 [[package]]
-name = "vil_new_http"
-version = "0.2.0"
+name = "vil_net"
+version = "0.2.1"
 dependencies = [
- "async-stream",
- "axum 0.7.9",
  "bytes",
- "futures-util",
- "hyper 1.9.0",
- "hyper-util",
- "reqwest 0.12.28",
+ "dashmap 5.5.3",
+ "nix 0.27.1",
  "serde",
  "serde_json",
  "socket2 0.5.10",
  "tokio",
- "tokio-stream",
- "tower 0.4.13",
- "tower-http 0.5.2",
- "vil_ir 0.2.0",
- "vil_json 0.2.0",
- "vil_rt 0.2.0",
- "vil_types 0.2.0",
+ "vil_shm 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
@@ -13652,18 +13628,34 @@ dependencies = [
  "tokio-stream",
  "tower 0.4.13",
  "tower-http 0.5.2",
- "vil_ir 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rt 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_ir 0.2.0",
+ "vil_json 0.2.0",
+ "vil_rt 0.2.0",
+ "vil_types 0.2.0",
 ]
 
 [[package]]
-name = "vil_obs"
-version = "0.2.0"
+name = "vil_new_http"
+version = "0.2.1"
 dependencies = [
+ "async-stream",
+ "axum 0.7.9",
+ "bytes",
+ "futures-util",
+ "hyper 1.9.0",
+ "hyper-util",
+ "reqwest 0.12.28",
  "serde",
- "vil_types 0.2.0",
+ "serde_json",
+ "socket2 0.5.10",
+ "tokio",
+ "tokio-stream",
+ "tower 0.4.13",
+ "tower-http 0.5.2",
+ "vil_ir 0.2.1",
+ "vil_json 0.2.1",
+ "vil_rt 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
@@ -13673,12 +13665,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6e4b444f7db3f030aa671959a54b1a9712049eb02045c5d0a9c3d38b186af8f"
 dependencies = [
  "serde",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_types 0.2.0",
+]
+
+[[package]]
+name = "vil_obs"
+version = "0.2.1"
+dependencies = [
+ "serde",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
 name = "vil_observer"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9c4d54f34e1ed566d6237dc19c6a8d9b18fab11f2099a37a1b1e608ce8ba78c"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -13693,35 +13695,33 @@ dependencies = [
 
 [[package]]
 name = "vil_observer"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9c4d54f34e1ed566d6237dc19c6a8d9b18fab11f2099a37a1b1e608ce8ba78c"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_new_http 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rt 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
+ "vil_new_http 0.2.1",
+ "vil_rt 0.2.1",
 ]
 
 [[package]]
 name = "vil_opcua"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "opcua",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_operator"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "futures",
  "k8s-openapi",
@@ -13738,6 +13738,8 @@ dependencies = [
 [[package]]
 name = "vil_orm"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a7dc22e4d8274116d619fc51d54b9cf357697ba568a11ab4d39febe2bb36052"
 dependencies = [
  "chrono",
  "serde",
@@ -13752,28 +13754,17 @@ dependencies = [
 
 [[package]]
 name = "vil_orm"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a7dc22e4d8274116d619fc51d54b9cf357697ba568a11ab4d39febe2bb36052"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "serde",
  "serde_json",
  "sqlx",
  "uuid",
- "vil_db_sqlx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_orm_derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "vil_orm_derive"
-version = "0.2.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
+ "vil_db_sqlx 0.2.1",
+ "vil_log 0.2.1",
+ "vil_orm_derive 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -13788,73 +13779,82 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil_orm_derive"
+version = "0.2.1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "vil_otel"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
  "tokio",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_output_parser"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_plugin_sdk"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "vil_server_core 0.2.0",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_private_rag"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_prompt_optimizer"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_prompt_shield"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aho-corasick",
  "axum 0.7.9",
@@ -13862,48 +13862,39 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_prompts"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_quantized"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "rmp-serde",
  "serde",
  "serde_json",
  "tracing",
- "vil_log 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
-]
-
-[[package]]
-name = "vil_queue"
-version = "0.2.0"
-dependencies = [
- "crossbeam-queue",
- "nix 0.27.1",
- "vil_types 0.2.0",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -13914,12 +13905,23 @@ checksum = "af10e98586098e8485672087dfaf62f8c47bdb16bbf994bd70b3dcbe7f20790e"
 dependencies = [
  "crossbeam-queue",
  "nix 0.27.1",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_types 0.2.0",
+]
+
+[[package]]
+name = "vil_queue"
+version = "0.2.1"
+dependencies = [
+ "crossbeam-queue",
+ "nix 0.27.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
 name = "vil_rag"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c5c3d3bc000459b1f9e8fd8944741a81af98f66804a34e71f8f305fe789318c"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13938,9 +13940,7 @@ dependencies = [
 
 [[package]]
 name = "vil_rag"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c5c3d3bc000459b1f9e8fd8944741a81af98f66804a34e71f8f305fe789318c"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13949,38 +13949,28 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_llm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_json 0.2.1",
+ "vil_llm 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_realtime_rag"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
  "vil_embedder",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
  "vil_tokenizer",
-]
-
-[[package]]
-name = "vil_registry"
-version = "0.2.0"
-dependencies = [
- "dashmap 5.5.3",
- "vil_obs 0.2.0",
- "vil_shm 0.2.0",
- "vil_types 0.2.0",
 ]
 
 [[package]]
@@ -13990,14 +13980,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4c86deddb9f997a8b63e2e98c44f5a706702144ff153e6e2ba52e93b4ad767b"
 dependencies = [
  "dashmap 5.5.3",
- "vil_obs 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_shm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_obs 0.2.0",
+ "vil_shm 0.2.0",
+ "vil_types 0.2.0",
+]
+
+[[package]]
+name = "vil_registry"
+version = "0.2.1"
+dependencies = [
+ "dashmap 5.5.3",
+ "vil_obs 0.2.1",
+ "vil_shm 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
 name = "vil_reranker"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14005,29 +14005,31 @@ dependencies = [
  "serde_json",
  "tokio",
  "vil_embedder",
- "vil_llm 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_llm 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_rlhf_data"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_rt"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9587c9a37f09d04a2141490fab31936f7d3eba8f1c782fb5fa1236802afd14a3"
 dependencies = [
  "dashmap 5.5.3",
  "tokio",
@@ -14043,25 +14045,23 @@ dependencies = [
 
 [[package]]
 name = "vil_rt"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9587c9a37f09d04a2141490fab31936f7d3eba8f1c782fb5fa1236802afd14a3"
+version = "0.2.1"
 dependencies = [
  "dashmap 5.5.3",
  "tokio",
  "tracing",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_net 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_obs 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_queue 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_registry 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_shm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_log 0.2.1",
+ "vil_net 0.2.1",
+ "vil_obs 0.2.1",
+ "vil_queue 0.2.1",
+ "vil_registry 0.2.1",
+ "vil_shm 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
 name = "vil_script_js"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "boa_engine",
  "serde",
@@ -14070,7 +14070,7 @@ dependencies = [
 
 [[package]]
 name = "vil_script_lua"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "mlua",
  "serde",
@@ -14080,6 +14080,8 @@ dependencies = [
 [[package]]
 name = "vil_sdk"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90b078bdb7c45d085c99326aae1fcd509a3317e6f17c46a497b9decc4df8adb5"
 dependencies = [
  "bytes",
  "serde",
@@ -14094,24 +14096,22 @@ dependencies = [
 
 [[package]]
 name = "vil_sdk"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90b078bdb7c45d085c99326aae1fcd509a3317e6f17c46a497b9decc4df8adb5"
+version = "0.2.1"
 dependencies = [
  "bytes",
  "serde",
  "serde_json",
- "vil_engine 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_ir 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_new_http 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_validate 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_engine 0.2.1",
+ "vil_ir 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_new_http 0.2.1",
+ "vil_types 0.2.1",
+ "vil_validate 0.2.1",
 ]
 
 [[package]]
 name = "vil_semantic_router"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14119,16 +14119,18 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "vil_log 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_server"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "659b59525a42a19aa22babb0f4a6629cdb5713044eaaa0b620dff645bd3806c1"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -14152,9 +14154,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "659b59525a42a19aa22babb0f4a6629cdb5713044eaaa0b620dff645bd3806c1"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -14162,43 +14162,18 @@ dependencies = [
  "tokio",
  "tower 0.4.13",
  "tracing",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_obs 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_auth 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_config 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_db 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_mesh 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_web 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "vil_server_auth"
-version = "0.2.0"
-dependencies = [
- "argon2",
- "axum 0.7.9",
- "dashmap 5.5.3",
- "getrandom 0.2.17",
- "http 1.4.0",
- "jsonwebtoken 9.3.1",
- "password-hash",
- "rand 0.8.5",
- "rmp-serde",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "subtle",
- "tokio",
- "tower 0.4.13",
- "tracing",
- "uuid",
- "vil_log 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_json 0.2.1",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_obs 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server_auth 0.2.1",
+ "vil_server_config 0.2.1",
+ "vil_server_core 0.2.1",
+ "vil_server_db 0.2.1",
+ "vil_server_macros 0.2.1",
+ "vil_server_mesh 0.2.1",
+ "vil_server_web 0.2.1",
 ]
 
 [[package]]
@@ -14224,19 +14199,33 @@ dependencies = [
  "tower 0.4.13",
  "tracing",
  "uuid",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_log 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
-name = "vil_server_config"
-version = "0.2.0"
+name = "vil_server_auth"
+version = "0.2.1"
 dependencies = [
+ "argon2",
+ "axum 0.7.9",
+ "dashmap 5.5.3",
+ "getrandom 0.2.17",
+ "http 1.4.0",
+ "jsonwebtoken 9.3.1",
+ "password-hash",
+ "rand 0.8.5",
+ "rmp-serde",
  "serde",
  "serde_json",
- "serde_yaml",
- "toml",
+ "sha2 0.10.9",
+ "subtle",
+ "tokio",
+ "tower 0.4.13",
  "tracing",
+ "uuid",
+ "vil_log 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -14253,8 +14242,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil_server_config"
+version = "0.2.1"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "toml",
+ "tracing",
+]
+
+[[package]]
 name = "vil_server_core"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fba46efb558e8f57c4616deea260ded7e4da409ca9d038d226e3ff2125cc7a4"
 dependencies = [
  "aes-gcm",
  "axum 0.7.9",
@@ -14291,9 +14293,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_core"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fba46efb558e8f57c4616deea260ded7e4da409ca9d038d226e3ff2125cc7a4"
+version = "0.2.1"
 dependencies = [
  "aes-gcm",
  "axum 0.7.9",
@@ -14317,29 +14317,15 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vil_capsule 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_json 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_obs 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_observer 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rt 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_shm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sidecar 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "vil_server_db"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "rmp-serde",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "vil_log 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_capsule 0.2.1",
+ "vil_json 0.2.1",
+ "vil_log 0.2.1",
+ "vil_obs 0.2.1",
+ "vil_observer 0.2.1",
+ "vil_rt 0.2.1",
+ "vil_shm 0.2.1",
+ "vil_sidecar 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
@@ -14354,34 +14340,33 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_log 0.2.0",
+ "vil_server_core 0.2.0",
+]
+
+[[package]]
+name = "vil_server_db"
+version = "0.2.1"
+dependencies = [
+ "async-trait",
+ "rmp-serde",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "vil_log 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_server_format"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "bytes",
  "prost 0.13.5",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "vil_server_macros"
-version = "0.2.0"
-dependencies = [
- "axum 0.7.9",
- "proc-macro2",
- "quote",
- "serde",
- "serde_json",
- "syn 2.0.117",
- "tokio",
- "tracing",
- "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -14396,8 +14381,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil_server_macros"
+version = "0.2.1"
+dependencies = [
+ "axum 0.7.9",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn 2.0.117",
+ "tokio",
+ "tracing",
+ "vil_server_core 0.2.1",
+]
+
+[[package]]
 name = "vil_server_mesh"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7020c5d3ad7fecf69f3988d23ae087116c54e03a2a7745de7db81b4a7f92d904"
 dependencies = [
  "async-trait",
  "bytes",
@@ -14417,9 +14419,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_mesh"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7020c5d3ad7fecf69f3988d23ae087116c54e03a2a7745de7db81b4a7f92d904"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "bytes",
@@ -14430,33 +14430,11 @@ dependencies = [
  "serde_yaml",
  "tokio",
  "tracing",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_rt 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_shm 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "vil_server_test"
-version = "0.2.0"
-dependencies = [
- "axum 0.7.9",
- "bytes",
- "http-body-util",
- "hyper 1.9.0",
- "hyper-util",
- "serde",
- "serde_json",
- "tokio",
- "tower 0.4.13",
- "tracing",
- "vil_db_semantic 0.2.0",
- "vil_server 0.2.0",
- "vil_server_auth 0.2.0",
- "vil_server_core 0.2.0",
- "vil_server_mesh 0.2.0",
- "vil_server_web 0.2.0",
+ "vil_log 0.2.1",
+ "vil_rt 0.2.1",
+ "vil_server_core 0.2.1",
+ "vil_shm 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
@@ -14475,23 +14453,30 @@ dependencies = [
  "tokio",
  "tower 0.4.13",
  "tracing",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
-name = "vil_server_web"
-version = "0.2.0"
+name = "vil_server_test"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
- "http 1.4.0",
+ "bytes",
+ "http-body-util",
+ "hyper 1.9.0",
+ "hyper-util",
  "serde",
  "serde_json",
  "tokio",
  "tower 0.4.13",
  "tracing",
- "validator",
- "vil_server_core 0.2.0",
+ "vil_db_semantic 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_auth 0.2.1",
+ "vil_server_core 0.2.1",
+ "vil_server_mesh 0.2.1",
+ "vil_server_web 0.2.1",
 ]
 
 [[package]]
@@ -14508,17 +14493,22 @@ dependencies = [
  "tower 0.4.13",
  "tracing",
  "validator",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_server_core 0.2.0",
 ]
 
 [[package]]
-name = "vil_shm"
-version = "0.2.0"
+name = "vil_server_web"
+version = "0.2.1"
 dependencies = [
- "dashmap 5.5.3",
- "memmap2",
- "nix 0.27.1",
- "vil_types 0.2.0",
+ "axum 0.7.9",
+ "http 1.4.0",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower 0.4.13",
+ "tracing",
+ "validator",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
@@ -14530,25 +14520,17 @@ dependencies = [
  "dashmap 5.5.3",
  "memmap2",
  "nix 0.27.1",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_types 0.2.0",
 ]
 
 [[package]]
-name = "vil_sidecar"
-version = "0.2.0"
+name = "vil_shm"
+version = "0.2.1"
 dependencies = [
- "bytes",
  "dashmap 5.5.3",
  "memmap2",
- "rmp-serde",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "tokio",
- "tracing",
- "vil_log 0.2.0",
- "vil_types 0.2.0",
+ "nix 0.27.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
@@ -14566,25 +14548,43 @@ dependencies = [
  "serde_yaml",
  "tokio",
  "tracing",
- "vil_log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_log 0.2.0",
+ "vil_types 0.2.0",
+]
+
+[[package]]
+name = "vil_sidecar"
+version = "0.2.1"
+dependencies = [
+ "bytes",
+ "dashmap 5.5.3",
+ "memmap2",
+ "rmp-serde",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "vil_log 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
 name = "vil_soap"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "quick-xml 0.36.2",
  "reqwest 0.12.28",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_speculative"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14593,31 +14593,31 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.0",
- "vil_log 0.2.0",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_llm 0.2.1",
+ "vil_log 0.2.1",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_sql_agent"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_storage_azure"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "azure_core",
  "azure_storage",
@@ -14627,26 +14627,26 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_storage_gcs"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bytes",
  "google-cloud-storage",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_storage_s3"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bytes",
  "http 1.4.0",
@@ -14655,13 +14655,13 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_streaming_rag"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14669,60 +14669,60 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
  "vil_tokenizer",
 ]
 
 [[package]]
 name = "vil_synthetic"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_tensor_shm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_tokenizer"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum 0.7.9",
  "base64 0.22.1",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_topo"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -14733,44 +14733,44 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_cdc"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "tokio",
  "tokio-postgres",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "tokio",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
 name = "vil_trigger_cron"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "chrono",
  "cron",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_email"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-imap",
  "async-native-tls",
@@ -14779,14 +14779,14 @@ dependencies = [
  "tokio",
  "tokio-native-tls",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_evm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures-util",
@@ -14795,40 +14795,40 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.24.0",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_fs"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "notify",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_iot"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "rumqttc",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_webhook"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14836,18 +14836,9 @@ dependencies = [
  "sha2 0.10.9",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
  "vil_trigger_core",
-]
-
-[[package]]
-name = "vil_types"
-version = "0.2.0"
-dependencies = [
- "bytes",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -14861,11 +14852,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "vil_validate"
-version = "0.2.0"
+name = "vil_types"
+version = "0.2.1"
 dependencies = [
- "vil_ir 0.2.0",
- "vil_types 0.2.0",
+ "bytes",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -14874,34 +14866,25 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c70087389720760a86c27d61325e4b8d72cb78d30718c7fbabda17e0ac6a5d4a"
 dependencies = [
- "vil_ir 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_ir 0.2.0",
+ "vil_types 0.2.0",
+]
+
+[[package]]
+name = "vil_validate"
+version = "0.2.1"
+dependencies = [
+ "vil_ir 0.2.1",
+ "vil_types 0.2.1",
 ]
 
 [[package]]
 name = "vil_validate_derive"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
-]
-
-[[package]]
-name = "vil_vectordb"
-version = "0.2.0"
-dependencies = [
- "axum 0.7.9",
- "dashmap 5.5.3",
- "parking_lot 0.12.5",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -14917,49 +14900,50 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 1.0.69",
- "vil_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_macros 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+]
+
+[[package]]
+name = "vil_vectordb"
+version = "0.2.1"
+dependencies = [
+ "axum 0.7.9",
+ "dashmap 5.5.3",
+ "parking_lot 0.12.5",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_vision"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_viz"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "vil_workflow_v2"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "axum 0.7.9",
- "dashmap 5.5.3",
- "serde",
- "serde_json",
- "tokio",
- "vil_macros 0.2.0",
- "vil_sdk 0.2.0",
- "vil_server 0.2.0",
- "vil_server_core 0.2.0",
 ]
 
 [[package]]
@@ -14974,23 +14958,39 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_sdk 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vil_server_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vil_macros 0.2.0",
+ "vil_sdk 0.2.0",
+ "vil_server 0.2.0",
+ "vil_server_core 0.2.0",
+]
+
+[[package]]
+name = "vil_workflow_v2"
+version = "0.2.1"
+dependencies = [
+ "async-trait",
+ "axum 0.7.9",
+ "dashmap 5.5.3",
+ "serde",
+ "serde_json",
+ "tokio",
+ "vil_macros 0.2.1",
+ "vil_sdk 0.2.1",
+ "vil_server 0.2.1",
+ "vil_server_core 0.2.1",
 ]
 
 [[package]]
 name = "vil_ws"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "dashmap 5.5.3",
  "futures-util",
  "tokio",
  "tokio-tungstenite 0.24.0",
  "tracing",
- "vil_connector_macros 0.2.0",
- "vil_log 0.2.0",
+ "vil_connector_macros 0.2.1",
+ "vil_log 0.2.1",
 ]
 
 [[package]]
