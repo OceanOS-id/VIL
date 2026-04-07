@@ -256,7 +256,8 @@ Monitor at: `https://api.my-app.com/_vil/dashboard/`
 
 - **[Developer Guide Part 1](001-VIL-Developer_Guide-Overview.md)** — Architecture deep dive
 - **[Developer Guide Part 3](003-VIL-Developer_Guide-Server-Framework.md)** — Server patterns
-- **[Examples](../../examples/)** — 80+ working examples
+- **[Developer Guide Part 11](011-VIL-Developer_Guide-Custom-Code.md)** — WASM & Sidecar macros
+- **[Examples](../../examples/)** — 93 working examples
 - **[COOKBOOK](COOKBOOK.md)** — 20 common patterns (coming soon)
 
 ---

@@ -187,43 +187,61 @@ struct ThirdPartyAdapter;      // Most restricted, only I/O
 
 ### 3.3 WASM FaaS Runtime
 
-VIL provides real WASM execution via **wasmtime** for Function-as-a-Service workloads:
+VIL provides real WASM execution via **wasmtime**. The recommended API uses
+the `#[vil_wasm]` macro — zero plumbing, developer writes only business logic:
 
 ```rust
-use vil_capsule::{CapsuleHost, WasmPool};
+use vil_server_macros::vil_wasm;
 
-// Precompile a WASM module
-let host = CapsuleHost::new()?;
-let module = host.precompile("pricing.wasm")?;
+// Developer writes logic, VIL handles: compile → pool → bridge → fallback
+#[vil_wasm(module = "pricing")]
+fn calculate_price(base_cents: i32, qty: i32) -> i32 {
+    let discount = if qty >= 100 { 20 } else if qty >= 50 { 10 } else { 0 };
+    (base_cents as i64 * qty as i64 * (100 - discount) / 100) as i32
+}
 
-// Simple i32 call
-let result = module.call_i32("calculate_price", 42)?;
-
-// Memory-based call for complex payloads
-let output = module.call_with_memory("validate", input_bytes)?;
-
-// Pool for high-throughput FaaS
-let pool = WasmPool::new("pricing.wasm", 8)?; // 8 pre-warmed instances
-let result = pool.dispatch("calculate_price", payload)?;
+// In handler — called like a normal function:
+let price = calculate_price(1000, 50);  // → dispatched to WasmPool
 ```
 
-Three real WASM modules ship with VIL (total: 2,149 bytes compiled):
+The macro auto-generates:
+- Pool lazy-initialization on first call
+- `.wasm` file auto-loaded from `wasm-modules/out/{module}.wasm`
+- Native Rust fallback if `.wasm` not available (with warning)
+- Metadata for observability introspection
 
-| Module | Size | Functions | Description |
-|--------|------|-----------|-------------|
-| `pricing.wasm` | 567B | `calculate_price`, `apply_tax`, `bulk_discount` | Pricing engine |
-| `validation.wasm` | 533B | `validate_order`, `validate_age`, `validate_quantity` | Input validation |
-| `transform.wasm` | 1,049B | `to_uppercase`, `reverse_bytes`, `count_vowels` | Data transformation |
+For low-level access (advanced users), the `vil_capsule` crate provides
+direct `WasmPool`, `CapsuleHost`, and `WasmFaaSRegistry` APIs.
 
-All modules are `#![no_std]` for ultra-lightweight deployment. `WasmPool` provides pre-warmed instance pooling with round-robin dispatch (~19ns per call overhead).
+See [Developer Guide Part 11 — WASM & Sidecar Macros](./011-VIL-Developer_Guide-Custom-Code.md)
+for complete documentation.
 
 ---
 
-## 4. Sidecar SDK
+## 4. Sidecar Integration
 
-VIL supports external-process integration via the **Sidecar SDK**, enabling Python, Go, and other languages to participate as VIL Process activities over Unix Domain Sockets with zero-copy SHM data plane.
+VIL supports external-process integration via SHM + Unix Domain Sockets.
+The recommended API uses the `#[vil_sidecar]` macro — zero plumbing:
 
-### 4.1 Python SDK
+### 4.1 Rust Host (using macro)
+
+```rust
+use vil_server_macros::vil_sidecar;
+
+#[derive(Deserialize, Serialize)]
+struct FraudResult { score: f64, decision: String }
+
+// VIL handles: registry, spawn, connect, invoke, deserialize
+#[vil_sidecar(target = "fraud-checker")]
+async fn check_fraud(data: &[u8]) -> FraudResult {
+    // Body: demo logic (or reference to external source file)
+}
+
+// In handler — called like normal async:
+let result = check_fraud(&order_bytes).await;
+```
+
+### 4.2 Python Sidecar (external process)
 
 ```python
 from vil_sidecar import VilSidecar
@@ -238,7 +256,7 @@ def fraud_check(request: dict) -> dict:
 app.run()
 ```
 
-### 4.2 Go SDK
+### 4.3 Go Sidecar (external process)
 
 ```go
 app := vil.NewSidecar("ml-engine")
@@ -248,6 +266,9 @@ app.Method("predict", func(req vil.Request) vil.Response {
 })
 app.Run()
 ```
+
+See [Developer Guide Part 11 — WASM & Sidecar Macros](./011-VIL-Developer_Guide-Custom-Code.md)
+for complete documentation.
 
 ### 4.3 Production Features
 

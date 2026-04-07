@@ -12,70 +12,95 @@ VIL sits **above Rust** — developers write intent through semantic macros, and
 | **Process Model** | `#[process]`, ports, failure domains, cleanup policies |
 | **Zero-Copy Contracts** | VASI validation, `VRef<T>`, `VSlice<T>`, `Loaned<T>` |
 | **Workflow DSL** | `vil_workflow!` macro for topology declaration |
-| **Transpile SDK** | Write VIL pipelines in Python/Go/Java/TypeScript, compile to native Rust binary via `vil compile` |
+| **WASM Sandbox** | `#[vil_wasm]` — zero-plumbing sandboxed execution via wasmtime |
+| **Sidecar Integration** | `#[vil_sidecar]` — zero-plumbing polyglot (Python/Go/Java) via SHM+UDS |
+| **Transpile SDK** | Write VIL pipelines in Python/Go/Java/TypeScript, compile to native Rust binary |
+| **AI Stack** | `LlmRouter`, `RagPipeline`, `Agent` (ReAct), `VectorDB` (HNSW) |
 | **WebSocket Semantic** | `#[derive(VilWsEvent)]`, `WsHub` topic-based broadcast |
 | **Transfer Modes** | LoanWrite, LoanRead, PublishOffset, Copy, ShareRead, ConsumeOnce |
 | **Tri-Lane Protocol** | Trigger/Data/Control separation — no head-of-line blocking |
 | **Observability** | `#[trace_hop]`, `#[latency_marker]` — zero manual instrumentation |
 | **IR & Validation** | 10 compile-time validation passes, JSON/YAML contract export |
 
-## Deployment
+## Three Execution Modes
 
-VIL code can be written in **Rust** (native) or in **Python, Go, Java, TypeScript** via the Transpile SDK, and compiled to native Rust binaries:
+```rust
+// Native — fastest, zero overhead
+async fn validate(body: ShmSlice) -> VilResponse<Result> { /* Rust logic */ }
 
+// WASM — sandboxed, hot-deployable (zero plumbing)
+#[vil_wasm(module = "pricing")]
+fn calculate_price(base: i32, qty: i32) -> i32 { /* business rules */ }
+
+// Sidecar — polyglot, process-isolated (zero plumbing)
+#[vil_sidecar(target = "ml-scorer")]
+async fn score_fraud(data: &[u8]) -> FraudResult { /* ML scoring */ }
 ```
-Rust Source ─────────── cargo build ──→ vil-server (native binary)
 
-Python/Go/Java/TS ──── vil compile ──→ native binary (same performance)
-  (VilPipeline DSL)    --from python     ~3,855 req/s SSE pipeline
-                          --release         Single static binary, no FFI overhead
-```
+Developer writes functions. VIL handles all plumbing — pool management, process spawning, SHM transport, error handling.
 
-The `sdk/` folder contains language bindings for development (FFI mode). For production, use `vil compile` to transpile DSL source into a native binary. See [`examples-sdk/`](../../examples-sdk/) for 76 runnable examples across 4 languages.
-
-## Core Crates
+## Core Crates (142 total)
 
 | Crate | Purpose |
 |-------|---------|
 | `vil_types` | Core types, markers (Vasi, PodLike), identity (ProcessId, PortId) |
 | `vil_shm` | Shared memory allocator (ExchangeHeap) |
 | `vil_queue` | Zero-copy SPSC/MPMC descriptor queues |
-| `vil_registry` | Distributed atomic routing registry |
-| `vil_rt` | Runtime kernel (loan, publish, recv, process registration) |
-| `vil_ir` | Semantic IR (ProgramIR, ProcessIR, MessageIR, WorkflowIR) |
-| `vil_validate` | 10 compile-time validation passes |
-| `vil_macros` | Proc-macros (vil_state, vil_workflow!, VilModel, VilError) |
-| `vil_codegen_rust` | IR → Rust code generation |
-| `vil_codegen_c` | IR → C header export |
-| `vil_sdk` | High-level SDK (Layer 1/2/3 API, HttpSink/HttpSource) |
-| `vil_json` | High-performance JSON (serde_json default, sonic-rs SIMD optional) |
-| `vil_server_macros` | Proc-macros (vil_handler, VilSseEvent, VilWsEvent, vil_endpoint, vil_app) |
+| `vil_server` | Process-oriented HTTP server (Axum + VIL runtime) |
+| `vil_server_macros` | `#[vil_handler]`, `#[vil_endpoint]`, `#[vil_wasm]`, `#[vil_sidecar]` |
+| `vil_capsule` | WASM sandbox (wasmtime) — WasmPool, zero-plumbing bridge |
+| `vil_sidecar` | Sidecar protocol (UDS + SHM) — zero-plumbing bridge |
+| `vil_llm` | Multi-provider LLM (OpenAI, Anthropic, Ollama), LlmRouter |
+| `vil_rag` | RAG pipeline (ingest, chunk, embed, retrieve, generate) |
+| `vil_agent` | AI Agent with ReAct loop + ToolRegistry |
+| `vil_vectordb` | Native HNSW vector search |
+| `vil_orm` | VilEntity derive, VilQuery builder |
+| `vil_log` | Semantic log — zero-copy ring buffer, 7 typed categories |
+| `vil_sdk` | Pipeline SDK (HttpSource/HttpSink, ShmToken, vil_workflow!) |
 
 ## Documentation
 
-- [VIL Developer Guide](./VIL-Developer-Guide.md) — complete reference
-- [SDK Integration Guide](./SDK-Integration-Guide.md) — Transpile SDK + FFI SDK for Python/Go/Java/TypeScript
-- [VIL Concept](./VIL_CONCEPT.md) — 10 immutable design principles
-- [Architecture Overview](../ARCHITECTURE_OVERVIEW.md) — layered architecture
-- [Examples Guide](../EXAMPLES.md) — 18 runnable examples
-- [CLI Reference](./VIL-Developer-Guide.md#13-cli-tools-reference) — vil compile, run, bench, inspect
+| Document | Focus |
+|----------|-------|
+| [Quick Start](./QUICKSTART.md) | Build your first API in 30 minutes |
+| [Developer Guide (11 parts)](./001-VIL-Developer_Guide-Overview.md) | Complete reference |
+| [Custom Code Guide](./011-VIL-Developer_Guide-Custom-Code.md) | Native, WASM, Sidecar patterns |
+| [VIL Concept](./VIL_CONCEPT.md) | 10 immutable design principles |
+| [Architecture Overview](../ARCHITECTURE_OVERVIEW.md) | Layered architecture, 142 crates |
+| [Examples](../EXAMPLES.md) | 93 runnable examples |
 
 ## Quick Start
 
 ```rust
-use vil_sdk::prelude::*;
+use vil_server::prelude::*;
 
-#[vil_state]
-pub struct InferenceResult {
-    pub session_id: u64,
-    pub tokens: u32,
-    pub latency_us: u64,
+#[tokio::main]
+async fn main() {
+    let svc = ServiceProcess::new("hello")
+        .endpoint(Method::GET, "/", get(hello))
+        .endpoint(Method::POST, "/echo", post(echo));
+
+    VilApp::new("my-app")
+        .port(8080)
+        .observer(true)
+        .service(svc)
+        .run()
+        .await;
 }
 
-fn main() {
-    vil_sdk::http_gateway()
-        .listen(3080)
-        .upstream("http://localhost:4545/v1/chat/completions")
-        .run();
+async fn hello() -> VilResponse<&'static str> {
+    VilResponse::ok("Hello from VIL!")
 }
+
+async fn echo(body: ShmSlice) -> HandlerResult<VilResponse<serde_json::Value>> {
+    let input: serde_json::Value = body.json()
+        .map_err(|_| VilError::bad_request("invalid JSON"))?;
+    Ok(VilResponse::ok(input))
+}
+```
+
+```bash
+cargo run
+curl localhost:8080/api/hello/
+curl -X POST localhost:8080/api/hello/echo -H 'Content-Type: application/json' -d '{"msg":"test"}'
 ```

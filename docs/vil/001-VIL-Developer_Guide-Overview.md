@@ -10,7 +10,7 @@
 
 ## Document Index
 
-This Developer Guide is split into 9 parts for easier navigation:
+This Developer Guide is split into 12 parts for easier navigation:
 
 | # | Document | Scope |
 |---|---------|-------|
@@ -18,11 +18,13 @@ This Developer Guide is split into 9 parts for easier navigation:
 | 002 | [Semantic Types & Memory Model](./002-VIL-Developer_Guide-Semantic-Types.md) | Semantic macros, memory classes, session management, Execution Contract |
 | 003 | [Server Framework](./003-VIL-Developer_Guide-Server-Framework.md) | Server macros, VilApp, ServiceProcess, Tri-Lane mesh, DB integration, Observer |
 | 004 | [Pipeline & HTTP Streaming](./004-VIL-Developer_Guide-Pipeline-Streaming.md) | `vil_workflow!`, Layer 1/2/3 API, `vil_new_http`, SSE/NDJSON, YAML pipelines |
-| 005 | [Infrastructure & Plugins](./005-VIL-Developer_Guide-Infrastructure.md) | Resilience, observability, WASM FaaS, sidecar SDK, LSP, AI plugin system |
+| 005 | [Infrastructure & Plugins](./005-VIL-Developer_Guide-Infrastructure.md) | Resilience, observability, `#[vil_wasm]`, `#[vil_sidecar]`, LSP, AI plugin system |
 | 006 | [CLI, Deployment & Best Practices](./006-VIL-Developer_Guide-CLI-Deployment.md) | CLI reference, Transpile SDK, C interop, health endpoints, deployment, best practices |
 | 007 | [Semantic Log System](./007-VIL-Developer_Guide-Semantic-Log.md) | vil_log, SPSC ring buffer, 7 log types, auto-emit, drains |
 | 008 | [Connectors & Semantic Types](./008-VIL-Developer_Guide-Connectors.md) | Phase 6 connectors, `#[connector_fault/event/state]`, triggers |
-| **009** | **[Dual Architecture](./009-VIL-Developer_Guide-Dual-Architecture.md)** | **VilApp vs ShmToken: when to use which, benchmarks, decision matrix, hybrid pattern** |
+| 009 | [Dual Architecture](./009-VIL-Developer_Guide-Dual-Architecture.md) | VilApp vs ShmToken: when to use which, benchmarks, decision matrix |
+| 010 | [Observer Dashboard](./010-VIL-Developer_Guide-Observer-Dashboard.md) | Embedded SPA, metrics, topology, health monitoring |
+| **011** | **[Custom Code](./011-VIL-Developer_Guide-Custom-Code.md)** | **Native vs WASM vs Sidecar, `#[vil_wasm]`/`#[vil_sidecar]` macros, decision guide, performance** |
 
 ---
 
@@ -285,20 +287,20 @@ vil run --mock   # Run with built-in mock server
 
 | Metric | Value |
 |--------|-------|
-| Rust crates | 101 |
+| Rust crates | 142 |
 | Architecture layers | 15+ |
-| Native examples | 49 (5 tiers: Basic/Pipeline/LLM/RAG/Agent) |
-| SDK examples | 32 (8 examples x 4 languages: Python/Go/Java/TypeScript, transpile-only) |
+| Native examples | 93 (8 tiers: Basic/Pipeline/LLM/RAG/Agent/VilLog/DB/Trigger) |
+| SDK examples | 8 languages (Python/Go/TypeScript/Java/C#/Kotlin/Swift/Zig) |
 | vflow examples | 9 |
 | Passing tests | 1,425+ |
-| Protocols | 7 (REST, SSE, WebSocket, gRPC, Kafka, MQTT, NATS) |
+| Protocols | 12 (REST, SSE, WebSocket, gRPC, Kafka, MQTT, NATS, RabbitMQ, SQS, SOAP, Modbus, OPC-UA) |
 | YAML Codegen modules | 6 |
-| Code execution modes | 5 (expr/handler/script/wasm/sidecar) |
-| AI features | 52 across 51 crates (51/51 VIL Way) |
+| Code execution modes | 3 macros: native, `#[vil_wasm]`, `#[vil_sidecar]` |
+| AI features | LlmRouter, RagPipeline, Agent (ReAct), VectorDB (HNSW) |
 | HTTP streaming crate | `vil_new_http` (SSE + NDJSON, 7 dialects) |
-| Benchmark (HTTP) | 2.0M req/s |
-| Benchmark (ShmSlice) | 860K ops/s |
-| Benchmark (Tri-Lane) | 1.8M msg/s |
+| Benchmark (HTTP) | 2.1M req/s |
+| Benchmark (ShmSlice) | 880K ops/s |
+| Benchmark (Tri-Lane) | 1.9M msg/s |
 
 ---
 

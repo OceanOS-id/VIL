@@ -14,8 +14,8 @@
 
 <p align="center">
   <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License"></a>
-  <img src="https://img.shields.io/badge/crates-130%2B-green" alt="Crates">
-  <img src="https://img.shields.io/badge/examples-83-orange" alt="Examples">
+  <img src="https://img.shields.io/badge/crates-142-green" alt="Crates">
+  <img src="https://img.shields.io/badge/examples-93-orange" alt="Examples">
   <img src="https://img.shields.io/badge/tests-1425%2B-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/rust-1.93%2B-orange" alt="Rust">
 </p>
@@ -189,7 +189,7 @@ pipeline.source(url="http://ai-provider:4545/v1/chat", format="sse")
 | **Edge** | vil_edge_deploy | ARM64, ARMv7, RISC-V deployment profiles |
 | **Connector Macros** | vil_connector_macros | Lightweight #[connector_fault/event/state] for all connectors |
 
-**130+ crates** | **83 examples** | **9 SDK languages** | **6 Grafana dashboards**
+**142 crates** | **93 examples** | **9 SDK languages** | **6 Grafana dashboards**
 
 ## Examples (8 Tiers)
 
@@ -240,7 +240,7 @@ cargo run --release -p vil-basic-credit-npl-filter
 | `#[connector_event]` | Ad-hoc structs | #[repr(C)], ≤192B, compile-time size guard |
 | `#[connector_state]` | Manual metrics | Zero-init state, atomic-ready counters |
 
-All 51 AI plugins + all 83 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
+All 51 AI plugins + all 93 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
 
 ## Documentation
 
@@ -248,8 +248,8 @@ All 51 AI plugins + all 83 examples use these patterns. Zero `Extension<T>`, zer
 |-------|------|
 | Architecture Overview | [docs/ARCHITECTURE_OVERVIEW.md](docs/ARCHITECTURE_OVERVIEW.md) |
 | Design Principles | [docs/vil/VIL_CONCEPT.md](docs/vil/VIL_CONCEPT.md) |
-| Custom Code (Native/WASM/Sidecar) | [docs/vil/CUSTOM_CODE_GUIDE.md](docs/vil/CUSTOM_CODE_GUIDE.md) |
-| VIL Guide (8 parts) | [docs/vil/001-VIL-Developer_Guide-Overview.md](docs/vil/001-VIL-Developer_Guide-Overview.md) |
+| Custom Code (Native/WASM/Sidecar) | [docs/vil/011-VIL-Developer_Guide-Custom-Code.md](docs/vil/011-VIL-Developer_Guide-Custom-Code.md) |
+| VIL Guide (11 parts) | [docs/vil/001-VIL-Developer_Guide-Overview.md](docs/vil/001-VIL-Developer_Guide-Overview.md) |
 | Server Framework | [docs/vil-server/vil-server-guide.md](docs/vil-server/vil-server-guide.md) |
 | API Reference | [docs/vil-server/API-REFERENCE-SERVER.md](docs/vil-server/API-REFERENCE-SERVER.md) |
 | Config Reference | [vil-server.reference.yaml](vil-server.reference.yaml) |

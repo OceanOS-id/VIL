@@ -402,13 +402,15 @@ sink_b.run_worker::<ShmToken>(world.clone(), hb);
 
 **Key:** Multiple `vil_workflow!` sharing `VastarRuntimeWorld`, ShmToken for cross-pipeline zero-copy.
 
-### 4.3 Macro Status (Updated 2026-03-25)
+### 4.3 Macro Status (Updated 2026-04-07)
 
 | Macro | Purpose | Status |
 |-------|---------|--------|
 | `#[vil_handler]` | RequestId injection + tracing + error mapping | ✅ Done |
 | `#[vil_handler(shm)]` | Auto ShmSlice body + ServiceCtx injection | ✅ Done |
 | `#[vil_endpoint]` | Auto JSON body extraction + exec class dispatch | ✅ Done |
+| `#[vil_wasm(module)]` | Zero-plumbing WASM sandbox — auto pool, bridge, fallback | ✅ Done |
+| `#[vil_sidecar(target)]` | Zero-plumbing sidecar process — auto registry, invoke, deserialize | ✅ Done |
 | `#[vil_state/event/fault/decision]` | Semantic message types with VASI validation | ✅ Done |
 | `#[process]` | Process IR builder | ✅ Done |
 | `vil_workflow!` | Declarative pipeline wiring | ✅ Done |
@@ -416,15 +418,18 @@ sink_b.run_worker::<ShmToken>(world.clone(), hb);
 | `#[vil_service]` | Module-level service definition | ✅ Done |
 | `.transform()` | Inline NDJSON/SSE processing on HttpSourceBuilder | ✅ Done |
 
-### 4.4 Examples — 5-Tier Structure (49 Examples)
+### 4.4 Examples — 8-Tier Structure (93 Examples)
 
 | Tier | Count | Pattern | Token | Examples |
 |------|-------|---------|-------|----------|
-| **Tier 1: Basic** | 29 | VX_APP + SDK_PIPELINE | ShmSlice, ShmToken | 001-029 |
-| **Tier 2: Pipeline** | 5 | Multi-pipeline | ShmToken | 101-105 (fan-out, fan-in, diamond, multi-workflow) |
-| **Tier 3: LLM** | 5 | VX_APP + SDK_PIPELINE | ShmSlice | 201-205 (each unique business logic) |
-| **Tier 4: RAG** | 5 | VX_APP | ShmSlice, ServiceCtx | 301-305 (vector, multi-source, hybrid, citation, guardrail) |
-| **Tier 5: Agent** | 5 | VX_APP | ShmSlice, ServiceCtx | 401-405 (calculator, HTTP, files, CSV, ReAct loop) |
+| **Tier 1: Basic** | 39 | VX_APP + SDK_PIPELINE | ShmSlice, ShmToken | 001-039 |
+| **Tier 2: Pipeline** | 7 | Multi-pipeline | ShmToken | 101-107 (fan-out, fan-in, diamond, multi-workflow) |
+| **Tier 3: LLM** | 6 | VX_APP + SDK_PIPELINE | ShmSlice | 201-206 (chat, routing, tools, streaming, chunking, decision) |
+| **Tier 4: RAG** | 6 | VX_APP | ShmSlice, ServiceCtx | 301-306 (vector, multi-source, hybrid, citation, guardrail, events) |
+| **Tier 5: Agent** | 6 | VX_APP | ShmSlice, ServiceCtx | 401-406 (calculator, HTTP, files, CSV, ReAct, SHM handler) |
+| **Tier 6: VilLog** | 9 | CLI/Benchmark | StdoutDrain, FileDrain | 501-509 (drains, benchmarks, tracing bridge) |
+| **Tier 7: DB/Storage** | 9 | VX_APP + CLI | VilORM, SqlxPool | 601-609 (S3, Mongo, ClickHouse, Elastic, VilORM CRUD) |
+| **Tier 8: MQ/Protocol/Trigger** | 8 | VX_APP + CLI | Real clients | 701-704 (MQ), 801-804 (Triggers) |
 
 **100% VIL Way** — zero plain axum patterns (no `Json<T>`, no `Extension<T>`).
 
