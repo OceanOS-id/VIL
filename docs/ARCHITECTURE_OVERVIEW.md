@@ -1,6 +1,6 @@
 # VIL Architecture Overview
 
-**142 crates** | **93 examples** | **1,425+ tests** | **12 protocols** | **3 execution modes**
+**142 crates** | **112 examples** | **1,425+ tests** | **12 protocols** | **3 execution modes**
 **License:** MIT OR Apache-2.0 | **Repository:** [github.com/OceanOS-id/VIL](https://github.com/OceanOS-id/VIL)
 
 ---

@@ -289,7 +289,7 @@ vil run --mock   # Run with built-in mock server
 |--------|-------|
 | Rust crates | 142 |
 | Architecture layers | 15+ |
-| Native examples | 93 (8 tiers: Basic/Pipeline/LLM/RAG/Agent/VilLog/DB/Trigger) |
+| Native examples | 112 (8 tiers: Basic/Pipeline/LLM/RAG/Agent/VilLog/DB/Trigger) |
 | SDK examples | 8 languages (Python/Go/TypeScript/Java/C#/Kotlin/Swift/Zig) |
 | vflow examples | 9 |
 | Passing tests | 1,425+ |

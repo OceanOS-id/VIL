@@ -418,7 +418,7 @@ sink_b.run_worker::<ShmToken>(world.clone(), hb);
 | `#[vil_service]` | Module-level service definition | ✅ Done |
 | `.transform()` | Inline NDJSON/SSE processing on HttpSourceBuilder | ✅ Done |
 
-### 4.4 Examples — 8-Tier Structure (93 Examples)
+### 4.4 Examples — 8-Tier Structure (112 Examples)
 
 | Tier | Count | Pattern | Token | Examples |
 |------|-------|---------|-------|----------|

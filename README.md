@@ -15,7 +15,7 @@
 <p align="center">
   <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License"></a>
   <img src="https://img.shields.io/badge/crates-142-green" alt="Crates">
-  <img src="https://img.shields.io/badge/examples-93-orange" alt="Examples">
+  <img src="https://img.shields.io/badge/examples-112-orange" alt="Examples">
   <img src="https://img.shields.io/badge/tests-1425%2B-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/rust-1.93%2B-orange" alt="Rust">
 </p>
@@ -189,7 +189,7 @@ pipeline.source(url="http://ai-provider:4545/v1/chat", format="sse")
 | **Edge** | vil_edge_deploy | ARM64, ARMv7, RISC-V deployment profiles |
 | **Connector Macros** | vil_connector_macros | Lightweight #[connector_fault/event/state] for all connectors |
 
-**142 crates** | **93 examples** | **9 SDK languages** | **6 Grafana dashboards**
+**142 crates** | **112 examples** | **9 SDK languages** | **6 Grafana dashboards**
 
 ## Examples (8 Tiers)
 
@@ -240,7 +240,7 @@ cargo run --release -p vil-basic-credit-npl-filter
 | `#[connector_event]` | Ad-hoc structs | #[repr(C)], ≤192B, compile-time size guard |
 | `#[connector_state]` | Manual metrics | Zero-init state, atomic-ready counters |
 
-All 51 AI plugins + all 93 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
+All 51 AI plugins + all 112 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
 
 ## Documentation
 

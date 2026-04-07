@@ -67,7 +67,7 @@ Developer writes functions. VIL handles all plumbing — pool management, proces
 | [Custom Code Guide](./011-VIL-Developer_Guide-Custom-Code.md) | Native, WASM, Sidecar patterns |
 | [VIL Concept](./VIL_CONCEPT.md) | 10 immutable design principles |
 | [Architecture Overview](../ARCHITECTURE_OVERVIEW.md) | Layered architecture, 142 crates |
-| [Examples](../EXAMPLES.md) | 93 runnable examples |
+| [Examples](../EXAMPLES.md) | 112 runnable examples |
 
 ## Quick Start
 
