@@ -1,5 +1,6 @@
 # ╔══════════════════════════════════════════════════════════════════════════════╗
-# ║  VIL Workflow Showcase — ALL Features, Workflow-First Design            ║
+# ║  VIL v0.3.0 Workflow Showcase — 171 crates, 234 examples, 20 FaaS       ║
+# ║  Standard + Workflow Pattern | WASM 83K req/s | Sidecar 59K req/s        ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 #
 # This YAML is the SINGLE SOURCE OF TRUTH for a VIL application.
@@ -896,6 +897,200 @@ observability:
   profiler:       { enabled: true }
   prometheus:     { enabled: true, path: /metrics }
   healthcheck:    { enabled: true, path: /health }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 12. VWFD — Workflow Pattern (NEW in v0.3.0)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Declarative YAML workflows with 3 execution modes.
+# vil_vwfd::app("workflows/", 8080).native(...).wasm(...).sidecar(...).run()
+
+vwfd:
+  enabled: true
+  workflow_dir: "workflows/"          # VIL_VWFD_DIR
+
+  # ── Native Rust Handlers ──
+  native_handlers:
+    - name: validate_order
+      description: "Validate order items and calculate total"
+    - name: enrich_customer
+      description: "Enrich customer data from internal DB"
+
+  # ── WASM Modules (WASI-compliant, 83K req/s) ──
+  wasm:
+    pool_workers: 8                   # VIL_WASM_WORKERS (dedicated OS threads)
+    modules:
+      - name: pricing
+        path: "modules/pricing.wasm"
+        # Source: Rust/C/Go/AssemblyScript/Java → wasm32-wasip1
+      - name: fraud_check
+        path: "modules/fraud_check.wasm"
+
+  # ── Sidecar Processes (pool x4, 59K req/s) ──
+  sidecar:
+    pool_size: 4                      # VIL_SIDECAR_POOL_SIZE
+    targets:
+      - name: ml_scorer
+        command: "python3 sidecars/ml_scorer.py"
+        # Protocol: line-delimited JSON stdin/stdout
+      - name: notification_builder
+        command: "node sidecars/notification.js"
+      - name: claim_processor
+        command: "php sidecars/claim_processor.php"
+
+  # ── Observer Dashboard ──
+  observer: true                      # /_vil/dashboard/
+
+  # ── Expression Language ──
+  # language: vil-expr (VIL Expression — compatible CEL subset)
+  # language: literal (as-is value)
+  # language: spv1 ($.field replacement)
+  # language: vil_query (compile-time SQL DSL)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 13. BUILT-IN FaaS — 20 V-CEL Functions (NEW in v0.3.0)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Enable: vil_vwfd = { features = ["faas-core"] } or ["faas-full"]
+# Usage in YAML: source: { language: vil-expr, source: 'sha256(data)' }
+
+faas:
+  # ── faas-core (10 functions) ──
+  security:
+    - sha256(data)                    # vil_hash — SHA-256 hash
+    - md5(data)                       # vil_hash — MD5 hash
+    - hmac_sha256(data, key)          # vil_hash — HMAC-SHA256
+    - aes_encrypt(data, key)          # vil_crypto — AES-256-GCM encrypt
+    - aes_decrypt(ciphertext, key)    # vil_crypto — AES-256-GCM decrypt
+    - jwt_sign(payload, secret)       # vil_jwt — JWT sign (HS256/384/512)
+    - jwt_verify(token, secret)       # vil_jwt — JWT verify + decode
+  identity:
+    - uuid_v4()                       # vil_id_gen — UUID v4
+    - uuid_v7()                       # vil_id_gen — UUID v7 (time-ordered)
+    - ulid()                          # vil_id_gen — ULID
+    - nanoid(len)                     # vil_id_gen — Nano ID
+    - parse_phone(number, country)    # vil_phone — phone validation (libphonenumber)
+  datetime:
+    - parse_date(str, format?)        # vil_datefmt — parse to structured date
+    - format_date(str, format?)       # vil_datefmt — format date string
+    - now()                           # vil_datefmt — current UTC timestamp
+    - age(birth_date)                 # vil_duration — years since date
+    - duration(from, to, unit)        # vil_duration — elapsed days/months/years
+  parsing:
+    - parse_csv(data, delim, header)  # vil_parse_csv — CSV to JSON rows
+    - parse_xml(data)                 # vil_parse_xml — XML to JSON elements
+    - xpath(parsed, expr)             # vil_parse_xml — XPath query
+  text:
+    - regex_match(text, pattern)      # vil_regex — regex test → bool
+    - regex_extract(text, pattern)    # vil_regex — regex capture groups
+    - regex_replace(text, pat, repl)  # vil_regex — regex replace all
+
+  # ── faas-full (additional 10 functions) ──
+  transform:
+    - validate_schema(data, schema)   # vil_validate_schema — JSON Schema validation
+    - mask_pii(data, rule)            # vil_mask — PII masking (email/phone/nik/cc)
+    - reshape(data, mapping)          # vil_reshape — declarative field mapping
+    - render_template(tmpl, data)     # vil_template — Handlebars template
+    - validate_email(email)           # vil_email_validate — email format + domain
+  statistics:
+    - mean(array)                     # vil_stats — arithmetic mean
+    - median(array)                   # vil_stats — median
+    - stdev(array)                    # vil_stats — standard deviation
+    - percentile(array, p)            # vil_stats — Nth percentile
+    - variance(array)                 # vil_stats — variance
+    - is_anomaly(val, hist, method)   # vil_anomaly — z-score / IQR outlier
+  notification:
+    - send_email(to, subject, body)   # vil_email — SMTP send (VIL_SMTP_HOST)
+    - send_webhook(url, payload, secret) # vil_webhook_out — HTTP POST + HMAC
+  geo:
+    - geo_distance(lat1,lng1,lat2,lng2,unit) # vil_geodist — Haversine distance
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 14. TRIGGERS — 13 Types (NEW: 5 added in v0.3.0)
+# ═══════════════════════════════════════════════════════════════════════════════
+# All triggers fire into workflow via webhook path or direct execution.
+
+triggers:
+  # ── Core (existing) ──
+  webhook:    { path: /api/webhook, method: POST }
+  cron:       { schedule: "0 9 * * *" }          # vil_trigger_cron
+  mqtt:       { host: localhost, port: 1883, topic: "vil/#" }  # vil_trigger_iot
+  cdc:        { database_url: "postgres://...", slot: vil_cdc } # vil_trigger_cdc
+  fs:         { watch_path: "/data/inbox" }       # vil_trigger_fs
+  email:      { imap_host: imap.gmail.com, folder: INBOX }     # vil_trigger_email
+  evm:        { rpc_url: "wss://...", contract: "0x..." }      # vil_trigger_evm
+
+  # ── New in v0.3.0 ──
+  kafka:      { brokers: "localhost:9092", topic: orders, group_id: vil } # vil_trigger_kafka
+  s3:         { bucket: data-inbox, prefix: "uploads/", poll_secs: 30 }  # vil_trigger_s3
+  sftp:       { host: sftp.bank.co.id, remote_dir: /incoming }           # vil_trigger_sftp
+  db_poll:    { database_url: "sqlite:app.db", table: events, id_column: id } # vil_trigger_db_poll
+  grpc:       { endpoint: "http://localhost:50051", service: events }     # vil_trigger_grpc
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 15. CONNECTORS — 30 Dispatches
+# ═══════════════════════════════════════════════════════════════════════════════
+
+connectors:
+  # ── Database (10) ──
+  database:
+    postgres:   { url: "${ENV:VIL_DATABASE_URL}" }      # vastar.db.postgres
+    mysql:      { url: "mysql://..." }                   # vastar.db.mysql
+    sqlite:     { url: "sqlite:app.db?mode=rwc" }       # vastar.db.sqlite
+    redis:      { url: "redis://localhost:6379" }        # vastar.db.redis
+    mongo:      { uri: "mongodb://localhost:27017" }     # vastar.db.mongo
+    cassandra:  { contact_points: ["localhost:9042"] }   # vastar.db.cassandra
+    clickhouse: { url: "http://localhost:8123" }         # vastar.db.clickhouse
+    dynamodb:   { region: ap-southeast-1 }               # vastar.db.dynamodb
+    elastic:    { url: "http://localhost:9200" }          # vastar.db.elastic
+    neo4j:      { uri: "bolt://localhost:7687" }          # vastar.db.neo4j
+
+  # ── Message Queue (7) ──
+  mq:
+    nats:       { url: "nats://localhost:4222" }          # vastar.mq.nats
+    kafka:      { brokers: "localhost:9092" }              # vastar.mq.kafka
+    mqtt:       { host: localhost, port: 1883 }            # vastar.mq.mqtt
+    rabbitmq:   { url: "amqp://localhost:5672" }           # vastar.mq.rabbitmq
+    pulsar:     { url: "pulsar://localhost:6650" }         # vastar.mq.pulsar
+    pubsub:     { project: my-gcp-project }                # vastar.mq.pubsub
+    sqs:        { region: ap-southeast-1, queue: my-queue } # vastar.mq.sqs
+
+  # ── Storage (3) ──
+  storage:
+    s3:         { endpoint: "http://localhost:9000", bucket: data } # vastar.storage.s3
+    gcs:        { bucket: my-gcs-bucket }                  # vastar.storage.gcs
+    azure:      { container: my-container }                # vastar.storage.azure
+
+  # ── Protocol (6) ──
+  protocol:
+    http:       { base_url: "https://api.example.com" }    # vastar.http
+    sftp:       { host: sftp.example.com, port: 22 }       # vastar.sftp
+    soap:       { wsdl: "https://legacy.example.com?wsdl" } # vastar.soap
+    websocket:  { url: "ws://localhost:8080/ws" }           # vastar.ws
+    modbus:     { host: "192.168.1.100", port: 502 }       # vastar.modbus
+    opcua:      { endpoint: "opc.tcp://localhost:4840" }    # vastar.opcua
+
+  # ── Codec (3) ──
+  codec:
+    iso8583:    { spec: iso8583_v87 }                      # vastar.codec.iso8583
+    msgpack:    {}                                          # vastar.codec.msgpack
+    protobuf:   { schema: "proto/messages.proto" }          # vastar.codec.protobuf
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 16. EXAMPLES INDEX — 234 examples across 9 tiers
+# ═══════════════════════════════════════════════════════════════════════════════
+
+examples:
+  basic:      47    # 001-047: HTTP, WS, GQL, SSE, WASM, Sidecar, Auth, SHM
+  pipeline:   10    # 101-108: Fan-out, fan-in, diamond, DAG, traced
+  llm:        6     # 201-206: Chat, multi-model, streaming, tools
+  rag:        8     # 301-308: Vector search, hybrid, guardrail, citation
+  agent:      7     # 401-407: Calculator, researcher, multi-agent
+  villog:     9     # 501-509: Stdout, file, multi-drain, benchmark
+  database:   11    # 601-611: SQLite, Mongo, S3, TimeSeries, VilORM
+  protocol:   6     # 701-706: RabbitMQ, gRPC, SOAP, Modbus, Pulsar
+  faas_demo:  5     # 901-905: KYC, Data Pipeline, Secure API, Finance, Notify
+  # Each example has: src/main.rs (standard) + vwfd/ (workflow pattern)
+
+# ═══════════════════════════════════════════════════════════════════════════════
 
 performance:
   metrics_sample_rate: 1
