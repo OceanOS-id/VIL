@@ -29,11 +29,11 @@ spec:
       input_mappings:
         - target: collection
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.collection
         - target: document
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.document
       output_variable: insert_result
 
@@ -42,7 +42,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "status": "inserted",

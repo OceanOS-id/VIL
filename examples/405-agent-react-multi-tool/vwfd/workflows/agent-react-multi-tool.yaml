@@ -27,7 +27,7 @@ spec:
       input_mappings:
         - target: react_state
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "messages": [
@@ -65,7 +65,7 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -78,7 +78,7 @@ spec:
 
     # Step B: Parse Thought/Action/ActionInput, execute the selected tool
     # NativeCode because: parsing structured text + conditional tool dispatch
-    # + web search / math eval are not V-CEL expressible
+    # + web search / math eval are not VIL Expression expressible
     - id: parse-and-execute
       activity_type: NativeCode
       code_config:
@@ -92,7 +92,7 @@ spec:
       input_mappings:
         - target: llm_output
           source:
-            language: v-cel
+            language: vil-expr
             source: llm_output
       output_variable: step_result
 
@@ -102,7 +102,7 @@ spec:
       input_mappings:
         - target: react_state
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "messages": step_result.done
@@ -131,7 +131,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "question": trigger_payload.question,

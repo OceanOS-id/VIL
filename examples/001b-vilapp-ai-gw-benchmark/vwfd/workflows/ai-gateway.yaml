@@ -35,7 +35,7 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -44,7 +44,7 @@ spec:
               }
         - target: headers
           source:
-            language: v-cel
+            language: vil-expr
             source: '{"Content-Type": "application/json"}'
       output_variable: llm_result
 
@@ -53,7 +53,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"content": llm_result.body.choices[0].message.content}'
 
     - id: end

@@ -1,13 +1,13 @@
 // 901 — KYC Onboarding (FaaS Demo: vil_phone, vil_email_validate, vil_hash, vil_id_gen, vil_mask)
 //
-// Demonstrates 5 built-in FaaS functions in V-CEL expressions:
+// Demonstrates 5 built-in FaaS functions in VIL Expression expressions:
 //   parse_phone()    — validate & format phone number
 //   validate_email() — check email format
 //   sha256()         — hash sensitive data for audit
 //   uuid_v4()        — generate application ID
 //   mask_pii()       — mask PII for safe logging
 //
-// All processing via V-CEL expressions in YAML — zero NativeCode handlers.
+// All processing via VIL Expression expressions in YAML — zero NativeCode handlers.
 
 #[tokio::main]
 async fn main() {

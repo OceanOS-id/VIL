@@ -39,11 +39,11 @@ spec:
       input_mappings:
         - target: issue
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.issue
         - target: customer_id
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.customer_id
       output_variable: tier1_result
 
@@ -57,7 +57,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "customer_id": trigger_payload.customer_id,
@@ -87,15 +87,15 @@ spec:
       input_mappings:
         - target: issue
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.issue
         - target: customer_id
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.customer_id
         - target: tier1_context
           source:
-            language: v-cel
+            language: vil-expr
             source: tier1_result
       output_variable: tier2_result
 
@@ -109,7 +109,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "customer_id": trigger_payload.customer_id,
@@ -140,19 +140,19 @@ spec:
       input_mappings:
         - target: issue
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.issue
         - target: customer_id
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.customer_id
         - target: tier1_context
           source:
-            language: v-cel
+            language: vil-expr
             source: tier1_result
         - target: tier2_context
           source:
-            language: v-cel
+            language: vil-expr
             source: tier2_result
       output_variable: tier3_result
 
@@ -162,7 +162,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "customer_id": trigger_payload.customer_id,

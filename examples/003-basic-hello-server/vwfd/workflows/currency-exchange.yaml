@@ -28,17 +28,17 @@ spec:
         # Determine operation from path + method
         - target: operation
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               trigger_payload.path == "/api/fx/rates" ? "rates" :
               trigger_payload.path == "/api/fx/stats" ? "stats" :
               "convert"
         - target: from
-          source: { language: v-cel, source: 'trigger_payload.body.from' }
+          source: { language: vil-expr, source: 'trigger_payload.body.from' }
         - target: to
-          source: { language: v-cel, source: 'trigger_payload.body.to' }
+          source: { language: vil-expr, source: 'trigger_payload.body.to' }
         - target: amount
-          source: { language: v-cel, source: 'trigger_payload.body.amount' }
+          source: { language: vil-expr, source: 'trigger_payload.body.amount' }
         - target: conversion_id
           source: { language: literal, source: "1" }
         - target: total_conversions
@@ -54,7 +54,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: 'result'
 
     - id: end

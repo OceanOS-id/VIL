@@ -139,7 +139,7 @@ fn generate_yaml(def: &VwfdMacroDef) -> String {
                 }
             }
             ActivityKind::VilRules(ref rule_set) => {
-                yaml.push_str("      activity_type: VRule\n");
+                yaml.push_str("      activity_type: Rule\n");
                 yaml.push_str("      rule_config:\n");
                 yaml.push_str(&format!("        rule_set_id: {}\n", rule_set));
             }
@@ -211,7 +211,7 @@ mod tests {
                     operation: Some("post".into()),
                     mappings: vec![
                         MappingDef { target: "url".into(), language: "literal".into(), source: "http://example.com".into() },
-                        MappingDef { target: "body".into(), language: "v-cel".into(), source: "trigger_payload".into() },
+                        MappingDef { target: "body".into(), language: "vil-expr".into(), source: "trigger_payload".into() },
                     ],
                     output: Some("result".into()),
                     durability: None,
@@ -228,7 +228,7 @@ mod tests {
                     output: None,
                     durability: None,
                     compensation: None,
-                    response_expr: Some(("v-cel".into(), r#"{"result": result}"#.into())),
+                    response_expr: Some(("vil-expr".into(), r#"{"result": result}"#.into())),
                     trigger_ref: Some("trigger".into()),
                 },
             ],
@@ -249,7 +249,7 @@ mod tests {
         assert!(yaml.contains("connector_ref: vastar.http"));
         assert!(yaml.contains("operation: post"));
         assert!(yaml.contains("language: \"literal\""));
-        assert!(yaml.contains("language: \"v-cel\""));
+        assert!(yaml.contains("language: \"vil-expr\""));
         assert!(yaml.contains("activity_type: EndTrigger"));
         assert!(yaml.contains("trigger_ref: trigger"));
         assert!(yaml.contains("output_variable: result"));

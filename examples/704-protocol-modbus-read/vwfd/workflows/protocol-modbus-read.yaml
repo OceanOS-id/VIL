@@ -61,7 +61,7 @@ spec:
       input_mappings:
         - target: device_state
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "registers": register_data.values,
@@ -77,7 +77,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: device_state.device_state
 
     - id: end

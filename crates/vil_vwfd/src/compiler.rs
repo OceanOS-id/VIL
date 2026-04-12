@@ -220,14 +220,14 @@ fn compile_mappings(
                     compiled_sql: None, param_refs: None,
                 });
             }
-            "v-cel" | "cel" => {
-                // Validate V-CEL expression is supported by vil_expr
+            "vil-expr" | "cel" => {
+                // Validate VIL Expression expression is supported by vil_expr
                 vil_expr::check_supported(&src).map_err(|e| CompileError {
                     message: e,
                     location: Some(format!("activity.{}.input_mappings.{}", activity_id, target)),
                 })?;
                 compiled.push(CompiledMapping {
-                    target, language: "v-cel".into(), source: src,
+                    target, language: "vil-expr".into(), source: src,
                     compiled_sql: None, param_refs: None,
                 });
             }
@@ -247,7 +247,7 @@ fn compile_mappings(
                 return Err(CompileError {
                     message: format!(
                         "language '{}' not supported by vil compiler. \
-                         Use vflow compile --cloud for v-cel/vrule support.",
+                         Use vflow compile --cloud for vil-expr/vrule support.",
                         other
                     ),
                     location: Some(format!("activity.{}.input_mappings.{}", activity_id, target)),
@@ -471,7 +471,7 @@ spec:
             source: "http://api.example.com"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: '{"name": trigger_payload.name, "active": true}'
       output_variable: result
 
@@ -480,7 +480,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: 'result'
 
     - id: end
@@ -521,7 +521,7 @@ spec:
         let transform_node = &graph.nodes[1]; // transform
         assert_eq!(transform_node.mappings.len(), 2);
         assert_eq!(transform_node.mappings[0].language, "literal");
-        assert_eq!(transform_node.mappings[1].language, "v-cel");
+        assert_eq!(transform_node.mappings[1].language, "vil-expr");
     }
 
     #[test]
@@ -554,7 +554,7 @@ spec:
       input_mappings:
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: 'data.map(x, x * 2)'
     - id: end
       activity_type: End

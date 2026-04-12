@@ -29,15 +29,15 @@ spec:
       input_mappings:
         - target: query
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.query
         - target: top_k
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.top_k != null ? trigger_payload.top_k : 5
         - target: min_score
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.min_score != null ? trigger_payload.min_score : 0.0
       output_variable: search_results
 
@@ -47,7 +47,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "results": search_results.hits,

@@ -13,7 +13,7 @@ spec:
       output_variable: response
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: v-cel, source: 'response' } }
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: 'response' } }
     - id: end
       activity_type: End
   flows:

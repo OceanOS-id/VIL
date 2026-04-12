@@ -30,15 +30,15 @@ spec:
       input_mappings:
         - target: queue_url
           source:
-            language: v-cel
+            language: vil-expr
             source: env.SQS_QUEUE_URL
         - target: message_body
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.body
         - target: message_attributes
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.attributes
       output_variable: send_result
 
@@ -47,7 +47,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "status": "sent",

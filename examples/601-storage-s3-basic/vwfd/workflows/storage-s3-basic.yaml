@@ -30,19 +30,19 @@ spec:
       input_mappings:
         - target: bucket
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.bucket
         - target: key
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.key
         - target: content_type
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.content_type
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.body
       output_variable: upload_result
 
@@ -51,7 +51,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "status": "uploaded",

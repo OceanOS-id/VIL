@@ -17,11 +17,11 @@ spec:
       code_config: { handler_ref: protected_data_handler }
       input_mappings:
         - target: headers
-          source: { language: v-cel, source: trigger_payload.headers }
+          source: { language: vil-expr, source: trigger_payload.headers }
       output_variable: result
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: v-cel, source: result } }
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: result } }
     - id: end
       activity_type: End
   flows:

@@ -29,7 +29,7 @@ spec:
       input_mappings:
         - target: query
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.query
         - target: top_k
           source:
@@ -43,7 +43,7 @@ spec:
       input_mappings:
         - target: rag_prompt
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -72,7 +72,7 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: rag_prompt
       output_variable: llm_answer
 
@@ -85,11 +85,11 @@ spec:
       input_mappings:
         - target: answer_text
           source:
-            language: v-cel
+            language: vil-expr
             source: llm_answer
         - target: doc_metadata
           source:
-            language: v-cel
+            language: vil-expr
             source: legal_docs.chunks
       output_variable: cited_response
 
@@ -99,7 +99,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "answer": cited_response.answer,

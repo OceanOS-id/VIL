@@ -144,7 +144,7 @@ spec:
       input_mappings:
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: 'trigger_payload'
       output_variable: {step_id}_result
 "#));
@@ -156,7 +156,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"status": "ok"}'
 
     - id: end

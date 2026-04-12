@@ -29,7 +29,7 @@ spec:
           source: { language: literal, source: "http://127.0.0.1:4545/v1/chat/completions" }
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -46,7 +46,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"assessment": llm_result.content, "model": "gpt-4", "provider": "openai"}'
 
     - id: end

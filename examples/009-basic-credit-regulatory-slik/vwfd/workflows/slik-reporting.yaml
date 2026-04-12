@@ -34,7 +34,7 @@ spec:
       output_variable: debtor_data
       durability: immediate
     - id: validate_slik
-      activity_type: VRule
+      activity_type: Rule
       rule_config: { rule_set_id: slik_validation_v1 }
       output_variable: validation_result
     - id: format_report
@@ -52,7 +52,7 @@ spec:
         - target: url
           source: { language: literal, source: "https://slik-api.ojk.go.id/v1/submit" }
         - target: body
-          source: { language: v-cel, source: 'report' }
+          source: { language: vil-expr, source: 'report' }
       output_variable: submit_result
       compensation:
         connector_ref: vastar.http
@@ -69,7 +69,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"status": "submitted", "result": submit_result}'
     - id: end
       activity_type: End

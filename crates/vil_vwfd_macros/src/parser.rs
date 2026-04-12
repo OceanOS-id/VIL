@@ -331,7 +331,7 @@ fn parse_expr_value(input: ParseStream) -> Result<(String, String)> {
         let content;
         syn::parenthesized!(content in input);
         let val = content.parse::<LitStr>()?.value();
-        Ok(("v-cel".into(), val))
+        Ok(("vil-expr".into(), val))
     } else if lookahead.peek(kw::spv1) {
         input.parse::<kw::spv1>()?;
         let content;

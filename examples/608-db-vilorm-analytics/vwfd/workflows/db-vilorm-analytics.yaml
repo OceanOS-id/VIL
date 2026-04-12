@@ -30,7 +30,7 @@ spec:
       input_mappings:
         - target: data
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "event_type": trigger_payload.event_type,
@@ -49,7 +49,7 @@ spec:
       input_mappings:
         - target: sql
           source:
-            language: v-cel
+            language: vil-expr
             source: >
               "INSERT INTO daily_stats (date, event_type, count) VALUES (date('now'), '" +
               trigger_payload.event_type + "', 1) ON CONFLICT(date, event_type) DO UPDATE SET count = count + 1"
@@ -64,7 +64,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "event_id": inserted_event.id,

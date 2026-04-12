@@ -25,7 +25,7 @@ spec:
       input_mappings:
         - target: log_entry
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "fired_at": now(),
@@ -48,7 +48,7 @@ spec:
             source: cron_log
         - target: data
           source:
-            language: v-cel
+            language: vil-expr
             source: log_entry
       output_variable: insert_result
 

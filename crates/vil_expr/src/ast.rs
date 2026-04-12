@@ -1,15 +1,15 @@
-/// V-CEL compatible AST. Standard Rust — no arena, no zero-copy tricks.
+/// VIL Expression (vil-expr) compatible AST. Standard Rust — no arena, no zero-copy tricks.
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
-    // ── Literals (V-CEL §2.1) ──
+    // ── Literals (vil-expr §2.1) ──
     Int(i64),
     Float(f64),
     Bool(bool),
     String(String),
     Null,
 
-    // ── Collections (V-CEL §2.2) ──
+    // ── Collections (vil-expr §2.2) ──
     List(Vec<Expr>),
     Map(Vec<(Expr, Expr)>),
 
@@ -18,14 +18,14 @@ pub enum Expr {
     Field(Box<Expr>, String),                   // expr.field
     Index(Box<Expr>, Box<Expr>),                // expr[index]
 
-    // ── Operators (V-CEL §3.2.1) ──
+    // ── Operators (vil-expr §3.2.1) ──
     Unary(UnaryOp, Box<Expr>),
     Binary(BinaryOp, Box<Expr>, Box<Expr>),
 
-    // ── Ternary (V-CEL §3.2.1 prec 9) ──
+    // ── Ternary (vil-expr §3.2.1 prec 9) ──
     Ternary(Box<Expr>, Box<Expr>, Box<Expr>),   // cond ? then : else
 
-    // ── Membership (V-CEL §3.2.3) ──
+    // ── Membership (vil-expr §3.2.3) ──
     In(Box<Expr>, Box<Expr>),                   // x in [1,2,3]
 
     // ── Calls ──

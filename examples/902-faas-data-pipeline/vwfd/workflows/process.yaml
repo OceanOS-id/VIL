@@ -17,20 +17,20 @@ spec:
       activity_type: Transform
       input_mappings:
         - target: csv_result
-          source: { language: v-cel, source: 'parse_csv(trigger_payload.body.csv_data, ",", true)' }
+          source: { language: vil-expr, source: 'parse_csv(trigger_payload.body.csv_data, ",", true)' }
         - target: schema_valid
-          source: { language: v-cel, source: 'validate_schema(trigger_payload.body.data, trigger_payload.body.schema)' }
+          source: { language: vil-expr, source: 'validate_schema(trigger_payload.body.data, trigger_payload.body.schema)' }
         - target: scores_mean
-          source: { language: v-cel, source: 'mean(trigger_payload.body.scores)' }
+          source: { language: vil-expr, source: 'mean(trigger_payload.body.scores)' }
         - target: scores_stdev
-          source: { language: v-cel, source: 'stdev(trigger_payload.body.scores)' }
+          source: { language: vil-expr, source: 'stdev(trigger_payload.body.scores)' }
       output_variable: result
 
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: v-cel, source: 'result' }
+        final_response: { language: vil-expr, source: 'result' }
     - id: end
       activity_type: End
   flows:

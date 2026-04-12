@@ -45,7 +45,7 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -63,7 +63,7 @@ spec:
       input_mappings:
         - target: translation
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "index": loop_state.iteration,
@@ -83,7 +83,7 @@ spec:
       input_mappings:
         - target: batch_result
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "total": size(trigger_payload.texts),
@@ -97,7 +97,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: batch_response
 
     - id: end

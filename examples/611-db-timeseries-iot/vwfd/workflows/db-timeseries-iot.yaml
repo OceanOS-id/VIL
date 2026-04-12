@@ -29,25 +29,25 @@ spec:
       input_mappings:
         - target: measurement
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.metric
         - target: tags
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "device_id": trigger_payload.device_id
               }
         - target: fields
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "value": trigger_payload.value
               }
         - target: timestamp
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.timestamp ?? now()
       output_variable: write_result
 
@@ -56,7 +56,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "status": "written",

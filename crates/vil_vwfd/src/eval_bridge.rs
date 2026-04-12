@@ -22,7 +22,7 @@ pub fn eval_mapping(
             Ok(serde_json::from_str(&result).unwrap_or(Value::String(result)))
         }
 
-        "v-cel" | "cel" => {
+        "vil-expr" | "cel" => {
             vil_expr::evaluate(&mapping.source, vars)
         }
 
@@ -48,7 +48,7 @@ pub fn eval_mapping(
         }
 
         other => Err(format!(
-            "language '{}' not supported. Use vflow compile --cloud for full V-CEL/VRule.",
+            "language '{}' not supported. Use vflow compile --cloud for full VIL Expression/Rule.",
             other
         )),
     }
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn test_vcel() {
         let m = CompiledMapping {
-            target: "body".into(), language: "v-cel".into(),
+            target: "body".into(), language: "vil-expr".into(),
             source: r#"{"name": trigger_payload.name, "total": trigger_payload.amount}"#.into(),
             compiled_sql: None, param_refs: None,
         };

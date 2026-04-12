@@ -27,7 +27,7 @@ spec:
       input_mappings:
         - target: event
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "event_type": "TransactionEvent",
@@ -51,7 +51,7 @@ spec:
             source: "transactions"
         - target: payload
           source:
-            language: v-cel
+            language: vil-expr
             source: transaction_event.event
       output_variable: publish_result
 
@@ -60,7 +60,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "status": "published",

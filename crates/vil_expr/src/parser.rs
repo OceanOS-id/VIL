@@ -1,4 +1,4 @@
-/// Pratt parser — V-CEL precedence table (§3.2.1).
+/// Pratt parser — vil-expr precedence table (§3.2.1).
 
 use crate::ast::*;
 use crate::token::Token;
@@ -29,7 +29,7 @@ impl Parser {
         else { Err(format!("expected {:?}, got {:?} at pos {}", expected, tok, self.pos)) }
     }
 
-    // ── V-CEL Precedence (§3.2.1, low to high) ──
+    // ── vil-expr Precedence (§3.2.1, low to high) ──
     // 1: ||
     // 2: &&
     // 3: ==, !=
@@ -265,7 +265,7 @@ impl Parser {
     }
 }
 
-/// Parse V-CEL expression string → AST.
+/// Parse vil-expr expression string → AST.
 pub fn parse(input: &str) -> Result<Expr, String> {
     let tokens = crate::token::tokenize(input)?;
     let mut parser = Parser::new(tokens);

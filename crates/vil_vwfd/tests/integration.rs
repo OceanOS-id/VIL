@@ -29,7 +29,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"echo": trigger_payload.message, "status": "ok"}'
 
     - id: end
@@ -83,7 +83,7 @@ spec:
           source: { language: literal, source: "http://api.example.com/users" }
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: '{"name": trigger_payload.name, "age": trigger_payload.age}'
         - target: auth
           source:
@@ -96,7 +96,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"api": api_result, "input_name": trigger_payload.name}'
 
     - id: end
@@ -175,17 +175,17 @@ spec:
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: v-cel, source: '{"grade": "A", "score": trigger_payload.score}' }
+        final_response: { language: vil-expr, source: '{"grade": "A", "score": trigger_payload.score}' }
     - id: grade_b
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: v-cel, source: '{"grade": "B", "score": trigger_payload.score}' }
+        final_response: { language: vil-expr, source: '{"grade": "B", "score": trigger_payload.score}' }
     - id: grade_c
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: v-cel, source: '{"grade": "C", "score": trigger_payload.score}' }
+        final_response: { language: vil-expr, source: '{"grade": "C", "score": trigger_payload.score}' }
     - id: end
       activity_type: End
   flows:
@@ -243,7 +243,7 @@ spec:
       connector_config: { connector_ref: vastar.http, operation: get }
       input_mappings:
         - target: url
-          source: { language: v-cel, source: '"http://api/" + trigger_payload.endpoint' }
+          source: { language: vil-expr, source: '"http://api/" + trigger_payload.endpoint' }
       output_variable: step_1_result
 
     - id: step_2
@@ -253,7 +253,7 @@ spec:
         - target: entity
           source: { language: literal, source: "records" }
         - target: data
-          source: { language: v-cel, source: '{"source": step_1_result.data, "user": trigger_payload.user}' }
+          source: { language: vil-expr, source: '{"source": step_1_result.data, "user": trigger_payload.user}' }
       output_variable: step_2_result
 
     - id: respond
@@ -261,7 +261,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"step1": step_1_result, "step2": step_2_result, "user": trigger_payload.user}'
 
     - id: end
@@ -395,7 +395,7 @@ fn test_loader_e2e() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 9. V-CEL compatible expressions
+// 9. VIL Expression compatible expressions
 // ═══════════════════════════════════════════════════════════════════════════
 
 const EXPR_WORKFLOW: &str = r#"
@@ -418,7 +418,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "greeting": "Hello " + trigger_payload.name,
@@ -458,7 +458,7 @@ async fn test_e2e_vcel_compatible_expressions() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10. Reject unsupported V-CEL features gracefully
+// 10. Reject unsupported VIL Expression features gracefully
 // ═══════════════════════════════════════════════════════════════════════════
 
 #[test]
@@ -476,7 +476,7 @@ spec:
       connector_config: { connector_ref: vastar.http, operation: post }
       input_mappings:
         - target: body
-          source: { language: v-cel, source: "items.map(x, x * 2)" }
+          source: { language: vil-expr, source: "items.map(x, x * 2)" }
     - id: end
       activity_type: End
   flows:
@@ -531,7 +531,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: 'query_result'
 
     - id: end
@@ -618,7 +618,7 @@ spec:
             source: 'http://example.com'
         - target: body
           source:
-            language: "v-cel"
+            language: "vil-expr"
             source: 'trigger_payload'
       output_variable: step_1_result
     - id: respond
@@ -626,7 +626,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"result": step_1_result}'
     - id: end
       activity_type: End
@@ -730,7 +730,7 @@ spec:
       input_mappings:
         - target: combined
           source:
-            language: v-cel
+            language: vil-expr
             source: '{"iteration": _loop_index, "from_a": step_a_result}'
       output_variable: transform_result
     - id: respond
@@ -738,7 +738,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"loops_done": true, "last_transform": transform_result, "last_index": _loop_index}'
     - id: end
       activity_type: End
@@ -898,7 +898,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"wasm": wasm_result, "sidecar": sidecar_result, "human": human_result}'
     - id: end
       activity_type: End

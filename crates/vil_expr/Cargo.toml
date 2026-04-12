@@ -2,7 +2,7 @@
 name = "vil_expr"
 version.workspace = true
 edition = "2021"
-description = "VIL Expression Evaluator (V-CEL compatible) — path access, concat, compare, JSON templates"
+description = "VIL Expression Evaluator (VIL Expression compatible) — path access, concat, compare, JSON templates"
 license = "MIT OR Apache-2.0"
 
 [dependencies]

@@ -17,7 +17,7 @@ spec:
       sidecar_config: { target: validate_credit_schema }
       output_variable: schema_result
     - id: validate_business
-      activity_type: VRule
+      activity_type: Rule
       rule_config: { rule_set_id: credit_qa_rules_v1 }
       output_variable: business_result
     - id: validate_cross_ref
@@ -29,7 +29,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"schema": schema_result, "business": business_result, "cross_ref": cross_ref_result}'
     - id: end
       activity_type: End

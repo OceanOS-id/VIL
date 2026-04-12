@@ -16,19 +16,19 @@ spec:
       activity_type: Transform
       input_mappings:
         - target: notification_id
-          source: { language: v-cel, source: 'ulid()' }
+          source: { language: vil-expr, source: 'ulid()' }
         - target: email_body
-          source: { language: v-cel, source: 'render_template("Dear {{name}}, order {{order_id}} confirmed.", trigger_payload.body)' }
+          source: { language: vil-expr, source: 'render_template("Dear {{name}}, order {{order_id}} confirmed.", trigger_payload.body)' }
         - target: masked_email
-          source: { language: v-cel, source: 'mask_pii(trigger_payload.body.email, "email")' }
+          source: { language: vil-expr, source: 'mask_pii(trigger_payload.body.email, "email")' }
         - target: masked_phone
-          source: { language: v-cel, source: 'mask_pii(trigger_payload.body.phone, "phone")' }
+          source: { language: vil-expr, source: 'mask_pii(trigger_payload.body.phone, "phone")' }
       output_variable: result
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: v-cel, source: 'result' }
+        final_response: { language: vil-expr, source: 'result' }
     - id: end
       activity_type: End
   flows:

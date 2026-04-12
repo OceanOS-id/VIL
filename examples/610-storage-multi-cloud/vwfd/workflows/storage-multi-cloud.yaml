@@ -34,15 +34,15 @@ spec:
       input_mappings:
         - target: bucket
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.bucket
         - target: key
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.key
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.body
       output_variable: upload_result
 
@@ -55,15 +55,15 @@ spec:
       input_mappings:
         - target: bucket
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.bucket
         - target: object_name
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.key
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.body
       output_variable: upload_result
 
@@ -76,15 +76,15 @@ spec:
       input_mappings:
         - target: container
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.bucket
         - target: blob_name
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.key
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.body
       output_variable: upload_result
 
@@ -97,7 +97,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "status": "uploaded",

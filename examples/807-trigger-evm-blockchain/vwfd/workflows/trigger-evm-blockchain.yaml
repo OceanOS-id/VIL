@@ -22,7 +22,7 @@ spec:
       input_mappings:
         - target: transfer
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "tx_hash": trigger_payload.tx_hash,
@@ -43,7 +43,7 @@ spec:
         - target: entity
           source: { language: literal, source: blockchain_events }
         - target: data
-          source: { language: v-cel, source: transfer }
+          source: { language: vil-expr, source: transfer }
       output_variable: insert_result
 
     - id: end

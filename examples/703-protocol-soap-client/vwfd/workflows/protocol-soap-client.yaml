@@ -38,7 +38,7 @@ spec:
             source: "http://www.dataaccess.com/webservicesserver/"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               "<ubiNum>" + string(trigger_payload.number) + "</ubiNum>"
       output_variable: soap_result
@@ -48,7 +48,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "number": trigger_payload.number,

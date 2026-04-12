@@ -29,11 +29,11 @@ spec:
       input_mappings:
         - target: index
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.index
         - target: query
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "multi_match": {
@@ -43,7 +43,7 @@ spec:
               }
         - target: size
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.size ?? 10
       output_variable: search_result
 
@@ -52,7 +52,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "index": trigger_payload.index,

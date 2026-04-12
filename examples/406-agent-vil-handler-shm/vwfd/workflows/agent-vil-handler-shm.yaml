@@ -36,15 +36,15 @@ spec:
       input_mappings:
         - target: user_id
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.user_id
         - target: current_tx
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.tx
         - target: history
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.history
       output_variable: velocity_result
 
@@ -63,11 +63,11 @@ spec:
       input_mappings:
         - target: current_tx
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.tx
         - target: history
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.history
       output_variable: geo_result
 
@@ -85,11 +85,11 @@ spec:
       input_mappings:
         - target: current_amount
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.tx.amount_cents
         - target: history
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.history
       output_variable: amount_result
 
@@ -99,7 +99,7 @@ spec:
       input_mappings:
         - target: decision
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "composite_score": velocity_result.score * 40 / 100 + geo_result.score * 35 / 100 + amount_result.score * 25 / 100,
@@ -120,7 +120,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "user_id": trigger_payload.user_id,

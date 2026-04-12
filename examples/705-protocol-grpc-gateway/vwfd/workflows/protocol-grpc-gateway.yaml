@@ -22,7 +22,7 @@ spec:
       output_variable: trigger_payload
 
     # Step 1: Validate card — Luhn algorithm + expiry date check
-    # NativeCode: Luhn checksum is iterative digit manipulation, not expressible in v-cel
+    # NativeCode: Luhn checksum is iterative digit manipulation, not expressible in vil-expr
     - id: validate-card
       activity_type: Function
       wasm_config:
@@ -34,11 +34,11 @@ spec:
       input_mappings:
         - target: card_number
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.card_number
         - target: expiry
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.expiry
       output_variable: validation
 
@@ -55,19 +55,19 @@ spec:
       input_mappings:
         - target: card_number
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.card_number
         - target: amount
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.amount
         - target: currency
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.currency
         - target: validation
           source:
-            language: v-cel
+            language: vil-expr
             source: validation
       output_variable: charge_result
 
@@ -76,7 +76,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "payment_id": charge_result.payment_id,

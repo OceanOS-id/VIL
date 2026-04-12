@@ -11,11 +11,11 @@ spec:
       wasm_config: { module_ref: transfer_handler, function_name: main, timeout_ms: 5000 }
       input_mappings:
         - target: body
-          source: { language: v-cel, source: 'trigger_payload.body' }
+          source: { language: vil-expr, source: 'trigger_payload.body' }
       output_variable: result
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: v-cel, source: 'result' } }
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: 'result' } }
     - id: end
       activity_type: End
   flows:

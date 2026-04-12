@@ -527,13 +527,13 @@ fn execute_end_trigger(
     vars: &HashMap<String, Value>,
 ) -> Result<Value, ExecError> {
     if let Some(fr) = node.config.get("final_response") {
-        let lang = fr.get("language").and_then(|v| v.as_str()).unwrap_or("v-cel");
+        let lang = fr.get("language").and_then(|v| v.as_str()).unwrap_or("vil-expr");
         let source = fr.get("source")
             .and_then(|v| v.as_str())
             .unwrap_or("_last_output");
 
         match lang {
-            "v-cel" | "cel" => {
+            "vil-expr" | "cel" => {
                 vil_expr::evaluate(source, vars)
                     .map_err(|e| ExecError { message: e, node_id: Some(node.id.clone()) })
             }
@@ -769,14 +769,14 @@ spec:
         - target: url
           source: { language: literal, source: "http://example.com" }
         - target: body
-          source: { language: v-cel, source: '{"name": trigger_payload.name}' }
+          source: { language: vil-expr, source: '{"name": trigger_payload.name}' }
       output_variable: step1_result
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"result": step1_result, "input_name": trigger_payload.name}'
     - id: end
       activity_type: End
@@ -846,12 +846,12 @@ spec:
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: v-cel, source: '{"route": "high"}' }
+        final_response: { language: vil-expr, source: '{"route": "high"}' }
     - id: low-resp
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: v-cel, source: '{"route": "low"}' }
+        final_response: { language: vil-expr, source: '{"route": "low"}' }
     - id: end
       activity_type: End
   flows:

@@ -22,7 +22,7 @@ spec:
       output_variable: trigger_payload
 
     # Step 1: Eagerly execute all file tools — NativeCode because file I/O
-    # and pattern matching are not expressible in V-CEL
+    # and pattern matching are not expressible in VIL Expression
     - id: run-file-tools
       activity_type: NativeCode
       code_config:
@@ -36,11 +36,11 @@ spec:
       input_mappings:
         - target: files
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.files
         - target: patterns
           source:
-            language: v-cel
+            language: vil-expr
             source: "size(trigger_payload.patterns) > 0 ? trigger_payload.patterns : [\"unwrap\", \"unsafe\", \"clone\", \"TODO\"]"
       output_variable: tool_outputs
 
@@ -50,7 +50,7 @@ spec:
       input_mappings:
         - target: messages
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               [
                 {
@@ -81,7 +81,7 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -96,7 +96,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "review": review_text,

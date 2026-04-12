@@ -28,7 +28,7 @@ spec:
       input_mappings:
         - target: query
           source:
-            language: v-cel
+            language: vil-expr
             source: >
               "CREATE TABLE IF NOT EXISTS " + trigger_payload.table +
               " (" + trigger_payload.columns.join(", ") + ") ENGINE = MergeTree() ORDER BY tuple()"
@@ -51,7 +51,7 @@ spec:
       input_mappings:
         - target: query
           source:
-            language: v-cel
+            language: vil-expr
             source: >
               "INSERT INTO " + trigger_payload.table + " VALUES (" +
               current_row.join(", ") + ")"
@@ -66,7 +66,7 @@ spec:
       input_mappings:
         - target: batch_summary
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "status": "batch_complete",
@@ -80,7 +80,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: batch_summary
 
     - id: end

@@ -25,7 +25,7 @@ spec:
           source: { language: literal, source: "http://127.0.0.1:4545/v1/chat/completions" }
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: '{"model": trigger_payload.model, "messages": trigger_payload.messages, "stream": true}'
       output_variable: llm_result
     - id: respond
@@ -33,7 +33,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"content": llm_result.content}'
     - id: end
       activity_type: End

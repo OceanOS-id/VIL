@@ -23,7 +23,7 @@ spec:
         description: "POST /npl — 2 parallel pipeline branches filtering NPL vs healthy loans"
       input_mappings:
         - target: input
-          source: { language: v-cel, source: trigger_payload }
+          source: { language: vil-expr, source: trigger_payload }
       output_variable: result
 
     - id: respond
@@ -31,7 +31,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: result
 
     - id: end

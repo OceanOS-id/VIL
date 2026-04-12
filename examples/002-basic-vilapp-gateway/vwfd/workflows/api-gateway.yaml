@@ -20,16 +20,16 @@ spec:
         timeout_ms: 10000
       input_mappings:
         - target: url
-          source: { language: v-cel, source: '"http://127.0.0.1:4545/v1/chat/completions"' }
+          source: { language: vil-expr, source: '"http://127.0.0.1:4545/v1/chat/completions"' }
         - target: body
-          source: { language: v-cel, source: 'trigger_payload' }
+          source: { language: vil-expr, source: 'trigger_payload' }
       output_variable: backend_result
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"result": backend_result.body}'
     - id: end
       activity_type: End

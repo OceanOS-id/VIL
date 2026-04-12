@@ -22,7 +22,7 @@ spec:
       input_mappings:
         - target: email_entry
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "subject": trigger_payload.subject,
@@ -41,7 +41,7 @@ spec:
         - target: entity
           source: { language: literal, source: email_inbox }
         - target: data
-          source: { language: v-cel, source: email_entry }
+          source: { language: vil-expr, source: email_entry }
       output_variable: insert_result
 
     - id: end

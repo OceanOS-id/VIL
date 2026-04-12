@@ -23,7 +23,7 @@ spec:
       input_mappings:
         - target: order_event
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "order_id": trigger_payload.order_id,
@@ -41,7 +41,7 @@ spec:
         - target: entity
           source: { language: literal, source: webhook_events }
         - target: data
-          source: { language: v-cel, source: order_event }
+          source: { language: vil-expr, source: order_event }
       output_variable: insert_result
 
     - id: respond
@@ -49,7 +49,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"status": "ack", "event_id": order_event.order_id}'
 
     - id: end

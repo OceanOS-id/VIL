@@ -253,7 +253,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"echo": trigger_payload.name, "status": "ok"}'
     - id: end
       activity_type: End

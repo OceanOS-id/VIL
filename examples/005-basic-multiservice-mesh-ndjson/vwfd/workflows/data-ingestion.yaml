@@ -18,14 +18,14 @@ spec:
         function_name: execute }
       input_mappings:
         - target: data
-          source: { language: v-cel, source: 'trigger_payload' }
+          source: { language: vil-expr, source: 'trigger_payload' }
       output_variable: validated
     - id: transform
       activity_type: Transform
       input_mappings:
         - target: record
           source:
-            language: v-cel
+            language: vil-expr
             source: '{"source": "core_banking", "data": validated, "ingested_at": "now"}'
       output_variable: transformed
     - id: store
@@ -42,7 +42,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"status": "ingested", "record": transformed}'
     - id: end
       activity_type: End

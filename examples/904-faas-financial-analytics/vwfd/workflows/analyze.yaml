@@ -16,21 +16,21 @@ spec:
       activity_type: Transform
       input_mappings:
         - target: customer_age
-          source: { language: v-cel, source: 'age(trigger_payload.body.birth_date)' }
+          source: { language: vil-expr, source: 'age(trigger_payload.body.birth_date)' }
         - target: avg_amount
-          source: { language: v-cel, source: 'mean(trigger_payload.body.transactions)' }
+          source: { language: vil-expr, source: 'mean(trigger_payload.body.transactions)' }
         - target: anomaly_check
-          source: { language: v-cel, source: 'is_anomaly(trigger_payload.body.latest_amount, trigger_payload.body.transactions, "zscore", 2.0)' }
+          source: { language: vil-expr, source: 'is_anomaly(trigger_payload.body.latest_amount, trigger_payload.body.transactions, "zscore", 2.0)' }
         - target: branch_distance
-          source: { language: v-cel, source: 'geo_distance(-6.2088, 106.8456, -7.7956, 110.3695, "km")' }
+          source: { language: vil-expr, source: 'geo_distance(-6.2088, 106.8456, -7.7956, 110.3695, "km")' }
         - target: timestamp
-          source: { language: v-cel, source: 'now()' }
+          source: { language: vil-expr, source: 'now()' }
       output_variable: result
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: v-cel, source: 'result' }
+        final_response: { language: vil-expr, source: 'result' }
     - id: end
       activity_type: End
   flows:

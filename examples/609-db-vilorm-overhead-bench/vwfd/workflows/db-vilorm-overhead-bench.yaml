@@ -31,7 +31,7 @@ spec:
       input_mappings:
         - target: limit
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.limit ?? 100
       output_variable: items
 
@@ -40,7 +40,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "items": items,

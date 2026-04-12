@@ -34,7 +34,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"data": result.rows}'
 
     - id: end

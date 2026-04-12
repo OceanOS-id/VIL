@@ -1,8 +1,8 @@
-//! # vil_expr — VIL Expression Evaluator (V-CEL Compatible)
+//! # vil_expr — VIL Expression Evaluator (VIL Expression Compatible)
 //!
 //! Evaluates expressions against a variable map.
-//! Expression syntax is V-CEL compatible — expressions written here
-//! will work without modification on VFlow's V-CEL engine.
+//! Expression syntax is VIL Expression compatible — expressions written here
+//! will work without modification on VFlow's VIL Expression engine.
 //!
 //! ## Supported
 //! - Path access: `trigger_payload.customer.name`
@@ -17,7 +17,7 @@
 //! - Functions: `size()`, `has()`, `int()`, `string()`, `double()`, `max()`, `min()`, `type()`
 //! - List/Map construct and access
 //!
-//! ## Not Supported (requires VFlow V-CEL)
+//! ## Not Supported (requires VFlow VIL Expression)
 //! - `.map()`, `.filter()`, `.all()`, `.exists()` (list macros)
 //! - `matches()` (regex)
 //! - `timestamp()`, `duration()` (temporal types)
@@ -48,13 +48,13 @@ use std::collections::HashMap;
 
 pub type Vars = HashMap<String, Value>;
 
-/// Evaluate V-CEL expression → Value.
+/// Evaluate VIL Expression expression → Value.
 pub fn evaluate(expr: &str, vars: &Vars) -> Result<Value, String> {
     let parsed = parser::parse(expr)?;
     eval::eval(&parsed, vars)
 }
 
-/// Evaluate V-CEL expression → bool.
+/// Evaluate VIL Expression expression → bool.
 pub fn evaluate_bool(expr: &str, vars: &Vars) -> Result<bool, String> {
     let val = evaluate(expr, vars)?;
     Ok(match &val {
@@ -66,7 +66,7 @@ pub fn evaluate_bool(expr: &str, vars: &Vars) -> Result<bool, String> {
     })
 }
 
-/// Evaluate V-CEL expression → String.
+/// Evaluate VIL Expression expression → String.
 pub fn evaluate_to_string(expr: &str, vars: &Vars) -> Result<String, String> {
     let val = evaluate(expr, vars)?;
     Ok(match &val {
@@ -86,11 +86,11 @@ fn check_ast(expr: &ast::Expr) -> Result<(), String> {
     match expr {
         ast::Expr::MethodCall(_, method, _) if
             matches!(method.as_str(), "map" | "filter" | "all" | "exists" | "exists_one" | "matches") => {
-            Err(format!(".{}() requires VFlow V-CEL engine. Use vflow compile --cloud", method))
+            Err(format!(".{}() requires VFlow VIL Expression engine. Use vflow compile --cloud", method))
         }
         ast::Expr::FnCall(name, _) if
             matches!(name.as_str(), "timestamp" | "duration" | "bytes") => {
-            Err(format!("{}() requires VFlow V-CEL engine. Use vflow compile --cloud", name))
+            Err(format!("{}() requires VFlow VIL Expression engine. Use vflow compile --cloud", name))
         }
         // Recurse into children
         ast::Expr::Unary(_, e) => check_ast(e),

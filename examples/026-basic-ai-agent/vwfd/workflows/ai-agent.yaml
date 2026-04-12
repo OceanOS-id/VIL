@@ -29,7 +29,7 @@ spec:
           repeat until FINAL_ANSWER or max 5 iterations.
       input_mappings:
         - target: question
-          source: { language: v-cel, source: trigger_payload.question }
+          source: { language: vil-expr, source: trigger_payload.question }
       output_variable: agent_result
 
     - id: respond
@@ -37,7 +37,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "answer": agent_result.answer,

@@ -30,7 +30,7 @@ spec:
       input_mappings:
         - target: query
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.query
         - target: top_k
           source:
@@ -55,7 +55,7 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -76,7 +76,7 @@ spec:
       input_mappings:
         - target: text
           source:
-            language: v-cel
+            language: vil-expr
             source: llm_answer
       output_variable: pii_result
 
@@ -89,11 +89,11 @@ spec:
       input_mappings:
         - target: answer_text
           source:
-            language: v-cel
+            language: vil-expr
             source: pii_result.redacted_text
         - target: context_chunks
           source:
-            language: v-cel
+            language: vil-expr
             source: rag_context.chunks
       output_variable: hallucination_result
 
@@ -103,7 +103,7 @@ spec:
       input_mappings:
         - target: guardrail_output
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "safe_answer": pii_result.redacted_text,
@@ -120,7 +120,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "answer": guardrail_output.status == "BLOCKED" ? "[Response blocked due to hallucination risk]" : guardrail_output.safe_answer,

@@ -8,7 +8,7 @@ metadata:
     2. Build consolidated prompt with all chunks labeled
     3. Call LLM for per-chunk summaries + merged executive summary
     4. Return summary with compression metrics
-    Chunking is NativeCode (sentence boundary detection, not expressible in V-CEL).
+    Chunking is NativeCode (sentence boundary detection, not expressible in VIL Expression).
 
 spec:
   activities:
@@ -23,7 +23,7 @@ spec:
       output_variable: trigger_payload
 
     # Step 1: Chunk the document — NativeCode because sentence boundary
-    # splitting requires text parsing logic not available in V-CEL
+    # splitting requires text parsing logic not available in VIL Expression
     - id: chunk-document
       activity_type: NativeCode
       code_config:
@@ -32,11 +32,11 @@ spec:
       input_mappings:
         - target: text
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.text
         - target: max_chunk_size
           source:
-            language: v-cel
+            language: vil-expr
             source: "trigger_payload.max_chunk_size > 0 ? trigger_payload.max_chunk_size : 2000"
       output_variable: chunks
 
@@ -46,7 +46,7 @@ spec:
       input_mappings:
         - target: summary_prompt
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               "Summarize each section of this legal document. For each chunk, provide a 2-sentence summary. Then provide a merged executive summary.\n\n" + string(chunks)
       output_variable: prompt_data
@@ -68,7 +68,7 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -86,7 +86,7 @@ spec:
       input_mappings:
         - target: result
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "summary": summary,
@@ -101,7 +101,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: final_result
 
     - id: end

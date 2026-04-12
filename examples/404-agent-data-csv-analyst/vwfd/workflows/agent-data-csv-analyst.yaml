@@ -24,7 +24,7 @@ spec:
 
     # Step 1: Parse CSV and compute descriptive statistics
     # NativeCode because CSV parsing and statistical computation (median,
-    # std_dev, percentiles) are not expressible in V-CEL
+    # std_dev, percentiles) are not expressible in VIL Expression
     - id: compute-stats
       activity_type: Function
       wasm_config:
@@ -37,17 +37,17 @@ spec:
       input_mappings:
         - target: csv_data
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.csv_data
         - target: delimiter
           source:
-            language: v-cel
+            language: vil-expr
             source: "trigger_payload.delimiter != '' ? trigger_payload.delimiter : ','"
       output_variable: stats_result
 
     # Step 2: Generate chart specification from stats
     # NativeCode because Vega-Lite spec construction requires object building
-    # with conditional encoding logic not available in V-CEL
+    # with conditional encoding logic not available in VIL Expression
     - id: generate-chart
       activity_type: NativeCode
       code_config:
@@ -60,11 +60,11 @@ spec:
       input_mappings:
         - target: stats
           source:
-            language: v-cel
+            language: vil-expr
             source: stats_result
         - target: chart_preference
           source:
-            language: v-cel
+            language: vil-expr
             source: "trigger_payload.chart_type != '' ? trigger_payload.chart_type : 'auto'"
       output_variable: chart_data
 
@@ -74,7 +74,7 @@ spec:
       input_mappings:
         - target: messages
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               [
                 {
@@ -105,7 +105,7 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -120,7 +120,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "analysis": llm_analysis,

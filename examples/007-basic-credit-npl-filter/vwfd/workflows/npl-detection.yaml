@@ -27,7 +27,7 @@ spec:
                 .where_eq("customer_id", trigger_payload.customer_id)
       output_variable: credit_data
     - id: score_risk
-      activity_type: VRule
+      activity_type: Rule
       rule_config:
         rule_set_id: npl_scoring_v1
       output_variable: risk_result
@@ -49,7 +49,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"customer_id": trigger_payload.customer_id, "risk": risk_result, "action": _last_output}'
     - id: end
       activity_type: End

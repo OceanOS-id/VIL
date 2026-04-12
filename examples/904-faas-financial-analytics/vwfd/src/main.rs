@@ -1,5 +1,5 @@
 // 904 — Financial Analytics (Workflow Pattern)
-// Demonstrates: datefmt, duration, anomaly, geodist, stats in V-CEL
+// Demonstrates: datefmt, duration, anomaly, geodist, stats in VIL Expression
 #[tokio::main]
 async fn main() {
     vil_vwfd::app("examples/904-faas-financial-analytics/vwfd/workflows", 8080)

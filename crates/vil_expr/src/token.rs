@@ -1,4 +1,4 @@
-/// Tokenizer — V-CEL compatible token set.
+/// Tokenizer — vil-expr compatible token set.
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {

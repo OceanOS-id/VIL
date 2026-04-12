@@ -99,7 +99,7 @@ pub struct CompiledMapping {
     pub target: String,
     pub language: String,
     /// For literal/spv1: the source string.
-    /// For v-cel: the expression string (evaluated at runtime by vil_expr).
+    /// For vil-expr: the expression string (evaluated at runtime by vil_expr).
     /// For vil_query: pre-compiled SQL + param_refs.
     pub source: String,
     /// Pre-compiled SQL for vil_query (None for other languages).

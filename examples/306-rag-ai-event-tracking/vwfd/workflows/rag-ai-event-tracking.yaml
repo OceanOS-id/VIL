@@ -30,7 +30,7 @@ spec:
       input_mappings:
         - target: query
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload.question
         - target: top_k
           source:
@@ -55,7 +55,7 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "model": "gpt-4",
@@ -73,7 +73,7 @@ spec:
       input_mappings:
         - target: metrics
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "retrieval_ms": search_results.retrieval_ms,
@@ -90,7 +90,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "answer": llm_answer,

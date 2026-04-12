@@ -25,11 +25,11 @@ spec:
         timeout_ms: 5000
       input_mappings:
         - target: product_id
-          source: { language: v-cel, source: trigger_payload.product_id }
+          source: { language: vil-expr, source: trigger_payload.product_id }
         - target: quantity
-          source: { language: v-cel, source: trigger_payload.quantity }
+          source: { language: vil-expr, source: trigger_payload.quantity }
         - target: customer_tier
-          source: { language: v-cel, source: 'trigger_payload.customer_tier ?? "standard"' }
+          source: { language: vil-expr, source: 'trigger_payload.customer_tier ?? "standard"' }
       output_variable: pricing_result
 
     - id: respond
@@ -37,7 +37,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: '{"price": pricing_result.total, "discount": pricing_result.discount, "tier": pricing_result.tier}'
 
     - id: end

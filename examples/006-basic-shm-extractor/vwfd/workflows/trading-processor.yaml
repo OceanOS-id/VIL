@@ -18,14 +18,14 @@ spec:
         function_name: execute }
       input_mappings:
         - target: trades
-          source: { language: v-cel, source: 'trigger_payload.trades' }
+          source: { language: vil-expr, source: 'trigger_payload.trades' }
       output_variable: processed
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: 'processed'
     - id: end
       activity_type: End

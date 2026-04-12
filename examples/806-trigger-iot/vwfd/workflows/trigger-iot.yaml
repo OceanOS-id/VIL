@@ -22,7 +22,7 @@ spec:
       input_mappings:
         - target: reading
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "sensor_id": trigger_payload.sensor_id,
@@ -45,7 +45,7 @@ spec:
         - target: subject
           source: { language: literal, source: "alerts.factory.critical" }
         - target: payload
-          source: { language: v-cel, source: 'string(reading)' }
+          source: { language: vil-expr, source: 'string(reading)' }
       output_variable: alert_result
 
     # NORMAL/WARNING → store in timeseries
@@ -58,9 +58,9 @@ spec:
         - target: measurement
           source: { language: literal, source: sensor_readings }
         - target: tags
-          source: { language: v-cel, source: '{"sensor_id": reading.sensor_id, "severity": reading.severity}' }
+          source: { language: vil-expr, source: '{"sensor_id": reading.sensor_id, "severity": reading.severity}' }
         - target: fields
-          source: { language: v-cel, source: '{"value": reading.value}' }
+          source: { language: vil-expr, source: '{"value": reading.value}' }
       output_variable: store_result
 
     - id: end-alert

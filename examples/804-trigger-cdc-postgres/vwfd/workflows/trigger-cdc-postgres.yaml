@@ -23,7 +23,7 @@ spec:
       input_mappings:
         - target: change_event
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "table": trigger_payload.table,
@@ -42,7 +42,7 @@ spec:
         - target: entity
           source: { language: literal, source: change_log }
         - target: data
-          source: { language: v-cel, source: change_event }
+          source: { language: vil-expr, source: change_event }
       output_variable: insert_result
 
     - id: end

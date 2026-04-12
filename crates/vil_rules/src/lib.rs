@@ -1,6 +1,6 @@
 //! # vil_rules — VIL Business Rule Engine
 //!
-//! YAML-based if/then rules with V-CEL compatible conditions (via vil_expr).
+//! YAML-based if/then rules with VIL Expression compatible conditions (via vil_expr).
 //! Supports two formats: condition rules and decision tables.
 //!
 //! ## Condition Rules

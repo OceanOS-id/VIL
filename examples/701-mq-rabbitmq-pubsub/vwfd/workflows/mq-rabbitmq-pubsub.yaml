@@ -38,7 +38,7 @@ spec:
             source: "task"
         - target: payload
           source:
-            language: v-cel
+            language: vil-expr
             source: trigger_payload
       output_variable: publish_result
 
@@ -47,7 +47,7 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: v-cel
+          language: vil-expr
           source: |
             {
               "status": "published",

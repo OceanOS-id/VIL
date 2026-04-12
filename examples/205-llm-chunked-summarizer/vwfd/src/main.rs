@@ -2,7 +2,7 @@
 //
 // Workflow: trigger → chunk_splitter (NativeCode) → build prompt → LLM → respond
 //
-// chunk_splitter splits at sentence boundaries — not expressible in V-CEL.
+// chunk_splitter splits at sentence boundaries — not expressible in VIL Expression.
 
 use serde_json::{json, Value};
 

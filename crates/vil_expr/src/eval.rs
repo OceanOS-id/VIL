@@ -199,7 +199,7 @@ fn cmp_op(l: &Value, r: &Value, pred: fn(std::cmp::Ordering) -> bool) -> Result<
     }
 }
 
-// ── Function evaluation (V-CEL §3.2.6, §3.2.8) ──
+// ── Function evaluation (vil-expr §3.2.6, §3.2.8) ──
 
 fn eval_function(name: &str, args: &[Expr], vars: &Vars) -> Result<Value, String> {
     match name {
@@ -215,7 +215,7 @@ fn eval_function(name: &str, args: &[Expr], vars: &Vars) -> Result<Value, String
         }
         "has" => {
             // has(obj.field) — check field existence
-            // In V-CEL, `has` takes a field select expression
+            // In vil-expr, `has` takes a field select expression
             if args.len() != 1 { return Err("has() takes 1 argument".into()); }
             match &args[0] {
                 Expr::Field(obj, field) => {
@@ -393,7 +393,7 @@ fn dispatch_faas(name: &str, #[allow(unused)] args: &[Value]) -> Result<Value, S
     Err(format!("unknown function: {}(). Enable 'faas-core' or 'faas-full' feature.", name))
 }
 
-// ── Method evaluation (V-CEL §3.2.2-4) ──
+// ── Method evaluation (vil-expr §3.2.2-4) ──
 
 fn eval_method(obj: &Value, method: &str, args: &[Value]) -> Result<Value, String> {
     match (obj, method) {
@@ -439,7 +439,7 @@ fn eval_method(obj: &Value, method: &str, args: &[Value]) -> Result<Value, Strin
         // Unsupported macros → clear error
         (_, "map" | "filter" | "all" | "exists" | "exists_one") => {
             Err(format!(
-                ".{}() is a V-CEL list macro that requires VFlow cloud compiler. \
+                ".{}() is a vil-expr list macro that requires VFlow cloud compiler. \
                  Rewrite using basic expressions or use: vflow compile --cloud",
                 method
             ))

@@ -24,7 +24,7 @@ spec:
       input_mappings:
         - target: file_event
           source:
-            language: v-cel
+            language: vil-expr
             source: |
               {
                 "filename": trigger_payload.filename,
@@ -43,7 +43,7 @@ spec:
         - target: entity
           source: { language: literal, source: file_events }
         - target: data
-          source: { language: v-cel, source: file_event }
+          source: { language: vil-expr, source: file_event }
       output_variable: insert_result
 
     - id: end
