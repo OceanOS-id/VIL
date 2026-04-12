@@ -215,14 +215,16 @@ Webhook, Cron, Kafka Consumer, S3 Bucket Event, SFTP Directory, PostgreSQL CDC, 
 - **VWFD YAML Reference:** [vastar.id/docs/vil/reference/vwfd-yaml](https://vastar.id/docs/vil/reference/vwfd-yaml)
 - **FaaS Functions:** [vastar.id/docs/vil/reference/faas-functions](https://vastar.id/docs/vil/reference/faas-functions)
 
-## Editor Support
+## Editor Support (in-development)
 
-| Editor | Setup |
-|--------|-------|
-| VS Code | [editors/vscode/](editors/vscode/) |
-| Zed | [editors/zed/](editors/zed/) |
-| Helix | [editors/helix/](editors/helix/) |
-| JetBrains | [editors/jetbrains/](editors/jetbrains/) |
+`vil-lsp` provides diagnostics, completions, and hover for VIL macros alongside `rust-analyzer`.
+
+| Editor | Setup | Status |
+|--------|-------|--------|
+| VS Code | [editors/vscode/](editors/vscode/) | In development |
+| Zed | [editors/zed/](editors/zed/) | In development |
+| Helix | [editors/helix/](editors/helix/) | In development |
+| JetBrains | [editors/jetbrains/](editors/jetbrains/) | In development |
 
 ## License
 
