@@ -459,6 +459,14 @@ enum Commands {
         #[command(subcommand)]
         action: SdkAction,
     },
+
+    /// Compile VWFD workflow YAML → VILW binary graph
+    #[cfg(feature = "vwfd")]
+    #[command(name = "vwfd")]
+    Vwfd {
+        #[command(subcommand)]
+        action: VwfdAction,
+    },
 }
 
 #[derive(Subcommand)]
@@ -501,6 +509,46 @@ enum SdkAction {
     Path,
     /// List installed SDK versions
     List,
+}
+
+#[cfg(feature = "vwfd")]
+#[derive(Subcommand)]
+enum VwfdAction {
+    /// Compile VWFD YAML → VILW binary graph
+    Compile {
+        /// VWFD YAML file or directory
+        path: String,
+    },
+
+    /// Lint VWFD YAML with VIL Way rules
+    Lint {
+        /// VWFD YAML file or directory
+        path: String,
+    },
+
+    /// Export VWFD YAML from Rust source (vil_vwfd! macros)
+    Export {
+        /// Rust source directory containing vil_vwfd! macros
+        #[arg(long, default_value = "src")]
+        src: String,
+        /// Output directory for generated YAML
+        #[arg(short, long, default_value = "workflows")]
+        output: String,
+    },
+
+    /// Start MCP JSON-RPC server (stdio) for IDE integration
+    Mcp,
+
+    /// Serve VWFD workflows as HTTP endpoints
+    Serve {
+        /// Directory containing VWFD YAML files
+        #[arg(default_value = "workflows")]
+        dir: String,
+
+        /// Port to listen on
+        #[arg(short, long, default_value = "8090")]
+        port: u16,
+    },
 }
 
 #[derive(Subcommand)]
@@ -1472,6 +1520,116 @@ fn main() {
                     eprintln!("{} {}", "Error:".red().bold(), e);
                     std::process::exit(1);
                 }
+            }
+        },
+
+        #[cfg(feature = "vwfd")]
+        Commands::Vwfd { action } => match action {
+            VwfdAction::Compile { path } => {
+                let p = std::path::Path::new(&path);
+                if p.is_dir() {
+                    let results = vil_vwfd::cli::compile_all(&path);
+                    let mut ok = 0;
+                    let mut fail = 0;
+                    for r in results {
+                        match r {
+                            Ok(cr) => {
+                                println!(
+                                    "{} {} ({} nodes, {} bytes, {}ms){}",
+                                    "✓".green().bold(),
+                                    cr.id,
+                                    cr.node_count,
+                                    cr.bytes,
+                                    cr.duration_ms,
+                                    cr.route.as_deref().map(|r| format!(" → {}", r)).unwrap_or_default(),
+                                );
+                                ok += 1;
+                            }
+                            Err(e) => {
+                                eprintln!("{} {}", "✗".red().bold(), e);
+                                fail += 1;
+                            }
+                        }
+                    }
+                    println!("\n{} compiled, {} failed", ok.to_string().green(), fail.to_string().red());
+                    if fail > 0 { std::process::exit(1); }
+                } else {
+                    match vil_vwfd::cli::compile_vwfd(&path) {
+                        Ok(cr) => {
+                            println!(
+                                "{} {} compiled ({} nodes, {} bytes, {}ms)",
+                                "✓".green().bold(), cr.id, cr.node_count, cr.bytes, cr.duration_ms,
+                            );
+                            if let Some(route) = cr.route {
+                                println!("  webhook: {}", route.cyan());
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("{} {}", "Error:".red().bold(), e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            }
+            VwfdAction::Lint { path } => {
+                let p = std::path::Path::new(&path);
+                let results = if p.is_dir() {
+                    vil_vwfd::cli::lint_dir(&path)
+                } else {
+                    vec![vil_vwfd::cli::lint_vwfd(&path)]
+                };
+                let mut total_errors = 0;
+                let mut total_warnings = 0;
+                for lr in &results {
+                    if lr.errors.is_empty() && lr.warnings.is_empty() && lr.infos.is_empty() {
+                        println!("{} {} — clean", "✓".green().bold(), lr.file);
+                    } else {
+                        println!("{}", lr.file.bold());
+                        for e in &lr.errors {
+                            eprintln!("  {} [{}] {}{}", "ERROR".red().bold(), e.code,
+                                e.message, e.location.as_deref().map(|l| format!(" ({})", l)).unwrap_or_default());
+                        }
+                        for w in &lr.warnings {
+                            println!("  {} [{}] {}{}", "WARN".yellow().bold(), w.code,
+                                w.message, w.location.as_deref().map(|l| format!(" ({})", l)).unwrap_or_default());
+                        }
+                        for i in &lr.infos {
+                            println!("  {} [{}] {}{}", "INFO".cyan(), i.code,
+                                i.message, i.location.as_deref().map(|l| format!(" ({})", l)).unwrap_or_default());
+                        }
+                    }
+                    total_errors += lr.errors.len();
+                    total_warnings += lr.warnings.len();
+                }
+                println!("\n{} files, {} errors, {} warnings",
+                    results.len(), total_errors.to_string().red(), total_warnings.to_string().yellow());
+                if total_errors > 0 { std::process::exit(1); }
+            }
+            VwfdAction::Export { src, output } => {
+                match vil_vwfd::cli::export_vwfd_from_source(&src, &output) {
+                    Ok(files) => {
+                        for f in &files {
+                            println!("{} {}", "✓".green().bold(), f);
+                        }
+                        println!("\n{} workflow(s) exported to {}", files.len(), output.cyan());
+                    }
+                    Err(e) => {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            VwfdAction::Mcp => {
+                vil_vwfd::mcp::run_server();
+            }
+            VwfdAction::Serve { dir, port } => {
+                let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+                rt.block_on(async {
+                    if let Err(e) = vil_vwfd::handler::serve(&dir, *port).await {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                });
             }
         },
     }

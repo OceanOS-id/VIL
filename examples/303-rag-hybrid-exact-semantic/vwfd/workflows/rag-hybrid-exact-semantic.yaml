@@ -1,0 +1,148 @@
+version: "3.0"
+metadata:
+  id: rag-hybrid-exact-semantic
+  name: "Hybrid RAG: Exact Match + Semantic Fallback"
+  description: |
+    Two-tier retrieval: first check exact match against FAQ trigger phrases.
+    If exact hit found, respond instantly without LLM (fast path). If no exact
+    match, fall back to keyword scoring + semantic search, then augment with
+    LLM for a natural answer. ExclusiveGateway routes between the two paths.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/hybrid
+        response_mode: buffered
+        end_activity: respond-exact
+      output_variable: trigger_payload
+
+    # Step 1: Exact match check on FAQ triggers
+    - id: exact-match
+      activity_type: Function
+      wasm_config:
+        module_ref: rag_exact_match_check
+        description: "Check user query against a table of FAQ trigger phrases using normalized exact matching (lowercased, trimmed, punctuation-stripped). Returns {matched: bool, answer: string|null, faq_id: string|null}."
+      input_mappings:
+        - target: query
+          source:
+            language: v-cel
+            source: trigger_payload.query
+      output_variable: exact_result
+
+    # Gateway: exact hit or semantic fallback
+    - id: route-gate
+      activity_type: ExclusiveGateway
+
+    # Branch A: Exact hit — respond instantly, no LLM
+    - id: respond-exact
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "answer": exact_result.answer,
+              "source": "exact_match",
+              "faq_id": exact_result.faq_id,
+              "query": trigger_payload.query
+            }
+
+    - id: end-exact
+      activity_type: End
+
+    # Branch B: No exact match — keyword scoring + LLM augment
+    - id: keyword-search
+      activity_type: Function
+      wasm_config:
+        module_ref: rag_keyword_score
+        description: "BM25-style keyword scoring against the knowledge base. Tokenizes query, computes TF-IDF scores, returns top-3 chunks with relevance scores. Used as fallback when exact match fails."
+      input_mappings:
+        - target: query
+          source:
+            language: v-cel
+            source: trigger_payload.query
+        - target: top_k
+          source:
+            language: literal
+            source: 3
+      output_variable: keyword_results
+
+    # LLM augments the keyword results into a natural answer
+    - id: llm-augment
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a helpful assistant. Synthesize the provided context into a clear answer. If context is insufficient, say so."},
+                  {"role": "user", "content": "Context:\n" + keyword_results.context_text + "\n\nQuestion: " + trigger_payload.query}
+                ],
+                "stream": true
+              }
+      output_variable: llm_answer
+
+    - id: respond-semantic
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "answer": llm_answer,
+              "source": "semantic_fallback",
+              "chunks_used": keyword_results.chunks,
+              "query": trigger_payload.query
+            }
+
+    - id: end-semantic
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: exact-match } }
+    - { id: f2, from: { node: exact-match }, to: { node: route-gate } }
+    # Branch A: exact hit
+    - id: f3-exact
+      from: { node: route-gate }
+      to: { node: respond-exact }
+      condition: "exact_result.matched == true"
+      priority: 1
+    - { id: f4, from: { node: respond-exact }, to: { node: end-exact } }
+    # Branch B: semantic fallback (default)
+    - id: f5-fallback
+      from: { node: route-gate }
+      to: { node: keyword-search }
+      priority: 0
+    - { id: f6, from: { node: keyword-search }, to: { node: llm-augment } }
+    - { id: f7, from: { node: llm-augment }, to: { node: respond-semantic } }
+    - { id: f8, from: { node: respond-semantic }, to: { node: end-semantic } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: exact_result
+      type: object
+    - name: keyword_results
+      type: object
+    - name: llm_answer
+      type: string

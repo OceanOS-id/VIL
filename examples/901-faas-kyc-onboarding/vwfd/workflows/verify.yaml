@@ -1,0 +1,50 @@
+version: "3.0"
+metadata:
+  id: kyc-verify
+  name: "POST /api/kyc/verify — KYC Onboarding (5 FaaS: phone, email, hash, id_gen, mask)"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/kyc/verify, method: POST }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: process
+      activity_type: Transform
+      input_mappings:
+        # uuid_v4() — generate unique application ID
+        - target: application_id
+          source: { language: v-cel, source: 'uuid_v4()' }
+        # parse_phone() — validate & format Indonesian phone
+        - target: phone_result
+          source: { language: v-cel, source: 'parse_phone(trigger_payload.body.phone, "ID")' }
+        # validate_email() — check email format + domain
+        - target: email_result
+          source: { language: v-cel, source: 'validate_email(trigger_payload.body.email)' }
+        # sha256() — hash email for audit trail (no PII in logs)
+        - target: email_hash
+          source: { language: v-cel, source: 'sha256(trigger_payload.body.email)' }
+        # mask_pii() — mask phone for safe logging
+        - target: phone_masked
+          source: { language: v-cel, source: 'mask_pii(trigger_payload.body.phone, "phone")' }
+        - target: name
+          source: { language: v-cel, source: 'trigger_payload.body.name' }
+      output_variable: result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response: { language: v-cel, source: 'result' }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: process } }
+    - { id: f2, from: { node: process }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

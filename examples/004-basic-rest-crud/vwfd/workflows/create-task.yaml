@@ -1,0 +1,81 @@
+version: "3.0"
+metadata:
+  id: create-task
+  name: "POST /tasks — Create task via VilQuery insert"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/tasks/tasks, method: POST }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: init-table
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: execute
+      input_mappings:
+        - target: sql
+          source:
+            language: literal
+            source: >
+              CREATE TABLE IF NOT EXISTS tasks (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL, description TEXT DEFAULT '',
+                done INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+                updated_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+              )
+      output_variable: init_result
+
+    - id: insert-task
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: execute
+      input_mappings:
+        - target: sql
+          source:
+            language: v-cel
+            source: >
+              "INSERT INTO tasks (id, title, description) VALUES ('" +
+              string(trigger_payload.body._request_id) + "', '" +
+              string(trigger_payload.body.title) + "', '" +
+              string(trigger_payload.body.description) + "')"
+      output_variable: insert_result
+
+    - id: fetch-created
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: find_one
+      input_mappings:
+        - target: sql
+          source:
+            language: v-cel
+            source: >
+              "SELECT * FROM tasks WHERE id = '" +
+              string(trigger_payload.body._request_id) + "'"
+      output_variable: task
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: '{"_status": 201, "data": task.row}'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: init-table } }
+    - { id: f2, from: { node: init-table }, to: { node: insert-task } }
+    - { id: f3, from: { node: insert-task }, to: { node: fetch-created } }
+    - { id: f4, from: { node: fetch-created }, to: { node: respond } }
+    - { id: f5, from: { node: respond }, to: { node: end } }

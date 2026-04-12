@@ -1,0 +1,62 @@
+version: "3.0"
+metadata:
+  id: db-vilorm-overhead-bench
+  name: "VilORM Overhead Benchmark — Simple Read"
+  description: |
+    Minimal ORM benchmark flow: single find_many on items entity. Measures
+    pure VilORM overhead for SELECT * queries — no transforms, no extra logic.
+    Used for latency benchmarking against raw SQLx.
+    Endpoint: GET /api/orm/items
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/orm/items
+          method: GET
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Single Connector call — benchmark target
+    - id: fetch-items
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: find_many
+        entity: items
+      input_mappings:
+        - target: limit
+          source:
+            language: v-cel
+            source: trigger_payload.limit ?? 100
+      output_variable: items
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "items": items,
+              "count": size(items)
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: fetch-items } }
+    - { id: f2, from: { node: fetch-items }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: items
+      type: array

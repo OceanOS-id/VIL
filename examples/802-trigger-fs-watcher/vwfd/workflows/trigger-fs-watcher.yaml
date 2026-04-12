@@ -1,0 +1,60 @@
+version: "3.0"
+metadata:
+  id: trigger-fs-watcher
+  name: "Filesystem Watcher Trigger"
+  description: |
+    Watches a directory for file changes (create/modify). Debounces at 100ms,
+    filters by pattern (*.log). When a matching file event occurs, extracts
+    filename + event type and logs to SQLite. No HTTP response.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: fs_watcher
+        fs_config:
+          path: "/tmp/watch"
+          pattern: "*.log"
+          debounce_ms: 100
+      output_variable: trigger_payload
+
+    - id: extract-event
+      activity_type: transform
+      input_mappings:
+        - target: file_event
+          source:
+            language: v-cel
+            source: |
+              {
+                "filename": trigger_payload.filename,
+                "event_type": trigger_payload.event_type,
+                "timestamp": trigger_payload.timestamp,
+                "size_bytes": trigger_payload.size_bytes
+              }
+      output_variable: file_event
+
+    - id: log-event
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: insert
+      input_mappings:
+        - target: entity
+          source: { language: literal, source: file_events }
+        - target: data
+          source: { language: v-cel, source: file_event }
+      output_variable: insert_result
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: extract-event } }
+    - { id: f2, from: { node: extract-event }, to: { node: log-event } }
+    - { id: f3, from: { node: log-event }, to: { node: end } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: file_event, type: object }
+    - { name: insert_result, type: object }

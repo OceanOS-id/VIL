@@ -1,0 +1,30 @@
+version: "3.0"
+metadata: { id: list-products, name: "GET /api/shop/products" }
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config: { trigger_type: webhook, webhook_config: { path: /api/shop/products, method: GET }, response_mode: buffered, end_activity: respond }
+      output_variable: trigger_payload
+    - id: query
+      activity_type: Connector
+      connector_config: { connector_ref: vastar.db.sqlite, operation: query }
+      input_mappings:
+        - target: sql
+          source:
+            language: vil_query
+            source: |
+              select("products")
+                .columns("id, name, price, stock, category")
+                .order_by("created_at DESC")
+                .limit(100)
+      output_variable: result
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: v-cel, source: 'result' } }
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: query } }
+    - { id: f2, from: { node: query }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

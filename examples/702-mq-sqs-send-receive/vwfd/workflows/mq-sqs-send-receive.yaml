@@ -1,0 +1,71 @@
+version: "3.0"
+metadata:
+  id: mq-sqs-send-receive
+  name: "AWS SQS — Send Message"
+  description: |
+    Sends a message to an AWS SQS queue. Receives the message body via webhook,
+    reads the queue URL from environment variable SQS_QUEUE_URL, and dispatches
+    via the vastar.mq.sqs connector. Responds with SQS message ID and sequence
+    number for tracking.
+    Endpoint: POST /api/send  { "body": "...", "attributes": {...} }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/send
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Send message to SQS queue
+    - id: sqs-send
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.mq.sqs
+        operation: send
+      input_mappings:
+        - target: queue_url
+          source:
+            language: v-cel
+            source: env.SQS_QUEUE_URL
+        - target: message_body
+          source:
+            language: v-cel
+            source: trigger_payload.body
+        - target: message_attributes
+          source:
+            language: v-cel
+            source: trigger_payload.attributes
+      output_variable: send_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "status": "sent",
+              "queue_url": env.SQS_QUEUE_URL,
+              "message_id": send_result.message_id,
+              "sequence_number": send_result.sequence_number
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: sqs-send } }
+    - { id: f2, from: { node: sqs-send }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: send_result
+      type: object

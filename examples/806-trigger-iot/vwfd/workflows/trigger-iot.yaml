@@ -1,0 +1,90 @@
+version: "3.0"
+metadata:
+  id: trigger-iot
+  name: "IoT MQTT Sensor Trigger — Factory Line Monitor"
+  description: |
+    Subscribes to MQTT topic "factory/line-a/+/threshold" for sensor readings.
+    Classifies severity (NORMAL/WARNING/CRITICAL). Critical → alert via NATS,
+    otherwise → store in timeseries DB.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: mqtt
+        mqtt_config:
+          topic: "factory/line-a/+/threshold"
+      output_variable: trigger_payload
+
+    - id: classify-severity
+      activity_type: transform
+      input_mappings:
+        - target: reading
+          source:
+            language: v-cel
+            source: |
+              {
+                "sensor_id": trigger_payload.sensor_id,
+                "value": trigger_payload.value,
+                "unit": trigger_payload.unit,
+                "severity": trigger_payload.value > 90 ? "CRITICAL" : (trigger_payload.value > 70 ? "WARNING" : "NORMAL")
+              }
+      output_variable: reading
+
+    - id: severity-gate
+      activity_type: ExclusiveGateway
+
+    # CRITICAL → publish alert via NATS
+    - id: alert-critical
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.mq.nats
+        operation: publish
+      input_mappings:
+        - target: subject
+          source: { language: literal, source: "alerts.factory.critical" }
+        - target: payload
+          source: { language: v-cel, source: 'string(reading)' }
+      output_variable: alert_result
+
+    # NORMAL/WARNING → store in timeseries
+    - id: store-reading
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.timeseries
+        operation: write
+      input_mappings:
+        - target: measurement
+          source: { language: literal, source: sensor_readings }
+        - target: tags
+          source: { language: v-cel, source: '{"sensor_id": reading.sensor_id, "severity": reading.severity}' }
+        - target: fields
+          source: { language: v-cel, source: '{"value": reading.value}' }
+      output_variable: store_result
+
+    - id: end-alert
+      activity_type: End
+    - id: end-store
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: classify-severity } }
+    - { id: f2, from: { node: classify-severity }, to: { node: severity-gate } }
+    - id: f3-critical
+      from: { node: severity-gate }
+      to: { node: alert-critical }
+      condition: 'reading.severity == "CRITICAL"'
+      priority: 1
+    - id: f4-normal
+      from: { node: severity-gate }
+      to: { node: store-reading }
+      priority: 0
+    - { id: f5, from: { node: alert-critical }, to: { node: end-alert } }
+    - { id: f6, from: { node: store-reading }, to: { node: end-store } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: reading, type: object }
+    - { name: alert_result, type: object }
+    - { name: store_result, type: object }

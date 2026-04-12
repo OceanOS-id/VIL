@@ -84,6 +84,37 @@ impl SqlxPool {
         Ok(result.rows_affected())
     }
 
+    /// Fetch all rows as Vec<serde_json::Value> — for SELECT queries.
+    pub async fn fetch_all_json(&self, sql: &str) -> Result<Vec<serde_json::Value>, sqlx::Error> {
+        use sqlx::{Row, Column, TypeInfo};
+        let start = std::time::Instant::now();
+        let rows = sqlx::query(sql).fetch_all(&self.pool).await?;
+        let duration_ns = start.elapsed().as_nanos() as u64;
+        self.metrics.record_query(duration_ns, false);
+
+        let mut result = Vec::with_capacity(rows.len());
+        for row in &rows {
+            let mut obj = serde_json::Map::new();
+            for col in row.columns() {
+                let name = col.name().to_string();
+                let type_name = col.type_info().name();
+                let val: serde_json::Value = match type_name {
+                    "INTEGER" | "INT" | "INT4" | "INT8" | "BIGINT" | "SMALLINT" =>
+                        row.try_get::<i64, _>(col.ordinal()).map(|v| serde_json::json!(v)).unwrap_or(serde_json::Value::Null),
+                    "REAL" | "FLOAT" | "FLOAT4" | "FLOAT8" | "DOUBLE" | "NUMERIC" | "DECIMAL" =>
+                        row.try_get::<f64, _>(col.ordinal()).map(|v| serde_json::json!(v)).unwrap_or(serde_json::Value::Null),
+                    "BOOLEAN" | "BOOL" =>
+                        row.try_get::<bool, _>(col.ordinal()).map(|v| serde_json::json!(v)).unwrap_or(serde_json::Value::Null),
+                    _ =>
+                        row.try_get::<String, _>(col.ordinal()).map(|v| serde_json::json!(v)).unwrap_or(serde_json::Value::Null),
+                };
+                obj.insert(name, val);
+            }
+            result.push(serde_json::Value::Object(obj));
+        }
+        Ok(result)
+    }
+
     /// Close the pool gracefully.
     pub async fn close(&self) {
         self.pool.close().await;

@@ -1,0 +1,54 @@
+version: "3.0"
+metadata:
+  id: data-ingestion
+  name: "Core Banking Data Ingestion (VWFD)"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/ingest }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+    - id: validate
+      activity_type: Function
+      wasm_config: { module_ref: validate_payload
+        function_name: execute }
+      input_mappings:
+        - target: data
+          source: { language: v-cel, source: 'trigger_payload' }
+      output_variable: validated
+    - id: transform
+      activity_type: Transform
+      input_mappings:
+        - target: record
+          source:
+            language: v-cel
+            source: '{"source": "core_banking", "data": validated, "ingested_at": "now"}'
+      output_variable: transformed
+    - id: store
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.postgres
+        operation: raw_query
+      input_mappings:
+        - target: sql
+          source: { language: literal, source: "INSERT INTO ingested_data (payload) VALUES ($1)" }
+      output_variable: store_result
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: '{"status": "ingested", "record": transformed}'
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: validate } }
+    - { id: f2, from: { node: validate }, to: { node: transform } }
+    - { id: f3, from: { node: transform }, to: { node: store } }
+    - { id: f4, from: { node: store }, to: { node: respond } }
+    - { id: f5, from: { node: respond }, to: { node: end } }

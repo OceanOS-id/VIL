@@ -1,0 +1,134 @@
+version: "3.0"
+metadata:
+  id: llm-code-review-with-tools
+  name: "Automated Code Review Assistant"
+  description: |
+    Multi-turn code review: receive code → LLM analysis → parse tool calls
+    (<tool>name:input</tool>) → execute local tools (calculator for metrics,
+    analyzer for static analysis) → feed results back → final review.
+    Max 3 turns. Tools are in-process (NativeCode).
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/code/review
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Call LLM with system prompt + user code
+    # LLM is instructed to use <tool>analyzer:CODE</tool> and <tool>calculator:...</tool>
+    - id: llm-analysis
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a code review assistant with two tools. To use a tool, write: <tool>TOOL_NAME:INPUT</tool>. Available: calculator (lines/complexity/math), analyzer (static analysis for unwrap, unsafe, clone, missing docs). Always use analyzer first, then calculator for complexity."},
+                  {"role": "user", "content": "Review this code:\n```\n" + trigger_payload.code + "\n```"}
+                ],
+                "stream": true
+              }
+      output_variable: llm_turn_1
+
+    # Step 2: Execute tools locally — NativeCode because tools are in-process
+    # (calculator: line count, complexity; analyzer: unwrap/unsafe/clone detection)
+    # In production this integrates with real linters (clippy, rustfmt)
+    - id: execute-tools
+      activity_type: NativeCode
+      code_config:
+        handler_ref: tool_executor
+        description: "Parse <tool>name:input</tool> from LLM output → execute calculator/analyzer → return results"
+      input_mappings:
+        - target: llm_output
+          source:
+            language: v-cel
+            source: llm_turn_1
+        - target: code
+          source:
+            language: v-cel
+            source: trigger_payload.code
+      output_variable: tool_results
+
+    # Step 3: Call LLM again with tool results for final review
+    - id: llm-final-review
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "Provide your final code review incorporating tool results."},
+                  {"role": "user", "content": "Code:\n" + trigger_payload.code},
+                  {"role": "assistant", "content": llm_turn_1},
+                  {"role": "user", "content": "Tool results:\n" + string(tool_results) + "\n\nNow provide your final review."}
+                ],
+                "stream": true
+              }
+      output_variable: final_review
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "review": final_review,
+              "tools_executed": tool_results.tools,
+              "turns": 2
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: llm-analysis } }
+    - { id: f2, from: { node: llm-analysis }, to: { node: execute-tools } }
+    - { id: f3, from: { node: execute-tools }, to: { node: llm-final-review } }
+    - { id: f4, from: { node: llm-final-review }, to: { node: respond } }
+    - { id: f5, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: llm_turn_1
+      type: string
+    - name: tool_results
+      type: object
+    - name: final_review
+      type: string

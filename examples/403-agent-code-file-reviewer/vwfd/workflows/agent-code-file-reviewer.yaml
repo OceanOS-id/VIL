@@ -1,0 +1,125 @@
+version: "3.0"
+metadata:
+  id: agent-code-file-reviewer
+  name: "Eager Code File Review Agent"
+  description: |
+    Code review agent that pre-executes all tools BEFORE calling the LLM.
+    Tools (read_file, count_lines, find_pattern) run eagerly on the requested
+    files, then results are assembled into a single context-rich prompt.
+    The LLM receives all tool outputs at once and produces a comprehensive review.
+    Endpoint: POST /api/code-review  { "files": ["src/main.rs"], "patterns": ["unwrap", "unsafe"] }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/code-review
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Eagerly execute all file tools — NativeCode because file I/O
+    # and pattern matching are not expressible in V-CEL
+    - id: run-file-tools
+      activity_type: NativeCode
+      code_config:
+        handler_ref: code_file_tools
+        description: |
+          For each file in request: (1) read_file — read full contents,
+          (2) count_lines — total lines, blank lines, comment lines,
+          (3) find_pattern — search for each pattern (e.g. unwrap, unsafe, todo)
+          with line numbers. Returns {files: [{path, content, line_count,
+          blank_lines, comment_lines, pattern_matches: [{pattern, lines}]}]}.
+      input_mappings:
+        - target: files
+          source:
+            language: v-cel
+            source: trigger_payload.files
+        - target: patterns
+          source:
+            language: v-cel
+            source: "size(trigger_payload.patterns) > 0 ? trigger_payload.patterns : [\"unwrap\", \"unsafe\", \"clone\", \"TODO\"]"
+      output_variable: tool_outputs
+
+    # Step 2: Build a system prompt that includes all tool results
+    - id: build-review-prompt
+      activity_type: transform
+      input_mappings:
+        - target: messages
+          source:
+            language: v-cel
+            source: |
+              [
+                {
+                  "role": "system",
+                  "content": "You are a senior code reviewer. You have been given pre-computed analysis results for the requested files. Use these results to produce a thorough review covering: code quality, potential bugs, security concerns, and style issues.\n\nProvide your review as JSON: {\"summary\": \"...\", \"issues\": [{\"severity\": \"high|medium|low\", \"file\": \"...\", \"line\": N, \"description\": \"...\"}], \"score\": 1-10}"
+                },
+                {
+                  "role": "user",
+                  "content": "Review these files. Tool results:\n\n" + string(tool_outputs)
+                }
+              ]
+      output_variable: prompt_data
+
+    # Step 3: Single LLM call with all context pre-loaded
+    - id: llm-review
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": prompt_data.messages,
+                "stream": true,
+                "temperature": 0.2
+              }
+      output_variable: review_text
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "review": review_text,
+              "files_analyzed": size(tool_outputs.files),
+              "tool_results": tool_outputs
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: run-file-tools } }
+    - { id: f2, from: { node: run-file-tools }, to: { node: build-review-prompt } }
+    - { id: f3, from: { node: build-review-prompt }, to: { node: llm-review } }
+    - { id: f4, from: { node: llm-review }, to: { node: respond } }
+    - { id: f5, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: tool_outputs
+      type: object
+    - name: prompt_data
+      type: object
+    - name: review_text
+      type: string

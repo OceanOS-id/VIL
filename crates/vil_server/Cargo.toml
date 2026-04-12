@@ -11,24 +11,24 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 # VIL Server crates
-vil_server_core = { version = "0.2", path = "../vil_server_core" }
-vil_server_web = { version = "0.2", path = "../vil_server_web" }
-vil_server_config = { version = "0.2", path = "../vil_server_config" }
-vil_server_mesh = { version = "0.2", path = "../vil_server_mesh" }
-vil_server_auth = { version = "0.2", path = "../vil_server_auth" }
-vil_server_db = { version = "0.2", path = "../vil_server_db" }
+vil_server_core = { version = "0.3", path = "../vil_server_core" }
+vil_server_web = { version = "0.3", path = "../vil_server_web" }
+vil_server_config = { version = "0.3", path = "../vil_server_config" }
+vil_server_mesh = { version = "0.3", path = "../vil_server_mesh" }
+vil_server_auth = { version = "0.3", path = "../vil_server_auth" }
+vil_server_db = { version = "0.3", path = "../vil_server_db" }
 
 # VIL macros
-vil_macros = { version = "0.2", path = "../vil_macros" }
-vil_server_macros = { version = "0.2", path = "../vil_server_macros" }
-vil_json = { version = "0.2", path = "../vil_json" }
+vil_macros = { version = "0.3", path = "../vil_macros" }
+vil_server_macros = { version = "0.3", path = "../vil_server_macros" }
+vil_json = { version = "0.3", path = "../vil_json" }
 
 # VIL SDK (needed for semantic type macros: vil_state, vil_event, etc.)
-vil_sdk = { version = "0.2", path = "../vil_sdk" }
+vil_sdk = { version = "0.3", path = "../vil_sdk" }
 
 # VIL observability
-vil_obs = { version = "0.2", path = "../vil_obs" }
-vil_log = { version = "0.2", path = "../vil_log" }
+vil_obs = { version = "0.3", path = "../vil_obs" }
+vil_log = { version = "0.3", path = "../vil_log" }
 
 # Re-export essentials
 axum = { version = "0.7", features = ["macros"] }

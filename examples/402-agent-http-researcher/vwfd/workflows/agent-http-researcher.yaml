@@ -1,0 +1,183 @@
+version: "3.0"
+metadata:
+  id: agent-http-researcher
+  name: "Multi-Turn HTTP Research Agent"
+  description: |
+    Research agent with a multi-turn tool-use loop (max 8 iterations).
+    Each iteration: call LLM -> parse tool call -> execute tool (HTTP GET for
+    product search OR calculator for price comparison) -> feed observation back.
+    Loop terminates when LLM outputs DONE or max iterations reached.
+    Endpoint: POST /api/research/analyze  { "query": "Compare prices of ..." }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/research/analyze
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Initialize conversation history and iteration counter
+    - id: init-state
+      activity_type: transform
+      input_mappings:
+        - target: agent_state
+          source:
+            language: v-cel
+            source: |
+              {
+                "messages": [
+                  {"role": "system", "content": "You are a research agent. You have two tools:\n\n1. <tool>fetch_products:SEARCH_QUERY</tool> — HTTP GET to search products, returns JSON array\n2. <tool>calculator:EXPRESSION</tool> — evaluate math expression\n\nUse tools to research the user's query. When you have enough info, respond with DONE: followed by your final answer."},
+                  {"role": "user", "content": trigger_payload.query}
+                ],
+                "iterations": 0,
+                "done": false
+              }
+      output_variable: agent_state
+
+    # Agent loop: max 8 iterations, exit when agent_state.done == true
+    - id: agent-loop
+      activity_type: LoopWhile
+      loop_config:
+        condition: "agent_state.done == false"
+        max_iterations: 8
+
+    # Step A: Call LLM with current conversation history
+    - id: llm-turn
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": agent_state.messages,
+                "stream": true
+              }
+      output_variable: llm_output
+
+    # Step B: Parse tool call from LLM output, execute the right tool
+    - id: execute-tool
+      activity_type: NativeCode
+      code_config:
+        handler_ref: research_tool_executor
+        description: |
+          Parse <tool>NAME:INPUT</tool> from llm_output. If NAME is fetch_products,
+          perform HTTP GET to product search API with INPUT as query param.
+          If NAME is calculator, evaluate the math expression. If output starts
+          with "DONE:", mark done=true and extract final answer. Returns
+          {tool_name, tool_input, observation, done, final_answer}.
+      input_mappings:
+        - target: llm_output
+          source:
+            language: v-cel
+            source: llm_output
+        - target: api_base
+          source:
+            language: literal
+            source: "http://127.0.0.1:8080/api/products"
+      output_variable: tool_result
+
+    # Step C: Route based on whether agent is done
+    - id: done-gate
+      activity_type: ExclusiveGateway
+
+    # Branch: NOT done — append observation and loop back
+    - id: append-observation
+      activity_type: transform
+      input_mappings:
+        - target: agent_state
+          source:
+            language: v-cel
+            source: |
+              {
+                "messages": agent_state.messages + [
+                  {"role": "assistant", "content": llm_output},
+                  {"role": "user", "content": "Tool result (" + tool_result.tool_name + "): " + string(tool_result.observation)}
+                ],
+                "iterations": agent_state.iterations + 1,
+                "done": false
+              }
+      output_variable: agent_state
+
+    # Branch: DONE — update state to exit loop
+    - id: mark-done
+      activity_type: transform
+      input_mappings:
+        - target: agent_state
+          source:
+            language: v-cel
+            source: |
+              {
+                "messages": agent_state.messages,
+                "iterations": agent_state.iterations + 1,
+                "done": true,
+                "final_answer": tool_result.final_answer
+              }
+      output_variable: agent_state
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "query": trigger_payload.query,
+              "answer": agent_state.final_answer,
+              "iterations": agent_state.iterations
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: init-state } }
+    - { id: f2, from: { node: init-state }, to: { node: agent-loop } }
+    # Loop body
+    - { id: f3, from: { node: agent-loop }, to: { node: llm-turn } }
+    - { id: f4, from: { node: llm-turn }, to: { node: execute-tool } }
+    - { id: f5, from: { node: execute-tool }, to: { node: done-gate } }
+    # Gateway: not done -> append observation -> loop back
+    - id: f6-continue
+      from: { node: done-gate }
+      to: { node: append-observation }
+      condition: "tool_result.done == false"
+      priority: 1
+    - { id: f7, from: { node: append-observation }, to: { node: agent-loop } }
+    # Gateway: done -> mark done -> loop back (will exit on condition check)
+    - id: f8-done
+      from: { node: done-gate }
+      to: { node: mark-done }
+      priority: 0
+    - { id: f9, from: { node: mark-done }, to: { node: agent-loop } }
+    # Loop exit
+    - { id: f10, from: { node: agent-loop }, to: { node: respond }, condition: "_exit" }
+    - { id: f11, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: agent_state
+      type: object
+    - name: llm_output
+      type: string
+    - name: tool_result
+      type: object

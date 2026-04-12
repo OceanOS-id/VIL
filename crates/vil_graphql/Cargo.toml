@@ -10,8 +10,8 @@ readme = "README.md"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-vil_db_semantic = { version = "0.2", path = "../vil_db_semantic" }
-vil_server_core = { version = "0.2", path = "../vil_server_core" }
+vil_db_semantic = { version = "0.3", path = "../vil_db_semantic" }
+vil_server_core = { version = "0.3", path = "../vil_server_core" }
 
 async-graphql = "7"
 async-graphql-axum = "7"

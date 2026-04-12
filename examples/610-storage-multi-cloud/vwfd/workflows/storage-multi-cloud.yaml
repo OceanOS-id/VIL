@@ -1,0 +1,143 @@
+version: "3.0"
+metadata:
+  id: storage-multi-cloud
+  name: "Multi-Cloud Storage — Provider-Routed Upload"
+  description: |
+    Upload to S3, GCS, or Azure Blob based on provider field. ExclusiveGateway
+    routes to the correct Connector (vastar.storage.s3 / gcs / azure). Each
+    branch performs put_object/upload/upload_blob respectively, then merges
+    to a common response.
+    Endpoint: POST /api/storage/upload  { "provider": "s3|gcs|azure", "bucket": "...", "key": "...", "body": "..." }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/storage/upload
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Gateway: route based on provider
+    - id: provider-gate
+      activity_type: ExclusiveGateway
+
+    # Branch A: AWS S3
+    - id: upload-s3
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.storage.s3
+        operation: put_object
+      input_mappings:
+        - target: bucket
+          source:
+            language: v-cel
+            source: trigger_payload.bucket
+        - target: key
+          source:
+            language: v-cel
+            source: trigger_payload.key
+        - target: body
+          source:
+            language: v-cel
+            source: trigger_payload.body
+      output_variable: upload_result
+
+    # Branch B: Google Cloud Storage
+    - id: upload-gcs
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.storage.gcs
+        operation: upload
+      input_mappings:
+        - target: bucket
+          source:
+            language: v-cel
+            source: trigger_payload.bucket
+        - target: object_name
+          source:
+            language: v-cel
+            source: trigger_payload.key
+        - target: body
+          source:
+            language: v-cel
+            source: trigger_payload.body
+      output_variable: upload_result
+
+    # Branch C: Azure Blob Storage
+    - id: upload-azure
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.storage.azure
+        operation: upload_blob
+      input_mappings:
+        - target: container
+          source:
+            language: v-cel
+            source: trigger_payload.bucket
+        - target: blob_name
+          source:
+            language: v-cel
+            source: trigger_payload.key
+        - target: body
+          source:
+            language: v-cel
+            source: trigger_payload.body
+      output_variable: upload_result
+
+    # Merge point
+    - id: merge
+      activity_type: Noop
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "status": "uploaded",
+              "provider": trigger_payload.provider,
+              "bucket": trigger_payload.bucket,
+              "key": trigger_payload.key,
+              "result": upload_result
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: provider-gate } }
+    # S3 branch
+    - id: f2-s3
+      from: { node: provider-gate }
+      to: { node: upload-s3 }
+      condition: "trigger_payload.provider == 's3'"
+      priority: 2
+    # GCS branch
+    - id: f3-gcs
+      from: { node: provider-gate }
+      to: { node: upload-gcs }
+      condition: "trigger_payload.provider == 'gcs'"
+      priority: 1
+    # Azure branch (default fallback)
+    - id: f4-azure
+      from: { node: provider-gate }
+      to: { node: upload-azure }
+      priority: 0
+    # All branches merge
+    - { id: f5, from: { node: upload-s3 }, to: { node: merge } }
+    - { id: f6, from: { node: upload-gcs }, to: { node: merge } }
+    - { id: f7, from: { node: upload-azure }, to: { node: merge } }
+    - { id: f8, from: { node: merge }, to: { node: respond } }
+    - { id: f9, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: upload_result
+      type: object

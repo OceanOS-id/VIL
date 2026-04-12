@@ -1,0 +1,76 @@
+version: "3.0"
+metadata:
+  id: storage-s3-basic
+  name: "S3 Object Storage — Upload"
+  description: |
+    Basic S3 object upload via PUT. Receives file content + metadata (bucket,
+    key, content_type) → Connector put_object to S3 → respond with upload
+    confirmation including ETag and location.
+    Endpoint: PUT /api/storage/upload  { "bucket": "...", "key": "...", "content_type": "...", "body": "..." }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/storage/upload
+          method: PUT
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Upload object to S3
+    - id: s3-upload
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.storage.s3
+        operation: put_object
+      input_mappings:
+        - target: bucket
+          source:
+            language: v-cel
+            source: trigger_payload.bucket
+        - target: key
+          source:
+            language: v-cel
+            source: trigger_payload.key
+        - target: content_type
+          source:
+            language: v-cel
+            source: trigger_payload.content_type
+        - target: body
+          source:
+            language: v-cel
+            source: trigger_payload.body
+      output_variable: upload_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "status": "uploaded",
+              "bucket": trigger_payload.bucket,
+              "key": trigger_payload.key,
+              "etag": upload_result.etag,
+              "content_type": trigger_payload.content_type
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: s3-upload } }
+    - { id: f2, from: { node: s3-upload }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: upload_result
+      type: object

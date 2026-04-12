@@ -1,0 +1,140 @@
+version: "3.0"
+metadata:
+  id: llm-decision-routing
+  name: "Insurance Underwriting AI (Decision Routing)"
+  description: |
+    Underwriting risk assessment with rule-based pre-screen + LLM analysis.
+    Flow: receive applicant → pre-screen rules (age < 18, coverage > $5M) →
+    ExclusiveGateway: if rejected → instant response, if passed → LLM assessment
+    → parse tier → calculate premium → return assessment.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/underwrite/assess
+        response_mode: buffered
+        end_activity: respond-approved
+      output_variable: trigger_payload
+
+    # Step 1: Rule-based pre-screen
+    - id: pre-screen
+      activity_type: VilRules
+      rule_config:
+        rule_set_id: underwrite_prescreen
+      input_mappings:
+        - target: applicant_age
+          source:
+            language: v-cel
+            source: trigger_payload.applicant_age
+        - target: coverage_cents
+          source:
+            language: v-cel
+            source: trigger_payload.coverage_cents
+      output_variable: prescreen_result
+
+    # Gateway: branch based on pre-screen result
+    - id: prescreen-gate
+      activity_type: ExclusiveGateway
+
+    # Branch A: Pre-screen REJECTED — respond immediately
+    - id: respond-rejected
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "applicant_age": trigger_payload.applicant_age,
+              "pre_screen": prescreen_result,
+              "ai_assessment": "N/A — pre-screen rejected",
+              "recommended_tier": prescreen_result.action.tier,
+              "premium_estimate_cents": 0
+            }
+
+    # Branch B: Pre-screen PASSED — call LLM for risk assessment
+    - id: llm-assess
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are an insurance underwriter AI. Analyze the applicant and respond with:\nTIER: [Preferred|Standard|Substandard|Decline]\nASSESSMENT: [2-3 sentence risk analysis]"},
+                  {"role": "user", "content": "Applicant: age=" + string(trigger_payload.applicant_age) + ", occupation=" + trigger_payload.occupation + ", health=" + trigger_payload.health_score + ", coverage=$" + string(trigger_payload.coverage_cents / 100)}
+                ]
+              }
+      output_variable: llm_response
+
+    # Parse tier + calculate premium
+    - id: calculate-premium
+      activity_type: transform
+      input_mappings:
+        - target: assessment
+          source:
+            language: v-cel
+            source: |
+              {
+                "applicant_age": trigger_payload.applicant_age,
+                "pre_screen": {"passed": true, "reason": "passed"},
+                "ai_assessment": llm_response,
+                "recommended_tier": "Standard",
+                "premium_estimate_cents": trigger_payload.coverage_cents / 100
+              }
+      output_variable: final_assessment
+
+    - id: respond-approved
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: final_assessment
+
+    - id: end-rejected
+      activity_type: End
+    - id: end-approved
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: pre-screen } }
+    - { id: f2, from: { node: pre-screen }, to: { node: prescreen-gate } }
+    # Rejected: pre-screen failed (age < 18 or coverage > $5M)
+    - id: f3-reject
+      from: { node: prescreen-gate }
+      to: { node: respond-rejected }
+      condition: "prescreen_result.action.tier == 'DECLINE' || prescreen_result.action.tier == 'MANUAL_REVIEW'"
+      priority: 1
+    # Passed: proceed to LLM
+    - id: f4-pass
+      from: { node: prescreen-gate }
+      to: { node: llm-assess }
+      priority: 0
+    - { id: f5, from: { node: respond-rejected }, to: { node: end-rejected } }
+    - { id: f6, from: { node: llm-assess }, to: { node: calculate-premium } }
+    - { id: f7, from: { node: calculate-premium }, to: { node: respond-approved } }
+    - { id: f8, from: { node: respond-approved }, to: { node: end-approved } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: prescreen_result
+      type: object
+    - name: llm_response
+      type: string
+    - name: final_assessment
+      type: object

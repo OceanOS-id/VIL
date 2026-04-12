@@ -1,0 +1,58 @@
+version: "3.0"
+metadata:
+  id: medical-triage-chatbot
+  name: "Medical Triage Chatbot (VWFD)"
+  description: "AI-assisted patient symptom assessment — SSE streaming to LLM"
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/chat }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: call_llm
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
+      input_mappings:
+        - target: url
+          source: { language: literal, source: "http://127.0.0.1:4545/v1/chat/completions" }
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a medical triage assistant. Assess symptoms, classify urgency (EMERGENCY/URGENT/ROUTINE), and recommend next steps."},
+                  {"role": "user", "content": trigger_payload.prompt}
+                ],
+                "stream": true
+              }
+      output_variable: llm_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: '{"assessment": llm_result.content, "model": "gpt-4", "provider": "openai"}'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: call_llm } }
+    - { id: f2, from: { node: call_llm }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

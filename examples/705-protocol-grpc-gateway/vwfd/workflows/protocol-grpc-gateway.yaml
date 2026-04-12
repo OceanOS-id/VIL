@@ -1,0 +1,105 @@
+version: "3.0"
+metadata:
+  id: protocol-grpc-gateway
+  name: "Payment Gateway — Charge with Card Validation"
+  description: |
+    Stateful payment gateway that validates credit card details (Luhn check,
+    expiry validation) and processes a charge. Uses NativeCode because it
+    manages in-memory payment state (ledger of processed charges) and performs
+    card-specific validation algorithms that are inherently imperative logic.
+    Endpoint: POST /charge  { "card_number": "...", "expiry": "MM/YY", "amount": 100.00, "currency": "USD" }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /charge
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Validate card — Luhn algorithm + expiry date check
+    # NativeCode: Luhn checksum is iterative digit manipulation, not expressible in v-cel
+    - id: validate-card
+      activity_type: Function
+      wasm_config:
+        module_ref: payment_validate_card
+        description: |
+          Validates credit card number using Luhn algorithm (double every second
+          digit from right, sum digits, check mod 10 == 0). Also validates expiry
+          date is not in the past. Returns { valid: bool, card_type: string, errors: [] }.
+      input_mappings:
+        - target: card_number
+          source:
+            language: v-cel
+            source: trigger_payload.card_number
+        - target: expiry
+          source:
+            language: v-cel
+            source: trigger_payload.expiry
+      output_variable: validation
+
+    # Step 2: Process payment — generate ID, store in in-memory ledger, deduct
+    # NativeCode: stateful operation (in-memory payment store) + ID generation
+    - id: process-payment
+      activity_type: Function
+      wasm_config:
+        module_ref: payment_process_charge
+        description: |
+          Generates a unique payment ID (pay_XXXX), stores the charge record in
+          the in-memory payment ledger with status/timestamp, and returns the
+          charge result. Skips processing if card validation failed.
+      input_mappings:
+        - target: card_number
+          source:
+            language: v-cel
+            source: trigger_payload.card_number
+        - target: amount
+          source:
+            language: v-cel
+            source: trigger_payload.amount
+        - target: currency
+          source:
+            language: v-cel
+            source: trigger_payload.currency
+        - target: validation
+          source:
+            language: v-cel
+            source: validation
+      output_variable: charge_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "payment_id": charge_result.payment_id,
+              "status": charge_result.status,
+              "amount": trigger_payload.amount,
+              "currency": trigger_payload.currency,
+              "card_type": validation.card_type,
+              "timestamp": charge_result.timestamp
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: validate-card } }
+    - { id: f2, from: { node: validate-card }, to: { node: process-payment } }
+    - { id: f3, from: { node: process-payment }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: validation
+      type: object
+    - name: charge_result
+      type: object

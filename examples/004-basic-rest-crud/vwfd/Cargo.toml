@@ -1,0 +1,11 @@
+[package]
+name = "vil-vwfd-task-crud"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+vil_vwfd = { path = "../../../crates/vil_vwfd", features = ["connectors-db"] }
+vil_db_sqlx = { path = "../../../crates/vil_db_sqlx" }
+tokio = { version = "1", features = ["full"] }

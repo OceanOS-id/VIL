@@ -1,0 +1,17 @@
+[package]
+name = "vil_trigger_db_poll"
+description = "VIL trigger — DB table polling (last-id pattern)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+
+[dependencies]
+vil_trigger_core = { workspace = true }
+vil_db_sqlx = { path = "../vil_db_sqlx" }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }

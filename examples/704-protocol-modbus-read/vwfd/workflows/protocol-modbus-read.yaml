@@ -1,0 +1,101 @@
+version: "3.0"
+metadata:
+  id: protocol-modbus-read
+  name: "Modbus TCP — Read Registers and Coils"
+  description: |
+    Reads holding registers and coils from a Modbus TCP device. Fetches 10
+    holding registers starting at address 0 and 8 coils starting at address 0,
+    then combines the results into a unified device state response. Typical use
+    case: polling industrial PLC/sensor data via a webhook-triggered read.
+    Endpoint: POST /api/read
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/read
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Read 10 holding registers from address 0
+    - id: read-registers
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.modbus
+        operation: read_registers
+      input_mappings:
+        - target: address
+          source:
+            language: literal
+            source: "0"
+        - target: count
+          source:
+            language: literal
+            source: "10"
+      output_variable: register_data
+
+    # Step 2: Read 8 coils from address 0
+    - id: read-coils
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.modbus
+        operation: read_coils
+      input_mappings:
+        - target: address
+          source:
+            language: literal
+            source: "0"
+        - target: count
+          source:
+            language: literal
+            source: "8"
+      output_variable: coil_data
+
+    # Step 3: Combine register + coil data into unified device state
+    - id: combine-state
+      activity_type: transform
+      input_mappings:
+        - target: device_state
+          source:
+            language: v-cel
+            source: |
+              {
+                "registers": register_data.values,
+                "coils": coil_data.values,
+                "register_count": size(register_data.values),
+                "coil_count": size(coil_data.values),
+                "timestamp": now()
+              }
+      output_variable: device_state
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: device_state.device_state
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: read-registers } }
+    - { id: f2, from: { node: read-registers }, to: { node: read-coils } }
+    - { id: f3, from: { node: read-coils }, to: { node: combine-state } }
+    - { id: f4, from: { node: combine-state }, to: { node: respond } }
+    - { id: f5, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: register_data
+      type: object
+    - name: coil_data
+      type: object
+    - name: device_state
+      type: object

@@ -1,0 +1,24 @@
+version: "3.0"
+metadata: { id: score-health, name: "GET /api/score/health" }
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config: { trigger_type: webhook, webhook_config: { path: /api/score/health, method: GET }, response_mode: buffered, end_activity: respond }
+      output_variable: trigger_payload
+    - id: check
+      activity_type: Sidecar
+      sidecar_config: { target: ml_scorer, method: execute }
+      input_mappings:
+        - target: operation
+          source: { language: literal, source: "health" }
+      output_variable: result
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: v-cel, source: 'result' } }
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: check } }
+    - { id: f2, from: { node: check }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

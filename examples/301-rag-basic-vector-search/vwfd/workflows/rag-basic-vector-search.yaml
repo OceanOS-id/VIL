@@ -1,0 +1,112 @@
+version: "3.0"
+metadata:
+  id: rag-basic-vector-search
+  name: "Basic RAG with Vector Search"
+  description: |
+    Retrieval-Augmented Generation: embed user query → cosine similarity search
+    against a static knowledge base (top-2 chunks) → build augmented prompt with
+    retrieved context → LLM SSE completion → respond with answer + citations.
+    Static KB is loaded at init (NativeCode), no external vector DB required.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/rag
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Embed query + cosine search top-2 from static KB
+    - id: vector-search
+      activity_type: Function
+      wasm_config:
+        module_ref: rag_embed_and_search
+        function_name: execute
+        description: "Embed the user query into a vector, then cosine-similarity search against the static knowledge base. Returns top-2 most relevant chunks with their scores and source metadata."
+      input_mappings:
+        - target: query
+          source:
+            language: v-cel
+            source: trigger_payload.query
+        - target: top_k
+          source:
+            language: literal
+            source: 2
+      output_variable: retrieved_docs
+
+    # Step 2: Build RAG prompt with retrieved context
+    - id: build-prompt
+      activity_type: transform
+      input_mappings:
+        - target: rag_prompt
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a helpful assistant. Answer the user question using ONLY the provided context. Cite sources as [Source N]. If the context does not contain the answer, say so."},
+                  {"role": "user", "content": "Context:\n[Source 1] " + retrieved_docs.chunks[0].text + "\n[Source 2] " + retrieved_docs.chunks[1].text + "\n\nQuestion: " + trigger_payload.query}
+                ],
+                "stream": true
+              }
+      output_variable: rag_prompt
+
+    # Step 3: LLM SSE call
+    - id: llm-generate
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: rag_prompt
+      output_variable: llm_answer
+
+    # Step 4: Respond with answer + citations
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "answer": llm_answer,
+              "sources": retrieved_docs.chunks,
+              "query": trigger_payload.query
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: vector-search } }
+    - { id: f2, from: { node: vector-search }, to: { node: build-prompt } }
+    - { id: f3, from: { node: build-prompt }, to: { node: llm-generate } }
+    - { id: f4, from: { node: llm-generate }, to: { node: respond } }
+    - { id: f5, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: retrieved_docs
+      type: object
+    - name: rag_prompt
+      type: object
+    - name: llm_answer
+      type: string

@@ -1,0 +1,77 @@
+version: "3.0"
+metadata:
+  id: db-elastic-search
+  name: "Elasticsearch Full-Text Search"
+  description: |
+    Full-text search against Elasticsearch. Receives query string + optional
+    index and filters → Connector search operation → respond with hits and
+    aggregation metadata.
+    Endpoint: POST /api/elastic/search  { "index": "products", "query": "...", "size": 10 }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/elastic/search
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Execute search against Elasticsearch
+    - id: es-search
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.elastic
+        operation: search
+      input_mappings:
+        - target: index
+          source:
+            language: v-cel
+            source: trigger_payload.index
+        - target: query
+          source:
+            language: v-cel
+            source: |
+              {
+                "multi_match": {
+                  "query": trigger_payload.query,
+                  "fields": ["title", "description", "content"]
+                }
+              }
+        - target: size
+          source:
+            language: v-cel
+            source: trigger_payload.size ?? 10
+      output_variable: search_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "index": trigger_payload.index,
+              "query": trigger_payload.query,
+              "total_hits": search_result.total,
+              "hits": search_result.hits,
+              "took_ms": search_result.took
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: es-search } }
+    - { id: f2, from: { node: es-search }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: search_result
+      type: object

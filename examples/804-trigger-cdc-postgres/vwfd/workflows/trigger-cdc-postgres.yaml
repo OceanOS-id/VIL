@@ -1,0 +1,59 @@
+version: "3.0"
+metadata:
+  id: trigger-cdc-postgres
+  name: "PostgreSQL CDC Trigger — Change Data Capture"
+  description: |
+    Monitors PostgreSQL logical replication for INSERT/UPDATE/DELETE events.
+    Requires wal_level=logical + publication. Extracts table name, operation,
+    and row data, then logs to a change_log table for audit trail.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: cdc
+        cdc_config:
+          publication: "vil_changes"
+          slot: "vil_slot"
+      output_variable: trigger_payload
+
+    - id: extract-change
+      activity_type: transform
+      input_mappings:
+        - target: change_event
+          source:
+            language: v-cel
+            source: |
+              {
+                "table": trigger_payload.table,
+                "operation": trigger_payload.operation,
+                "row_data": trigger_payload.row,
+                "lsn": trigger_payload.lsn
+              }
+      output_variable: change_event
+
+    - id: log-change
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: insert
+      input_mappings:
+        - target: entity
+          source: { language: literal, source: change_log }
+        - target: data
+          source: { language: v-cel, source: change_event }
+      output_variable: insert_result
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: extract-change } }
+    - { id: f2, from: { node: extract-change }, to: { node: log-change } }
+    - { id: f3, from: { node: log-change }, to: { node: end } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: change_event, type: object }
+    - { name: insert_result, type: object }

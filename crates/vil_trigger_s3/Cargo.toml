@@ -1,0 +1,17 @@
+[package]
+name = "vil_trigger_s3"
+description = "VIL trigger — S3 bucket polling"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+
+[dependencies]
+vil_trigger_core = { workspace = true }
+vil_storage_s3 = { path = "../vil_storage_s3" }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }

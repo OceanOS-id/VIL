@@ -32,7 +32,7 @@ vil_log = { workspace = true }
 tracing = { workspace = true }
 
 # VIL internal
-vil_types = { version = "0.2", path = "../vil_types" }
+vil_types = { version = "0.3", path = "../vil_types" }
 
 [features]
 default = ["msgpack"]

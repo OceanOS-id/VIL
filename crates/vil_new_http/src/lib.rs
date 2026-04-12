@@ -8,6 +8,7 @@
 
 pub mod sink;
 pub mod source;
+pub mod request;
 
 pub mod format;
 pub use format::HttpFormat;

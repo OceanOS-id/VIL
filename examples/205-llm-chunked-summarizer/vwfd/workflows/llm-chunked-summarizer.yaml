@@ -1,0 +1,128 @@
+version: "3.0"
+metadata:
+  id: llm-chunked-summarizer
+  name: "Legal Document Summarization Pipeline"
+  description: |
+    Processes long legal documents (contracts, regulatory filings):
+    1. Split document at sentence boundaries into chunks
+    2. Build consolidated prompt with all chunks labeled
+    3. Call LLM for per-chunk summaries + merged executive summary
+    4. Return summary with compression metrics
+    Chunking is NativeCode (sentence boundary detection, not expressible in V-CEL).
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /summarize
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Chunk the document — NativeCode because sentence boundary
+    # splitting requires text parsing logic not available in V-CEL
+    - id: chunk-document
+      activity_type: NativeCode
+      code_config:
+        handler_ref: chunk_splitter
+        description: "Split text at sentence boundaries (., !, ?) into chunks of max_chunk_size chars"
+      input_mappings:
+        - target: text
+          source:
+            language: v-cel
+            source: trigger_payload.text
+        - target: max_chunk_size
+          source:
+            language: v-cel
+            source: "trigger_payload.max_chunk_size > 0 ? trigger_payload.max_chunk_size : 2000"
+      output_variable: chunks
+
+    # Step 2: Build consolidated prompt with all chunks
+    - id: build-prompt
+      activity_type: transform
+      input_mappings:
+        - target: summary_prompt
+          source:
+            language: v-cel
+            source: |
+              "Summarize each section of this legal document. For each chunk, provide a 2-sentence summary. Then provide a merged executive summary.\n\n" + string(chunks)
+      output_variable: prompt_data
+
+    # Step 3: Call LLM with all chunks in single prompt
+    - id: llm-summarize
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a legal document summarizer. Provide concise, accurate summaries suitable for executive review."},
+                  {"role": "user", "content": prompt_data.summary_prompt}
+                ],
+                "stream": true
+              }
+      output_variable: summary
+
+    # Step 4: Build response with metrics
+    - id: build-response
+      activity_type: transform
+      input_mappings:
+        - target: result
+          source:
+            language: v-cel
+            source: |
+              {
+                "summary": summary,
+                "chunk_count": size(chunks),
+                "input_length": size(trigger_payload.text),
+                "summary_length": size(summary)
+              }
+      output_variable: final_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: final_result
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: chunk-document } }
+    - { id: f2, from: { node: chunk-document }, to: { node: build-prompt } }
+    - { id: f3, from: { node: build-prompt }, to: { node: llm-summarize } }
+    - { id: f4, from: { node: llm-summarize }, to: { node: build-response } }
+    - { id: f5, from: { node: build-response }, to: { node: respond } }
+    - { id: f6, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: chunks
+      type: array
+    - name: prompt_data
+      type: object
+    - name: summary
+      type: string
+    - name: final_result
+      type: object

@@ -1,0 +1,26 @@
+version: "3.0"
+metadata: { id: delete-post, name: "DELETE /api/blog/posts/:id — VilQuery delete" }
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config: { trigger_type: webhook, webhook_config: { path: /api/blog/posts/, method: DELETE }, response_mode: buffered, end_activity: respond }
+      output_variable: trigger_payload
+    - id: delete
+      activity_type: Connector
+      connector_config: { connector_ref: vastar.db.sqlite, operation: execute }
+      input_mappings:
+        - target: sql
+          source:
+            language: v-cel
+            source: '"DELETE FROM posts WHERE id = ''" + trigger_payload.path.split("/").last() + "''"'
+      output_variable: result
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: v-cel, source: 'result' } }
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: delete } }
+    - { id: f2, from: { node: delete }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

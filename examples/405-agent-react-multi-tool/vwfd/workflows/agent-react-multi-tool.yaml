@@ -1,0 +1,166 @@
+version: "3.0"
+metadata:
+  id: agent-react-multi-tool
+  name: "ReAct Multi-Tool Agent"
+  description: |
+    TRUE ReAct (Reasoning + Acting) agent loop. The LLM self-directs tool
+    selection using Thought/Action/Action Input/Observation format.
+    Tools: search (web lookup) and calculator (math eval).
+    Max 5 iterations. Loop exits when LLM emits FINAL_ANSWER.
+    Endpoint: POST /api/react  { "question": "What is the GDP per capita of ..." }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/react
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Initialize ReAct state: scratchpad, messages, iteration counter
+    - id: init-react
+      activity_type: transform
+      input_mappings:
+        - target: react_state
+          source:
+            language: v-cel
+            source: |
+              {
+                "messages": [
+                  {"role": "system", "content": "You are a ReAct agent. You MUST follow this exact format:\n\nThought: <reasoning about what to do next>\nAction: <search OR calculator>\nAction Input: <input for the action>\n\nAvailable actions:\n- search: look up factual information. Input is a search query string.\n- calculator: evaluate a math expression. Input is a math expression.\n\nWhen you have the final answer, respond with:\nThought: I now have enough information.\nFINAL_ANSWER: <your complete answer>"},
+                  {"role": "user", "content": trigger_payload.question}
+                ],
+                "reasoning_trace": [],
+                "iterations": 0,
+                "has_final_answer": false,
+                "final_answer": ""
+              }
+      output_variable: react_state
+
+    # ReAct loop: max 5 iterations, exit on FINAL_ANSWER
+    - id: react-loop
+      activity_type: LoopWhile
+      loop_config:
+        condition: "react_state.has_final_answer == false"
+        max_iterations: 5
+
+    # Step A: Call LLM — it produces Thought + Action + Action Input (or FINAL_ANSWER)
+    - id: llm-reason
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": react_state.messages,
+                "stream": true,
+                "temperature": 0.1,
+                "stop": ["Observation:"]
+              }
+      output_variable: llm_output
+
+    # Step B: Parse Thought/Action/ActionInput, execute the selected tool
+    # NativeCode because: parsing structured text + conditional tool dispatch
+    # + web search / math eval are not V-CEL expressible
+    - id: parse-and-execute
+      activity_type: NativeCode
+      code_config:
+        handler_ref: react_tool_dispatcher
+        description: |
+          Parse llm_output for ReAct format. Extract Thought, Action, Action Input.
+          If FINAL_ANSWER found: return {done: true, final_answer, thought}.
+          If Action is "search": call search API with Action Input, return observation.
+          If Action is "calculator": evaluate math expression, return observation.
+          Returns {done, thought, action, action_input, observation, final_answer}.
+      input_mappings:
+        - target: llm_output
+          source:
+            language: v-cel
+            source: llm_output
+      output_variable: step_result
+
+    # Step C: Append observation to conversation and update trace
+    - id: update-react-state
+      activity_type: transform
+      input_mappings:
+        - target: react_state
+          source:
+            language: v-cel
+            source: |
+              {
+                "messages": step_result.done
+                  ? react_state.messages
+                  : react_state.messages + [
+                      {"role": "assistant", "content": llm_output},
+                      {"role": "user", "content": "Observation: " + string(step_result.observation)}
+                    ],
+                "reasoning_trace": react_state.reasoning_trace + [
+                  {
+                    "iteration": react_state.iterations + 1,
+                    "thought": step_result.thought,
+                    "action": step_result.action,
+                    "action_input": step_result.action_input,
+                    "observation": step_result.observation
+                  }
+                ],
+                "iterations": react_state.iterations + 1,
+                "has_final_answer": step_result.done,
+                "final_answer": step_result.done ? step_result.final_answer : ""
+              }
+      output_variable: react_state
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "question": trigger_payload.question,
+              "answer": react_state.final_answer,
+              "reasoning_trace": react_state.reasoning_trace,
+              "iterations": react_state.iterations
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: init-react } }
+    - { id: f2, from: { node: init-react }, to: { node: react-loop } }
+    # Loop body: reason -> execute -> update -> back to loop
+    - { id: f3, from: { node: react-loop }, to: { node: llm-reason } }
+    - { id: f4, from: { node: llm-reason }, to: { node: parse-and-execute } }
+    - { id: f5, from: { node: parse-and-execute }, to: { node: update-react-state } }
+    - { id: f6, from: { node: update-react-state }, to: { node: react-loop } }
+    # Loop exit
+    - { id: f7, from: { node: react-loop }, to: { node: respond }, condition: "_exit" }
+    - { id: f8, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: react_state
+      type: object
+    - name: llm_output
+      type: string
+    - name: step_result
+      type: object

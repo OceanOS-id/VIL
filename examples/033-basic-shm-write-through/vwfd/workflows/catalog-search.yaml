@@ -1,0 +1,30 @@
+version: "3.0"
+metadata:
+  id: catalog-search
+  name: "POST /api/catalog/catalog/search"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/catalog/catalog/search, method: POST }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+    - id: handler
+      activity_type: NativeCode
+      code_config: { handler_ref: catalog_search_handler }
+      input_mappings:
+        - target: body
+          source: { language: v-cel, source: trigger_payload.body }
+      output_variable: result
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: v-cel, source: result } }
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: handler } }
+    - { id: f2, from: { node: handler }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

@@ -1,0 +1,39 @@
+version: "3.0"
+metadata:
+  id: financial-analyze
+  name: "POST /api/finance/analyze — Financial Analytics (5 FaaS: date, duration, anomaly, geo, stats)"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/finance/analyze, method: POST }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+    - id: process
+      activity_type: Transform
+      input_mappings:
+        - target: customer_age
+          source: { language: v-cel, source: 'age(trigger_payload.body.birth_date)' }
+        - target: avg_amount
+          source: { language: v-cel, source: 'mean(trigger_payload.body.transactions)' }
+        - target: anomaly_check
+          source: { language: v-cel, source: 'is_anomaly(trigger_payload.body.latest_amount, trigger_payload.body.transactions, "zscore", 2.0)' }
+        - target: branch_distance
+          source: { language: v-cel, source: 'geo_distance(-6.2088, 106.8456, -7.7956, 110.3695, "km")' }
+        - target: timestamp
+          source: { language: v-cel, source: 'now()' }
+      output_variable: result
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response: { language: v-cel, source: 'result' }
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: process } }
+    - { id: f2, from: { node: process }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

@@ -1,0 +1,69 @@
+version: "3.0"
+metadata:
+  id: ai-gw-vwfd
+  name: "AI Gateway (VWFD)"
+  description: "SSE proxy to upstream LLM — same as 001b but via VWFD pattern"
+
+spec:
+  durability:
+    enabled: false
+
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/gw/trigger
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: call_llm
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        timeout_ms: 30000
+        retry_policy:
+          max_retries: 1
+          backoff_ms: 500
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [{"role": "user", "content": trigger_payload.prompt}],
+                "stream": false
+              }
+        - target: headers
+          source:
+            language: v-cel
+            source: '{"Content-Type": "application/json"}'
+      output_variable: llm_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: '{"content": llm_result.body.choices[0].message.content}'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: call_llm } }
+    - { id: f2, from: { node: call_llm }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: llm_result, type: object }

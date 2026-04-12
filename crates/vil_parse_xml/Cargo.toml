@@ -1,0 +1,11 @@
+[package]
+name = "vil_parse_xml"
+version.workspace = true
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+serde_json = "1.0"
+quick-xml = "0.36"
+serde = { version = "1.0", features = ["derive"] }

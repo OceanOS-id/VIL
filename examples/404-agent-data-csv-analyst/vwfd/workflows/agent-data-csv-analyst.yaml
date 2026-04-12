@@ -1,0 +1,154 @@
+version: "3.0"
+metadata:
+  id: agent-data-csv-analyst
+  name: "CSV Data Analysis Agent"
+  description: |
+    Data analyst agent that parses CSV, computes statistics, generates chart
+    specifications, then calls LLM for narrative analysis.
+    Flow: parse CSV -> compute stats (mean, median, std_dev, growth rate) ->
+    generate Vega-Lite chart JSON -> LLM interprets stats -> respond with
+    analysis + stats + chart_data.
+    Endpoint: POST /api/csv-analyze  { "csv_data": "date,revenue\n...", "question": "..." }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/csv-analyze
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Parse CSV and compute descriptive statistics
+    # NativeCode because CSV parsing and statistical computation (median,
+    # std_dev, percentiles) are not expressible in V-CEL
+    - id: compute-stats
+      activity_type: Function
+      wasm_config:
+        module_ref: csv_stats_engine
+        description: |
+          Parse CSV string into typed columns. For each numeric column compute:
+          count, mean, median, std_dev, min, max, p25, p75, growth_rate
+          (first-to-last %). Returns {columns: [...], row_count: N,
+          stats: {col_name: {mean, median, std_dev, min, max, p25, p75, growth_rate}}}.
+      input_mappings:
+        - target: csv_data
+          source:
+            language: v-cel
+            source: trigger_payload.csv_data
+        - target: delimiter
+          source:
+            language: v-cel
+            source: "trigger_payload.delimiter != '' ? trigger_payload.delimiter : ','"
+      output_variable: stats_result
+
+    # Step 2: Generate chart specification from stats
+    # NativeCode because Vega-Lite spec construction requires object building
+    # with conditional encoding logic not available in V-CEL
+    - id: generate-chart
+      activity_type: NativeCode
+      code_config:
+        handler_ref: chart_generator
+        description: |
+          Build Vega-Lite chart spec from stats_result. Auto-detect: if a date/time
+          column exists, create line chart (temporal x-axis). Otherwise bar chart.
+          Includes trend line overlay if growth_rate is significant (>5%).
+          Returns {chart_type, vega_lite_spec, data_points}.
+      input_mappings:
+        - target: stats
+          source:
+            language: v-cel
+            source: stats_result
+        - target: chart_preference
+          source:
+            language: v-cel
+            source: "trigger_payload.chart_type != '' ? trigger_payload.chart_type : 'auto'"
+      output_variable: chart_data
+
+    # Step 3: Build prompt with computed stats for LLM narrative
+    - id: build-analysis-prompt
+      activity_type: transform
+      input_mappings:
+        - target: messages
+          source:
+            language: v-cel
+            source: |
+              [
+                {
+                  "role": "system",
+                  "content": "You are a data analyst. You receive pre-computed statistics and a chart specification. Provide an insightful narrative analysis that:\n1. Highlights key trends and anomalies\n2. Answers the user's specific question\n3. References actual numbers from the stats\n\nRespond as JSON: {\"narrative\": \"...\", \"key_insights\": [\"...\"], \"recommendations\": [\"...\"]}"
+                },
+                {
+                  "role": "user",
+                  "content": "Question: " + trigger_payload.question + "\n\nDataset: " + string(stats_result.row_count) + " rows, columns: " + string(stats_result.columns) + "\n\nStatistics:\n" + string(stats_result.stats) + "\n\nChart type: " + chart_data.chart_type
+                }
+              ]
+      output_variable: prompt_data
+
+    # Step 4: Call LLM for narrative interpretation
+    - id: llm-analyze
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": prompt_data.messages,
+                "stream": true,
+                "temperature": 0.3
+              }
+      output_variable: llm_analysis
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "analysis": llm_analysis,
+              "stats": stats_result.stats,
+              "chart_data": chart_data.vega_lite_spec,
+              "row_count": stats_result.row_count,
+              "columns": stats_result.columns
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: compute-stats } }
+    - { id: f2, from: { node: compute-stats }, to: { node: generate-chart } }
+    - { id: f3, from: { node: generate-chart }, to: { node: build-analysis-prompt } }
+    - { id: f4, from: { node: build-analysis-prompt }, to: { node: llm-analyze } }
+    - { id: f5, from: { node: llm-analyze }, to: { node: respond } }
+    - { id: f6, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: stats_result
+      type: object
+    - name: chart_data
+      type: object
+    - name: prompt_data
+      type: object
+    - name: llm_analysis
+      type: string

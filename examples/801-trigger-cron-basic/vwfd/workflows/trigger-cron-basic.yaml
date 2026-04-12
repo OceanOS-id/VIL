@@ -1,0 +1,69 @@
+version: "3.0"
+metadata:
+  id: trigger-cron-basic
+  name: "Cron Trigger — Periodic Log Writer"
+  description: |
+    Fires every 5 seconds via cron schedule. Each tick builds a log entry
+    with the current timestamp and cumulative fire count, then inserts it
+    into a SQLite cron_log table. No HTTP response — cron triggers are
+    fire-and-forget.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: cron
+        cron_config:
+          expression: "*/5 * * * * *"
+        response_mode: buffered
+      output_variable: trigger_payload
+
+    # Step 1: Build log entry with timestamp + fire count
+    - id: build-log-entry
+      activity_type: transform
+      input_mappings:
+        - target: log_entry
+          source:
+            language: v-cel
+            source: |
+              {
+                "fired_at": now(),
+                "fire_count": trigger_payload.fire_count ?? 1,
+                "source": "cron-basic",
+                "message": "Cron tick #" + string(trigger_payload.fire_count ?? 1) + " at " + string(now())
+              }
+      output_variable: log_entry
+
+    # Step 2: Persist log entry to SQLite
+    - id: insert-log
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: insert
+      input_mappings:
+        - target: entity
+          source:
+            language: literal
+            source: cron_log
+        - target: data
+          source:
+            language: v-cel
+            source: log_entry
+      output_variable: insert_result
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: build-log-entry } }
+    - { id: f2, from: { node: build-log-entry }, to: { node: insert-log } }
+    - { id: f3, from: { node: insert-log }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: log_entry
+      type: object
+    - name: insert_result
+      type: object

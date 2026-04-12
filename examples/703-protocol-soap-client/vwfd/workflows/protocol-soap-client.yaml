@@ -1,0 +1,71 @@
+version: "3.0"
+metadata:
+  id: protocol-soap-client
+  name: "SOAP Client — Number to Words"
+  description: |
+    Calls a SOAP web service to convert a number into its English word
+    representation. Uses the vastar.soap connector to invoke the NumberToWords
+    action on dataaccess.com, then responds with the parsed text result.
+    Demonstrates legacy SOAP integration from a modern webhook trigger.
+    Endpoint: POST /api/convert  { "number": 42 }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/convert
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Call SOAP action NumberToWords
+    - id: soap-call
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.soap
+        operation: call_action
+      input_mappings:
+        - target: action
+          source:
+            language: literal
+            source: "NumberToWords"
+        - target: namespace
+          source:
+            language: literal
+            source: "http://www.dataaccess.com/webservicesserver/"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              "<ubiNum>" + string(trigger_payload.number) + "</ubiNum>"
+      output_variable: soap_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "number": trigger_payload.number,
+              "words": soap_result.result,
+              "action": "NumberToWords"
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: soap-call } }
+    - { id: f2, from: { node: soap-call }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: soap_result
+      type: object

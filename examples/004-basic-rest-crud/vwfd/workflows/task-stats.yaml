@@ -1,0 +1,42 @@
+version: "3.0"
+metadata:
+  id: task-stats
+  name: "GET /tasks/stats — Task statistics (pure VilQuery)"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/tasks/tasks/stats, method: GET }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: count-all
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: query
+      input_mappings:
+        - target: sql
+          source:
+            language: literal
+            source: "SELECT COUNT(*) as total, SUM(CASE WHEN done=1 THEN 1 ELSE 0 END) as done FROM tasks"
+      output_variable: stats
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: 'stats'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: count-all } }
+    - { id: f2, from: { node: count-all }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

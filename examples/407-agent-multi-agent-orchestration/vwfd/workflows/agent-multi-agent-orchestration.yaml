@@ -1,0 +1,225 @@
+version: "3.0"
+metadata:
+  id: agent-multi-agent-orchestration
+  name: "Tiered Support — Multi-Agent Escalation"
+  description: |
+    Three-tier customer support agent orchestration. Each tier has its own
+    tools and authority level:
+    - Tier 1: FAQ lookup (knowledge base search). Resolves common questions.
+    - Tier 2: Diagnostic tools (run_diagnostic, search_logs). Resolves technical issues.
+    - Tier 3: Incident management (create_incident, execute_runbook). Handles critical issues.
+    Escalation is conditional: only proceeds if current tier cannot resolve.
+    Endpoint: POST /api/support/ask  { "customer_id": "...", "issue": "..." }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/support/ask
+        response_mode: buffered
+        end_activity: respond-t1
+      output_variable: trigger_payload
+
+    # ═══════════════════════════════════════════════
+    # TIER 1: FAQ Agent — knowledge base lookup
+    # ═══════════════════════════════════════════════
+    - id: tier1-faq
+      activity_type: NativeCode
+      code_config:
+        handler_ref: tier1_faq_agent
+        description: |
+          Search FAQ knowledge base for the customer's issue. Uses keyword +
+          fuzzy matching against FAQ entries. If confidence >= 0.7, returns
+          resolved=true with answer. Otherwise returns resolved=false with
+          reason=ESCALATE. Returns {resolved: bool, answer, confidence,
+          matched_faq_id, reason}.
+      input_mappings:
+        - target: issue
+          source:
+            language: v-cel
+            source: trigger_payload.issue
+        - target: customer_id
+          source:
+            language: v-cel
+            source: trigger_payload.customer_id
+      output_variable: tier1_result
+
+    # Gateway: Tier 1 resolved or escalate?
+    - id: tier1-gate
+      activity_type: ExclusiveGateway
+
+    # Tier 1 resolved — respond immediately
+    - id: respond-t1
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "customer_id": trigger_payload.customer_id,
+              "resolved_by": "tier1_faq",
+              "answer": tier1_result.answer,
+              "confidence": tier1_result.confidence,
+              "matched_faq_id": tier1_result.matched_faq_id
+            }
+
+    # ═══════════════════════════════════════════════
+    # TIER 2: Technical Diagnostic Agent
+    # ═══════════════════════════════════════════════
+    - id: tier2-diagnostic
+      activity_type: NativeCode
+      code_config:
+        handler_ref: tier2_diagnostic_agent
+        description: |
+          Run diagnostic tools for the customer's issue:
+          1. run_diagnostic — check service health, latency, error rates for
+             the customer's account/service.
+          2. search_logs — search recent logs (last 24h) for error patterns
+             matching the issue description.
+          If root cause identified (confidence >= 0.6), return resolved=true
+          with diagnosis and recommended fix. Otherwise ESCALATE to Tier 3.
+          Returns {resolved: bool, diagnosis, log_matches: [...],
+          health_status, recommended_fix, reason}.
+      input_mappings:
+        - target: issue
+          source:
+            language: v-cel
+            source: trigger_payload.issue
+        - target: customer_id
+          source:
+            language: v-cel
+            source: trigger_payload.customer_id
+        - target: tier1_context
+          source:
+            language: v-cel
+            source: tier1_result
+      output_variable: tier2_result
+
+    # Gateway: Tier 2 resolved or escalate?
+    - id: tier2-gate
+      activity_type: ExclusiveGateway
+
+    # Tier 2 resolved
+    - id: respond-t2
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "customer_id": trigger_payload.customer_id,
+              "resolved_by": "tier2_diagnostic",
+              "diagnosis": tier2_result.diagnosis,
+              "health_status": tier2_result.health_status,
+              "log_matches": tier2_result.log_matches,
+              "recommended_fix": tier2_result.recommended_fix,
+              "escalation_path": ["tier1_faq", "tier2_diagnostic"]
+            }
+
+    # ═══════════════════════════════════════════════
+    # TIER 3: Incident Management Agent
+    # ═══════════════════════════════════════════════
+    - id: tier3-incident
+      activity_type: NativeCode
+      code_config:
+        handler_ref: tier3_incident_agent
+        description: |
+          Handle critical/unresolved issues with incident management tools:
+          1. create_incident — open incident ticket with severity, affected
+             service, customer context, and all prior tier diagnostics.
+          2. execute_runbook — attempt automated remediation from runbook
+             matching the issue pattern (restart service, clear cache, etc.).
+          Always resolves (Tier 3 is terminal). Returns {incident_id,
+          severity, runbook_executed, runbook_result, assigned_team,
+          eta_minutes}.
+      input_mappings:
+        - target: issue
+          source:
+            language: v-cel
+            source: trigger_payload.issue
+        - target: customer_id
+          source:
+            language: v-cel
+            source: trigger_payload.customer_id
+        - target: tier1_context
+          source:
+            language: v-cel
+            source: tier1_result
+        - target: tier2_context
+          source:
+            language: v-cel
+            source: tier2_result
+      output_variable: tier3_result
+
+    # Tier 3 response (terminal)
+    - id: respond-t3
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "customer_id": trigger_payload.customer_id,
+              "resolved_by": "tier3_incident",
+              "incident_id": tier3_result.incident_id,
+              "severity": tier3_result.severity,
+              "runbook_executed": tier3_result.runbook_executed,
+              "runbook_result": tier3_result.runbook_result,
+              "assigned_team": tier3_result.assigned_team,
+              "eta_minutes": tier3_result.eta_minutes,
+              "escalation_path": ["tier1_faq", "tier2_diagnostic", "tier3_incident"]
+            }
+
+    - id: end-t1
+      activity_type: End
+    - id: end-t2
+      activity_type: End
+    - id: end-t3
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: tier1-faq } }
+    - { id: f2, from: { node: tier1-faq }, to: { node: tier1-gate } }
+    # Tier 1 resolved
+    - id: f3-resolved
+      from: { node: tier1-gate }
+      to: { node: respond-t1 }
+      condition: "tier1_result.resolved == true"
+      priority: 1
+    # Tier 1 escalate -> Tier 2
+    - id: f4-escalate
+      from: { node: tier1-gate }
+      to: { node: tier2-diagnostic }
+      priority: 0
+    - { id: f5, from: { node: respond-t1 }, to: { node: end-t1 } }
+    - { id: f6, from: { node: tier2-diagnostic }, to: { node: tier2-gate } }
+    # Tier 2 resolved
+    - id: f7-resolved
+      from: { node: tier2-gate }
+      to: { node: respond-t2 }
+      condition: "tier2_result.resolved == true"
+      priority: 1
+    # Tier 2 escalate -> Tier 3
+    - id: f8-escalate
+      from: { node: tier2-gate }
+      to: { node: tier3-incident }
+      priority: 0
+    - { id: f9, from: { node: respond-t2 }, to: { node: end-t2 } }
+    - { id: f10, from: { node: tier3-incident }, to: { node: respond-t3 } }
+    - { id: f11, from: { node: respond-t3 }, to: { node: end-t3 } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: tier1_result
+      type: object
+    - name: tier2_result
+      type: object
+    - name: tier3_result
+      type: object

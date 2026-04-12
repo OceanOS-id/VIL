@@ -59,37 +59,37 @@ full = ["web", "log", "sdk", "db-sqlite", "db-postgres", "db-redis", "ai", "ws",
 
 [dependencies]
 # Web
-vil_server = { version = "0.2", path = "../vil_server", optional = true }
-vil_server_core = { version = "0.2", path = "../vil_server_core", optional = true }
-vil_server_auth = { version = "0.2", path = "../vil_server_auth", optional = true }
-vil_server_web = { version = "0.2", path = "../vil_server_web", optional = true }
-vil_json = { version = "0.2", path = "../vil_json", optional = true }
+vil_server = { version = "0.3", path = "../vil_server", optional = true }
+vil_server_core = { version = "0.3", path = "../vil_server_core", optional = true }
+vil_server_auth = { version = "0.3", path = "../vil_server_auth", optional = true }
+vil_server_web = { version = "0.3", path = "../vil_server_web", optional = true }
+vil_json = { version = "0.3", path = "../vil_json", optional = true }
 
 # Log
-vil_log = { version = "0.2", path = "../vil_log", optional = true }
+vil_log = { version = "0.3", path = "../vil_log", optional = true }
 
 # SDK
-vil_sdk = { version = "0.2", path = "../vil_sdk", optional = true }
+vil_sdk = { version = "0.3", path = "../vil_sdk", optional = true }
 
 # Database
-vil_db_sqlx = { version = "0.2", path = "../vil_db_sqlx", optional = true }
-vil_db_semantic = { version = "0.2", path = "../vil_db_semantic", optional = true }
-vil_server_db = { version = "0.2", path = "../vil_server_db", optional = true }
-vil_db_redis = { version = "0.2", path = "../vil_db_redis", optional = true }
+vil_db_sqlx = { version = "0.3", path = "../vil_db_sqlx", optional = true }
+vil_db_semantic = { version = "0.3", path = "../vil_db_semantic", optional = true }
+vil_server_db = { version = "0.3", path = "../vil_server_db", optional = true }
+vil_db_redis = { version = "0.3", path = "../vil_db_redis", optional = true }
 
 # VilORM
-vil_orm = { version = "0.2", path = "../vil_orm", optional = true }
+vil_orm = { version = "0.3", path = "../vil_orm", optional = true }
 
 # AI
-vil_llm = { version = "0.2", path = "../vil_llm", optional = true }
-vil_ai_gateway = { version = "0.2", path = "../vil_ai_gateway", optional = true }
-vil_ai_trace = { version = "0.2", path = "../vil_ai_trace", optional = true }
-vil_cost_tracker = { version = "0.2", path = "../vil_cost_tracker", optional = true }
-vil_prompts = { version = "0.2", path = "../vil_prompts", optional = true }
-vil_prompt_shield = { version = "0.2", path = "../vil_prompt_shield", optional = true }
-vil_output_parser = { version = "0.2", path = "../vil_output_parser", optional = true }
-vil_guardrails = { version = "0.2", path = "../vil_guardrails", optional = true }
+vil_llm = { version = "0.3", path = "../vil_llm", optional = true }
+vil_ai_gateway = { version = "0.3", path = "../vil_ai_gateway", optional = true }
+vil_ai_trace = { version = "0.3", path = "../vil_ai_trace", optional = true }
+vil_cost_tracker = { version = "0.3", path = "../vil_cost_tracker", optional = true }
+vil_prompts = { version = "0.3", path = "../vil_prompts", optional = true }
+vil_prompt_shield = { version = "0.3", path = "../vil_prompt_shield", optional = true }
+vil_output_parser = { version = "0.3", path = "../vil_output_parser", optional = true }
+vil_guardrails = { version = "0.3", path = "../vil_guardrails", optional = true }
 
 # Infrastructure
-vil_ws = { version = "0.2", path = "../vil_ws", optional = true }
-vil_cache = { version = "0.2", path = "../vil_cache", optional = true }
+vil_ws = { version = "0.3", path = "../vil_ws", optional = true }
+vil_cache = { version = "0.3", path = "../vil_cache", optional = true }

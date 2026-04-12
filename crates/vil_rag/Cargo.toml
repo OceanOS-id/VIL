@@ -10,12 +10,12 @@ documentation = "https://vastar.id/docs/vil"
 readme = "README.md"
 
 [dependencies]
-vil_sdk = { version = "0.2", path = "../vil_sdk" }
-vil_server_core = { version = "0.2", path = "../vil_server_core" }
-vil_server = { version = "0.2", path = "../vil_server" }
-vil_llm = { version = "0.2", path = "../vil_llm" }
-vil_json = { version = "0.2", path = "../vil_json" }
-vil_macros = { version = "0.2", path = "../vil_macros" }
+vil_sdk = { version = "0.3", path = "../vil_sdk" }
+vil_server_core = { version = "0.3", path = "../vil_server_core" }
+vil_server = { version = "0.3", path = "../vil_server" }
+vil_llm = { version = "0.3", path = "../vil_llm" }
+vil_json = { version = "0.3", path = "../vil_json" }
+vil_macros = { version = "0.3", path = "../vil_macros" }
 
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

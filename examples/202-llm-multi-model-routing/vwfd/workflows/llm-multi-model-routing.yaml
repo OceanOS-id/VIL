@@ -1,0 +1,63 @@
+version: "3.0"
+metadata:
+  id: multi-model-translation
+  name: "Multi-Model Translation Service (VWFD)"
+  description: "Round-robin translation across models — GPT-4 and GPT-3.5"
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/translate }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: call_model
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
+      input_mappings:
+        - target: url
+          source: { language: literal, source: "http://127.0.0.1:4545/v1/chat/completions" }
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": has(trigger_payload.model) ? trigger_payload.model : "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "Translate the following text to " + trigger_payload.target_lang + ". Return ONLY the translation."},
+                  {"role": "user", "content": trigger_payload.text}
+                ],
+                "stream": true
+              }
+      output_variable: llm_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "original": trigger_payload.text,
+              "translated": llm_result.content,
+              "target_lang": trigger_payload.target_lang
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: call_model } }
+    - { id: f2, from: { node: call_model }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

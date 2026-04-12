@@ -1,0 +1,66 @@
+version: "3.0"
+metadata:
+  id: db-mongo-crud
+  name: "MongoDB CRUD — Insert Document"
+  description: |
+    Insert a single document into a MongoDB collection. Receives collection name
+    and document payload → Connector insert_one → respond with inserted ID and
+    acknowledgement.
+    Endpoint: POST /api/mongo/documents  { "collection": "...", "document": {...} }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/mongo/documents
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Insert document into MongoDB
+    - id: mongo-insert
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.mongo
+        operation: insert_one
+      input_mappings:
+        - target: collection
+          source:
+            language: v-cel
+            source: trigger_payload.collection
+        - target: document
+          source:
+            language: v-cel
+            source: trigger_payload.document
+      output_variable: insert_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "status": "inserted",
+              "collection": trigger_payload.collection,
+              "inserted_id": insert_result.inserted_id,
+              "acknowledged": insert_result.acknowledged
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: mongo-insert } }
+    - { id: f2, from: { node: mongo-insert }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: insert_result
+      type: object

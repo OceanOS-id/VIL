@@ -84,6 +84,7 @@ dependencies = [
  "cfg-if",
  "getrandom 0.3.4",
  "once_cell",
+ "serde",
  "version_check",
  "zerocopy",
 ]
@@ -125,7 +126,7 @@ dependencies = [
  "amq-protocol-types",
  "amq-protocol-uri",
  "cookie-factory",
- "nom",
+ "nom 7.1.3",
  "serde",
 ]
 
@@ -147,7 +148,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf99351d92a161c61ec6ecb213bc7057f5b837dd4e64ba6cb6491358efd770c4"
 dependencies = [
  "cookie-factory",
- "nom",
+ "nom 7.1.3",
  "serde",
  "serde_json",
 ]
@@ -297,7 +298,7 @@ dependencies = [
  "asn1-rs-derive",
  "asn1-rs-impl",
  "displaydoc",
- "nom",
+ "nom 7.1.3",
  "num-traits",
  "rusticata-macros",
  "thiserror 2.0.18",
@@ -518,7 +519,7 @@ dependencies = [
  "futures",
  "imap-proto",
  "log",
- "nom",
+ "nom 7.1.3",
  "pin-project",
  "pin-utils",
  "self_cell",
@@ -746,6 +747,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f28d99ec8bfea296261ca1af174f24225171fea9664ba9003cbebee704810528"
 dependencies = [
  "num-traits",
+]
+
+[[package]]
+name = "atomic-polyfill"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cf2bce30dfe09ef0bfaef228b9d414faaf7e563035494d7fe092dba54b300f4"
+dependencies = [
+ "critical-section",
 ]
 
 [[package]]
@@ -1537,6 +1547,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "bincode"
+version = "1.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "bit-set"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0700ddab506f33b20a03b13996eccd309a48e5ff77d0d95926aa0210fb4e95f1"
+dependencies = [
+ "bit-vec",
+]
+
+[[package]]
+name = "bit-vec"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1835,6 +1869,12 @@ dependencies = [
  "quote",
  "syn 1.0.109",
 ]
+
+[[package]]
+name = "bytecount"
+version = "0.6.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "175812e0be2bccb6abe50bb8d566126198344f707e304f45c648fd8f2cc0365e"
 
 [[package]]
 name = "bytemuck"
@@ -2559,7 +2599,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eee8b2b4516038bc0f1d3c9934bcb4a13dd316e04abbc63c96757a6d75978532"
 dependencies = [
  "chrono",
- "nom",
+ "nom 7.1.3",
  "once_cell",
 ]
 
@@ -2859,7 +2899,7 @@ checksum = "07da5016415d5a3c4dd39b11ed26f915f52fc4e0dc197d87908bc916e51bc1a6"
 dependencies = [
  "asn1-rs",
  "displaydoc",
- "nom",
+ "nom 7.1.3",
  "num-bigint",
  "num-traits",
  "rusticata-macros",
@@ -3168,6 +3208,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "email-encoding"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9298e6504d9b9e780ed3f7dfd43a61be8cd0e09eb07f7706a945b0072b6670b6"
+dependencies = [
+ "base64 0.22.1",
+ "memchr",
+]
+
+[[package]]
+name = "email_address"
+version = "0.2.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e079f19b08ca6239f47f8ba8509c11cf3ea30095831f7fed61441475edd8c449"
+
+[[package]]
 name = "embedded-io"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3310,52 +3366,52 @@ dependencies = [
 
 [[package]]
 name = "example-039-basic-observer-dashboard"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_observer 0.2.0",
  "vil_server 0.2.0",
 ]
 
 [[package]]
 name = "example-501-villog-stdout-dev"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-502-villog-file-rolling"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-503-villog-multi-drain"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-504-villog-benchmark-comparison"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3363,35 +3419,35 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-505-villog-tracing-bridge"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-506-villog-structured-events"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-507-villog-bench-file-drain"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3400,12 +3456,12 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-508-villog-bench-multithread"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "rmp-serde",
  "serde_json",
@@ -3413,35 +3469,35 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-509-villog-phase1-integration"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "rmp-serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-601-storage-s3-basic"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_storage_s3",
 ]
 
 [[package]]
 name = "example-602-db-mongo-crud"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bson",
  "serde",
@@ -3449,114 +3505,114 @@ dependencies = [
  "tokio",
  "tracing",
  "vil_db_mongo",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-603-db-clickhouse-batch"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "clickhouse",
  "serde",
  "tokio",
  "tracing",
  "vil_db_clickhouse",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-604-db-elastic-search"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "serde_json",
  "tokio",
  "tracing",
  "vil_db_elastic",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "example-701-mq-rabbitmq-pubsub"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_mq_rabbitmq",
 ]
 
 [[package]]
 name = "example-702-mq-sqs-send-receive"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_mq_sqs",
 ]
 
 [[package]]
 name = "example-703-protocol-soap-client"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_soap",
 ]
 
 [[package]]
 name = "example-704-protocol-modbus-read"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_modbus",
 ]
 
 [[package]]
 name = "example-801-trigger-cron-basic"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_trigger_core",
  "vil_trigger_cron",
 ]
 
 [[package]]
 name = "example-802-trigger-fs-watcher"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_trigger_core",
  "vil_trigger_fs",
 ]
 
 [[package]]
 name = "example-803-trigger-webhook-receiver"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "reqwest 0.12.28",
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_trigger_core",
  "vil_trigger_webhook",
 ]
 
 [[package]]
 name = "example-804-trigger-cdc-postgres"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_trigger_cdc",
  "vil_trigger_core",
 ]
@@ -3581,6 +3637,17 @@ name = "fallible-iterator"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2acce4a10f12dc2fb14a218589d4f1f62ef011b2d0cc4b3cb1bba8e94da14649"
+
+[[package]]
+name = "fancy-regex"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "531e46835a22af56d1e3b66f04844bed63158bc094a628bec1d321d9b4c44bf2"
+dependencies = [
+ "bit-set",
+ "regex-automata",
+ "regex-syntax 0.8.10",
+]
 
 [[package]]
 name = "fast-float2"
@@ -3731,6 +3798,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
 dependencies = [
  "percent-encoding 2.3.2",
+]
+
+[[package]]
+name = "fraction"
+version = "0.15.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f158e3ff0a1b334408dc9fb811cd99b446986f4d8b741bb08f9df1604085ae7"
+dependencies = [
+ "lazy_static",
+ "num",
 ]
 
 [[package]]
@@ -4318,6 +4395,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hash32"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0c35f58762feb77d74ebe43bdbc3210f09be9fe6742234d573bacc26ed92b67"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4409,6 +4495,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54b4a22553d4242c49fddb9ba998a99962b5cc6f22cb5a3482bec22522403ce4"
 dependencies = [
  "http 1.4.0",
+]
+
+[[package]]
+name = "heapless"
+version = "0.7.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdc6457c0eb62c71aac4bc17216026d8410337c4126773b9c5daba343f17964f"
+dependencies = [
+ "atomic-polyfill",
+ "hash32",
+ "rustc_version",
+ "serde",
+ "spin 0.9.8",
+ "stable_deref_trait",
 ]
 
 [[package]]
@@ -5095,7 +5195,7 @@ version = "0.16.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba1f9b30846c3d04371159ef3a0413ce7c1ae0a8c619cd255c60b3d902553f22"
 dependencies = [
- "nom",
+ "nom 7.1.3",
 ]
 
 [[package]]
@@ -5309,6 +5409,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6cb138bb79a146c1bd460005623e142ef0181e3d0219cb493e02f7d08a35695"
 
 [[package]]
+name = "iso8601"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1082f0c48f143442a1ac6122f67e360ceee130b967af4d50996e5154a45df46"
+dependencies = [
+ "nom 8.0.0",
+]
+
+[[package]]
 name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5449,6 +5558,36 @@ checksum = "5dea2b27dd239b2556ed7a25ba842fe47fd602e7fc7433c2a8d6106d4d9edd70"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "jsonschema"
+version = "0.18.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa0f4bea31643be4c6a678e9aa4ae44f0db9e5609d5ca9dc9083d06eb3e9a27a"
+dependencies = [
+ "ahash 0.8.12",
+ "anyhow",
+ "base64 0.22.1",
+ "bytecount",
+ "clap",
+ "fancy-regex",
+ "fraction",
+ "getrandom 0.2.17",
+ "iso8601",
+ "itoa",
+ "memchr",
+ "num-cmp",
+ "once_cell",
+ "parking_lot 0.12.5",
+ "percent-encoding 2.3.2",
+ "regex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "time",
+ "url 2.5.8",
+ "uuid",
 ]
 
 [[package]]
@@ -5668,6 +5807,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
 
 [[package]]
+name = "lettre"
+version = "0.11.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dabda5859ee7c06b995b9d1165aa52c39110e079ef609db97178d86aeb051fa7"
+dependencies = [
+ "base64 0.22.1",
+ "email-encoding",
+ "email_address",
+ "fastrand 2.3.0",
+ "futures-util",
+ "hostname",
+ "httpdate",
+ "idna 1.1.0",
+ "mime",
+ "native-tls",
+ "nom 8.0.0",
+ "percent-encoding 2.3.2",
+ "quoted_printable",
+ "socket2 0.6.3",
+ "tokio",
+ "url 2.5.8",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.184"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5715,6 +5878,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "linked-hash-map"
+version = "0.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5758,6 +5927,15 @@ name = "log"
 version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
+
+[[package]]
+name = "lru-cache"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31e24f1ad8321ca0e8a1e0ac13f23cb668e6f5466c2c57319f6a5cf1cc8e3b1c"
+dependencies = [
+ "linked-hash-map",
+]
 
 [[package]]
 name = "lru-slab"
@@ -6329,6 +6507,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "nom"
+version = "8.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df9761775871bdef83bee530e60050f7e54b1105350d6884eb0fb4f46c2f9405"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "notify"
 version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6375,6 +6562,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "num"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23"
+dependencies = [
+ "num-bigint",
+ "num-complex",
+ "num-integer",
+ "num-iter",
+ "num-rational",
+ "num-traits",
+]
+
+[[package]]
 name = "num-bigint"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6399,6 +6600,21 @@ dependencies = [
  "rand 0.8.5",
  "smallvec",
  "zeroize",
+]
+
+[[package]]
+name = "num-cmp"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63335b2e2c34fae2fb0aa2cecfd9f0832a1e24b3b32ecec612c3426d46dc8aaa"
+
+[[package]]
+name = "num-complex"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]
@@ -6440,6 +6656,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "537b596b97c40fcf8056d153049eb22f481c17ebce72a513ec9286e4986d1bb6"
 dependencies = [
  "num-modular",
+]
+
+[[package]]
+name = "num-rational"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f83d14da390562dca69fc84082e73e548e1ad308d24accdedd2720017cb37824"
+dependencies = [
+ "num-bigint",
+ "num-integer",
+ "num-traits",
 ]
 
 [[package]]
@@ -6556,6 +6783,12 @@ name = "once_cell_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
+
+[[package]]
+name = "oncemutex"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44d11de466f4a3006fe8a5e7ec84e93b79c70cb992ae0aa0eb631ad2df8abfe2"
 
 [[package]]
 name = "oorandom"
@@ -7082,6 +7315,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "phonenumber"
+version = "0.3.9+9.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9114f9c1683dd09c5f4fa024c89fdad783eaae21d3d52dd23ddaaffa29ffb168"
+dependencies = [
+ "either",
+ "fnv",
+ "nom 7.1.3",
+ "once_cell",
+ "postcard",
+ "quick-xml 0.36.2",
+ "regex",
+ "regex-cache",
+ "serde",
+ "serde_derive",
+ "strum 0.27.2",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "pin-project"
 version = "1.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7299,6 +7552,7 @@ dependencies = [
  "cobs",
  "embedded-io 0.4.0",
  "embedded-io 0.6.1",
+ "heapless",
  "serde",
 ]
 
@@ -7603,7 +7857,7 @@ dependencies = [
  "lz4",
  "murmur3",
  "native-tls",
- "nom",
+ "nom 7.1.3",
  "pem 3.0.6",
  "prost 0.13.5",
  "prost-build",
@@ -7716,6 +7970,12 @@ checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "quoted_printable"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "478e0585659a122aa407eb7e3c0e1fa51b1d8a870038bd29f0cf4a8551eea972"
 
 [[package]]
 name = "r-efi"
@@ -7951,6 +8211,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "redb"
+version = "2.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8eca1e9d98d5a7e9002d0013e18d5a9b000aee942eb134883a82f06ebffb6c01"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "redis"
 version = "0.27.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8056,7 +8325,7 @@ dependencies = [
  "aho-corasick",
  "memchr",
  "regex-automata",
- "regex-syntax",
+ "regex-syntax 0.8.10",
 ]
 
 [[package]]
@@ -8067,7 +8336,19 @@ checksum = "6e1dd4122fc1595e8162618945476892eefca7b88c52820e74af6262213cae8f"
 dependencies = [
  "aho-corasick",
  "memchr",
- "regex-syntax",
+ "regex-syntax 0.8.10",
+]
+
+[[package]]
+name = "regex-cache"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f7b62d69743b8b94f353b6b7c3deb4c5582828328bcb8d5fedf214373808793"
+dependencies = [
+ "lru-cache",
+ "oncemutex",
+ "regex",
+ "regex-syntax 0.6.29",
 ]
 
 [[package]]
@@ -8075,6 +8356,12 @@ name = "regex-lite"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cab834c73d247e67f4fae452806d17d3c7501756d98c8808d7c9c7aa7d18f973"
+
+[[package]]
+name = "regex-syntax"
+version = "0.6.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f162c6dd7b008981e4d40210aca20b4bd0f9b60ca9271061b07f78537722f2e1"
 
 [[package]]
 name = "regex-syntax"
@@ -8435,7 +8722,7 @@ version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf0c4a6ece9950b9abdb62b1cfcf2a68b3b67a10ba445b3bb85be2a293d0632"
 dependencies = [
- "nom",
+ "nom 7.1.3",
 ]
 
 [[package]]
@@ -10753,6 +11040,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2896d95c02a80c6d6a5d6e953d479f5ddf2dfdb6a244441010e373ac0fb88971"
 
 [[package]]
+name = "ulid"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "470dbf6591da1b39d43c14523b2b469c86879a53e8b758c8e090a470fe7b1fbe"
+dependencies = [
+ "rand 0.9.2",
+ "web-time",
+]
+
+[[package]]
 name = "unicase"
 version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10830,6 +11127,22 @@ name = "untrusted"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
+
+[[package]]
+name = "ureq"
+version = "2.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "02d1a66277ed75f640d608235660df48c8e3c19f3b4edb6a263315626cc3c01d"
+dependencies = [
+ "base64 0.22.1",
+ "flate2",
+ "log",
+ "once_cell",
+ "rustls 0.23.37",
+ "rustls-pki-types",
+ "url 2.5.8",
+ "webpki-roots 0.26.11",
+]
 
 [[package]]
 name = "url"
@@ -10948,29 +11261,29 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vil"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "vil_ai_gateway",
  "vil_ai_trace",
  "vil_cache",
  "vil_cost_tracker",
  "vil_db_redis",
- "vil_db_semantic 0.2.2",
- "vil_db_sqlx 0.2.2",
+ "vil_db_semantic 0.3.0",
+ "vil_db_sqlx 0.3.0",
  "vil_guardrails",
- "vil_json 0.2.2",
- "vil_llm 0.2.2",
- "vil_log 0.2.2",
- "vil_orm 0.2.2",
+ "vil_json 0.3.0",
+ "vil_llm 0.3.0",
+ "vil_log 0.3.0",
+ "vil_orm 0.3.0",
  "vil_output_parser",
  "vil_prompt_shield",
  "vil_prompts",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_auth 0.2.2",
- "vil_server_core 0.2.2",
- "vil_server_db 0.2.2",
- "vil_server_web 0.2.2",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_auth 0.3.0",
+ "vil_server_core 0.3.0",
+ "vil_server_db 0.3.0",
+ "vil_server_web 0.3.0",
  "vil_ws",
 ]
 
@@ -11794,6 +12107,66 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil-faas-data-pipeline"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "vil_parse_csv",
+ "vil_parse_xml",
+ "vil_reshape",
+ "vil_stats",
+ "vil_validate_schema",
+]
+
+[[package]]
+name = "vil-faas-financial-analytics"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "vil_anomaly",
+ "vil_datefmt",
+ "vil_duration",
+ "vil_geodist",
+ "vil_stats",
+]
+
+[[package]]
+name = "vil-faas-kyc-onboarding"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "vil_email_validate",
+ "vil_hash",
+ "vil_id_gen",
+ "vil_mask",
+ "vil_phone",
+]
+
+[[package]]
+name = "vil-faas-notification-hub"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "vil_email",
+ "vil_id_gen",
+ "vil_mask",
+ "vil_template",
+ "vil_webhook_out",
+]
+
+[[package]]
+name = "vil-faas-secure-api"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "vil_crypto",
+ "vil_jwt",
+ "vil_regex",
+ "vil_template",
+ "vil_webhook_out",
+]
+
+[[package]]
 name = "vil-llm-basic-chat"
 version = "0.1.0"
 dependencies = [
@@ -12109,30 +12482,30 @@ dependencies = [
 
 [[package]]
 name = "vil-trigger-email"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_trigger_core",
  "vil_trigger_email",
 ]
 
 [[package]]
 name = "vil-trigger-evm-blockchain"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_trigger_core",
  "vil_trigger_evm",
 ]
 
 [[package]]
 name = "vil-trigger-iot"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
  "vil_trigger_core",
  "vil_trigger_iot",
 ]
@@ -12158,6 +12531,1066 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil-vwfd-101b-multi-pipeline-benchmark"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-101c-vilapp-multi-pipeline-benchmark"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-ab-testing"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-agent-calculator"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-agent-code-file-reviewer"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-agent-data-csv-analyst"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-agent-http-researcher"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-agent-multi-agent-orchestration"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-agent-react-multi-tool"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-agent-vil-handler-shm"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-ai-agent"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-ai-gw-benchmark"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-ai-gw-demo"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-analytics"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-api-gateway"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-auction"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-auth-api"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-banking-errors"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-banking-txn"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-credit-qa"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-currency-exchange"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-data-ingestion"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-data-pipeline"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-db-clickhouse-batch"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-db-elastic-search"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-db-mongo-crud"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-db-timeseries-iot"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-db-vilorm-analytics"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-db-vilorm-crud"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "vil_db_sqlx 0.3.0",
+ "vil_orm 0.3.0",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-db-vilorm-ecommerce"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "vil_db_sqlx 0.3.0",
+ "vil_orm 0.3.0",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-db-vilorm-multitenant"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-db-vilorm-overhead-bench"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-financial-analytics"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-flight-search"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-graphql-catalog"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-handler-demo"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-healthcheck"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-hospital"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-hybrid-order"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-insurance"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-iot-sensor"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-kafka-txn"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-kyc-onboarding"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-llm-basic-chat"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-llm-chat"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-llm-chunked-summarizer"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-llm-code-review-with-tools"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-llm-decision-routing"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-llm-multi-model-routing"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-llm-streaming-translator"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-ml-serving"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-model-failover"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-model-router"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-mq-pulsar-messaging"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-mq-rabbitmq-pubsub"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-mq-sqs-send-receive"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-mqtt-iot"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-nats-orders"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-notification-hub"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-npl-detection"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-observer"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-order-pipeline"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-payment-ha"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-pipeline-3node-transform-chain"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-pipeline-diamond-topology"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-pipeline-fanin-gather"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-pipeline-fanout-scatter"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-pipeline-multi-workflow"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-pipeline-process-traced"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-pipeline-sse-standard-dialect"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-plugin-db"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-pricing"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-protocol-grpc-gateway"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-protocol-modbus-read"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-protocol-soap-client"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-ai-event-tracking"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-basic-vector-search"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-citation-extraction"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-full-pipeline-ingest-query"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-guardrail-pipeline"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-hybrid-exact-semantic"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-kb"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-multi-source-fanin"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-search"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-rag-vectordb-knowledge-index"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-restaurant"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-risk-scoring"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-secure-api"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-sidecar-credit"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-slik-reporting"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-social"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-sprint-tracker"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-stock-ticker"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-storage-multi-cloud"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-storage-s3-basic"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-task-crud"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "vil_db_sqlx 0.3.0",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-task-mgr"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-trading-processor"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-trigger-cdc-postgres"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-trigger-cron-basic"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-trigger-email"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-trigger-evm-blockchain"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-trigger-fs-watcher"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-trigger-iot"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-trigger-webhook-receiver"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-villog-bench-file-drain"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-villog-bench-multithread"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-villog-benchmark-comparison"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-villog-file-rolling"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-villog-multi-drain"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-villog-phase1-integration"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-villog-stdout-dev"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-villog-structured-events"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-villog-tracing-bridge"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-wasm-rules"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-workflow-dag-scheduler"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
+name = "vil-vwfd-ws-chat"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
 name = "vil-workflow-dag-scheduler"
 version = "0.1.0"
 dependencies = [
@@ -12173,7 +13606,7 @@ dependencies = [
 
 [[package]]
 name = "vil_ab_test"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -12181,10 +13614,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -12213,7 +13646,7 @@ dependencies = [
 
 [[package]]
 name = "vil_agent"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12223,19 +13656,19 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_json 0.2.2",
- "vil_llm 0.2.2",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_rag 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_json 0.3.0",
+ "vil_llm 0.3.0",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_rag 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_ai_compiler"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "rmp-serde",
@@ -12243,16 +13676,16 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_ai_gateway"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12263,69 +13696,76 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.2",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_llm 0.3.0",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_ai_trace"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_anomaly"
+version = "0.3.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_audio"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_bench_llm"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_cache"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "serde",
  "serde_json",
  "tracing",
  "vil_db_redis",
- "vil_server_core 0.2.2",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -12342,33 +13782,33 @@ dependencies = [
 
 [[package]]
 name = "vil_capsule"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "dashmap 5.5.3",
- "vil_ir 0.2.2",
- "vil_types 0.2.2",
+ "vil_ir 0.3.0",
+ "vil_types 0.3.0",
  "wasmtime",
  "wasmtime-wasi",
 ]
 
 [[package]]
 name = "vil_chunker"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
  "vil_tokenizer",
 ]
 
 [[package]]
 name = "vil_cli"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -12390,19 +13830,20 @@ dependencies = [
  "vil_cli_pipeline",
  "vil_cli_sdk",
  "vil_cli_server",
- "vil_net 0.2.2",
- "vil_obs 0.2.2",
- "vil_registry 0.2.2",
- "vil_rt 0.2.2",
- "vil_sdk 0.2.2",
- "vil_shm 0.2.2",
- "vil_types 0.2.2",
+ "vil_net 0.3.0",
+ "vil_obs 0.3.0",
+ "vil_registry 0.3.0",
+ "vil_rt 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_shm 0.3.0",
+ "vil_types 0.3.0",
  "vil_viz",
+ "vil_vwfd",
 ]
 
 [[package]]
 name = "vil_cli_compile"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -12412,14 +13853,14 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "vil_cli_core",
- "vil_rt 0.2.2",
- "vil_shm 0.2.2",
- "vil_types 0.2.2",
+ "vil_rt 0.3.0",
+ "vil_shm 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
 name = "vil_cli_core"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -12435,7 +13876,7 @@ dependencies = [
 
 [[package]]
 name = "vil_cli_pipeline"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -12450,19 +13891,19 @@ dependencies = [
  "tokio",
  "vil_cli_compile",
  "vil_cli_core",
- "vil_net 0.2.2",
- "vil_obs 0.2.2",
- "vil_registry 0.2.2",
- "vil_rt 0.2.2",
- "vil_sdk 0.2.2",
- "vil_shm 0.2.2",
- "vil_types 0.2.2",
+ "vil_net 0.3.0",
+ "vil_obs 0.3.0",
+ "vil_registry 0.3.0",
+ "vil_rt 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_shm 0.3.0",
+ "vil_types 0.3.0",
  "vil_viz",
 ]
 
 [[package]]
 name = "vil_cli_sdk"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "clap",
  "colored",
@@ -12475,7 +13916,7 @@ dependencies = [
 
 [[package]]
 name = "vil_cli_server"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "clap",
  "colored",
@@ -12491,22 +13932,22 @@ dependencies = [
 
 [[package]]
 name = "vil_codegen_c"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_json",
- "vil_ir 0.2.2",
- "vil_types 0.2.2",
+ "vil_ir 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
 name = "vil_codegen_rust"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "vil_ir 0.2.2",
- "vil_types 0.2.2",
+ "vil_ir 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
@@ -12522,7 +13963,7 @@ dependencies = [
 
 [[package]]
 name = "vil_connector_macros"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12531,7 +13972,7 @@ dependencies = [
 
 [[package]]
 name = "vil_consensus"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12540,47 +13981,47 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.2",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_llm 0.3.0",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_context_optimizer"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tracing",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
  "vil_tokenizer",
 ]
 
 [[package]]
 name = "vil_cost_tracker"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_crawler"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12592,68 +14033,87 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_crypto"
+version = "0.3.0"
+dependencies = [
+ "aes-gcm",
+ "base64 0.22.1",
+ "hex",
+ "rand 0.8.5",
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_data_prep"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_datefmt"
+version = "0.3.0"
+dependencies = [
+ "chrono",
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_db_cassandra"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "scylla",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_db_clickhouse"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "clickhouse",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_db_dynamodb"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "aws-config",
  "aws-sdk-dynamodb",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_db_elastic"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "elasticsearch",
@@ -12661,13 +14121,13 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_db_macros"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12676,7 +14136,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_mongo"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bson",
  "futures-util",
@@ -12685,25 +14145,25 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_db_neo4j"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "neo4rs",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_db_redis"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12711,13 +14171,13 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_server_core 0.2.2",
- "vil_server_db 0.2.2",
+ "vil_server_core 0.3.0",
+ "vil_server_db 0.3.0",
 ]
 
 [[package]]
 name = "vil_db_sea_orm"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12725,8 +14185,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_server_core 0.2.2",
- "vil_server_db 0.2.2",
+ "vil_server_core 0.3.0",
+ "vil_server_db 0.3.0",
 ]
 
 [[package]]
@@ -12747,7 +14207,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_semantic"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12756,8 +14216,8 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
- "vil_server_db 0.2.2",
+ "vil_log 0.3.0",
+ "vil_server_db 0.3.0",
 ]
 
 [[package]]
@@ -12778,7 +14238,7 @@ dependencies = [
 
 [[package]]
 name = "vil_db_sqlx"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "dashmap 5.5.3",
@@ -12786,96 +14246,119 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tokio",
- "vil_server_core 0.2.2",
- "vil_server_db 0.2.2",
+ "vil_server_core 0.3.0",
+ "vil_server_db 0.3.0",
 ]
 
 [[package]]
 name = "vil_db_timeseries"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "futures",
  "influxdb2",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_diag"
-version = "0.2.2"
+version = "0.3.0"
 
 [[package]]
 name = "vil_doc_extract"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_doc_layout"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_doc_parser"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_duration"
+version = "0.3.0"
+dependencies = [
+ "chrono",
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_edge"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_edge_deploy"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_yaml",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
+]
+
+[[package]]
+name = "vil_email"
+version = "0.3.0"
+dependencies = [
+ "lettre",
+ "serde_json",
+]
+
+[[package]]
+name = "vil_email_validate"
+version = "0.3.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_embedder"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -12884,10 +14367,10 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -12906,60 +14389,95 @@ dependencies = [
 
 [[package]]
 name = "vil_engine"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
- "vil_obs 0.2.2",
- "vil_queue 0.2.2",
- "vil_registry 0.2.2",
- "vil_rt 0.2.2",
- "vil_shm 0.2.2",
- "vil_types 0.2.2",
+ "vil_obs 0.3.0",
+ "vil_queue 0.3.0",
+ "vil_registry 0.3.0",
+ "vil_rt 0.3.0",
+ "vil_shm 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
 name = "vil_eval"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_llm 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_llm 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_expr"
+version = "0.3.0"
+dependencies = [
+ "serde_json",
+ "thiserror 1.0.69",
+ "vil_anomaly",
+ "vil_crypto",
+ "vil_datefmt",
+ "vil_duration",
+ "vil_email",
+ "vil_email_validate",
+ "vil_geodist",
+ "vil_hash",
+ "vil_id_gen",
+ "vil_jwt",
+ "vil_mask",
+ "vil_parse_csv",
+ "vil_parse_xml",
+ "vil_phone",
+ "vil_regex",
+ "vil_reshape",
+ "vil_stats",
+ "vil_template",
+ "vil_validate_schema",
+ "vil_webhook_out",
 ]
 
 [[package]]
 name = "vil_feature_store"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_federated_rag"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_geodist"
+version = "0.3.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
@@ -12982,7 +14500,7 @@ dependencies = [
 
 [[package]]
 name = "vil_graphql"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-graphql",
  "async-graphql-axum",
@@ -12992,13 +14510,13 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_db_semantic 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_db_semantic 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_graphrag"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13006,17 +14524,17 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_llm 0.2.2",
- "vil_macros 0.2.2",
+ "vil_llm 0.3.0",
+ "vil_macros 0.3.0",
  "vil_memory_graph",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_grpc"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "dashmap 5.5.3",
  "prost 0.13.5",
@@ -13029,37 +14547,58 @@ dependencies = [
 
 [[package]]
 name = "vil_guardrails"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "aho-corasick",
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
+ "vil_macros 0.3.0",
  "vil_prompt_shield",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_hash"
+version = "0.3.0"
+dependencies = [
+ "hex",
+ "hmac 0.12.1",
+ "md-5 0.10.6",
+ "serde_json",
+ "sha2 0.10.9",
+]
+
+[[package]]
+name = "vil_id_gen"
+version = "0.3.0"
+dependencies = [
+ "rand 0.8.5",
+ "serde_json",
+ "ulid",
+ "uuid",
 ]
 
 [[package]]
 name = "vil_index_updater"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_inference"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13069,11 +14608,11 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -13092,14 +14631,14 @@ dependencies = [
 
 [[package]]
 name = "vil_ir"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "proc-macro2",
  "quote",
  "serde",
  "serde_json",
  "serde_yaml",
- "vil_types 0.2.2",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
@@ -13116,12 +14655,21 @@ dependencies = [
 
 [[package]]
 name = "vil_json"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "serde",
  "serde_json",
  "sonic-rs",
+]
+
+[[package]]
+name = "vil_jwt"
+version = "0.3.0"
+dependencies = [
+ "jsonwebtoken 9.3.1",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -13150,7 +14698,7 @@ dependencies = [
 
 [[package]]
 name = "vil_llm"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13162,17 +14710,17 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_json 0.2.2",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_json 0.3.0",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_llm_cache"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -13180,15 +14728,15 @@ dependencies = [
  "serde",
  "serde_json",
  "vil_embedder",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_llm_proxy"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13197,11 +14745,11 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_llm 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -13224,7 +14772,7 @@ dependencies = [
 
 [[package]]
 name = "vil_log"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-nats 0.38.0",
  "async-trait",
@@ -13244,7 +14792,7 @@ dependencies = [
 
 [[package]]
 name = "vil_lsp"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "regex",
  "serde",
@@ -13271,7 +14819,7 @@ dependencies = [
 
 [[package]]
 name = "vil_macros"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "proc-macro2",
@@ -13279,31 +14827,39 @@ dependencies = [
  "serde",
  "serde_json",
  "syn 2.0.117",
- "vil_ir 0.2.2",
- "vil_json 0.2.2",
- "vil_server_core 0.2.2",
- "vil_types 0.2.2",
- "vil_validate 0.2.2",
+ "vil_ir 0.3.0",
+ "vil_json 0.3.0",
+ "vil_server_core 0.3.0",
+ "vil_types 0.3.0",
+ "vil_validate 0.3.0",
+]
+
+[[package]]
+name = "vil_mask"
+version = "0.3.0"
+dependencies = [
+ "regex",
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_memory_graph"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_migrate"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "sqlx",
@@ -13312,32 +14868,32 @@ dependencies = [
 
 [[package]]
 name = "vil_modbus"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "tokio",
  "tokio-modbus",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_model_registry"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_model_serving"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13348,12 +14904,12 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.2",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_llm 0.3.0",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -13376,7 +14932,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_kafka"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
@@ -13387,7 +14943,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
@@ -13408,7 +14964,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_mqtt"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
@@ -13417,7 +14973,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
@@ -13441,7 +14997,7 @@ dependencies = [
 
 [[package]]
 name = "vil_mq_nats"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-nats 0.37.0",
  "async-trait",
@@ -13453,12 +15009,12 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_mq_pubsub"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
@@ -13468,13 +15024,13 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_mq_pulsar"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
@@ -13483,13 +15039,13 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_mq_rabbitmq"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
@@ -13498,13 +15054,13 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_mq_sqs"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "aws-config",
@@ -13513,8 +15069,8 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
@@ -13542,7 +15098,7 @@ dependencies = [
 
 [[package]]
 name = "vil_multi_agent"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13552,28 +15108,28 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_agent 0.2.2",
- "vil_llm 0.2.2",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_agent 0.3.0",
+ "vil_llm 0.3.0",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_multimodal"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
  "vil_embedder",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -13595,7 +15151,7 @@ dependencies = [
 
 [[package]]
 name = "vil_net"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "dashmap 5.5.3",
@@ -13604,8 +15160,8 @@ dependencies = [
  "serde_json",
  "socket2 0.5.10",
  "tokio",
- "vil_shm 0.2.2",
- "vil_types 0.2.2",
+ "vil_shm 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
@@ -13636,7 +15192,7 @@ dependencies = [
 
 [[package]]
 name = "vil_new_http"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-stream",
  "axum 0.7.9",
@@ -13652,10 +15208,10 @@ dependencies = [
  "tokio-stream",
  "tower 0.4.13",
  "tower-http 0.5.2",
- "vil_ir 0.2.2",
- "vil_json 0.2.2",
- "vil_rt 0.2.2",
- "vil_types 0.2.2",
+ "vil_ir 0.3.0",
+ "vil_json 0.3.0",
+ "vil_rt 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
@@ -13670,10 +15226,10 @@ dependencies = [
 
 [[package]]
 name = "vil_obs"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "serde",
- "vil_types 0.2.2",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
@@ -13695,33 +15251,33 @@ dependencies = [
 
 [[package]]
 name = "vil_observer"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
- "vil_new_http 0.2.2",
- "vil_rt 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
+ "vil_new_http 0.3.0",
+ "vil_rt 0.3.0",
 ]
 
 [[package]]
 name = "vil_opcua"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "opcua",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_operator"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "futures",
  "k8s-openapi",
@@ -13754,17 +15310,17 @@ dependencies = [
 
 [[package]]
 name = "vil_orm"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "serde",
  "serde_json",
  "sqlx",
  "uuid",
- "vil_db_sqlx 0.2.2",
- "vil_log 0.2.2",
- "vil_orm_derive 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_db_sqlx 0.3.0",
+ "vil_log 0.3.0",
+ "vil_orm_derive 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -13780,7 +15336,7 @@ dependencies = [
 
 [[package]]
 name = "vil_orm_derive"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -13789,72 +15345,97 @@ dependencies = [
 
 [[package]]
 name = "vil_otel"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
  "tokio",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_output_parser"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_parse_csv"
+version = "0.3.0"
+dependencies = [
+ "csv",
+ "serde_json",
+]
+
+[[package]]
+name = "vil_parse_xml"
+version = "0.3.0"
+dependencies = [
+ "quick-xml 0.36.2",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "vil_phone"
+version = "0.3.0"
+dependencies = [
+ "phonenumber",
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_plugin_sdk"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "vil_server_core 0.2.2",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_private_rag"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_prompt_optimizer"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_prompt_shield"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "aho-corasick",
  "axum 0.7.9",
@@ -13862,39 +15443,39 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_prompts"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_quantized"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "rmp-serde",
  "serde",
  "serde_json",
  "tracing",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -13910,11 +15491,11 @@ dependencies = [
 
 [[package]]
 name = "vil_queue"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "crossbeam-queue",
  "nix 0.27.1",
- "vil_types 0.2.2",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
@@ -13940,7 +15521,7 @@ dependencies = [
 
 [[package]]
 name = "vil_rag"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -13949,28 +15530,36 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
- "vil_json 0.2.2",
- "vil_llm 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_json 0.3.0",
+ "vil_llm 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_realtime_rag"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
  "vil_embedder",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
  "vil_tokenizer",
+]
+
+[[package]]
+name = "vil_regex"
+version = "0.3.0"
+dependencies = [
+ "regex",
+ "serde_json",
 ]
 
 [[package]]
@@ -13987,17 +15576,17 @@ dependencies = [
 
 [[package]]
 name = "vil_registry"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "dashmap 5.5.3",
- "vil_obs 0.2.2",
- "vil_shm 0.2.2",
- "vil_types 0.2.2",
+ "vil_obs 0.3.0",
+ "vil_shm 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
 name = "vil_reranker"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14005,24 +15594,31 @@ dependencies = [
  "serde_json",
  "tokio",
  "vil_embedder",
- "vil_llm 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_llm 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_reshape"
+version = "0.3.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_rlhf_data"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -14045,23 +15641,34 @@ dependencies = [
 
 [[package]]
 name = "vil_rt"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "dashmap 5.5.3",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
- "vil_net 0.2.2",
- "vil_obs 0.2.2",
- "vil_queue 0.2.2",
- "vil_registry 0.2.2",
- "vil_shm 0.2.2",
- "vil_types 0.2.2",
+ "vil_log 0.3.0",
+ "vil_net 0.3.0",
+ "vil_obs 0.3.0",
+ "vil_queue 0.3.0",
+ "vil_registry 0.3.0",
+ "vil_shm 0.3.0",
+ "vil_types 0.3.0",
+]
+
+[[package]]
+name = "vil_rules"
+version = "0.3.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror 1.0.69",
+ "vil_expr",
 ]
 
 [[package]]
 name = "vil_script_js"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "boa_engine",
  "serde",
@@ -14070,7 +15677,7 @@ dependencies = [
 
 [[package]]
 name = "vil_script_lua"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "mlua",
  "serde",
@@ -14096,22 +15703,22 @@ dependencies = [
 
 [[package]]
 name = "vil_sdk"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "serde",
  "serde_json",
- "vil_engine 0.2.2",
- "vil_ir 0.2.2",
- "vil_macros 0.2.2",
- "vil_new_http 0.2.2",
- "vil_types 0.2.2",
- "vil_validate 0.2.2",
+ "vil_engine 0.3.0",
+ "vil_ir 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_new_http 0.3.0",
+ "vil_types 0.3.0",
+ "vil_validate 0.3.0",
 ]
 
 [[package]]
 name = "vil_semantic_router"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14119,11 +15726,11 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -14154,7 +15761,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "serde",
@@ -14162,18 +15769,18 @@ dependencies = [
  "tokio",
  "tower 0.4.13",
  "tracing",
- "vil_json 0.2.2",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_obs 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server_auth 0.2.2",
- "vil_server_config 0.2.2",
- "vil_server_core 0.2.2",
- "vil_server_db 0.2.2",
- "vil_server_macros 0.2.2",
- "vil_server_mesh 0.2.2",
- "vil_server_web 0.2.2",
+ "vil_json 0.3.0",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_obs 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server_auth 0.3.0",
+ "vil_server_config 0.3.0",
+ "vil_server_core 0.3.0",
+ "vil_server_db 0.3.0",
+ "vil_server_macros 0.3.0",
+ "vil_server_mesh 0.3.0",
+ "vil_server_web 0.3.0",
 ]
 
 [[package]]
@@ -14205,7 +15812,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_auth"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "argon2",
  "axum 0.7.9",
@@ -14224,8 +15831,8 @@ dependencies = [
  "tower 0.4.13",
  "tracing",
  "uuid",
- "vil_log 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_log 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -14243,7 +15850,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_config"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -14293,7 +15900,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_core"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "aes-gcm",
  "axum 0.7.9",
@@ -14317,15 +15924,15 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vil_capsule 0.2.2",
- "vil_json 0.2.2",
- "vil_log 0.2.2",
- "vil_obs 0.2.2",
- "vil_observer 0.2.2",
- "vil_rt 0.2.2",
- "vil_shm 0.2.2",
- "vil_sidecar 0.2.2",
- "vil_types 0.2.2",
+ "vil_capsule 0.3.0",
+ "vil_json 0.3.0",
+ "vil_log 0.3.0",
+ "vil_obs 0.3.0",
+ "vil_observer 0.3.0",
+ "vil_rt 0.3.0",
+ "vil_shm 0.3.0",
+ "vil_sidecar 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
@@ -14346,7 +15953,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_db"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "rmp-serde",
@@ -14354,13 +15961,13 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_log 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_server_format"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "bytes",
@@ -14382,7 +15989,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_macros"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "proc-macro2",
@@ -14392,7 +15999,7 @@ dependencies = [
  "syn 2.0.117",
  "tokio",
  "tracing",
- "vil_server_core 0.2.2",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -14419,7 +16026,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_mesh"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
@@ -14430,11 +16037,11 @@ dependencies = [
  "serde_yaml",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
- "vil_rt 0.2.2",
- "vil_server_core 0.2.2",
- "vil_shm 0.2.2",
- "vil_types 0.2.2",
+ "vil_log 0.3.0",
+ "vil_rt 0.3.0",
+ "vil_server_core 0.3.0",
+ "vil_shm 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
@@ -14459,7 +16066,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_test"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "bytes",
@@ -14471,12 +16078,12 @@ dependencies = [
  "tokio",
  "tower 0.4.13",
  "tracing",
- "vil_db_semantic 0.2.2",
- "vil_server 0.2.2",
- "vil_server_auth 0.2.2",
- "vil_server_core 0.2.2",
- "vil_server_mesh 0.2.2",
- "vil_server_web 0.2.2",
+ "vil_db_semantic 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_auth 0.3.0",
+ "vil_server_core 0.3.0",
+ "vil_server_mesh 0.3.0",
+ "vil_server_web 0.3.0",
 ]
 
 [[package]]
@@ -14498,7 +16105,7 @@ dependencies = [
 
 [[package]]
 name = "vil_server_web"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "http 1.4.0",
@@ -14508,7 +16115,7 @@ dependencies = [
  "tower 0.4.13",
  "tracing",
  "validator",
- "vil_server_core 0.2.2",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
@@ -14525,12 +16132,12 @@ dependencies = [
 
 [[package]]
 name = "vil_shm"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "dashmap 5.5.3",
  "memmap2",
  "nix 0.27.1",
- "vil_types 0.2.2",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
@@ -14554,7 +16161,7 @@ dependencies = [
 
 [[package]]
 name = "vil_sidecar"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "dashmap 5.5.3",
@@ -14566,25 +16173,25 @@ dependencies = [
  "tempfile",
  "tokio",
  "tracing",
- "vil_log 0.2.2",
- "vil_types 0.2.2",
+ "vil_log 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
 name = "vil_soap"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "quick-xml 0.36.2",
  "reqwest 0.12.28",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_speculative"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14593,31 +16200,38 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
- "vil_llm 0.2.2",
- "vil_log 0.2.2",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_llm 0.3.0",
+ "vil_log 0.3.0",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_sql_agent"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_stats"
+version = "0.3.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_storage_azure"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "azure_core",
  "azure_storage",
@@ -14627,26 +16241,26 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_storage_gcs"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "google-cloud-storage",
  "serde",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_storage_s3"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "http 1.4.0",
@@ -14655,13 +16269,13 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_streaming_rag"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14669,60 +16283,68 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
  "vil_tokenizer",
 ]
 
 [[package]]
 name = "vil_synthetic"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
+]
+
+[[package]]
+name = "vil_template"
+version = "0.3.0"
+dependencies = [
+ "handlebars",
+ "serde_json",
 ]
 
 [[package]]
 name = "vil_tensor_shm"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "parking_lot 0.12.5",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_tokenizer"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "base64 0.22.1",
  "regex",
  "serde",
  "serde_json",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_topo"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -14733,44 +16355,55 @@ dependencies = [
 
 [[package]]
 name = "vil_trigger_cdc"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "tokio",
  "tokio-postgres",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_core"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "tokio",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
 name = "vil_trigger_cron"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "chrono",
  "cron",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
+ "vil_trigger_core",
+]
+
+[[package]]
+name = "vil_trigger_db_poll"
+version = "0.3.0"
+dependencies = [
+ "async-trait",
+ "tokio",
+ "tracing",
+ "vil_db_sqlx 0.3.0",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_email"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-imap",
  "async-native-tls",
@@ -14779,14 +16412,14 @@ dependencies = [
  "tokio",
  "tokio-native-tls",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_evm"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "futures-util",
@@ -14795,40 +16428,83 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.24.0",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_fs"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "notify",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
+ "vil_trigger_core",
+]
+
+[[package]]
+name = "vil_trigger_grpc"
+version = "0.3.0"
+dependencies = [
+ "async-trait",
+ "tokio",
+ "tracing",
+ "vil_grpc",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_iot"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "rumqttc",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
+ "vil_trigger_core",
+]
+
+[[package]]
+name = "vil_trigger_kafka"
+version = "0.3.0"
+dependencies = [
+ "async-trait",
+ "tokio",
+ "tracing",
+ "vil_mq_kafka 0.3.0",
+ "vil_trigger_core",
+]
+
+[[package]]
+name = "vil_trigger_s3"
+version = "0.3.0"
+dependencies = [
+ "async-trait",
+ "tokio",
+ "tracing",
+ "vil_storage_s3",
+ "vil_trigger_core",
+]
+
+[[package]]
+name = "vil_trigger_sftp"
+version = "0.3.0"
+dependencies = [
+ "async-trait",
+ "tokio",
+ "tracing",
  "vil_trigger_core",
 ]
 
 [[package]]
 name = "vil_trigger_webhook"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14836,8 +16512,8 @@ dependencies = [
  "sha2 0.10.9",
  "tokio",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
  "vil_trigger_core",
 ]
 
@@ -14853,7 +16529,7 @@ dependencies = [
 
 [[package]]
 name = "vil_types"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "serde",
@@ -14872,19 +16548,27 @@ dependencies = [
 
 [[package]]
 name = "vil_validate"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
- "vil_ir 0.2.2",
- "vil_types 0.2.2",
+ "vil_ir 0.3.0",
+ "vil_types 0.3.0",
 ]
 
 [[package]]
 name = "vil_validate_derive"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "vil_validate_schema"
+version = "0.3.0"
+dependencies = [
+ "jsonschema",
+ "serde_json",
 ]
 
 [[package]]
@@ -14908,7 +16592,7 @@ dependencies = [
 
 [[package]]
 name = "vil_vectordb"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "axum 0.7.9",
  "dashmap 5.5.3",
@@ -14917,33 +16601,117 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 1.0.69",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_vision"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_viz"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "vil_vwfd"
+version = "0.3.0"
+dependencies = [
+ "async-trait",
+ "bincode",
+ "bson",
+ "bytes",
+ "redb",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "vil_capsule 0.3.0",
+ "vil_db_cassandra",
+ "vil_db_clickhouse",
+ "vil_db_dynamodb",
+ "vil_db_elastic",
+ "vil_db_mongo",
+ "vil_db_neo4j",
+ "vil_db_redis",
+ "vil_db_sqlx 0.3.0",
+ "vil_db_timeseries",
+ "vil_expr",
+ "vil_modbus",
+ "vil_mq_kafka 0.3.0",
+ "vil_mq_mqtt 0.3.0",
+ "vil_mq_nats 0.3.0",
+ "vil_mq_pubsub",
+ "vil_mq_pulsar",
+ "vil_mq_rabbitmq",
+ "vil_mq_sqs",
+ "vil_new_http 0.3.0",
+ "vil_opcua",
+ "vil_orm 0.3.0",
+ "vil_rt 0.3.0",
+ "vil_rules",
+ "vil_server_core 0.3.0",
+ "vil_sidecar 0.3.0",
+ "vil_soap",
+ "vil_storage_azure",
+ "vil_storage_gcs",
+ "vil_storage_s3",
+ "vil_trigger_cdc",
+ "vil_trigger_core",
+ "vil_trigger_cron",
+ "vil_trigger_db_poll",
+ "vil_trigger_email",
+ "vil_trigger_evm",
+ "vil_trigger_fs",
+ "vil_trigger_grpc",
+ "vil_trigger_iot",
+ "vil_trigger_kafka",
+ "vil_trigger_s3",
+ "vil_trigger_sftp",
+ "vil_trigger_webhook",
+ "vil_types 0.3.0",
+ "vil_ws",
+ "wasmtime",
+ "wasmtime-wasi",
+]
+
+[[package]]
+name = "vil_vwfd_macros"
+version = "0.3.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "vil_webhook_out"
+version = "0.3.0"
+dependencies = [
+ "hex",
+ "hmac 0.12.1",
+ "serde_json",
+ "sha2 0.10.9",
+ "ureq",
 ]
 
 [[package]]
@@ -14966,7 +16734,7 @@ dependencies = [
 
 [[package]]
 name = "vil_workflow_v2"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum 0.7.9",
@@ -14974,23 +16742,23 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "vil_macros 0.2.2",
- "vil_sdk 0.2.2",
- "vil_server 0.2.2",
- "vil_server_core 0.2.2",
+ "vil_macros 0.3.0",
+ "vil_sdk 0.3.0",
+ "vil_server 0.3.0",
+ "vil_server_core 0.3.0",
 ]
 
 [[package]]
 name = "vil_ws"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "dashmap 5.5.3",
  "futures-util",
  "tokio",
  "tokio-tungstenite 0.24.0",
  "tracing",
- "vil_connector_macros 0.2.2",
- "vil_log 0.2.2",
+ "vil_connector_macros 0.3.0",
+ "vil_log 0.3.0",
 ]
 
 [[package]]
@@ -16237,7 +18005,7 @@ dependencies = [
  "data-encoding",
  "der-parser",
  "lazy_static",
- "nom",
+ "nom 7.1.3",
  "oid-registry",
  "rusticata-macros",
  "thiserror 2.0.18",

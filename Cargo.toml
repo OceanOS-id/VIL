@@ -122,6 +122,45 @@ members = [
     "crates/vil_trigger_iot",
     "crates/vil_trigger_evm",
     "crates/vil_trigger_webhook",
+    "crates/vil_trigger_kafka",
+    "crates/vil_trigger_s3",
+    "crates/vil_trigger_sftp",
+    "crates/vil_trigger_db_poll",
+    "crates/vil_trigger_grpc",
+
+    # --- Built-in FaaS Crates (Phase C) ---
+    "crates/vil_hash",
+    "crates/vil_crypto",
+    "crates/vil_jwt",
+    "crates/vil_id_gen",
+    "crates/vil_datefmt",
+    "crates/vil_duration",
+    "crates/vil_parse_csv",
+    "crates/vil_parse_xml",
+    "crates/vil_regex",
+    "crates/vil_phone",
+    "crates/vil_validate_schema",
+    "crates/vil_mask",
+    "crates/vil_reshape",
+    "crates/vil_template",
+    "crates/vil_email_validate",
+    "crates/vil_stats",
+    "crates/vil_anomaly",
+    "crates/vil_email",
+    "crates/vil_webhook_out",
+    "crates/vil_geodist",
+
+    # --- FaaS Demo Examples ---
+    "examples/901-faas-kyc-onboarding",
+    "examples/901-faas-kyc-onboarding/vwfd",
+    "examples/902-faas-data-pipeline",
+    "examples/902-faas-data-pipeline/vwfd",
+    "examples/903-faas-secure-api",
+    "examples/903-faas-secure-api/vwfd",
+    "examples/904-faas-financial-analytics",
+    "examples/904-faas-financial-analytics/vwfd",
+    "examples/905-faas-notification-hub",
+    "examples/905-faas-notification-hub/vwfd",
 
     # --- Phase 2 Protocol Crates ---
     "crates/vil_soap",
@@ -256,6 +295,119 @@ members = [
     "examples/806-trigger-iot",
     "examples/807-trigger-evm-blockchain",
     "examples/001b-vilapp-ai-gw-benchmark",
+    "examples/001b-vilapp-ai-gw-benchmark/vwfd",
+    # ── VWFD workflow examples (112 total) ──
+    "examples/001-basic-ai-gw-demo/vwfd",
+    "examples/002-basic-vilapp-gateway/vwfd",
+    "examples/003-basic-hello-server/vwfd",
+    "examples/004-basic-rest-crud/vwfd",
+    "examples/005-basic-multiservice-mesh-ndjson/vwfd",
+    "examples/006-basic-shm-extractor/vwfd",
+    "examples/007-basic-credit-npl-filter/vwfd",
+    "examples/008-basic-credit-quality-monitor/vwfd",
+    "examples/009-basic-credit-regulatory-slik/vwfd",
+    "examples/010-basic-websocket-chat/vwfd",
+    "examples/011-basic-graphql-api/vwfd",
+    "examples/012-basic-plugin-database/vwfd",
+    "examples/013-basic-nats-worker/vwfd",
+    "examples/014-basic-kafka-stream/vwfd",
+    "examples/015-basic-mqtt-iot-gateway/vwfd",
+    "examples/016-basic-ai-rag-gateway/vwfd",
+    "examples/017-basic-production-fullstack/vwfd",
+    "examples/018-basic-ai-multi-model-router/vwfd",
+    "examples/019-basic-ai-multi-model-advanced/vwfd",
+    "examples/020-basic-ai-ab-testing/vwfd",
+    "examples/021-basic-wasm-faas/vwfd",
+    "examples/022-basic-sidecar-python/vwfd",
+    "examples/023-basic-hybrid-wasm-sidecar/vwfd",
+    "examples/024-basic-llm-chat/vwfd",
+    "examples/025-basic-rag-service/vwfd",
+    "examples/026-basic-ai-agent/vwfd",
+    "examples/027-basic-vilserver-minimal/vwfd",
+    "examples/028-basic-sse-hub-streaming/vwfd",
+    "examples/029-basic-vil-handler-endpoint/vwfd",
+    "examples/030-basic-trilane-messaging/vwfd",
+    "examples/031-basic-mesh-routing/vwfd",
+    "examples/032-basic-failover-ha/vwfd",
+    "examples/033-basic-shm-write-through/vwfd",
+    "examples/034-basic-blocking-task/vwfd",
+    "examples/035-basic-vil-service-module/vwfd",
+    "examples/036-basic-sse-event-builder/vwfd",
+    "examples/037-basic-vilmodel-derive/vwfd",
+    "examples/038-basic-vil-app-dsl/vwfd",
+    "examples/039-basic-observer-dashboard/vwfd",
+    "examples/040-basic-auth-middleware-stack/vwfd",
+    "examples/041-basic-sidecar-failover/vwfd",
+    "examples/042-basic-scripting-sandbox/vwfd",
+    "examples/043-basic-integration-test/vwfd",
+    "examples/044-basic-graphql-subscriptions/vwfd",
+    "examples/045-basic-exec-class-pinned/vwfd",
+    "examples/046-basic-mesh-scatter-gather/vwfd",
+    "examples/047-basic-custom-error-stack/vwfd",
+    "examples/101-pipeline-3node-transform-chain/vwfd",
+    "examples/101b-multi-pipeline-benchmark/vwfd",
+    "examples/101c-vilapp-multi-pipeline-benchmark/vwfd",
+    "examples/102-pipeline-fanout-scatter/vwfd",
+    "examples/103-pipeline-fanin-gather/vwfd",
+    "examples/104-pipeline-diamond-topology/vwfd",
+    "examples/105-pipeline-multi-workflow/vwfd",
+    "examples/106-pipeline-sse-standard-dialect/vwfd",
+    "examples/107-pipeline-process-traced/vwfd",
+    "examples/108-workflow-dag-scheduler/vwfd",
+    "examples/201-llm-basic-chat/vwfd",
+    "examples/202-llm-multi-model-routing/vwfd",
+    "examples/203-llm-code-review-with-tools/vwfd",
+    "examples/204-llm-streaming-translator/vwfd",
+    "examples/205-llm-chunked-summarizer/vwfd",
+    "examples/206-llm-decision-routing/vwfd",
+    "examples/301-rag-basic-vector-search/vwfd",
+    "examples/302-rag-multi-source-fanin/vwfd",
+    "examples/303-rag-hybrid-exact-semantic/vwfd",
+    "examples/304-rag-citation-extraction/vwfd",
+    "examples/305-rag-guardrail-pipeline/vwfd",
+    "examples/306-rag-ai-event-tracking/vwfd",
+    "examples/307-rag-vectordb-knowledge-index/vwfd",
+    "examples/308-rag-full-pipeline-ingest-query/vwfd",
+    "examples/401-agent-calculator/vwfd",
+    "examples/402-agent-http-researcher/vwfd",
+    "examples/403-agent-code-file-reviewer/vwfd",
+    "examples/404-agent-data-csv-analyst/vwfd",
+    "examples/405-agent-react-multi-tool/vwfd",
+    "examples/406-agent-vil-handler-shm/vwfd",
+    "examples/407-agent-multi-agent-orchestration/vwfd",
+    "examples/501-villog-stdout-dev/vwfd",
+    "examples/502-villog-file-rolling/vwfd",
+    "examples/503-villog-multi-drain/vwfd",
+    "examples/504-villog-benchmark-comparison/vwfd",
+    "examples/505-villog-tracing-bridge/vwfd",
+    "examples/506-villog-structured-events/vwfd",
+    "examples/507-villog-bench-file-drain/vwfd",
+    "examples/508-villog-bench-multithread/vwfd",
+    "examples/509-villog-phase1-integration/vwfd",
+    "examples/601-storage-s3-basic/vwfd",
+    "examples/602-db-mongo-crud/vwfd",
+    "examples/603-db-clickhouse-batch/vwfd",
+    "examples/604-db-elastic-search/vwfd",
+    "examples/605-db-vilorm-crud/vwfd",
+    "examples/606-db-vilorm-ecommerce/vwfd",
+    "examples/607-db-vilorm-multitenant/vwfd",
+    "examples/608-db-vilorm-analytics/vwfd",
+    "examples/609-db-vilorm-overhead-bench/vwfd",
+    "examples/610-storage-multi-cloud/vwfd",
+    "examples/611-db-timeseries-iot/vwfd",
+    "examples/701-mq-rabbitmq-pubsub/vwfd",
+    "examples/702-mq-sqs-send-receive/vwfd",
+    "examples/703-protocol-soap-client/vwfd",
+    "examples/704-protocol-modbus-read/vwfd",
+    "examples/705-protocol-grpc-gateway/vwfd",
+    "examples/706-mq-pulsar-messaging/vwfd",
+    "examples/801-trigger-cron-basic/vwfd",
+    "examples/802-trigger-fs-watcher/vwfd",
+    "examples/803-trigger-webhook-receiver/vwfd",
+    "examples/804-trigger-cdc-postgres/vwfd",
+    "examples/805-trigger-email/vwfd",
+    "examples/806-trigger-iot/vwfd",
+    "examples/807-trigger-evm-blockchain/vwfd",
     "examples/101b-multi-pipeline-benchmark",
     "examples/101c-vilapp-multi-pipeline-benchmark",
     "examples/106-pipeline-sse-standard-dialect",
@@ -321,11 +473,17 @@ members = [
     "examples/607-db-vilorm-multitenant",
     "examples/608-db-vilorm-analytics",
     "examples/609-db-vilorm-overhead-bench",
+
+    # --- VWFD Runtime (VIL workflow definition) ---
+    "crates/vil_expr",
+    "crates/vil_rules",
+    "crates/vil_vwfd",
+    "crates/vil_vwfd_macros",
 ]
 
 [workspace.package]
 edition = "2021"
-version = "0.2.2"
+version = "0.3.0"
 license = "MIT OR Apache-2.0"
 authors = ["VIL Community"]
 repository = "https://github.com/OceanOS-id/VIL"
@@ -337,88 +495,93 @@ categories = ["network-programming", "web-programming", "asynchronous"]
 
 [workspace.dependencies]
 # Core runtime
-vil_types        = { version = "0.2", path = "crates/vil_types" }
-vil_shm          = { version = "0.2", path = "crates/vil_shm" }
-vil_queue        = { version = "0.2", path = "crates/vil_queue" }
-vil_log          = { version = "0.2", path = "crates/vil_log" }
-vil_registry     = { version = "0.2", path = "crates/vil_registry" }
-vil_rt           = { version = "0.2", path = "crates/vil_rt" }
-vil_obs          = { version = "0.2", path = "crates/vil_obs" }
-vil_net          = { version = "0.2", path = "crates/vil_net" }
-vil_engine       = { version = "0.2", path = "crates/vil_engine" }
+vil_types        = { version = "0.3", path = "crates/vil_types" }
+vil_shm          = { version = "0.3", path = "crates/vil_shm" }
+vil_queue        = { version = "0.3", path = "crates/vil_queue" }
+vil_log          = { version = "0.3", path = "crates/vil_log" }
+vil_registry     = { version = "0.3", path = "crates/vil_registry" }
+vil_rt           = { version = "0.3", path = "crates/vil_rt" }
+vil_obs          = { version = "0.3", path = "crates/vil_obs" }
+vil_net          = { version = "0.3", path = "crates/vil_net" }
+vil_engine       = { version = "0.3", path = "crates/vil_engine" }
 
 # Semantic compiler
-vil_ir           = { version = "0.2", path = "crates/vil_ir" }
-vil_diag         = { version = "0.2", path = "crates/vil_diag" }
-vil_validate     = { version = "0.2", path = "crates/vil_validate" }
-vil_macros       = { version = "0.2", path = "crates/vil_macros" }
-vil_connector_macros = { version = "0.2", path = "crates/vil_connector_macros" }
-vil_codegen_rust = { version = "0.2", path = "crates/vil_codegen_rust" }
-vil_codegen_c    = { version = "0.2", path = "crates/vil_codegen_c" }
+vil_ir           = { version = "0.3", path = "crates/vil_ir" }
+vil_diag         = { version = "0.3", path = "crates/vil_diag" }
+vil_validate     = { version = "0.3", path = "crates/vil_validate" }
+vil_macros       = { version = "0.3", path = "crates/vil_macros" }
+vil_connector_macros = { version = "0.3", path = "crates/vil_connector_macros" }
+vil_codegen_rust = { version = "0.3", path = "crates/vil_codegen_rust" }
+vil_codegen_c    = { version = "0.3", path = "crates/vil_codegen_c" }
 
 # Tooling
-vil_cli          = { version = "0.2", path = "crates/vil_cli" }
-vil_ffi          = { version = "0.2", path = "crates/vil_ffi" }
-vil_new_http     = { version = "0.2", path = "crates/vil_new_http" }
+vil_cli          = { version = "0.3", path = "crates/vil_cli" }
+vil_ffi          = { version = "0.3", path = "crates/vil_ffi" }
+vil_new_http     = { version = "0.3", path = "crates/vil_new_http" }
 
 # Storage plugins
-vil_storage_s3     = { version = "0.2", path = "crates/vil_storage_s3" }
-vil_storage_gcs    = { version = "0.2", path = "crates/vil_storage_gcs" }
-vil_storage_azure  = { version = "0.2", path = "crates/vil_storage_azure" }
+vil_storage_s3     = { version = "0.3", path = "crates/vil_storage_s3" }
+vil_storage_gcs    = { version = "0.3", path = "crates/vil_storage_gcs" }
+vil_storage_azure  = { version = "0.3", path = "crates/vil_storage_azure" }
 
 # Elasticsearch plugin
-vil_db_elastic     = { version = "0.2", path = "crates/vil_db_elastic" }
+vil_db_elastic     = { version = "0.3", path = "crates/vil_db_elastic" }
 
 # Phase 1 Database Plugins
-vil_db_mongo       = { version = "0.2", path = "crates/vil_db_mongo" }
-vil_db_clickhouse  = { version = "0.2", path = "crates/vil_db_clickhouse" }
-vil_db_dynamodb    = { version = "0.2", path = "crates/vil_db_dynamodb" }
-vil_db_cassandra   = { version = "0.2", path = "crates/vil_db_cassandra" }
-vil_db_timeseries  = { version = "0.2", path = "crates/vil_db_timeseries" }
-vil_db_neo4j       = { version = "0.2", path = "crates/vil_db_neo4j" }
+vil_db_mongo       = { version = "0.3", path = "crates/vil_db_mongo" }
+vil_db_clickhouse  = { version = "0.3", path = "crates/vil_db_clickhouse" }
+vil_db_dynamodb    = { version = "0.3", path = "crates/vil_db_dynamodb" }
+vil_db_cassandra   = { version = "0.3", path = "crates/vil_db_cassandra" }
+vil_db_timeseries  = { version = "0.3", path = "crates/vil_db_timeseries" }
+vil_db_neo4j       = { version = "0.3", path = "crates/vil_db_neo4j" }
 
 # SDK & extensions
-vil_sdk          = { version = "0.2", path = "crates/vil_sdk" }
-vil_topo         = { version = "0.2", path = "crates/vil_topo" }
-vil_capsule      = { version = "0.2", path = "crates/vil_capsule" }
+vil_sdk          = { version = "0.3", path = "crates/vil_sdk" }
+vil_topo         = { version = "0.3", path = "crates/vil_topo" }
+vil_capsule      = { version = "0.3", path = "crates/vil_capsule" }
 
 # VIL Server
-vil_server       = { version = "0.2", path = "crates/vil_server" }
-vil_server_core  = { version = "0.2", path = "crates/vil_server_core" }
-vil_server_web   = { version = "0.2", path = "crates/vil_server_web" }
-vil_server_config = { version = "0.2", path = "crates/vil_server_config" }
-vil_server_mesh  = { version = "0.2", path = "crates/vil_server_mesh" }
-vil_server_auth  = { version = "0.2", path = "crates/vil_server_auth" }
-vil_server_db    = { version = "0.2", path = "crates/vil_server_db" }
-vil_server_test  = { version = "0.2", path = "crates/vil_server_test" }
-vil_server_macros = { version = "0.2", path = "crates/vil_server_macros" }
+vil_server       = { version = "0.3", path = "crates/vil_server" }
+vil_server_core  = { version = "0.3", path = "crates/vil_server_core" }
+vil_server_web   = { version = "0.3", path = "crates/vil_server_web" }
+vil_server_config = { version = "0.3", path = "crates/vil_server_config" }
+vil_server_mesh  = { version = "0.3", path = "crates/vil_server_mesh" }
+vil_server_auth  = { version = "0.3", path = "crates/vil_server_auth" }
+vil_server_db    = { version = "0.3", path = "crates/vil_server_db" }
+vil_server_test  = { version = "0.3", path = "crates/vil_server_test" }
+vil_server_macros = { version = "0.3", path = "crates/vil_server_macros" }
 
 # Phase 2 MQ Plugins
-vil_mq_rabbitmq    = { version = "0.2", path = "crates/vil_mq_rabbitmq" }
-vil_mq_sqs         = { version = "0.2", path = "crates/vil_mq_sqs" }
-vil_mq_pulsar      = { version = "0.2", path = "crates/vil_mq_pulsar" }
-vil_mq_pubsub      = { version = "0.2", path = "crates/vil_mq_pubsub" }
+vil_mq_rabbitmq    = { version = "0.3", path = "crates/vil_mq_rabbitmq" }
+vil_mq_sqs         = { version = "0.3", path = "crates/vil_mq_sqs" }
+vil_mq_pulsar      = { version = "0.3", path = "crates/vil_mq_pulsar" }
+vil_mq_pubsub      = { version = "0.3", path = "crates/vil_mq_pubsub" }
 
 # Phase 3 Trigger Crates
-vil_trigger_core    = { version = "0.2", path = "crates/vil_trigger_core" }
-vil_trigger_cron    = { version = "0.2", path = "crates/vil_trigger_cron" }
-vil_trigger_fs      = { version = "0.2", path = "crates/vil_trigger_fs" }
-vil_trigger_cdc     = { version = "0.2", path = "crates/vil_trigger_cdc" }
-vil_trigger_email   = { version = "0.2", path = "crates/vil_trigger_email" }
-vil_trigger_iot     = { version = "0.2", path = "crates/vil_trigger_iot" }
-vil_trigger_evm     = { version = "0.2", path = "crates/vil_trigger_evm" }
-vil_trigger_webhook = { version = "0.2", path = "crates/vil_trigger_webhook" }
+vil_trigger_core    = { version = "0.3", path = "crates/vil_trigger_core" }
+vil_trigger_cron    = { version = "0.3", path = "crates/vil_trigger_cron" }
+vil_trigger_fs      = { version = "0.3", path = "crates/vil_trigger_fs" }
+vil_trigger_cdc     = { version = "0.3", path = "crates/vil_trigger_cdc" }
+vil_trigger_email   = { version = "0.3", path = "crates/vil_trigger_email" }
+vil_trigger_iot     = { version = "0.3", path = "crates/vil_trigger_iot" }
+vil_trigger_evm     = { version = "0.3", path = "crates/vil_trigger_evm" }
+vil_trigger_webhook = { version = "0.3", path = "crates/vil_trigger_webhook" }
+vil_trigger_kafka   = { version = "0.3", path = "crates/vil_trigger_kafka" }
+vil_trigger_s3      = { version = "0.3", path = "crates/vil_trigger_s3" }
+vil_trigger_sftp    = { version = "0.3", path = "crates/vil_trigger_sftp" }
+vil_trigger_db_poll = { version = "0.3", path = "crates/vil_trigger_db_poll" }
+vil_trigger_grpc    = { version = "0.3", path = "crates/vil_trigger_grpc" }
 
 # Phase 2 Protocol Crates
-vil_soap           = { version = "0.2", path = "crates/vil_soap" }
-vil_opcua          = { version = "0.2", path = "crates/vil_opcua" }
-vil_modbus         = { version = "0.2", path = "crates/vil_modbus" }
-vil_ws             = { version = "0.2", path = "crates/vil_ws" }
+vil_soap           = { version = "0.3", path = "crates/vil_soap" }
+vil_opcua          = { version = "0.3", path = "crates/vil_opcua" }
+vil_modbus         = { version = "0.3", path = "crates/vil_modbus" }
+vil_ws             = { version = "0.3", path = "crates/vil_ws" }
 
 
 # Phase 5a: Open-Source Enterprise
-vil_otel          = { version = "0.2", path = "crates/vil_otel" }
-vil_edge_deploy   = { version = "0.2", path = "crates/vil_edge_deploy" }
+vil_otel          = { version = "0.3", path = "crates/vil_otel" }
+vil_edge_deploy   = { version = "0.3", path = "crates/vil_edge_deploy" }
 
 # Common dependencies
 serde              = { version = "1.0", features = ["derive"] }

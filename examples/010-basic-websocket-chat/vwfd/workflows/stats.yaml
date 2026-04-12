@@ -1,0 +1,36 @@
+version: "3.0"
+metadata:
+  id: chat-stats
+  name: "GET /api/chat/stats — Chat statistics"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/chat/stats, method: GET }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: get-stats
+      activity_type: NativeCode
+      code_config:
+        handler_ref: chat_stats
+      output_variable: stats
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: 'stats'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: get-stats } }
+    - { id: f2, from: { node: get-stats }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

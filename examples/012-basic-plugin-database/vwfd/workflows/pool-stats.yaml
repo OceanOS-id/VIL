@@ -1,0 +1,33 @@
+version: "3.0"
+metadata:
+  id: pool-stats
+  name: "GET /pool-stats — Pool statistics"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /pool-stats, method: GET }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: handle
+      activity_type: NativeCode
+      code_config: { handler_ref: pool_stats }
+      output_variable: result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response: { language: v-cel, source: 'result' }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: handle } }
+    - { id: f2, from: { node: handle }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

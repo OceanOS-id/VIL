@@ -1,0 +1,120 @@
+version: "3.0"
+metadata:
+  id: rag-ai-event-tracking
+  name: "RAG Support Bot with AI Event Tracking"
+  description: |
+    Customer support RAG: keyword search across 12 support articles (top-3) →
+    LLM chat generates answer → transform tracks timing metrics (retrieval_ms,
+    generation_ms, total_ms) for AI observability. Demonstrates instrumenting
+    RAG pipelines with performance event data.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/support/ask
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Keyword search across 12 support articles, top-3
+    - id: article-search
+      activity_type: Function
+      wasm_config:
+        module_ref: rag_keyword_article_search
+        function_name: execute
+        description: "Keyword-based search across 12 support articles. Tokenizes query, scores articles using BM25 ranking, returns top-3 matches with article_id, title, snippet, and relevance score. Also records retrieval_start_ms timestamp for metrics."
+      input_mappings:
+        - target: query
+          source:
+            language: v-cel
+            source: trigger_payload.question
+        - target: top_k
+          source:
+            language: literal
+            source: 3
+      output_variable: search_results
+
+    # Step 2: LLM chat to generate support answer
+    - id: llm-chat
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a customer support assistant. Answer the question using the provided support articles. Be concise and helpful. Reference article titles when relevant."},
+                  {"role": "user", "content": "Support articles:\n" + search_results.context_text + "\n\nCustomer question: " + trigger_payload.question}
+                ],
+                "stream": true
+              }
+      output_variable: llm_answer
+
+    # Step 3: Track retrieval + generation timing metrics
+    - id: track-metrics
+      activity_type: transform
+      input_mappings:
+        - target: metrics
+          source:
+            language: v-cel
+            source: |
+              {
+                "retrieval_ms": search_results.retrieval_ms,
+                "generation_ms": search_results.generation_start_ms > 0 ? _elapsed_ms - search_results.generation_start_ms : _elapsed_ms - search_results.retrieval_ms,
+                "total_ms": _elapsed_ms,
+                "articles_searched": 12,
+                "articles_matched": size(search_results.articles)
+              }
+      output_variable: metrics
+
+    # Step 4: Respond
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "answer": llm_answer,
+              "articles": search_results.articles,
+              "metrics": metrics,
+              "question": trigger_payload.question
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: article-search } }
+    - { id: f2, from: { node: article-search }, to: { node: llm-chat } }
+    - { id: f3, from: { node: llm-chat }, to: { node: track-metrics } }
+    - { id: f4, from: { node: track-metrics }, to: { node: respond } }
+    - { id: f5, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: search_results
+      type: object
+    - name: llm_answer
+      type: string
+    - name: metrics
+      type: object

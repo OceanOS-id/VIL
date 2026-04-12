@@ -1,0 +1,135 @@
+version: "3.0"
+metadata:
+  id: rag-multi-source-fanin
+  name: "Multi-Source RAG with Fan-In Ranking"
+  description: |
+    Search two independent knowledge bases (tech docs + FAQ) in sequence,
+    cross-rank and merge results into top-3, build augmented prompt,
+    call LLM for a unified answer. Demonstrates multi-source retrieval
+    with cross-collection relevance ranking.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/multi-rag
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Search both KBs independently
+    - id: search-sources
+      activity_type: Function
+      wasm_config:
+        module_ref: rag_multi_source_search
+        description: "Embed query and search two knowledge bases independently: tech_docs (API references, guides) and faq (frequently asked questions). Returns raw results from both sources with scores."
+      input_mappings:
+        - target: query
+          source:
+            language: v-cel
+            source: trigger_payload.query
+      output_variable: raw_results
+
+    # Step 2: Cross-rank and merge top-3
+    - id: cross-rank
+      activity_type: Function
+      wasm_config:
+        module_ref: rag_cross_rank_merge
+        description: "Cross-rank results from tech_docs and faq sources using reciprocal rank fusion (RRF). Normalizes scores across collections, deduplicates, and returns the top-3 most relevant chunks with source attribution."
+      input_mappings:
+        - target: tech_results
+          source:
+            language: v-cel
+            source: raw_results.tech_docs
+        - target: faq_results
+          source:
+            language: v-cel
+            source: raw_results.faq
+        - target: top_k
+          source:
+            language: literal
+            source: 3
+      output_variable: merged_top3
+
+    # Step 3: Build prompt with merged context
+    - id: build-prompt
+      activity_type: transform
+      input_mappings:
+        - target: rag_prompt
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a technical support assistant. Answer using ONLY the provided context from multiple sources. Indicate which source (tech_docs or faq) each part of your answer comes from."},
+                  {"role": "user", "content": "Context:\n[1] (" + merged_top3.chunks[0].source + ") " + merged_top3.chunks[0].text + "\n[2] (" + merged_top3.chunks[1].source + ") " + merged_top3.chunks[1].text + "\n[3] (" + merged_top3.chunks[2].source + ") " + merged_top3.chunks[2].text + "\n\nQuestion: " + trigger_payload.query}
+                ],
+                "stream": true
+              }
+      output_variable: rag_prompt
+
+    # Step 4: LLM call
+    - id: llm-generate
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: rag_prompt
+      output_variable: llm_answer
+
+    # Step 5: Respond
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "answer": llm_answer,
+              "sources": merged_top3.chunks,
+              "source_counts": {
+                "tech_docs": merged_top3.tech_count,
+                "faq": merged_top3.faq_count
+              },
+              "query": trigger_payload.query
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: search-sources } }
+    - { id: f2, from: { node: search-sources }, to: { node: cross-rank } }
+    - { id: f3, from: { node: cross-rank }, to: { node: build-prompt } }
+    - { id: f4, from: { node: build-prompt }, to: { node: llm-generate } }
+    - { id: f5, from: { node: llm-generate }, to: { node: respond } }
+    - { id: f6, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: raw_results
+      type: object
+    - name: merged_top3
+      type: object
+    - name: rag_prompt
+      type: object
+    - name: llm_answer
+      type: string

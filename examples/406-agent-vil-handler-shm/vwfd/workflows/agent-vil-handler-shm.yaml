@@ -1,0 +1,155 @@
+version: "3.0"
+metadata:
+  id: agent-vil-handler-shm
+  name: "Fraud Detection — Rule-Based Parallel Scoring (No LLM)"
+  description: |
+    Pure rule-based fraud detection with three scoring dimensions:
+    velocity (tx/hour), geo-plausibility (location consistency), and
+    amount anomaly (deviation from user's baseline). Weighted composite
+    score: 40% velocity + 35% geo + 25% amount. Decision: APPROVE (<30),
+    REVIEW (30-70), BLOCK (>70). No LLM involved — deterministic scoring.
+    Endpoint: POST /api/detect  { "user_id": "...", "tx": {...}, "history": [...] }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/detect
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Scorer 1: Transaction velocity — count tx in last hour, score 0-100
+    # NativeCode because: timestamp arithmetic, sliding window counting
+    - id: velocity-check
+      activity_type: Sidecar
+      sidecar_config:
+        target: velocity_checker
+        description: |
+          Count transactions in last 1h, 6h, 24h windows from history.
+          Score: 0 if tx_1h <= 3, linear scale to 100 at tx_1h >= 20.
+          Also flags burst patterns (>5 tx in 10min). Returns
+          {score: 0-100, tx_1h, tx_6h, tx_24h, burst_detected: bool}.
+      input_mappings:
+        - target: user_id
+          source:
+            language: v-cel
+            source: trigger_payload.user_id
+        - target: current_tx
+          source:
+            language: v-cel
+            source: trigger_payload.tx
+        - target: history
+          source:
+            language: v-cel
+            source: trigger_payload.history
+      output_variable: velocity_result
+
+    # Scorer 2: Geo-plausibility — check location consistency
+    # NativeCode because: haversine distance, travel speed calculation
+    - id: geo-analysis
+      activity_type: NativeCode
+      code_config:
+        handler_ref: geo_analyzer
+        description: |
+          Compare current tx location with last known location. Calculate
+          haversine distance and implied travel speed (km/h). Score: 0 if
+          speed < 200 km/h (plausible), 50 if 200-900 (suspicious), 100 if
+          >900 (impossible — likely fraud). Also checks if country changed.
+          Returns {score: 0-100, distance_km, speed_kmh, country_changed: bool}.
+      input_mappings:
+        - target: current_tx
+          source:
+            language: v-cel
+            source: trigger_payload.tx
+        - target: history
+          source:
+            language: v-cel
+            source: trigger_payload.history
+      output_variable: geo_result
+
+    # Scorer 3: Amount anomaly — deviation from user baseline
+    # NativeCode because: statistical z-score calculation against user history
+    - id: amount-check
+      activity_type: NativeCode
+      code_config:
+        handler_ref: amount_calculator
+        description: |
+          Compute mean and std_dev of user's historical transaction amounts.
+          Calculate z-score of current amount. Score: 0 if z < 1.5 (normal),
+          linear scale 0-100 for z in [1.5, 4.0], cap at 100 for z >= 4.
+          Returns {score: 0-100, z_score, user_mean, user_std, current_amount}.
+      input_mappings:
+        - target: current_amount
+          source:
+            language: v-cel
+            source: trigger_payload.tx.amount_cents
+        - target: history
+          source:
+            language: v-cel
+            source: trigger_payload.history
+      output_variable: amount_result
+
+    # Combine scores with weighted formula and make decision
+    - id: compute-decision
+      activity_type: transform
+      input_mappings:
+        - target: decision
+          source:
+            language: v-cel
+            source: |
+              {
+                "composite_score": velocity_result.score * 40 / 100 + geo_result.score * 35 / 100 + amount_result.score * 25 / 100,
+                "action": (velocity_result.score * 40 / 100 + geo_result.score * 35 / 100 + amount_result.score * 25 / 100) > 70
+                  ? "BLOCK"
+                  : ((velocity_result.score * 40 / 100 + geo_result.score * 35 / 100 + amount_result.score * 25 / 100) >= 30 ? "REVIEW" : "APPROVE"),
+                "weights": {"velocity": 0.40, "geo": 0.35, "amount": 0.25},
+                "scores": {
+                  "velocity": velocity_result,
+                  "geo": geo_result,
+                  "amount": amount_result
+                }
+              }
+      output_variable: decision
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "user_id": trigger_payload.user_id,
+              "tx_id": trigger_payload.tx.tx_id,
+              "action": decision.action,
+              "composite_score": decision.composite_score,
+              "breakdown": decision.scores,
+              "weights": decision.weights
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: velocity-check } }
+    - { id: f2, from: { node: velocity-check }, to: { node: geo-analysis } }
+    - { id: f3, from: { node: geo-analysis }, to: { node: amount-check } }
+    - { id: f4, from: { node: amount-check }, to: { node: compute-decision } }
+    - { id: f5, from: { node: compute-decision }, to: { node: respond } }
+    - { id: f6, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: velocity_result
+      type: object
+    - name: geo_result
+      type: object
+    - name: amount_result
+      type: object
+    - name: decision
+      type: object

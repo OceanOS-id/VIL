@@ -1,0 +1,67 @@
+version: "3.0"
+metadata:
+  id: trigger-webhook-receiver
+  name: "Webhook Receiver with HMAC Verification"
+  description: |
+    HTTP webhook listener with optional HMAC-SHA256 signature verification.
+    Receives order events, logs to SQLite, returns ack.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /webhook
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: extract-order
+      activity_type: transform
+      input_mappings:
+        - target: order_event
+          source:
+            language: v-cel
+            source: |
+              {
+                "order_id": trigger_payload.order_id,
+                "event_type": trigger_payload.event_type,
+                "amount": trigger_payload.amount
+              }
+      output_variable: order_event
+
+    - id: log-event
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: insert
+      input_mappings:
+        - target: entity
+          source: { language: literal, source: webhook_events }
+        - target: data
+          source: { language: v-cel, source: order_event }
+      output_variable: insert_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: '{"status": "ack", "event_id": order_event.order_id}'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: extract-order } }
+    - { id: f2, from: { node: extract-order }, to: { node: log-event } }
+    - { id: f3, from: { node: log-event }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: order_event, type: object }
+    - { name: insert_result, type: object }

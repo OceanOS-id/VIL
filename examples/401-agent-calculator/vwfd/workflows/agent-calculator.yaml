@@ -1,0 +1,98 @@
+version: "3.0"
+metadata:
+  id: agent-calculator
+  name: "Single-Turn Calculator Agent"
+  description: |
+    Calculator agent that embeds tool schemas in the system prompt and lets the
+    LLM produce a structured answer with calculation steps. Single-turn only:
+    no execution loop — the LLM reasons through the math using the schema as
+    a guide and returns the final result directly.
+    Endpoint: POST /api/calc  { "question": "What is 15% tip on $84.50?" }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/calc
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Build prompt with tool schema embedded so LLM knows the format
+    - id: build-prompt
+      activity_type: transform
+      input_mappings:
+        - target: messages
+          source:
+            language: v-cel
+            source: |
+              [
+                {
+                  "role": "system",
+                  "content": "You are a calculator agent. You have access to these tool schemas (for reference only — execute the math yourself):\n\n[tool: add] params: {a: number, b: number} -> number\n[tool: subtract] params: {a: number, b: number} -> number\n[tool: multiply] params: {a: number, b: number} -> number\n[tool: divide] params: {a: number, b: number} -> number\n[tool: percentage] params: {value: number, percent: number} -> number\n\nRespond with JSON: {\"steps\": [{\"tool\": \"...\", \"params\": {...}, \"result\": ...}], \"final_answer\": ..., \"explanation\": \"...\"}"
+                },
+                {
+                  "role": "user",
+                  "content": trigger_payload.question
+                }
+              ]
+      output_variable: prompt_data
+
+    # Step 2: Call LLM with streaming — single turn, no tool execution loop
+    - id: llm-calc
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": prompt_data.messages,
+                "stream": true,
+                "temperature": 0.0
+              }
+      output_variable: llm_answer
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "question": trigger_payload.question,
+              "answer": llm_answer
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: build-prompt } }
+    - { id: f2, from: { node: build-prompt }, to: { node: llm-calc } }
+    - { id: f3, from: { node: llm-calc }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: prompt_data
+      type: object
+    - name: llm_answer
+      type: string

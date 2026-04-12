@@ -1,0 +1,91 @@
+version: "3.0"
+metadata:
+  id: db-vilorm-analytics
+  name: "VilORM Analytics — Event Ingest with Daily Stats"
+  description: |
+    Analytics event ingestion: insert raw event into events table → upsert
+    daily_stats counter via raw SQL (INSERT ON CONFLICT UPDATE increment) →
+    respond with event ID and updated daily count.
+    Endpoint: POST /api/events  { "event_type": "page_view", "user_id": "...", "metadata": {...} }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/events
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Insert raw event
+    - id: insert-event
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: insert
+        entity: events
+      input_mappings:
+        - target: data
+          source:
+            language: v-cel
+            source: |
+              {
+                "event_type": trigger_payload.event_type,
+                "user_id": trigger_payload.user_id,
+                "metadata": trigger_payload.metadata,
+                "created_at": now()
+              }
+      output_variable: inserted_event
+
+    # Step 2: Upsert daily_stats counter (raw SQL — ON CONFLICT not in ORM ops)
+    - id: upsert-daily-stats
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: raw_query
+      input_mappings:
+        - target: sql
+          source:
+            language: v-cel
+            source: >
+              "INSERT INTO daily_stats (date, event_type, count) VALUES (date('now'), '" +
+              trigger_payload.event_type + "', 1) ON CONFLICT(date, event_type) DO UPDATE SET count = count + 1"
+        - target: returning
+          source:
+            language: literal
+            source: true
+      output_variable: stats_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "event_id": inserted_event.id,
+              "event_type": trigger_payload.event_type,
+              "daily_count": stats_result.count,
+              "date": stats_result.date
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: insert-event } }
+    - { id: f2, from: { node: insert-event }, to: { node: upsert-daily-stats } }
+    - { id: f3, from: { node: upsert-daily-stats }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: inserted_event
+      type: object
+    - name: stats_result
+      type: object

@@ -1,0 +1,58 @@
+version: "3.0"
+metadata:
+  id: trigger-email
+  name: "Email IMAP IDLE Trigger"
+  description: |
+    Monitors HR inbox via IMAP IDLE for new emails. When email arrives,
+    extracts subject/from/body and logs to SQLite inbox table.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: email
+        email_config:
+          folder: "INBOX"
+          idle: true
+      output_variable: trigger_payload
+
+    - id: extract-email
+      activity_type: transform
+      input_mappings:
+        - target: email_entry
+          source:
+            language: v-cel
+            source: |
+              {
+                "subject": trigger_payload.subject,
+                "from": trigger_payload.from,
+                "body_snippet": trigger_payload.body_snippet,
+                "received_at": trigger_payload.timestamp
+              }
+      output_variable: email_entry
+
+    - id: log-email
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: insert
+      input_mappings:
+        - target: entity
+          source: { language: literal, source: email_inbox }
+        - target: data
+          source: { language: v-cel, source: email_entry }
+      output_variable: insert_result
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: extract-email } }
+    - { id: f2, from: { node: extract-email }, to: { node: log-email } }
+    - { id: f3, from: { node: log-email }, to: { node: end } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: email_entry, type: object }
+    - { name: insert_result, type: object }

@@ -1,0 +1,35 @@
+version: "3.0"
+metadata:
+  id: secure-auth
+  name: "POST /api/auth/token — Secure API (5 FaaS: crypto, jwt, webhook, regex, template)"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/auth/token, method: POST }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+    - id: process
+      activity_type: Transform
+      input_mappings:
+        - target: email_valid
+          source: { language: v-cel, source: 'regex_match(trigger_payload.body.email, "^[^@]+@[^@]+\\.[a-zA-Z]{2,}$")' }
+        - target: token
+          source: { language: v-cel, source: 'jwt_sign(trigger_payload.body, "secret-key")' }
+        - target: welcome
+          source: { language: v-cel, source: 'render_template("Welcome {{name}}", trigger_payload.body)' }
+      output_variable: result
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response: { language: v-cel, source: 'result' }
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: process } }
+    - { id: f2, from: { node: process }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

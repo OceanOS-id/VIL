@@ -1,0 +1,72 @@
+version: "3.0"
+metadata:
+  id: mq-rabbitmq-pubsub
+  name: "RabbitMQ Pub/Sub — Publish Task Result"
+  description: |
+    Publishes a task result message to a RabbitMQ exchange. Receives a payload
+    via webhook, routes it through the vastar.mq.rabbitmq connector to the
+    vil.results exchange with routing_key "task", and responds with publish
+    confirmation including delivery status and timestamp.
+    Endpoint: POST /api/publish  { "task_id": "...", "status": "...", "result": {...} }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/publish
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Publish message to RabbitMQ exchange
+    - id: rabbitmq-publish
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.mq.rabbitmq
+        operation: publish
+      input_mappings:
+        - target: exchange
+          source:
+            language: literal
+            source: "vil.results"
+        - target: routing_key
+          source:
+            language: literal
+            source: "task"
+        - target: payload
+          source:
+            language: v-cel
+            source: trigger_payload
+      output_variable: publish_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "status": "published",
+              "exchange": "vil.results",
+              "routing_key": "task",
+              "delivered": publish_result.delivered,
+              "timestamp": publish_result.timestamp
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: rabbitmq-publish } }
+    - { id: f2, from: { node: rabbitmq-publish }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: publish_result
+      type: object

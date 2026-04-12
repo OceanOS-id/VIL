@@ -1,0 +1,46 @@
+version: "3.0"
+metadata:
+  id: villog-tracing-bridge
+  name: "VilLog Tracing Bridge"
+  description: |
+    Bridges third-party tracing ecosystem into VIL ring via VilTracingLayer.
+    This is a logging infrastructure demo — runs as CLI program, not HTTP server.
+    NativeCode is the only valid pattern (no external service calls, no workflow).
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/villog-tracing-bridge }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: process
+      activity_type: NativeCode
+      code_config:
+        handler_ref: villog_tracing_bridge
+        description: "Bridges third-party tracing ecosystem into VIL ring via VilTracingLayer"
+      output_variable: result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: result
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: process } }
+    - { id: f2, from: { node: process }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: result, type: object }

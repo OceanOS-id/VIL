@@ -1,0 +1,46 @@
+version: "3.0"
+metadata:
+  id: list-tasks
+  name: "GET /tasks — List tasks via VilQuery select"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/tasks/tasks, method: GET }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: query
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: query
+      input_mappings:
+        - target: sql
+          source:
+            language: vil_query
+            source: |
+              select("tasks")
+                .columns("id, title, done, created_at")
+                .order_by("created_at DESC")
+                .limit(100)
+      output_variable: result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: '{"data": result.rows}'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: query } }
+    - { id: f2, from: { node: query }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

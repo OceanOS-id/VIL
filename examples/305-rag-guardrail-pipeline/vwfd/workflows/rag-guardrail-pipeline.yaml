@@ -1,0 +1,161 @@
+version: "3.0"
+metadata:
+  id: rag-guardrail-pipeline
+  name: "RAG with Safety Guardrail Pipeline"
+  description: |
+    RAG pipeline with post-generation safety checks: retrieve context → LLM
+    generates answer → PII detection (email, phone, NIK regex) → hallucination
+    detection (5 markers: unsupported claims, fabricated refs, confidence without
+    evidence, contradictions, out-of-scope assertions) → final status transform
+    (PASS / REDACTED / BLOCKED) with confidence score.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/safe-rag
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: RAG context retrieval
+    - id: retrieve-context
+      activity_type: NativeCode
+      code_config:
+        handler_ref: rag_context_retrieval
+        description: "Embed query and retrieve top-3 relevant chunks from the knowledge base. Returns chunks with text and metadata for use as LLM context and later hallucination checking."
+      input_mappings:
+        - target: query
+          source:
+            language: v-cel
+            source: trigger_payload.query
+        - target: top_k
+          source:
+            language: literal
+            source: 3
+      output_variable: rag_context
+
+    # Step 2: LLM call
+    - id: llm-generate
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "Answer the question using ONLY the provided context. Do not include personal information like emails, phone numbers, or ID numbers in your response."},
+                  {"role": "user", "content": "Context:\n" + rag_context.context_text + "\n\nQuestion: " + trigger_payload.query}
+                ],
+                "stream": true
+              }
+      output_variable: llm_answer
+
+    # Step 3: PII check — regex scan for email, phone, NIK
+    - id: pii-check
+      activity_type: Function
+      wasm_config:
+        module_ref: guardrail_pii_detector
+        description: "Scan LLM output for PII using regex patterns: email ([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+), phone (\\d{10,13} with optional +/- separators), NIK (16-digit Indonesian ID number). Returns {has_pii: bool, pii_types: [], redacted_text: string} where detected PII is replaced with [REDACTED]."
+      input_mappings:
+        - target: text
+          source:
+            language: v-cel
+            source: llm_answer
+      output_variable: pii_result
+
+    # Step 4: Hallucination detection — 5 markers
+    - id: hallucination-check
+      activity_type: NativeCode
+      code_config:
+        handler_ref: guardrail_hallucination_detector
+        description: "Check LLM answer against retrieved context for 5 hallucination markers: (1) unsupported factual claims not in context, (2) fabricated references/citations, (3) high-confidence statements without evidence, (4) contradictions with source material, (5) out-of-scope assertions beyond the question. Returns {score: 0.0-1.0, markers_found: [], is_hallucinated: bool}."
+      input_mappings:
+        - target: answer_text
+          source:
+            language: v-cel
+            source: pii_result.redacted_text
+        - target: context_chunks
+          source:
+            language: v-cel
+            source: rag_context.chunks
+      output_variable: hallucination_result
+
+    # Step 5: Final status determination
+    - id: build-status
+      activity_type: transform
+      input_mappings:
+        - target: guardrail_output
+          source:
+            language: v-cel
+            source: |
+              {
+                "safe_answer": pii_result.redacted_text,
+                "status": hallucination_result.is_hallucinated ? "BLOCKED" : (pii_result.has_pii ? "REDACTED" : "PASS"),
+                "confidence": 1.0 - hallucination_result.score,
+                "pii_detected": pii_result.pii_types,
+                "hallucination_markers": hallucination_result.markers_found
+              }
+      output_variable: guardrail_output
+
+    # Step 6: Respond
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "answer": guardrail_output.status == "BLOCKED" ? "[Response blocked due to hallucination risk]" : guardrail_output.safe_answer,
+              "status": guardrail_output.status,
+              "confidence": guardrail_output.confidence,
+              "guardrails": {
+                "pii": pii_result.pii_types,
+                "hallucination_score": hallucination_result.score,
+                "hallucination_markers": hallucination_result.markers_found
+              },
+              "query": trigger_payload.query
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: retrieve-context } }
+    - { id: f2, from: { node: retrieve-context }, to: { node: llm-generate } }
+    - { id: f3, from: { node: llm-generate }, to: { node: pii-check } }
+    - { id: f4, from: { node: pii-check }, to: { node: hallucination-check } }
+    - { id: f5, from: { node: hallucination-check }, to: { node: build-status } }
+    - { id: f6, from: { node: build-status }, to: { node: respond } }
+    - { id: f7, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: rag_context
+      type: object
+    - name: llm_answer
+      type: string
+    - name: pii_result
+      type: object
+    - name: hallucination_result
+      type: object
+    - name: guardrail_output
+      type: object

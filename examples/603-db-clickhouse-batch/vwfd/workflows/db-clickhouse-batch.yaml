@@ -1,0 +1,113 @@
+version: "3.0"
+metadata:
+  id: db-clickhouse-batch
+  name: "ClickHouse Batch Insert with Table Setup"
+  description: |
+    Batch insert workflow: create table if not exists → LoopForEach over rows →
+    insert each row via Connector → collect results → respond with insert count.
+    Endpoint: POST /api/clickhouse/batch  { "table": "events", "columns": [...], "rows": [[...], ...] }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/clickhouse/batch
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Ensure table exists via CREATE TABLE IF NOT EXISTS
+    - id: create-table
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.clickhouse
+        operation: execute
+      input_mappings:
+        - target: query
+          source:
+            language: v-cel
+            source: >
+              "CREATE TABLE IF NOT EXISTS " + trigger_payload.table +
+              " (" + trigger_payload.columns.join(", ") + ") ENGINE = MergeTree() ORDER BY tuple()"
+      output_variable: create_result
+
+    # Step 2: Loop over each row for insertion
+    - id: insert-loop
+      activity_type: LoopForEach
+      loop_config:
+        collection: "trigger_payload.rows"
+        item_variable: current_row
+      output_variable: loop_state
+
+    # Per-row: insert into ClickHouse
+    - id: insert-row
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.clickhouse
+        operation: execute
+      input_mappings:
+        - target: query
+          source:
+            language: v-cel
+            source: >
+              "INSERT INTO " + trigger_payload.table + " VALUES (" +
+              current_row.join(", ") + ")"
+      output_variable: row_result
+
+    - id: loop-end
+      activity_type: Noop
+
+    # After loop: build summary response
+    - id: build-response
+      activity_type: transform
+      input_mappings:
+        - target: batch_summary
+          source:
+            language: v-cel
+            source: |
+              {
+                "status": "batch_complete",
+                "table": trigger_payload.table,
+                "rows_inserted": size(trigger_payload.rows)
+              }
+      output_variable: batch_summary
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: batch_summary
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: create-table } }
+    - { id: f2, from: { node: create-table }, to: { node: insert-loop } }
+    # Loop body
+    - { id: f3, from: { node: insert-loop }, to: { node: insert-row } }
+    - { id: f4, from: { node: insert-row }, to: { node: loop-end } }
+    - { id: f5, from: { node: loop-end }, to: { node: insert-loop } }
+    # After loop exits
+    - { id: f6, from: { node: insert-loop }, to: { node: build-response }, condition: "_loop_done" }
+    - { id: f7, from: { node: build-response }, to: { node: respond } }
+    - { id: f8, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: create_result
+      type: object
+    - name: current_row
+      type: array
+    - name: row_result
+      type: object
+    - name: loop_state
+      type: object
+    - name: batch_summary
+      type: object

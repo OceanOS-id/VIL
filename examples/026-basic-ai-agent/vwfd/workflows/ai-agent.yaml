@@ -1,0 +1,59 @@
+version: "3.0"
+metadata:
+  id: ai-agent
+  name: "IT Helpdesk Agent — ReAct Multi-Tool"
+  description: |
+    Autonomous IT support agent. ReAct loop (max 5 iterations):
+    LLM reasons → selects tool (system_status, knowledge_base, sla_calculator)
+    → executes → feeds observation back → repeats until resolved.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/helpdesk/ask }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: agent-loop
+      activity_type: NativeCode
+      code_config:
+        handler_ref: react_agent_loop
+        description: |
+          ReAct loop: LLM → parse Thought/Action/ActionInput → dispatch tool
+          (system_status: server health, knowledge_base: KB search,
+          sla_calculator: SLA compliance check) → append observation →
+          repeat until FINAL_ANSWER or max 5 iterations.
+      input_mappings:
+        - target: question
+          source: { language: v-cel, source: trigger_payload.question }
+      output_variable: agent_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "answer": agent_result.answer,
+              "tools_used": agent_result.tools_used,
+              "iterations": agent_result.iterations,
+              "reasoning_trace": agent_result.trace
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: agent-loop } }
+    - { id: f2, from: { node: agent-loop }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: agent_result, type: object }

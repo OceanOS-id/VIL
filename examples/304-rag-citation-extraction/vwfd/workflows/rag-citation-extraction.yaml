@@ -1,0 +1,132 @@
+version: "3.0"
+metadata:
+  id: rag-citation-extraction
+  name: "RAG with Structured Citation Extraction"
+  description: |
+    Legal document RAG pipeline: retrieve relevant legal documents → build
+    prompt instructing LLM to cite as [Doc1], [Doc2], etc. → LLM SSE generates
+    answer with inline citations → NativeCode extracts [DocN] references and
+    builds structured Citation objects with doc title, section, and page.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/cited-rag
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Retrieve legal docs via vector search
+    - id: retrieve-docs
+      activity_type: NativeCode
+      code_config:
+        handler_ref: rag_legal_doc_retrieval
+        description: "Embed query and search the legal document corpus. Returns top-4 document chunks with metadata (doc_id, title, section, page_number). Each chunk is assigned a citation label [Doc1]..[Doc4]."
+      input_mappings:
+        - target: query
+          source:
+            language: v-cel
+            source: trigger_payload.query
+        - target: top_k
+          source:
+            language: literal
+            source: 4
+      output_variable: legal_docs
+
+    # Step 2: Build prompt with citation instructions
+    - id: build-prompt
+      activity_type: transform
+      input_mappings:
+        - target: rag_prompt
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a legal research assistant. Answer the question using ONLY the provided documents. You MUST cite every claim using [Doc1], [Doc2], etc. corresponding to the document labels below. Do not invent information."},
+                  {"role": "user", "content": "Documents:\n" + legal_docs.formatted_context + "\n\nQuestion: " + trigger_payload.query}
+                ],
+                "stream": true
+              }
+      output_variable: rag_prompt
+
+    # Step 3: LLM SSE call
+    - id: llm-generate
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: rag_prompt
+      output_variable: llm_answer
+
+    # Step 4: Extract [DocN] refs and build Citation structs
+    - id: extract-citations
+      activity_type: Sidecar
+      sidecar_config:
+        target: rag_citation_extractor
+        description: "Parse the LLM answer text for [Doc1]..[DocN] citation markers using regex. For each unique marker found, look up the corresponding document metadata from legal_docs and build a Citation struct {label, doc_id, title, section, page}. Returns the answer text plus an ordered citations array."
+      input_mappings:
+        - target: answer_text
+          source:
+            language: v-cel
+            source: llm_answer
+        - target: doc_metadata
+          source:
+            language: v-cel
+            source: legal_docs.chunks
+      output_variable: cited_response
+
+    # Step 5: Respond with structured citations
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "answer": cited_response.answer,
+              "citations": cited_response.citations,
+              "citation_count": cited_response.citation_count,
+              "query": trigger_payload.query
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: retrieve-docs } }
+    - { id: f2, from: { node: retrieve-docs }, to: { node: build-prompt } }
+    - { id: f3, from: { node: build-prompt }, to: { node: llm-generate } }
+    - { id: f4, from: { node: llm-generate }, to: { node: extract-citations } }
+    - { id: f5, from: { node: extract-citations }, to: { node: respond } }
+    - { id: f6, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: legal_docs
+      type: object
+    - name: rag_prompt
+      type: object
+    - name: llm_answer
+      type: string
+    - name: cited_response
+      type: object

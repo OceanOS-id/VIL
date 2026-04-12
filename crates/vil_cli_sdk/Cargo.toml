@@ -9,7 +9,7 @@ homepage = "https://vastar.id/products/vil"
 documentation = "https://vastar.id/docs/vil"
 
 [dependencies]
-vil_cli_core = { version = "0.2", path = "../vil_cli_core" }
+vil_cli_core = { version = "0.3", path = "../vil_cli_core" }
 clap = { version = "4.4", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

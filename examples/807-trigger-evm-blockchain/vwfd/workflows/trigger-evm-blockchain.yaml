@@ -1,0 +1,60 @@
+version: "3.0"
+metadata:
+  id: trigger-evm-blockchain
+  name: "EVM Blockchain Event Trigger — DeFi Monitor"
+  description: |
+    Subscribes to smart contract events via WebSocket (eth_subscribe).
+    Monitors Transfer events from DeFi contract. Decodes event data
+    (from/to/amount) and logs to SQLite for on-chain analytics.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: evm
+        evm_config:
+          event_signature: "Transfer(address,address,uint256)"
+      output_variable: trigger_payload
+
+    - id: decode-event
+      activity_type: transform
+      input_mappings:
+        - target: transfer
+          source:
+            language: v-cel
+            source: |
+              {
+                "tx_hash": trigger_payload.tx_hash,
+                "block_number": trigger_payload.block_number,
+                "from_address": trigger_payload.from,
+                "to_address": trigger_payload.to,
+                "amount_wei": trigger_payload.amount,
+                "contract": trigger_payload.contract_address
+              }
+      output_variable: transfer
+
+    - id: log-transfer
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: insert
+      input_mappings:
+        - target: entity
+          source: { language: literal, source: blockchain_events }
+        - target: data
+          source: { language: v-cel, source: transfer }
+      output_variable: insert_result
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: decode-event } }
+    - { id: f2, from: { node: decode-event }, to: { node: log-transfer } }
+    - { id: f3, from: { node: log-transfer }, to: { node: end } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: transfer, type: object }
+    - { name: insert_result, type: object }

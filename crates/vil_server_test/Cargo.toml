@@ -10,8 +10,8 @@ readme = "README.md"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-vil_server_core = { version = "0.2", path = "../vil_server_core" }
-vil_server = { version = "0.2", path = "../vil_server" }
+vil_server_core = { version = "0.3", path = "../vil_server_core" }
+vil_server = { version = "0.3", path = "../vil_server" }
 
 axum = "0.7"
 tokio = { version = "1", features = ["full"] }
@@ -25,7 +25,7 @@ bytes = "1.0"
 http-body-util = "0.1"
 
 [dev-dependencies]
-vil_server_auth = { version = "0.2", path = "../vil_server_auth" }
-vil_server_mesh = { version = "0.2", path = "../vil_server_mesh" }
-vil_server_web = { version = "0.2", path = "../vil_server_web" }
-vil_db_semantic = { version = "0.2", path = "../vil_db_semantic" }
+vil_server_auth = { version = "0.3", path = "../vil_server_auth" }
+vil_server_mesh = { version = "0.3", path = "../vil_server_mesh" }
+vil_server_web = { version = "0.3", path = "../vil_server_web" }
+vil_db_semantic = { version = "0.3", path = "../vil_db_semantic" }

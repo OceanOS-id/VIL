@@ -1,0 +1,132 @@
+version: "3.0"
+metadata:
+  id: rag-full-pipeline-ingest-query
+  name: "Full RAG Pipeline: Embed + Search + Generate"
+  description: |
+    Complete RAG pipeline: embed question → HNSW vector search (top-3) →
+    build context window → LLM chat completion → transform with timing
+    metrics (embed_ms, search_ms, generation_ms, total_ms). End-to-end
+    demonstration of the full retrieval-augmented generation cycle.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/rag/query
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Embed question → HNSW search top-3
+    - id: embed-and-search
+      activity_type: Function
+      wasm_config:
+        module_ref: rag_hnsw_embed_search
+        function_name: execute
+        description: "Embed the user question into a dense vector, then HNSW cosine search the knowledge index for top-3 most relevant chunks. Returns chunks with text, doc_id, title, score, and timing breakdown (embed_ms, search_ms)."
+      input_mappings:
+        - target: question
+          source:
+            language: v-cel
+            source: trigger_payload.question
+        - target: top_k
+          source:
+            language: literal
+            source: 3
+      output_variable: search_results
+
+    # Step 2: Build context for LLM
+    - id: build-context
+      activity_type: transform
+      input_mappings:
+        - target: llm_request
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a knowledgeable assistant. Answer the question using the provided context. Be accurate and concise. If the context is insufficient, state what you can answer and what needs more information."},
+                  {"role": "user", "content": "Context:\n[1] " + search_results.chunks[0].text + "\n[2] " + search_results.chunks[1].text + "\n[3] " + search_results.chunks[2].text + "\n\nQuestion: " + trigger_payload.question}
+                ],
+                "stream": true
+              }
+      output_variable: llm_request
+
+    # Step 3: LLM chat completion
+    - id: llm-generate
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: llm_request
+      output_variable: llm_answer
+
+    # Step 4: Timing metrics
+    - id: compute-metrics
+      activity_type: transform
+      input_mappings:
+        - target: timing
+          source:
+            language: v-cel
+            source: |
+              {
+                "embed_ms": search_results.embed_ms,
+                "search_ms": search_results.search_ms,
+                "generation_ms": _elapsed_ms - search_results.embed_ms - search_results.search_ms,
+                "total_ms": _elapsed_ms
+              }
+      output_variable: timing
+
+    # Step 5: Respond
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "answer": llm_answer,
+              "sources": search_results.chunks,
+              "timing": timing,
+              "question": trigger_payload.question
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: embed-and-search } }
+    - { id: f2, from: { node: embed-and-search }, to: { node: build-context } }
+    - { id: f3, from: { node: build-context }, to: { node: llm-generate } }
+    - { id: f4, from: { node: llm-generate }, to: { node: compute-metrics } }
+    - { id: f5, from: { node: compute-metrics }, to: { node: respond } }
+    - { id: f6, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: search_results
+      type: object
+    - name: llm_request
+      type: object
+    - name: llm_answer
+      type: string
+    - name: timing
+      type: object

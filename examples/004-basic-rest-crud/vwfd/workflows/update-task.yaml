@@ -1,0 +1,55 @@
+version: "3.0"
+metadata:
+  id: update-task
+  name: "PUT /tasks/:id — Update task (pure VilQuery)"
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/tasks/tasks/, method: PUT }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: update
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: execute
+      input_mappings:
+        - target: sql
+          source:
+            language: v-cel
+            source: '"UPDATE tasks SET updated_at = strftime(''%Y-%m-%dT%H:%M:%SZ'',''now''), done = 1 WHERE id = ''" + trigger_payload.path.split("/").last() + "''"'
+      output_variable: update_result
+
+    - id: fetch
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.db.sqlite
+        operation: find_one
+      input_mappings:
+        - target: sql
+          source:
+            language: v-cel
+            source: '"SELECT * FROM tasks WHERE id = ''" + trigger_payload.path.split("/").last() + "''"'
+      output_variable: task
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: 'task'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: update } }
+    - { id: f2, from: { node: update }, to: { node: fetch } }
+    - { id: f3, from: { node: fetch }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }

@@ -1,0 +1,88 @@
+version: "3.0"
+metadata:
+  id: mq-pulsar-messaging
+  name: "Apache Pulsar — Publish Transaction Event"
+  description: |
+    Publishes a structured TransactionEvent to an Apache Pulsar topic. Receives
+    raw transaction data via webhook, transforms it into a typed event with
+    type/amount/currency/timestamp fields, then publishes to the "transactions"
+    topic via the vastar.mq.pulsar connector. Responds with publish confirmation.
+    Endpoint: POST /api/events/publish  { "type": "purchase", "amount": 59.99, "currency": "IDR" }
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/events/publish
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # Step 1: Build typed TransactionEvent from raw input
+    - id: build-event
+      activity_type: transform
+      input_mappings:
+        - target: event
+          source:
+            language: v-cel
+            source: |
+              {
+                "event_type": "TransactionEvent",
+                "type": trigger_payload.type,
+                "amount": trigger_payload.amount,
+                "currency": trigger_payload.currency,
+                "timestamp": now()
+              }
+      output_variable: transaction_event
+
+    # Step 2: Publish event to Pulsar topic
+    - id: pulsar-publish
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.mq.pulsar
+        operation: publish
+      input_mappings:
+        - target: topic
+          source:
+            language: literal
+            source: "transactions"
+        - target: payload
+          source:
+            language: v-cel
+            source: transaction_event.event
+      output_variable: publish_result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: |
+            {
+              "status": "published",
+              "topic": "transactions",
+              "event_type": "TransactionEvent",
+              "message_id": publish_result.message_id,
+              "timestamp": transaction_event.event.timestamp
+            }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: build-event } }
+    - { id: f2, from: { node: build-event }, to: { node: pulsar-publish } }
+    - { id: f3, from: { node: pulsar-publish }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: transaction_event
+      type: object
+    - name: publish_result
+      type: object

@@ -1,0 +1,130 @@
+version: "3.0"
+metadata:
+  id: llm-streaming-translator
+  name: "Real-time Batch Document Translation"
+  description: |
+    Batch translation service: receive array of texts + target language →
+    LoopForEach over texts → per-item LLM translation (SSE streaming) →
+    collect results with success/failure counts → return batch response.
+    Each translation is independent — errors don't stop the batch.
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/translate/batch
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    # LoopForEach over trigger_payload.texts
+    - id: translate-loop
+      activity_type: LoopForEach
+      loop_config:
+        collection: "trigger_payload.texts"
+        item_variable: current_text
+      output_variable: loop_state
+
+    # Per-item: call LLM to translate current_text
+    - id: translate-item
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        format: sse
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: v-cel
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [
+                  {"role": "system", "content": "You are a translator. Translate to " + trigger_payload.target_lang + ". Return ONLY the translated text, nothing else."},
+                  {"role": "user", "content": current_text}
+                ],
+                "stream": true
+              }
+      output_variable: translated_text
+
+    # Collect translation result per item
+    - id: collect-result
+      activity_type: transform
+      input_mappings:
+        - target: translation
+          source:
+            language: v-cel
+            source: |
+              {
+                "index": loop_state.iteration,
+                "original": current_text,
+                "translated": translated_text,
+                "status": "ok"
+              }
+      output_variable: translation_line
+
+    # End of loop body — back to translate-loop
+    - id: loop-end
+      activity_type: Noop
+
+    # After loop: build batch response
+    - id: build-response
+      activity_type: transform
+      input_mappings:
+        - target: batch_result
+          source:
+            language: v-cel
+            source: |
+              {
+                "total": size(trigger_payload.texts),
+                "target_lang": trigger_payload.target_lang,
+                "translations": _loop_results
+              }
+      output_variable: batch_response
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: batch_response
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: translate-loop } }
+    # Loop body
+    - { id: f2, from: { node: translate-loop }, to: { node: translate-item } }
+    - { id: f3, from: { node: translate-item }, to: { node: collect-result } }
+    - { id: f4, from: { node: collect-result }, to: { node: loop-end } }
+    - { id: f5, from: { node: loop-end }, to: { node: translate-loop } }
+    # After loop exits
+    - { id: f6, from: { node: translate-loop }, to: { node: build-response }, condition: "_loop_done" }
+    - { id: f7, from: { node: build-response }, to: { node: respond } }
+    - { id: f8, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - name: trigger_payload
+      type: object
+    - name: current_text
+      type: string
+    - name: translated_text
+      type: string
+    - name: translation_line
+      type: object
+    - name: loop_state
+      type: object
+    - name: batch_response
+      type: object

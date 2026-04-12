@@ -1,0 +1,12 @@
+[package]
+name = "vflow-risk-mitigation-bench"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+vil_shm = { path = "../../crates/vil_shm" }
+tokio = { version = "1", features = ["full", "sync", "time"] }
+flatbuffers = "24.3.25"

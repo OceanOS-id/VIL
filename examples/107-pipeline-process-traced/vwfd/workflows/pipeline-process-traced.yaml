@@ -1,0 +1,47 @@
+version: "3.0"
+metadata:
+  id: traced-pipeline
+  name: "Process-Traced Supply Chain Pipeline"
+  description: "POST /traced — supply chain with per-hop latency measurement via trace macros"
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /traced }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: process
+      activity_type: Function
+      wasm_config:
+        module_ref: traced_supply_chain
+        function_name: execute
+        description: "POST /traced — supply chain with per-hop latency measurement via trace macros"
+      input_mappings:
+        - target: input
+          source: { language: v-cel, source: trigger_payload }
+      output_variable: result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: v-cel
+          source: result
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: process } }
+    - { id: f2, from: { node: process }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
+
+  variables:
+    - { name: trigger_payload, type: object }
+    - { name: result, type: object }
