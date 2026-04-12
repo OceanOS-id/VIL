@@ -14,206 +14,184 @@
 
 <p align="center">
   <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License"></a>
-  <img src="https://img.shields.io/badge/crates-142-green" alt="Crates">
-  <img src="https://img.shields.io/badge/examples-112-orange" alt="Examples">
-  <img src="https://img.shields.io/badge/tests-1425%2B-brightgreen" alt="Tests">
-  <img src="https://img.shields.io/badge/rust-1.93%2B-orange" alt="Rust">
+  <img src="https://img.shields.io/badge/crates-171-green" alt="Crates">
+  <img src="https://img.shields.io/badge/examples-234-orange" alt="Examples">
+  <img src="https://img.shields.io/badge/built--in_FaaS-20-cyan" alt="FaaS">
+  <img src="https://img.shields.io/badge/v0.3.0-latest-brightgreen" alt="Version">
 </p>
 
 VIL combines a **semantic language layer** (compiler, IR, macros, codegen) with a **server framework** (VilApp, ServiceProcess, Tri-Lane mesh) — generating all plumbing so developers write only business logic and intent.
 
-```
-Developer writes:          VIL generates:
-  body: ShmSlice         →  Zero-copy request body via ExchangeHeap
-  ctx: ServiceCtx        →  Tri-Lane inter-service messaging
-  vil_workflow!           →  Process registration, port wiring, queue plumbing
-  .transform(|line|{})   →  Per-record NDJSON/SSE inline processing
-  VilResponse::ok(data)  →  SIMD JSON serialization + SHM write-through
-```
+**v0.3.0:** Two development patterns (Standard + Workflow), WASM at 83K req/s, Sidecar at 59K req/s, 20 built-in FaaS functions.
 
-## Key Differentiators
+## Two Patterns, One Runtime
 
-- **Zero-copy by default** — ShmSlice body extraction, ExchangeHeap, no intermediate buffers
-- **Tri-Lane Protocol** — Trigger / Data / Control physically separated (no head-of-line blocking)
-- **3 execution modes** — Native Rust (0 overhead), WASM sandbox (~1-5μs), Sidecar any language (~12μs)
-- **YAML → Native binary** — write in Python/Go/Java/TypeScript/C#/Kotlin/Swift/Zig, compile to Rust binary (transpile SDK)
-- **51 AI plugin crates + 30 connector/trigger crates** — LLM, RAG, Agent, embeddings, vector DB — all use VIL Way patterns
-- **5 SSE dialects** — OpenAI, Anthropic, Ollama, Cohere, Gemini with correct done-signal handling
-- **Production config** — profiles (dev/staging/prod), 30+ env vars, SHM pool P99 tuning
-
-## Performance
-
-> Intel i9-11900F (8C/16T), 32GB RAM, Ubuntu 22.04, Rust 1.93.1
-
-| Benchmark | Throughput | records/s | P50 | P99 | Notes |
-|-----------|-----------|-----------|-----|-----|-------|
-| VX_APP HTTP server | **41,000 req/s** | — | 0.5ms | 26ms | Pure VIL overhead <1ms |
-| AI Gateway (SSE proxy) | **6,200 req/s** | — | 76ms | 116ms | Sweet spot c500, 16% overhead vs direct |
-| NDJSON transform (1K rec/req) | **895 req/s** | **895K rec/s** | 183ms | 246ms | Parse + enrich/filter + re-serialize |
-| Multi-pipeline (shared SHM) | **3,700 req/s** | — | 46ms | 85ms | ShmToken zero-copy cross-workflow |
-
-### AI Gateway (001) — Scaling & Overhead (validated 2026-03-27)
-
-| Concurrent | Via VIL | Direct (simulator) | VIL Overhead | P50 | P99 | Success |
-|-----------|---------|-------------------|--------------|-----|-----|---------|
-| 100 | 2,111 | — | — | 43ms | 83ms | 100% |
-| 200 | 3,875 | 4,734 | 18% | 45ms | 77ms | 100% |
-| 300 | 5,780 | — | — | 46ms | 71ms | 100% |
-| **400** | **6,466** | — | — | **56ms** | **88ms** | **100%** |
-| **500** | **6,519** | 7,785 | **16%** | **72ms** | **112ms** | **100%** |
-| 600 | 6,195 | — | — | 91ms | 120ms | 100% |
-| 800 | 6,065 | — | — | 123ms | 186ms | 100% |
-| 1000 | 6,239 | — | — | 152ms | 189ms | 100% |
-
-**Sweet spot: c400-500 — ~6,500 req/s, P99 <112ms, 16% overhead vs direct.**
-Throughput plateaus at c500+ while latency climbs. At c800+ P99 approaches 200ms SLO.
-
-**What this means:** If you build a custom API gateway or data pipeline using VIL, you can expect performance in the same class as dedicated infrastructure software:
-
-| Use Case | VIL Measured | Comparable To |
-|----------|-------------|---------------|
-| Custom REST gateway (routing + auth + transform) | **~41,000 req/s** | Envoy, Nginx reverse proxy |
-| AI inference proxy (SSE streaming + Tri-Lane) | **~6,500 req/s** | Kong, AWS API Gateway (single node) |
-| NDJSON data pipeline (parse + enrich + validate) | **~895 req/s (895K rec/s)** | Kafka Streams, Flink per-record transform |
-| Multi-service mesh (Tri-Lane SHM) | **~3,700 req/s** | Service mesh sidecar (Linkerd, Istio dataplane) |
-
-The difference: Envoy/Nginx are C/C++ infrastructure with no business logic. VIL delivers similar throughput **while executing your custom business logic** (validation, enrichment, routing decisions) inside the pipeline — not just proxying bytes.
-
-Full benchmark with overhead analysis: [examples/BENCHMARK_REPORT.md](examples/BENCHMARK_REPORT.md)
-
-## Quick Start
-
-### Pattern A: HTTP Server (VX_APP)
+### Standard Pattern — Imperative Rust
 
 ```rust
 use vil_server::prelude::*;
 
-async fn create_task(ctx: ServiceCtx, body: ShmSlice) -> Result<VilResponse<Task>, VilError> {
-    let store = ctx.state::<Arc<Store>>()?;
-    let input: CreateTask = body.json().map_err(|_| VilError::bad_request("invalid JSON"))?;
-    Ok(VilResponse::created(store.insert(input)))
-}
-
 #[tokio::main]
 async fn main() {
-    VilApp::new("tasks")
-        .port(8080)
-        .profile("prod")
-        .service(ServiceProcess::new("tasks")
-            .state(store)
-            .endpoint(Method::POST, "/tasks", post(create_task)))
+    VilApp::new("my-service")
+        .service(ServiceProcess::new("handler")
+            .endpoint(Method::POST, "/api/process", post(my_handler)))
+        .run("0.0.0.0:8080").await;
+}
+```
+
+### Workflow Pattern — Declarative YAML + Any Language
+
+```rust
+#[tokio::main]
+async fn main() {
+    vil_vwfd::app("workflows/", 8080)
+        .native("validate", |input| Ok(json!({"ok": true})))
+        .wasm("pricing", "modules/pricing.wasm")
+        .sidecar("scorer", "python3 scorer.py")
         .run().await;
 }
 ```
 
-### Pattern B: Streaming Pipeline (SDK)
-
-```rust
-use vil_sdk::prelude::*;
-
-let source = HttpSourceBuilder::new("CreditIngest")
-    .url("http://core-banking:18081/api/v1/credits/ndjson?page_size=1000")
-    .format(HttpFormat::NDJSON)
-    .transform(|line: &[u8]| {
-        let r: serde_json::Value = serde_json::from_slice(line).ok()?;
-        if r["kolektabilitas"].as_u64()? >= 3 { Some(line.to_vec()) } else { None }
-    });
-
-let (_ir, handles) = vil_workflow! {
-    name: "NplFilter",
-    instances: [sink, source],
-    routes: [
-        sink.trigger_out -> source.trigger_in (LoanWrite),
-        source.data_out  -> sink.data_in      (LoanWrite),
-        source.ctrl_out  -> sink.ctrl_in      (Copy),
-    ]
-};
+```yaml
+# workflows/order.yaml
+- id: process
+  activity_type: Transform
+  input_mappings:
+    - target: order_id
+      source: { language: vil-expr, source: 'uuid_v4()' }
+    - target: total
+      source: { language: vil-expr, source: 'mean(trigger_payload.body.prices)' }
+    - target: email_hash
+      source: { language: vil-expr, source: 'sha256(trigger_payload.body.email)' }
 ```
 
-### Pattern C: Custom Code (3 Execution Modes)
+## 3 Execution Modes
+
+| Mode | Throughput | Latency | Use Case |
+|------|-----------|---------|----------|
+| **Native Rust** | 97K req/s | 0.5 ms | Core logic, maximum performance |
+| **WASM Sandbox** | 83K req/s | 0.5 ms | Hot-deploy, plugins, 6 WASM languages |
+| **Sidecar** | 59K req/s | 0.5 ms | Python, Node.js, PHP, Lua, C# — 9 languages |
+
+WASM is **WASI-compliant** with PoolingAllocator + InstancePre + WasmWorkerPool.
+Sidecar uses **keep-alive process pool x4** with line-delimited JSON.
+
+## 20 Built-in FaaS Functions
+
+Zero custom code — call directly from YAML expressions:
 
 ```yaml
-# Native Rust — compiled in, 0 overhead
-endpoints:
-  - method: POST
-    path: /api/enrich
-    handler: enrich_handler
-    exec_class: AsyncTask
+# Security
+source: { language: vil-expr, source: 'sha256(data)' }
+source: { language: vil-expr, source: 'jwt_sign(payload, "secret")' }
 
-# WASM — sandboxed, hot-deployable
-vil_wasm:
-  - name: pricing
-    wasm_path: ./wasm-modules/pricing.wasm
-    pool_size: 4
-    functions:
-      - name: calculate_price
+# Identity
+source: { language: vil-expr, source: 'uuid_v4()' }
+source: { language: vil-expr, source: 'parse_phone("+6281234567890", "ID")' }
 
-# Sidecar — any language (Python, Go, Java)
-sidecars:
-  - name: ml-scorer
-    command: python3
-    script: ./sidecars/ml_scorer.py
-    methods: [predict, score_batch]
-    auto_restart: true
+# Analytics
+source: { language: vil-expr, source: 'is_anomaly(amount, history, "zscore", 2.0)' }
+source: { language: vil-expr, source: 'geo_distance(-6.2, 106.8, -7.8, 110.4, "km")' }
+
+# Data
+source: { language: vil-expr, source: 'parse_csv(data, ",", true)' }
+source: { language: vil-expr, source: 'render_template("Hello {{name}}", data)' }
 ```
 
-### Pattern D: Write in Python, Compile to Native Binary
+**All 20:** sha256, md5, hmac_sha256, aes_encrypt, aes_decrypt, jwt_sign, jwt_verify, uuid_v4, uuid_v7, ulid, nanoid, parse_date, format_date, now, age, duration, parse_csv, parse_xml, xpath, regex_match, regex_extract, regex_replace, parse_phone, validate_email, validate_schema, mask_pii, reshape, render_template, mean, median, stdev, percentile, variance, is_anomaly, send_email, send_webhook, geo_distance
 
-```python
-from vil import VilPipeline
-
-pipeline = VilPipeline("ai-gateway", port=3080)
-pipeline.sink(port=3080, path="/trigger")
-pipeline.source(url="http://ai-provider:4545/v1/chat", format="sse")
-# vil compile --from python --input gateway.py --release → native binary
+```toml
+vil_vwfd = { features = ["faas-full"] }  # enable all 20
 ```
+
+## Performance
+
+> Intel i9-11900F (8C/16T), 32GB RAM, Ubuntu 22.04, vastar bench (warmed, c=10)
+
+| Mode | Language | req/s | vs Native |
+|------|----------|-------|-----------|
+| Native | Rust | 97,331 | 1.00x |
+| WASM | Rust | 87,417 | 0.90x |
+| WASM | AssemblyScript | 83,373 | 0.86x |
+| WASM | C | 80,540 | 0.83x |
+| Sidecar | PHP | 59,101 | 0.61x |
+| Sidecar | Lua | 58,365 | 0.60x |
+| WASM | Java | 57,246 | 0.59x |
+| Sidecar | Node.js | 35,480 | 0.36x |
+| Sidecar | C# | 26,251 | 0.27x |
+
+At c=200 concurrency, WASM **exceeds** NativeCode (25K vs 24.6K) due to dedicated worker threads.
 
 ## What's Inside
 
 | Layer | Crates | Purpose |
 |-------|--------|---------|
-| **Runtime** | vil_types, vil_shm, vil_queue, vil_registry, vil_rt | Zero-copy SHM, SPSC queues, ownership registry |
-| **Compiler** | vil_ir, vil_validate, vil_macros, vil_codegen_* | Semantic IR, 10 validation passes, code generation |
-| **Server** | vil_server (9 crates) | VilApp, Tri-Lane mesh, 21 middleware, auth, config profiles |
-| **Protocol** | vil_grpc, vil_graphql, vil_mq_kafka/nats/mqtt | gRPC, GraphQL, Kafka, NATS, MQTT — all with Tri-Lane bridge |
-| **Database** | vil_db_sqlx, vil_db_sea_orm, vil_db_redis, vil_db_semantic | SQLx, SeaORM, Redis, zero-cost semantic layer |
-| **AI Plugins** | vil_llm, vil_rag, vil_agent + 48 more | LLM, RAG, Agent, embeddings, vector DB — 51 crates, VIL Way |
-| **SDK** | vil_sdk, vil_plugin_sdk, vil_cli | Pipeline SDK, plugin interface, CLI tooling |
-| **Execution** | vil_capsule, vil_sidecar | WASM sandbox, sidecar protocol (UDS + SHM) |
-| **Storage** | vil_storage_s3, vil_storage_gcs, vil_storage_azure | S3/MinIO, GCS, Azure Blob — all with db_log! auto-emit |
-| **Database+** | vil_db_mongo, vil_db_clickhouse, vil_db_dynamodb, + 4 more | MongoDB, ClickHouse, DynamoDB, Cassandra, TimescaleDB, Neo4j, Elasticsearch |
-| **MQ+** | vil_mq_rabbitmq, vil_mq_sqs, vil_mq_pulsar, vil_mq_pubsub | RabbitMQ, SQS/SNS, Pulsar, Pub/Sub — all with mq_log! |
-| **Protocol+** | vil_soap, vil_opcua, vil_modbus, vil_ws | SOAP/WSDL, OPC-UA, Modbus, WebSocket server |
-| **Triggers** | vil_trigger_cron/fs/cdc/email/iot/evm/webhook | Cron, filesystem, CDC, email, IoT, blockchain, webhook |
-| **Observability** | vil_log, vil_otel | Semantic log (4.5-6.2x faster than tracing), OpenTelemetry export |
-| **Edge** | vil_edge_deploy | ARM64, ARMv7, RISC-V deployment profiles |
-| **Connector Macros** | vil_connector_macros | Lightweight #[connector_fault/event/state] for all connectors |
+| **Runtime** | vil_types, vil_shm, vil_queue, vil_rt | Zero-copy SHM, SPSC queues |
+| **Compiler** | vil_ir, vil_expr, vil_rules, vil_macros | VIL Expression evaluator, YAML rules, codegen |
+| **Server** | vil_server (9 crates) | VilApp, Tri-Lane mesh, auth, config |
+| **Workflow** | vil_vwfd, vil_vwfd_macros | VWFD compiler + executor, VwfdApp builder |
+| **Execution** | vil_capsule, vil_sidecar | WASM sandbox (wasmtime), Sidecar SDK (UDS+SHM) |
+| **Connectors** | 30 crates | DB (10), MQ (7), Storage (3), Protocol (6), Codec (3), SFTP |
+| **Triggers** | 13 crates | Webhook, Cron, Kafka, S3, SFTP, CDC, FS, MQTT, Email, EVM, gRPC, DB poll |
+| **Built-in FaaS** | 20 crates | Security, Date, Parsing, Text, Transform, Stats, Notification, Geo |
+| **AI Plugins** | 51 crates | LLM, RAG, Agent, embeddings, vector DB |
+| **Observability** | vil_log, vil_observer, vil_otel | Semantic log, dashboard, Prometheus, OpenTelemetry |
 
-**142 crates** | **112 examples** | **9 SDK languages** | **6 Grafana dashboards**
+**171 crates** | **234 examples** | **20 built-in FaaS** | **13 triggers** | **30 connectors**
 
-## Examples (8 Tiers)
+## Examples (9 Tiers)
 
-| Tier | Count | Pattern | Highlights |
-|------|-------|---------|------------|
-| **Basic** (001-038) | 38 | VX_APP + SDK | ShmSlice, ServiceCtx, WASM FaaS, sidecar, WebSocket, SSE |
-| **Pipeline** (101-107) | 7 | Multi-pipeline | Fan-out, fan-in, diamond, multi-workflow, traced |
-| **LLM** (201-206) | 6 | VX_APP + SDK | Chat, multi-model, tools, batch translate, decision routing |
-| **RAG** (301-306) | 6 | VX_APP | Vector search, multi-source, hybrid, citation, guardrail |
-| **Agent** (401-406) | 6 | VX_APP | Calculator, HTTP fetch, file review, CSV, ReAct, handler+SHM |
-| **VIL Log** (501-509) | 9 | vil_log | Stdout, file, multi-drain, benchmark, tracing bridge, structured events, file drain bench, multi-thread, Phase 1 integration |
-| **Storage/DB** (601-604) | 4 | Connectors | S3 basic, Mongo CRUD, ClickHouse batch, Elastic search |
-| **MQ/Protocol** (701-704) | 4 | Connectors | RabbitMQ pubsub, SQS send/receive, SOAP client, Modbus read |
-| **Triggers** (801-804) | 4 | Triggers | Cron basic, filesystem watcher, webhook receiver, CDC postgres |
+| Tier | Count | Highlights |
+|------|-------|------------|
+| **Basic** (001-047) | 47 | HTTP, WebSocket, GraphQL, SSE, WASM, Sidecar, Auth |
+| **Pipeline** (101-108) | 10 | Fan-out, fan-in, diamond, DAG, SSE, traced |
+| **LLM** (201-206) | 6 | Chat, multi-model, streaming, tools, decision routing |
+| **RAG** (301-308) | 8 | Vector search, hybrid, guardrail, citation, full pipeline |
+| **Agent** (401-407) | 7 | Calculator, researcher, multi-agent orchestration |
+| **VIL Log** (501-509) | 9 | Stdout, file, multi-drain, benchmark, tracing bridge |
+| **Database** (601-611) | 11 | SQLite, MongoDB, S3, TimeSeries, VilORM, multi-tenant |
+| **MQ/Protocol** (701-706) | 6 | RabbitMQ, gRPC, SOAP, Modbus, Pulsar |
+| **FaaS Demo** (901-905) | 5 | KYC, Data Pipeline, Secure API, Financial, Notification |
+
+Each example has **two versions**: Standard (`src/main.rs`) and Workflow (`vwfd/`).
 
 ```bash
-# Run any example
+# Standard
 cargo run --release -p vil-basic-hello-server
 
-# Pipeline examples require upstream simulators (for benchmarking & overhead measurement):
-#   AI Endpoint:  https://github.com/Vastar-AI/ai-endpoint-simulator    (:4545)
-#   Credit Data:  https://github.com/Vastar-AI/credit-data-simulator    (:18081)
-cargo run --release -p vil-basic-credit-npl-filter
+# Workflow (VWFD)
+cargo run --release -p vil-vwfd-currency-exchange
 ```
+
+## Quick Start
+
+```bash
+# Install CLI
+cargo install vil-cli
+
+# Create project
+vil init my-api --template vwfd
+cd my-api
+
+# Run
+cargo run --release
+curl http://localhost:8080/api/hello
+```
+
+## Connectors & Triggers
+
+### Connectors (30)
+
+**Database:** PostgreSQL, MySQL, SQLite, Redis, MongoDB, Cassandra, ClickHouse, DynamoDB, Elasticsearch, Neo4j, TimeSeries
+**Message Queue:** NATS, Kafka, MQTT, RabbitMQ, Pulsar, Google Pub/Sub, AWS SQS
+**Storage:** S3/MinIO/R2, Google Cloud Storage, Azure Blob
+**Protocol:** HTTP/SSE, SFTP, SOAP/WSDL, WebSocket, Modbus, OPC-UA
+**Codec:** ISO 8583, MessagePack, Protobuf
+
+### Triggers (13)
+
+Webhook, Cron, Kafka Consumer, S3 Bucket Event, SFTP Directory, PostgreSQL CDC, DB Poll, Filesystem Watch, MQTT/IoT, Email IMAP, EVM Blockchain, gRPC Stream
 
 ## The 10 Immutable Principles
 
@@ -228,38 +206,16 @@ cargo run --release -p vil-basic-credit-npl-filter
 9. **Ownership Transfer Model** — LoanWrite, LoanRead, PublishOffset, Copy
 10. **Observable by Design** — `#[trace_hop]`, metrics auto-generated
 
-## VIL Way — 100% Enforced
-
-| VIL Pattern | Replaces | Benefit |
-|-------------|----------|---------|
-| `body: ShmSlice` | `Json<T>` | Zero-copy via ExchangeHeap |
-| `ctx: ServiceCtx` | `Extension<T>` | Tri-Lane context + typed state |
-| `body.json::<T>()` | `serde_json` | SIMD JSON (sonic-rs) |
-| `VilResponse::ok(data)` | `Json(data)` | SIMD serialization + SHM write-through |
-| `#[connector_fault]` | Plain enum errors | Auto Display, error_code(), kind(), is_retryable() |
-| `#[connector_event]` | Ad-hoc structs | #[repr(C)], ≤192B, compile-time size guard |
-| `#[connector_state]` | Manual metrics | Zero-init state, atomic-ready counters |
-
-All 51 AI plugins + all 112 examples use these patterns. Zero `Extension<T>`, zero `Json<T>` extractors.
-
 ## Documentation
 
-| Guide | File |
-|-------|------|
-| Architecture Overview | [docs/ARCHITECTURE_OVERVIEW.md](docs/ARCHITECTURE_OVERVIEW.md) |
-| Design Principles | [docs/vil/VIL_CONCEPT.md](docs/vil/VIL_CONCEPT.md) |
-| Custom Code (Native/WASM/Sidecar) | [docs/vil/011-VIL-Developer_Guide-Custom-Code.md](docs/vil/011-VIL-Developer_Guide-Custom-Code.md) |
-| VIL Guide (11 parts) | [docs/vil/001-VIL-Developer_Guide-Overview.md](docs/vil/001-VIL-Developer_Guide-Overview.md) |
-| Server Framework | [docs/vil-server/vil-server-guide.md](docs/vil-server/vil-server-guide.md) |
-| API Reference | [docs/vil-server/API-REFERENCE-SERVER.md](docs/vil-server/API-REFERENCE-SERVER.md) |
-| Config Reference | [vil-server.reference.yaml](vil-server.reference.yaml) |
-| LLM Knowledge Base | [llm_knowledge/](llm_knowledge/index.md) |
-| Semantic Log System | [docs/vil/007-VIL-Developer_Guide-Semantic-Log.md](docs/vil/007-VIL-Developer_Guide-Semantic-Log.md) |
-| Roadmap | [ROADMAP.md](ROADMAP.md) |
+- **Website:** [vastar.id/products/vil](https://vastar.id/products/vil)
+- **Docs:** [vastar.id/docs/vil](https://vastar.id/docs/vil)
+- **Architecture:** [docs/ARCHITECTURE_OVERVIEW.md](docs/ARCHITECTURE_OVERVIEW.md)
+- **VIL Guide (11 parts):** [docs/vil/](docs/vil/)
+- **VWFD YAML Reference:** [vastar.id/docs/vil/reference/vwfd-yaml](https://vastar.id/docs/vil/reference/vwfd-yaml)
+- **FaaS Functions:** [vastar.id/docs/vil/reference/faas-functions](https://vastar.id/docs/vil/reference/faas-functions)
 
 ## Editor Support
-
-`vil-lsp` provides diagnostics, completions, and hover for VIL macros alongside `rust-analyzer`.
 
 | Editor | Setup |
 |--------|-------|
@@ -275,5 +231,7 @@ Licensed under either of [Apache License 2.0](LICENSE-APACHE) or [MIT License](L
 ## Links
 
 - **Repository:** [github.com/OceanOS-id/VIL](https://github.com/OceanOS-id/VIL)
-- **AI Endpoint Simulator:** [github.com/Vastar-AI/ai-endpoint-simulator](https://github.com/Vastar-AI/ai-endpoint-simulator)
-- **Credit Data Simulator:** [github.com/Vastar-AI/credit-data-simulator](https://github.com/Vastar-AI/credit-data-simulator)
+- **Website:** [vastar.id/products/vil](https://vastar.id/products/vil)
+- **Community Simulators:**
+  - [AI Endpoint Simulator](https://github.com/Vastar-AI/ai-endpoint-simulator)
+  - [Credit Data Simulator](https://github.com/Vastar-AI/credit-data-simulator)
