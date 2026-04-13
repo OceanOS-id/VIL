@@ -1,0 +1,47 @@
+version: "3.0"
+metadata:
+  id: create-order
+  name: "Benchmark: Create Order (uuid + mean + sha256)"
+  description: |
+    Head-to-head benchmark workflow — same business logic as Kestra comparison.
+    Webhook POST → generate UUID → calculate mean price → SHA-256 hash email → respond.
+    All compute via built-in expression functions, zero custom code.
+    Measured: 37K req/s (Docker), 43K req/s (native) on i9-11900F.
+  dialect: vil
+  dialect_version: "1.0"
+
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config: { path: /api/orders, method: POST }
+        response_mode: buffered
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: compute
+      activity_type: Transform
+      input_mappings:
+        - target: order_id
+          source: { language: vil-expr, source: 'uuid_v4()' }
+        - target: total
+          source: { language: vil-expr, source: 'mean(trigger_payload.body.prices)' }
+        - target: customer_hash
+          source: { language: vil-expr, source: 'sha256(trigger_payload.body.email)' }
+      output_variable: result
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response: { language: vil-expr, source: 'result' }
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: compute } }
+    - { id: f2, from: { node: compute }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

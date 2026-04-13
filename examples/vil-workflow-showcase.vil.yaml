@@ -1137,3 +1137,22 @@ admin:
   playground: true
   diagnostics: true
   hot_reload: true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BENCHMARK REFERENCE — VWFD Workflow Pattern
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Example 906-bench-create-order: pure VWFD declarative workflow used for
+# head-to-head benchmark against Kestra v1.3.9.
+#
+# Business logic: POST /api/orders → uuid_v4() + mean(prices) + sha256(email)
+# All compute via built-in expression functions, zero custom code.
+#
+# Results (i9-11900F 8C/16T, 32GB RAM, Ubuntu 22.04, both Docker):
+#
+#   VIL v0.3.0:    37,474 req/s | P50: 0.2ms | P99: 1.4ms | Image: 105MB
+#   Kestra v1.3.9:    804 req/s | P50: 10.1ms | P99: 39.5ms | Image: 500MB
+#   Ratio:          47x throughput | 51x latency
+#
+# See: examples/906-bench-create-order/
+# Full report: docs-dev-jangan-ditrack/vil/marketing/head-to-head/COMPARISON.md

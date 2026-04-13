@@ -12702,6 +12702,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "vil-vwfd-bench-create-order"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "vil_vwfd",
+]
+
+[[package]]
 name = "vil-vwfd-credit-qa"
 version = "0.1.0"
 dependencies = [

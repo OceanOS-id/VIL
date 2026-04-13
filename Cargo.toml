@@ -161,6 +161,7 @@ members = [
     "examples/904-faas-financial-analytics/vwfd",
     "examples/905-faas-notification-hub",
     "examples/905-faas-notification-hub/vwfd",
+    "examples/906-bench-create-order/vwfd",
 
     # --- Phase 2 Protocol Crates ---
     "crates/vil_soap",
