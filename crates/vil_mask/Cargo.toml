@@ -1,5 +1,7 @@
 [package]
 name = "vil_mask"
+description = "VIL Expression function — data masking (PII, credit card)"
+repository = "https://github.com/AdeVastra/VIL"
 version.workspace = true
 edition = "2021"
 license = "MIT OR Apache-2.0"

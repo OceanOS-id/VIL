@@ -1,5 +1,7 @@
 [package]
 name = "vil_parse_xml"
+description = "VIL Expression function — XML parsing to JSON"
+repository = "https://github.com/AdeVastra/VIL"
 version.workspace = true
 edition = "2021"
 license = "MIT OR Apache-2.0"

@@ -11,7 +11,7 @@ documentation.workspace = true
 
 [dependencies]
 vil_trigger_core = { workspace = true }
-vil_grpc = { path = "../vil_grpc" }
+vil_grpc = { version = "0.3", path = "../vil_grpc" }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 tracing = { workspace = true }

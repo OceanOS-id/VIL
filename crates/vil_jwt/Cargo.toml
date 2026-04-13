@@ -1,5 +1,7 @@
 [package]
 name = "vil_jwt"
+description = "VIL Expression function — JWT encode/decode/verify"
+repository = "https://github.com/AdeVastra/VIL"
 version.workspace = true
 edition = "2021"
 license = "MIT OR Apache-2.0"

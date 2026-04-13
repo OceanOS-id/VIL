@@ -10,26 +10,26 @@ serde_json = "1.0"
 thiserror = "1.0"
 
 # Built-in FaaS (all optional, feature-gated)
-vil_hash = { path = "../vil_hash", optional = true }
-vil_crypto = { path = "../vil_crypto", optional = true }
-vil_jwt = { path = "../vil_jwt", optional = true }
-vil_id_gen = { path = "../vil_id_gen", optional = true }
-vil_datefmt = { path = "../vil_datefmt", optional = true }
-vil_duration = { path = "../vil_duration", optional = true }
-vil_parse_csv = { path = "../vil_parse_csv", optional = true }
-vil_parse_xml = { path = "../vil_parse_xml", optional = true }
-vil_regex = { path = "../vil_regex", optional = true }
-vil_phone = { path = "../vil_phone", optional = true }
-vil_validate_schema = { path = "../vil_validate_schema", optional = true }
-vil_mask = { path = "../vil_mask", optional = true }
-vil_reshape = { path = "../vil_reshape", optional = true }
-vil_template = { path = "../vil_template", optional = true }
-vil_email_validate = { path = "../vil_email_validate", optional = true }
-vil_stats = { path = "../vil_stats", optional = true }
-vil_anomaly = { path = "../vil_anomaly", optional = true }
-vil_email = { path = "../vil_email", optional = true }
-vil_webhook_out = { path = "../vil_webhook_out", optional = true }
-vil_geodist = { path = "../vil_geodist", optional = true }
+vil_hash = { version = "0.3", path = "../vil_hash", optional = true }
+vil_crypto = { version = "0.3", path = "../vil_crypto", optional = true }
+vil_jwt = { version = "0.3", path = "../vil_jwt", optional = true }
+vil_id_gen = { version = "0.3", path = "../vil_id_gen", optional = true }
+vil_datefmt = { version = "0.3", path = "../vil_datefmt", optional = true }
+vil_duration = { version = "0.3", path = "../vil_duration", optional = true }
+vil_parse_csv = { version = "0.3", path = "../vil_parse_csv", optional = true }
+vil_parse_xml = { version = "0.3", path = "../vil_parse_xml", optional = true }
+vil_regex = { version = "0.3", path = "../vil_regex", optional = true }
+vil_phone = { version = "0.3", path = "../vil_phone", optional = true }
+vil_validate_schema = { version = "0.3", path = "../vil_validate_schema", optional = true }
+vil_mask = { version = "0.3", path = "../vil_mask", optional = true }
+vil_reshape = { version = "0.3", path = "../vil_reshape", optional = true }
+vil_template = { version = "0.3", path = "../vil_template", optional = true }
+vil_email_validate = { version = "0.3", path = "../vil_email_validate", optional = true }
+vil_stats = { version = "0.3", path = "../vil_stats", optional = true }
+vil_anomaly = { version = "0.3", path = "../vil_anomaly", optional = true }
+vil_email = { version = "0.3", path = "../vil_email", optional = true }
+vil_webhook_out = { version = "0.3", path = "../vil_webhook_out", optional = true }
+vil_geodist = { version = "0.3", path = "../vil_geodist", optional = true }
 
 [features]
 default = []

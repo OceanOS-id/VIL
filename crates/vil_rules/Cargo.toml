@@ -6,7 +6,7 @@ description = "VIL Business Rule Engine — YAML if/then rules and decision tabl
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-vil_expr = { path = "../vil_expr" }
+vil_expr = { version = "0.3", path = "../vil_expr" }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 serde_json = "1.0"

@@ -1,5 +1,7 @@
 [package]
 name = "vil_phone"
+description = "VIL Expression function — phone number validation and formatting"
+repository = "https://github.com/AdeVastra/VIL"
 version.workspace = true
 edition = "2021"
 license = "MIT OR Apache-2.0"

@@ -24,7 +24,7 @@ vil_cli_server = { version = "0.3", path = "../vil_cli_server", optional = true 
 vil_cli_compile = { version = "0.3", path = "../vil_cli_compile", optional = true }
 vil_cli_sdk = { version = "0.3", path = "../vil_cli_sdk", optional = true }
 vil_cli_pipeline = { version = "0.3", path = "../vil_cli_pipeline", optional = true }
-vil_vwfd = { path = "../vil_vwfd", optional = true }
+vil_vwfd = { version = "0.3", path = "../vil_vwfd", optional = true }
 
 # Existing deps (kept for main.rs dispatch + shared)
 vil_rt = { version = "0.3", path = "../vil_rt" }

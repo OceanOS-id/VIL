@@ -35,8 +35,7 @@ spec:
       activity_type: ExclusiveGateway
     - id: flag_npl
       activity_type: Sidecar
-      sidecar_config: { target: flag_npl_account
-        method: execute }
+      sidecar_config: { target: flag_npl_account, method: execute }
       output_variable: flag_result
     - id: pass_clean
       activity_type: Transform

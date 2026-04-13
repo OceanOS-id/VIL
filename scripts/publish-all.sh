@@ -74,7 +74,6 @@ CRATES=(
     vil_trigger_core vil_trigger_cron vil_trigger_fs vil_trigger_cdc
     vil_trigger_email vil_trigger_iot vil_trigger_evm vil_trigger_webhook
     vil_trigger_kafka vil_trigger_s3 vil_trigger_sftp vil_trigger_db_poll vil_trigger_grpc
-    vil_expr
     vil_hash vil_crypto vil_jwt vil_id_gen
     vil_datefmt vil_duration
     vil_parse_csv vil_parse_xml
@@ -83,7 +82,10 @@ CRATES=(
     vil_template vil_email_validate
     vil_stats vil_anomaly
     vil_email vil_webhook_out vil_geodist
+    vil_orm_derive vil_orm
+    vil_expr
     vil_rules
+    vil_cli_core vil_cli_compile vil_cli_sdk vil_cli_pipeline vil_cli_server
     vil_vwfd_macros vil_vwfd
     vil_otel vil_edge_deploy
     vil_tokenizer vil_embedder vil_llm vil_vectordb vil_inference

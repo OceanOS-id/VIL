@@ -1,5 +1,7 @@
 [package]
 name = "vil_id_gen"
+description = "VIL Expression function — ID generation (UUID, ULID, snowflake)"
+repository = "https://github.com/AdeVastra/VIL"
 version.workspace = true
 edition = "2021"
 license = "MIT OR Apache-2.0"

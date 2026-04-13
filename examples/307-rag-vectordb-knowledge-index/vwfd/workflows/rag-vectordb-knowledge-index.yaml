@@ -34,11 +34,11 @@ spec:
         - target: top_k
           source:
             language: vil-expr
-            source: trigger_payload.top_k != null ? trigger_payload.top_k : 5
+            source: 'trigger_payload.top_k != null ? trigger_payload.top_k : 5'
         - target: min_score
           source:
             language: vil-expr
-            source: trigger_payload.min_score != null ? trigger_payload.min_score : 0.0
+            source: 'trigger_payload.min_score != null ? trigger_payload.min_score : 0.0'
       output_variable: search_results
 
     # Step 2: Respond with search results (no LLM)

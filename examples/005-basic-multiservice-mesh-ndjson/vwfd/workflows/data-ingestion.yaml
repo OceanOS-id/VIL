@@ -14,8 +14,7 @@ spec:
       output_variable: trigger_payload
     - id: validate
       activity_type: Function
-      wasm_config: { module_ref: validate_payload
-        function_name: execute }
+      wasm_config: { module_ref: validate_payload, function_name: execute }
       input_mappings:
         - target: data
           source: { language: vil-expr, source: 'trigger_payload' }

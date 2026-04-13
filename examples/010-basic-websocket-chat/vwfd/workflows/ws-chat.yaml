@@ -8,8 +8,7 @@ spec:
       output_variable: trigger_payload
     - id: process_message
       activity_type: Sidecar
-      sidecar_config: { target: process_chat_message
-        method: execute }
+      sidecar_config: { target: process_chat_message, method: execute }
       output_variable: response
     - id: respond
       activity_type: EndTrigger
