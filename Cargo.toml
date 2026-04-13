@@ -162,6 +162,7 @@ members = [
     "examples/905-faas-notification-hub",
     "examples/905-faas-notification-hub/vwfd",
     "examples/906-bench-create-order/vwfd",
+    "examples/000-provision-server/vwfd",
 
     # --- Phase 2 Protocol Crates ---
     "crates/vil_soap",
@@ -476,6 +477,231 @@ members = [
     "examples/609-db-vilorm-overhead-bench",
 
     # --- VWFD Runtime (VIL workflow definition) ---
+    "crates/vil_expr",
+    "crates/vil_rules",
+    "crates/vil_vwfd",
+    "crates/vil_vwfd_macros",
+]
+
+# Default build targets: crates only. Examples are still workspace members
+# but won't compile unless explicitly requested:
+#   cargo build --release -p vil-basic-hello-server
+#   cargo build --release --workspace          (builds everything incl. examples)
+default-members = [
+    # --- Meta-crate ---
+    "crates/vil",
+    "crates/vil_validate_derive",
+    "crates/vil_migrate",
+    "crates/vil_orm_derive",
+    "crates/vil_orm",
+
+    # --- Core Runtime ---
+    "crates/vil_types",
+    "crates/vil_shm",
+    "crates/vil_queue",
+    "crates/vil_log",
+    "crates/vil_registry",
+    "crates/vil_rt",
+    "crates/vil_obs",
+    "crates/vil_net",
+    "crates/vil_engine",
+
+    # --- Semantic Compiler ---
+    "crates/vil_ir",
+    "crates/vil_diag",
+    "crates/vil_validate",
+    "crates/vil_macros",
+    "crates/vil_codegen_rust",
+    "crates/vil_codegen_c",
+
+    # --- Visualization ---
+    "crates/vil_viz",
+
+    # --- Script Runtimes ---
+    "crates/vil_script_lua",
+    "crates/vil_script_js",
+
+    # --- Tooling ---
+    "crates/vil_cli",
+    "crates/vil_cli_core",
+    "crates/vil_cli_compile",
+    "crates/vil_cli_sdk",
+    "crates/vil_cli_pipeline",
+    "crates/vil_cli_server",
+    "crates/vil_new_http",
+
+    # --- Connector Macros ---
+    "crates/vil_connector_macros",
+
+    # --- SDK & Extensions ---
+    "crates/vil_sdk",
+    "crates/vil_plugin_sdk",
+    "crates/vil_topo",
+    "crates/vil_capsule",
+    "crates/vil_sidecar",
+    "crates/vil_observer",
+
+    # --- VIL Server ---
+    "crates/vil_server_core",
+    "crates/vil_server_web",
+    "crates/vil_server_config",
+    "crates/vil_server_mesh",
+    "crates/vil_server_auth",
+    "crates/vil_server_db",
+    "crates/vil_server_test",
+    "crates/vil_server_macros",
+    "crates/vil_server",
+
+    # --- Storage Plugins ---
+    "crates/vil_storage_s3",
+    "crates/vil_storage_gcs",
+    "crates/vil_storage_azure",
+
+    # --- Database Plugins ---
+    "crates/vil_db_elastic",
+    "crates/vil_db_sqlx",
+    "crates/vil_db_sea_orm",
+    "crates/vil_db_redis",
+    "crates/vil_db_mongo",
+    "crates/vil_db_clickhouse",
+    "crates/vil_db_dynamodb",
+    "crates/vil_db_cassandra",
+    "crates/vil_db_timeseries",
+    "crates/vil_db_neo4j",
+
+    # --- DB Semantic Layer ---
+    "crates/vil_db_semantic",
+    "crates/vil_db_macros",
+    "crates/vil_cache",
+
+    # --- GraphQL + K8s Operator ---
+    "crates/vil_graphql",
+    "crates/vil_operator",
+
+    # --- JSON Abstraction ---
+    "crates/vil_json",
+
+    # --- Protocol + Serialization ---
+    "crates/vil_grpc",
+    "crates/vil_server_format",
+    "crates/vil_mq_kafka",
+    "crates/vil_mq_mqtt",
+    "crates/vil_mq_nats",
+    "crates/vil_mq_rabbitmq",
+    "crates/vil_mq_sqs",
+    "crates/vil_mq_pulsar",
+    "crates/vil_mq_pubsub",
+
+    # --- Phase 3 Trigger Crates ---
+    "crates/vil_trigger_core",
+    "crates/vil_trigger_cron",
+    "crates/vil_trigger_fs",
+    "crates/vil_trigger_cdc",
+    "crates/vil_trigger_email",
+    "crates/vil_trigger_iot",
+    "crates/vil_trigger_evm",
+    "crates/vil_trigger_webhook",
+    "crates/vil_trigger_kafka",
+    "crates/vil_trigger_s3",
+    "crates/vil_trigger_sftp",
+    "crates/vil_trigger_db_poll",
+    "crates/vil_trigger_grpc",
+
+    # --- Built-in FaaS Crates (Phase C) ---
+    "crates/vil_hash",
+    "crates/vil_crypto",
+    "crates/vil_jwt",
+    "crates/vil_id_gen",
+    "crates/vil_datefmt",
+    "crates/vil_duration",
+    "crates/vil_parse_csv",
+    "crates/vil_parse_xml",
+    "crates/vil_regex",
+    "crates/vil_phone",
+    "crates/vil_validate_schema",
+    "crates/vil_mask",
+    "crates/vil_reshape",
+    "crates/vil_template",
+    "crates/vil_email_validate",
+    "crates/vil_stats",
+    "crates/vil_anomaly",
+    "crates/vil_email",
+    "crates/vil_webhook_out",
+    "crates/vil_geodist",
+
+    # --- Phase 2 Protocol Crates ---
+    "crates/vil_soap",
+    "crates/vil_opcua",
+    "crates/vil_modbus",
+    "crates/vil_ws",
+
+    # --- LSP ---
+    "crates/vil_lsp",
+
+    # --- AI Plugins (Process-Oriented) ---
+    "crates/vil_llm",
+    "crates/vil_rag",
+    "crates/vil_agent",
+    "crates/vil_tokenizer",
+    "crates/vil_llm_proxy",
+    "crates/vil_embedder",
+    "crates/vil_inference",
+    "crates/vil_vectordb",
+    "crates/vil_realtime_rag",
+    "crates/vil_tensor_shm",
+    "crates/vil_speculative",
+    "crates/vil_ai_compiler",
+    "crates/vil_semantic_router",
+    "crates/vil_prompt_shield",
+    "crates/vil_context_optimizer",
+    "crates/vil_quantized",
+    "crates/vil_consensus",
+    "crates/vil_memory_graph",
+    "crates/vil_feature_store",
+    "crates/vil_streaming_rag",
+    "crates/vil_ai_gateway",
+    "crates/vil_model_serving",
+    "crates/vil_multi_agent",
+    "crates/vil_chunker",
+    "crates/vil_doc_parser",
+    "crates/vil_reranker",
+    "crates/vil_prompts",
+    "crates/vil_llm_cache",
+    "crates/vil_doc_layout",
+    "crates/vil_guardrails",
+    "crates/vil_eval",
+
+    # --- AI Plugins (I01-I10 Process-Oriented) ---
+    "crates/vil_crawler",
+    "crates/vil_graphrag",
+    "crates/vil_audio",
+    "crates/vil_vision",
+    "crates/vil_sql_agent",
+    "crates/vil_doc_extract",
+    "crates/vil_workflow_v2",
+    "crates/vil_ab_test",
+    "crates/vil_cost_tracker",
+    "crates/vil_model_registry",
+
+    # --- Phase 5a: Open-Source Enterprise ---
+    "crates/vil_otel",
+    "crates/vil_edge_deploy",
+
+    # --- AI Plugins (N01-N12 Final Batch) ---
+    "crates/vil_data_prep",
+    "crates/vil_synthetic",
+    "crates/vil_rlhf_data",
+    "crates/vil_bench_llm",
+    "crates/vil_multimodal",
+    "crates/vil_index_updater",
+    "crates/vil_federated_rag",
+    "crates/vil_private_rag",
+    "crates/vil_edge",
+    "crates/vil_output_parser",
+    "crates/vil_ai_trace",
+    "crates/vil_prompt_optimizer",
+
+    # --- VWFD Runtime ---
     "crates/vil_expr",
     "crates/vil_rules",
     "crates/vil_vwfd",
