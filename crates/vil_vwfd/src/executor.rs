@@ -58,6 +58,9 @@ pub struct ExecConfig {
     pub rule_fn: Option<RuleFn>,
     pub max_steps: u32,
     pub max_loop_iterations: u32,
+    /// Durability store for execution checkpoint/recovery.
+    /// If None, execution is stateless (no checkpoint, no recovery).
+    pub durability: Option<Arc<crate::DurabilityStore>>,
 }
 
 impl Default for ExecConfig {
@@ -67,6 +70,7 @@ impl Default for ExecConfig {
             rule_fn: None,
             max_steps: 10_000,
             max_loop_iterations: 1_000,
+            durability: None,
         }
     }
 }
@@ -86,9 +90,28 @@ pub async fn execute(
     }
     vars.insert("trigger_payload".into(), input.clone());
 
+    // Generate execution ID
+    let exec_id = format!("exec_{:016x}", std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos());
+    let workflow_id = graph.id.clone();
+
+    // Durability: begin execution
+    if let Some(ref store) = config.durability {
+        store.begin(&exec_id, &workflow_id, &vars.get("trigger_payload").unwrap_or(&Value::Null));
+    }
+
     let mut steps: u32 = 0;
-    let result = walk_subgraph(graph.entry_node, None, graph, &mut vars, config, &mut steps).await?;
-    Ok(ExecResult { output: result, variables: vars, steps })
+    let result = walk_subgraph(graph.entry_node, None, graph, &mut vars, config, &mut steps, &exec_id).await;
+
+    // Durability: complete or fail
+    if let Some(ref store) = config.durability {
+        match &result {
+            Ok(_) => store.complete(&exec_id),
+            Err(e) => store.fail(&exec_id, &e.to_string()),
+        }
+    }
+
+    result.map(|output| ExecResult { output, variables: vars, steps })
 }
 
 // ── Core walker — walks subgraph until terminal or scope boundary ───────────
@@ -105,6 +128,7 @@ fn walk_subgraph<'a>(
     vars: &'a mut HashMap<String, Value>,
     config: &'a ExecConfig,
     steps: &'a mut u32,
+    exec_id: &'a str,
 ) -> Pin<Box<dyn Future<Output = Result<Value, ExecError>> + Send + 'a>> {
     Box::pin(async move {
     let mut current_idx = start_idx;
@@ -126,16 +150,25 @@ fn walk_subgraph<'a>(
             NodeKind::Connector => {
                 let result = execute_connector(node, vars, config).await?;
                 store_output(node, &result, vars);
+                if let Some(ref store) = config.durability {
+                    store.checkpoint(exec_id, &node.id, *steps, vars);
+                }
             }
 
             NodeKind::Transform => {
                 let result = execute_transform(node, vars)?;
                 store_output(node, &result, vars);
+                if let Some(ref store) = config.durability {
+                    store.checkpoint(exec_id, &node.id, *steps, vars);
+                }
             }
 
             NodeKind::VilRules => {
                 let result = execute_rules(node, vars, config)?;
                 store_output(node, &result, vars);
+                if let Some(ref store) = config.durability {
+                    store.checkpoint(exec_id, &node.id, *steps, vars);
+                }
             }
 
             NodeKind::EndTrigger => {
@@ -147,20 +180,20 @@ fn walk_subgraph<'a>(
             }
 
             NodeKind::LoopWhile => {
-                execute_loop_while(current_idx, graph, vars, config, steps).await?;
+                execute_loop_while(current_idx, graph, vars, config, steps, exec_id).await?;
                 // After loop, advance via _exit edge
                 current_idx = find_exit_edge(current_idx, graph)?;
                 continue;
             }
 
             NodeKind::LoopForEach => {
-                execute_loop_foreach(current_idx, graph, vars, config, steps).await?;
+                execute_loop_foreach(current_idx, graph, vars, config, steps, exec_id).await?;
                 current_idx = find_exit_edge(current_idx, graph)?;
                 continue;
             }
 
             NodeKind::LoopRepeat => {
-                execute_loop_repeat(current_idx, graph, vars, config, steps).await?;
+                execute_loop_repeat(current_idx, graph, vars, config, steps, exec_id).await?;
                 current_idx = find_exit_edge(current_idx, graph)?;
                 continue;
             }
@@ -174,7 +207,7 @@ fn walk_subgraph<'a>(
 
                 if let Some(normal) = normal_edges.first() {
                     let saved_vars = vars.clone();
-                    match walk_subgraph(normal.to_idx, None, graph, vars, config, steps).await {
+                    match walk_subgraph(normal.to_idx, None, graph, vars, config, steps, exec_id).await {
                         Ok(result) => return Ok(result),
                         Err(e) => {
                             *vars = saved_vars;
@@ -206,32 +239,43 @@ fn walk_subgraph<'a>(
             }
 
             NodeKind::Function => {
-                // WASM function — dispatch via ConnectorFn with _wasm metadata
                 let result = execute_wasm_function(node, vars, config).await?;
                 store_output(node, &result, vars);
+                if let Some(ref store) = config.durability {
+                    store.checkpoint(exec_id, &node.id, *steps, vars);
+                }
             }
 
             NodeKind::Sidecar => {
-                // Sidecar (external process) — dispatch via ConnectorFn
                 let result = execute_sidecar(node, vars, config).await?;
                 store_output(node, &result, vars);
+                if let Some(ref store) = config.durability {
+                    store.checkpoint(exec_id, &node.id, *steps, vars);
+                }
             }
 
             NodeKind::SubWorkflow => {
-                // Recursive workflow execution
                 let result = execute_sub_workflow(node, vars, config).await?;
                 store_output(node, &result, vars);
+                if let Some(ref store) = config.durability {
+                    store.checkpoint(exec_id, &node.id, *steps, vars);
+                }
             }
 
             NodeKind::HumanTask => {
-                // Human task — park until external completion
                 let result = execute_human_task(node, vars, config).await?;
                 store_output(node, &result, vars);
+                if let Some(ref store) = config.durability {
+                    store.checkpoint(exec_id, &node.id, *steps, vars);
+                }
             }
 
             NodeKind::NativeCode => {
                 let result = execute_native_code(node, vars, config).await?;
                 store_output(node, &result, vars);
+                if let Some(ref store) = config.durability {
+                    store.checkpoint(exec_id, &node.id, *steps, vars);
+                }
             }
 
             NodeKind::Parallel => {
@@ -248,7 +292,7 @@ fn walk_subgraph<'a>(
                     for &branch_start in &branch_starts {
                         let mut branch_vars = vars.clone();
                         let mut branch_steps = 0u32;
-                        let result = walk_subgraph(branch_start, join_idx, graph, &mut branch_vars, config, &mut branch_steps).await?;
+                        let result = walk_subgraph(branch_start, join_idx, graph, &mut branch_vars, config, &mut branch_steps, exec_id).await?;
                         *steps += branch_steps;
                         branch_results.push((result, branch_vars));
                     }
@@ -311,6 +355,7 @@ async fn execute_loop_while(
     vars: &mut HashMap<String, Value>,
     config: &ExecConfig,
     steps: &mut u32,
+    exec_id: &str,
 ) -> Result<(), ExecError> {
     let node = &graph.nodes[loop_idx];
     let condition = node.config.get("condition")
@@ -335,7 +380,7 @@ async fn execute_loop_while(
 
         if let Some(bidx) = body_idx {
             // Walk FULL body subgraph — stop when edge points back to loop node
-            walk_subgraph(bidx, Some(loop_idx), graph, vars, config, steps).await?;
+            walk_subgraph(bidx, Some(loop_idx), graph, vars, config, steps, exec_id).await?;
         }
     }
 
@@ -348,6 +393,7 @@ async fn execute_loop_foreach(
     vars: &mut HashMap<String, Value>,
     config: &ExecConfig,
     steps: &mut u32,
+    exec_id: &str,
 ) -> Result<(), ExecError> {
     let node = &graph.nodes[loop_idx];
     let collection_expr = node.config.get("collection")
@@ -373,7 +419,7 @@ async fn execute_loop_foreach(
         vars.insert("_loop_index".into(), Value::Number(i.into()));
 
         if let Some(bidx) = body_idx {
-            walk_subgraph(bidx, Some(loop_idx), graph, vars, config, steps).await?;
+            walk_subgraph(bidx, Some(loop_idx), graph, vars, config, steps, exec_id).await?;
         }
     }
 
@@ -386,6 +432,7 @@ async fn execute_loop_repeat(
     vars: &mut HashMap<String, Value>,
     config: &ExecConfig,
     steps: &mut u32,
+    exec_id: &str,
 ) -> Result<(), ExecError> {
     let node = &graph.nodes[loop_idx];
     let count = node.config.get("repeat_count")
@@ -397,7 +444,7 @@ async fn execute_loop_repeat(
         vars.insert("_loop_index".into(), Value::Number(i.into()));
 
         if let Some(bidx) = body_idx {
-            walk_subgraph(bidx, Some(loop_idx), graph, vars, config, steps).await?;
+            walk_subgraph(bidx, Some(loop_idx), graph, vars, config, steps, exec_id).await?;
         }
     }
 
