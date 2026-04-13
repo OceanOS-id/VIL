@@ -299,6 +299,8 @@ pub struct VwfdApp {
     wasm_modules: HashMap<String, String>,     // module_ref → file path (WASI compliant)
     sidecar_commands: HashMap<String, String>,  // target → command
     durability: Option<Arc<crate::DurabilityStore>>,
+    provision_enabled: bool,
+    provision_key: Option<String>,
 }
 
 impl VwfdApp {
@@ -323,6 +325,22 @@ impl VwfdApp {
             Ok(ds) => self.durability = Some(Arc::new(ds)),
             Err(e) => eprintln!("  WARNING: state_store init failed — {}", e),
         }
+        self
+    }
+
+    /// Enable provisioning admin API — upload, list, remove, activate, deactivate workflows at runtime.
+    ///
+    /// When enabled, mounts admin endpoints at `/api/admin/`:
+    /// - POST /upload, GET /workflows, POST /workflow/activate, POST /workflow/deactivate
+    /// - DELETE /workflow, GET /workflow/status, POST /reload, GET /health
+    pub fn provision(mut self, enabled: bool) -> Self {
+        self.provision_enabled = enabled;
+        self
+    }
+
+    /// Set API key for provisioning admin endpoints. If not set, admin endpoints are open.
+    pub fn provision_key(mut self, key: impl Into<String>) -> Self {
+        self.provision_key = Some(key.into());
         self
     }
 
@@ -709,15 +727,43 @@ impl VwfdApp {
             .endpoint(Method::GET, "/", axum::routing::get(vwfd_get_handler))
             .endpoint(Method::PUT, "/*path", axum::routing::put(vwfd_put_handler))
             .endpoint(Method::DELETE, "/*path", axum::routing::delete(vwfd_delete_handler))
-            .extension(router_ext)
+            .extension(router_ext.clone())
             .extension(config_ext);
 
-        VilApp::new("vil-vwfd")
+        let mut app = VilApp::new("vil-vwfd")
             .port(self.port)
             .observer(self.observer_enabled)
-            .service(svc)
-            .run()
-            .await;
+            .service(svc);
+
+        // Provisioning admin API
+        if self.provision_enabled {
+            let provision_reg = Arc::new(crate::provision::WorkflowRegistry::new(&self.workflow_dir));
+            // Load existing workflows into provision registry
+            let (loaded, errors) = provision_reg.load_from_dir();
+            if loaded > 0 { eprintln!("  Provision: {} workflows loaded from dir", loaded); }
+            for e in &errors { eprintln!("  Provision error: {}", e); }
+
+            let provision_key = Arc::new(self.provision_key.clone());
+
+            let admin_svc = ServiceProcess::new("admin")
+                .prefix("/api/admin")
+                .extension(provision_reg.clone())
+                .extension(router_ext.clone())
+                .extension(provision_key)
+                .endpoint(Method::GET, "/health", axum::routing::get(crate::provision_admin::health))
+                .endpoint(Method::POST, "/upload", post(crate::provision_admin::upload_workflow))
+                .endpoint(Method::GET, "/workflows", axum::routing::get(crate::provision_admin::list_workflows))
+                .endpoint(Method::POST, "/workflow/activate", post(crate::provision_admin::activate_workflow))
+                .endpoint(Method::POST, "/workflow/deactivate", post(crate::provision_admin::deactivate_workflow))
+                .endpoint(Method::DELETE, "/workflow", axum::routing::delete(crate::provision_admin::remove_workflow))
+                .endpoint(Method::GET, "/workflow/status", axum::routing::get(crate::provision_admin::workflow_status))
+                .endpoint(Method::POST, "/reload", post(crate::provision_admin::reload_workflows));
+
+            app = app.service(admin_svc);
+            eprintln!("  Provision: admin API enabled at /api/admin/");
+        }
+
+        app.run().await;
 
         Ok(())
     }
@@ -742,6 +788,8 @@ pub fn app(workflow_dir: impl Into<String>, port: u16) -> VwfdApp {
         wasm_modules: HashMap::new(),
         sidecar_commands: HashMap::new(),
         durability: None,
+        provision_enabled: false,
+        provision_key: None,
     }
 }
 

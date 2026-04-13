@@ -18,6 +18,8 @@ pub mod process;
 pub mod cli;
 pub mod mcp;
 pub mod registry;
+pub mod provision;
+pub mod provision_admin;
 pub mod app;
 
 pub use compiler::compile;
@@ -27,4 +29,5 @@ pub use durability::{DurabilityStore, StateStore};
 pub use saga::{collect_compensations, run_compensation};
 pub use handler::WorkflowRouter;
 pub use loader::{load_dir, load_yaml};
+pub use provision::WorkflowRegistry;
 pub use app::{app, VwfdApp, NativeRegistry};
