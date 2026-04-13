@@ -48,7 +48,7 @@ spec:
         - target: timestamp
           source:
             language: vil-expr
-            source: trigger_payload.timestamp ?? now()
+            source: 'trigger_payload.timestamp != null ? trigger_payload.timestamp : now()'
       output_variable: write_result
 
     - id: respond

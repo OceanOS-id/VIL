@@ -44,7 +44,7 @@ spec:
         - target: size
           source:
             language: vil-expr
-            source: trigger_payload.size ?? 10
+            source: 'trigger_payload.size != null ? trigger_payload.size : 10'
       output_variable: search_result
 
     - id: respond

@@ -29,9 +29,9 @@ spec:
             source: |
               {
                 "fired_at": now(),
-                "fire_count": trigger_payload.fire_count ?? 1,
+                "fire_count": trigger_payload.fire_count != null ? trigger_payload.fire_count : 1,
                 "source": "cron-basic",
-                "message": "Cron tick #" + string(trigger_payload.fire_count ?? 1) + " at " + string(now())
+                "message": "Cron tick #" + string(trigger_payload.fire_count != null ? trigger_payload.fire_count : 1) + " at " + string(now())
               }
       output_variable: log_entry
 

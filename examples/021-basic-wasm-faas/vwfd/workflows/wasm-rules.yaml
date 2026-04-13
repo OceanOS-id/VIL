@@ -29,7 +29,7 @@ spec:
         - target: quantity
           source: { language: vil-expr, source: trigger_payload.quantity }
         - target: customer_tier
-          source: { language: vil-expr, source: 'trigger_payload.customer_tier ?? "standard"' }
+          source: { language: vil-expr, source: 'trigger_payload.customer_tier != null ? trigger_payload.customer_tier : "standard"' }
       output_variable: pricing_result
 
     - id: respond
