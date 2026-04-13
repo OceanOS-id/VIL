@@ -298,12 +298,26 @@ pub struct VwfdApp {
     native_registry: NativeRegistry,
     wasm_modules: HashMap<String, String>,     // module_ref → file path (WASI compliant)
     sidecar_commands: HashMap<String, String>,  // target → command
+    durability: Option<Arc<crate::DurabilityStore>>,
 }
 
 impl VwfdApp {
     /// Enable/disable embedded observer dashboard (/_vil/dashboard/).
     pub fn observer(mut self, enabled: bool) -> Self {
         self.observer_enabled = enabled;
+        self
+    }
+
+    /// Enable durability — redb checkpoint per-activity, crash recovery.
+    pub fn durability(mut self, store: Arc<crate::DurabilityStore>) -> Self {
+        self.durability = Some(store);
+        self
+    }
+
+    /// Enable in-memory durability — state tracked but not persisted to disk.
+    /// Useful for: benchmarks, dev mode, stateless API workflows.
+    pub fn durability_in_memory(mut self) -> Self {
+        self.durability = Some(Arc::new(crate::DurabilityStore::in_memory()));
         self
     }
 
@@ -569,6 +583,7 @@ impl VwfdApp {
 
         let config = ExecConfig {
             connector_fn: Some(connector_fn),
+            durability: self.durability.clone(),
             ..Default::default()
         };
 
@@ -721,6 +736,7 @@ pub fn app(workflow_dir: impl Into<String>, port: u16) -> VwfdApp {
         native_registry: NativeRegistry::new(),
         wasm_modules: HashMap::new(),
         sidecar_commands: HashMap::new(),
+        durability: None,
     }
 }
 
