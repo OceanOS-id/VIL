@@ -19,6 +19,12 @@ pub struct VwfdMetadata {
     pub author: Option<String>,
     pub tags: Option<Vec<String>>,
     pub updated_at: Option<String>,
+    /// State store type for execution state tracking.
+    /// Values: "in_memory", "h2_in_memory", "redb", "postgres" (future).
+    /// Default: none (stateless execution).
+    pub state_store: Option<String>,
+    /// State store path (for redb) or connection URL (for postgres).
+    pub state_store_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

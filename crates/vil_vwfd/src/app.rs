@@ -308,16 +308,21 @@ impl VwfdApp {
         self
     }
 
-    /// Enable durability — redb checkpoint per-activity, crash recovery.
-    pub fn durability(mut self, store: Arc<crate::DurabilityStore>) -> Self {
-        self.durability = Some(store);
-        self
-    }
-
-    /// Enable in-memory durability — state tracked but not persisted to disk.
-    /// Useful for: benchmarks, dev mode, stateless API workflows.
-    pub fn durability_in_memory(mut self) -> Self {
-        self.durability = Some(Arc::new(crate::DurabilityStore::in_memory()));
+    /// Set state store for execution tracking.
+    ///
+    /// ```rust,no_run
+    /// use vil_vwfd::StateStore;
+    /// vil_vwfd::app("workflows/", 8080)
+    ///     .state_store(StateStore::InMemory)        // fastest, lose on crash
+    ///     .state_store(StateStore::H2InMemory)      // same, Kestra-compatible naming
+    ///     .state_store(StateStore::Redb("/path".into())) // persistent, ACID
+    ///     .run().await;
+    /// ```
+    pub fn state_store(mut self, store: crate::StateStore) -> Self {
+        match store.build() {
+            Ok(ds) => self.durability = Some(Arc::new(ds)),
+            Err(e) => eprintln!("  WARNING: state_store init failed — {}", e),
+        }
         self
     }
 

@@ -9,6 +9,7 @@ metadata:
     Measured: 37K req/s (Docker), 43K req/s (native) on i9-11900F.
   dialect: vil
   dialect_version: "1.0"
+  state_store: in_memory              # in_memory | h2_in_memory | redb
 
 spec:
   activities:

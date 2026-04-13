@@ -1,12 +1,49 @@
-//! Durability — redb-backed checkpoint store for VIL VWFD execution.
+//! State Store — execution state tracking for VIL VWFD.
 //!
-//! Single-tier (redb only, no papaya/WAL tiered store like VFlow).
-//! Checkpoint after each activity. Recovery on startup.
+//! Supports multiple backends:
+//!   - InMemory: HashMap (fastest, lose on crash)
+//!   - H2InMemory: Same as InMemory (compatible naming with Kestra H2)
+//!   - Redb: Persistent embedded DB (ACID, crash-safe, fsync per-write)
+//!   - Postgres: External DB (future)
+//!
+//! Checkpoint after each activity. Recovery on startup (Redb only).
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
+
+/// State store backend selection.
+#[derive(Debug, Clone)]
+pub enum StateStore {
+    /// In-memory HashMap — fastest, state lost on restart.
+    InMemory,
+    /// H2-compatible in-memory — same as InMemory (naming compat with Kestra).
+    H2InMemory,
+    /// redb embedded DB — persistent, ACID, crash recovery.
+    Redb(String),
+    // Postgres(String),  // future
+}
+
+impl StateStore {
+    /// Parse from YAML metadata string.
+    pub fn from_yaml(store_type: &str, path: Option<&str>) -> Self {
+        match store_type {
+            "in_memory" | "memory" => StateStore::InMemory,
+            "h2_in_memory" | "h2" => StateStore::H2InMemory,
+            "redb" => StateStore::Redb(path.unwrap_or("/tmp/vil-state/exec.redb").to_string()),
+            _ => StateStore::InMemory,
+        }
+    }
+
+    /// Create DurabilityStore from this config.
+    pub fn build(&self) -> Result<DurabilityStore, String> {
+        match self {
+            StateStore::InMemory | StateStore::H2InMemory => Ok(DurabilityStore::in_memory()),
+            StateStore::Redb(path) => DurabilityStore::persistent(path),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutionState {

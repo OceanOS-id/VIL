@@ -23,7 +23,7 @@ pub mod app;
 pub use compiler::compile;
 pub use graph::{VilwGraph, NodeKind};
 pub use executor::{execute, ExecConfig, ExecResult, ExecError};
-pub use durability::DurabilityStore;
+pub use durability::{DurabilityStore, StateStore};
 pub use saga::{collect_compensations, run_compensation};
 pub use handler::WorkflowRouter;
 pub use loader::{load_dir, load_yaml};
