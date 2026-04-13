@@ -124,6 +124,14 @@ impl WorkflowRouter {
         routes.iter().map(|r| format!("{} {}", r.method, r.path)).collect()
     }
 
+    /// Clear all routes. Used by provisioning API on reload/sync.
+    pub fn clear(&self) {
+        let new_routes: Arc<Vec<Route>> = Arc::new(Vec::new());
+        let new_ptr = Box::into_raw(Box::new(new_routes));
+        let old_ptr = self.routes.swap(new_ptr, Ordering::AcqRel);
+        unsafe { let _ = Box::from_raw(old_ptr); }
+    }
+
     pub fn count(&self) -> usize {
         let ptr = self.routes.load(Ordering::Acquire);
         let routes = unsafe { &*ptr };
