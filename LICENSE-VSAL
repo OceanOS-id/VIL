@@ -98,6 +98,48 @@ You a worldwide, royalty-free, non-exclusive, non-transferable license to:
     provided that the Software, when installed and operated by the
     recipient, remains subject to this License.
 
+2.6 Patent Grant. Subject to the terms of this License, each Contributor
+    (including Licensor) hereby grants You a perpetual, worldwide,
+    non-exclusive, no-charge, royalty-free, irrevocable (except as stated
+    in this section) patent license to make, have made, use, offer to
+    sell, sell, import, and otherwise transfer the Software, where such
+    license applies only to those patent claims licensable by such
+    Contributor that are necessarily infringed by their Contribution(s)
+    alone or by combination of their Contribution(s) with the Software
+    to which such Contribution(s) was submitted. If You institute patent
+    litigation against any entity (including a cross-claim or
+    counterclaim in a lawsuit) alleging that the Software or a
+    Contribution incorporated within the Software constitutes direct or
+    contributory patent infringement, then any patent licenses granted
+    to You under this License for that Software shall terminate as of
+    the date such litigation is filed (Patent Retaliation).
+
+2.7 Notices Preservation. In any distribution of the Software (Source or
+    Object form), You must:
+
+    (a) Preserve all copyright, attribution, and license notices that
+        appear in the Software.
+    (b) Include a complete, unmodified copy of this License (LICENSE-VSAL).
+    (c) Preserve the Preamble listing of covered components.
+    (d) Retain any "NOTICE" files distributed with the Software.
+
+2.8 Modification Disclosure. If You distribute modified versions of the
+    Software, You must:
+
+    (a) Include prominent notices stating that You have modified the
+        Software and the date of any modifications.
+    (b) Cause the modified Software to carry prominent notices stating
+        that it is released under this License.
+    (c) When distributing in Object form, make the corresponding Source
+        form of Your modifications available to the recipient on the
+        same terms as this License, at no additional charge beyond the
+        cost of distribution.
+
+2.9 No Trademark License. No rights are granted under this License to use
+    any of Licensor's trademarks, service marks, trade names, or product
+    names, except as required for reasonable and customary use in
+    describing the origin of the Software (see Section 5.5).
+
 
 ================================================================================
   3. WORKFLOW SERVICE RESTRICTION
@@ -130,6 +172,14 @@ Without limiting the foregoing, You may NOT:
     execution on Software-based infrastructure operated by You as a
     managed service. The translation layer does NOT exempt the service
     from Workflow-as-a-Service classification.
+
+3.7 Anti-Circumvention. You may NOT, in any derivative work or modified
+    distribution of the Software, remove, disable, weaken, bypass, or
+    otherwise circumvent this Workflow Service Restriction, Section 4
+    (Significant Business Process Exception criteria), Section 5
+    (Reservation of Rights), or any license-notice, telemetry, or
+    enforcement mechanism the Licensor may include in the Software. Any
+    such circumvention constitutes a material breach.
 
 This restriction applies regardless of whether the service is offered for
 free or for a fee.
@@ -235,7 +285,7 @@ free or for a fee.
     Section 5.2 or Section 5.3. Commercial arrangements for WaaS
     operation, migration services, or equivalent activities may be
     obtained separately by written agreement with the Licensor (contact
-    legal@vastar.id).
+    legal@midsolution.id).
 
 5.5 Trademarks — "VIL", "vil_server", "VFlow", "VFlow Enterprise", "VWFD",
     "V-CEL", "VDICL", "VilQuery", "TriLaneKernel", "Galaxy Bimasakti", and
@@ -274,13 +324,36 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   8. TERMINATION
 ================================================================================
 
-8.1 If You breach Section 3 (Workflow Service Restriction), Your rights
-    under this License terminate automatically and immediately.
+8.1 Automatic Termination on Material Breach. If You breach Section 3
+    (Workflow Service Restriction) or Section 2.6 (Patent Retaliation),
+    Your rights under this License terminate automatically and
+    immediately, without need for notice.
 
-8.2 Upon termination, You must cease all use, distribution, and operation
-    of the Software and any derivative works thereof.
+8.2 Cure Period for Other Breaches. For any other breach of this License
+    (including Sections 2.7–2.9 on notices and modification disclosure),
+    Your rights terminate if You fail to cure the breach within thirty
+    (30) days after receiving written notice from the Licensor
+    identifying the breach. If cured within the cure period, Your rights
+    continue uninterrupted.
 
-8.3 Sections 1, 5, 7, 8, and 9 survive termination of this License.
+8.3 Good-Faith Grace for First-Time Inadvertent Breaches. Notwithstanding
+    Section 8.1, if this is Your first breach and the Licensor determines
+    (at its sole discretion) that the breach was inadvertent and cured
+    promptly in good faith after written notice, the Licensor may
+    reinstate Your rights under this License.
+
+8.4 Obligations Upon Termination. Upon termination, You must:
+
+    (a) Cease all use, distribution, and operation of the Software and
+        any derivative works thereof.
+    (b) Destroy or return all copies of the Software in Your possession
+        or control, except archival copies required by law.
+    (c) Notify any downstream recipients to whom You distributed the
+        Software of the termination.
+
+8.5 Survival. Sections 1 (Definitions), 2.6 (Patent Retaliation), 5
+    (Reservation of Rights), 7 (Disclaimer), 8 (Termination), 9
+    (Governing Law), and 11 (Miscellaneous) survive termination.
 
 
 ================================================================================
@@ -294,13 +367,85 @@ courts of Jakarta, Indonesia.
 
 
 ================================================================================
-  10. CONTACT
+  10. DEFINITIONS OF OPEN / SOURCE-AVAILABLE POSITIONING
+================================================================================
+
+10.1 Relation to Open-Source Licensing. This License is NOT an open-source
+     license under the Open Source Initiative (OSI) definition, because
+     Section 3 imposes a field-of-use restriction. The Software is
+     instead source-available — You may read, modify, redistribute, and
+     operate it subject to the terms herein.
+
+10.2 Sustainable Use Positioning. This License follows the "sustainable
+     use" pattern established by similar licenses (n8n Sustainable Use
+     License, Elastic License 2.0, Business Source License, Functional
+     Source License) in preserving commercial sustainability for the
+     Licensor while granting broad permissions to Licensees for internal
+     use, modification, and non-competing commercial products.
+
+10.3 Intent of This License. This License is intended to be interpreted
+     in favor of (i) Licensee freedom to use, modify, and deploy the
+     Software for the Licensee's own business purposes, including
+     internal automation and customer-facing products that qualify as
+     Significant Business Processes under Section 4; and (ii) Licensor's
+     sole right to operate the Software as a commodity Workflow-as-a-
+     Service offering. Ambiguities shall be resolved consistent with
+     these twin intents.
+
+
+================================================================================
+  11. MISCELLANEOUS
+================================================================================
+
+11.1 Severability. If any provision of this License is held to be
+     unenforceable or invalid by a court of competent jurisdiction, the
+     remaining provisions shall continue in full force and effect. The
+     unenforceable provision shall be modified to the minimum extent
+     necessary to make it enforceable while preserving its intent.
+
+11.2 No Waiver. No failure or delay by the Licensor in exercising any
+     right under this License shall constitute a waiver of that right.
+     Any waiver must be in writing and signed by an authorized
+     representative of the Licensor.
+
+11.3 Entire Agreement. This License, together with any separately-
+     executed commercial agreement between You and the Licensor,
+     constitutes the entire agreement regarding Your use of the
+     Software. In the event of conflict between this License and a
+     separately-executed commercial agreement with the Licensor, the
+     separately-executed commercial agreement controls.
+
+11.4 Assignment. You may not assign or transfer this License or any
+     rights hereunder without the prior written consent of the
+     Licensor, except that You may assign this License as part of a
+     merger, acquisition, or sale of substantially all of Your assets,
+     provided the successor agrees in writing to be bound by this
+     License.
+
+11.5 Export Compliance. You shall comply with all applicable export and
+     import laws and regulations of Indonesia, and any jurisdiction in
+     which You operate, in Your use and distribution of the Software.
+
+11.6 Language. The authoritative text of this License is English. If
+     this License is translated into another language, the English
+     version controls in the event of conflict.
+
+11.7 Updates and Versioning. The Licensor may publish new versions of
+     this License. Each new version will be given a distinguishing
+     version number. The Software is licensed under the version of this
+     License included in the distribution You received; Licensor may
+     not unilaterally apply a later version to Your existing
+     distribution.
+
+
+================================================================================
+  12. CONTACT
 ================================================================================
 
 For licensing inquiries, commercial agreements, or clarification:
 
-    Email:  legal@vastar.id
-    Sales:  sales@vastar.id
+    Email:  legal@midsolution.id
+    Sales:  sales@midsolution.id
     Web:    https://vastar.id/licensing
 
 PT RAG Mid Solution

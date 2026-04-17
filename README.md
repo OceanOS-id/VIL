@@ -294,7 +294,7 @@ The activities VSAL restricts for licensees are **exclusively available through 
 - **VIL Cloud Setup Project** — on-demand VIL Project generation from customer specs, delivered as a hosted deployment
 - **Commercial WaaS Sublicensing** — separate agreement for organizations that need to offer workflow hosting legitimately
 
-See [LICENSING.md §3.7.5](LICENSING.md) and [LICENSE-VSAL §5.2](LICENSE-VSAL) for the formal Licensor Reserved Rights. Contact **legal@vastar.id** for commercial arrangements.
+See [LICENSING.md §3.7.5](LICENSING.md) and [LICENSE-VSAL §5.2](LICENSE-VSAL) for the formal Licensor Reserved Rights. Contact **legal@midsolution.id** for commercial arrangements.
 
 ## Links
 

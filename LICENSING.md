@@ -235,7 +235,7 @@ The Workflow Service Restriction in §3.5 applies to Licensees, **not to the Lic
 
 4. **Commercial Sublicensing** — Licensing, sublicensing, white-labeling, or OEM embedding of the VSAL crates under separate negotiated commercial terms (for parties that need to offer WaaS legitimately).
 
-These rights are codified in LICENSE-VSAL §5.2 (Licensor Reserved Rights) and §5.3 (Exclusive Commercial Operation). Third parties seeking any of these capabilities must negotiate a separate commercial agreement with Vastar (contact legal@vastar.id).
+These rights are codified in LICENSE-VSAL §5.2 (Licensor Reserved Rights) and §5.3 (Exclusive Commercial Operation). Third parties seeking any of these capabilities must negotiate a separate commercial agreement with Vastar (contact legal@midsolution.id).
 
 > **Why the asymmetry?** VSAL exists precisely to preserve these commercial channels as Vastar's moat. Without exclusivity, VIL could not sustain open-source development at its current scope (165+ Apache/MIT library crates). This is the same model as MongoDB SSPL, Elastic License v2, and BSL — the licensor operates the service; licensees build products.
 
@@ -283,6 +283,43 @@ Legend: **SBPE** = Significant Business Process Exception (§3.6) — product de
 | **Vastar** operates multi-tenant Provisionable Mode for third-party customers on Vastar Cloud | ✓ | **Licensor Reserved Right.** Same activity by any other party = ✗. |
 | Company M contracts with Vastar for a commercial WaaS sublicense, then operates managed workflow hosting for their vertical (e.g., healthcare compliance) | ✓ | Permitted via separate commercial agreement with Vastar (§3.7.5 item 4). |
 
+### 3.9 VSAL Positioning — Sustainable Use License Family
+
+VSAL belongs to the **Sustainable Use License (SUL) family** — a class of source-available licenses that grant broad freedom for internal use, modification, and non-competing commercial products, while reserving commodity-hosting rights to the Licensor.
+
+#### 3.9.1 Peer Licenses
+
+| License | Used By | Core Restriction | Cure Period | Patent Grant |
+|---------|---------|------------------|:-----------:|:------------:|
+| **n8n Sustainable Use License** | n8n.io | Hosting n8n as a service | 30 days | No |
+| **Elastic License 2.0** | Elasticsearch, Kibana | Hosted Elastic-as-a-Service + circumvention | 30 days | Yes |
+| **Business Source License (BSL 1.1)** | MariaDB, CockroachDB, Couchbase, Sentry (past) | Any production use beyond "Additional Use Grant", converts to Apache after N years | None (per-licensor) | Per-licensor |
+| **Functional Source License (FSL)** | Sentry, GitButler | Competing with Licensor's product; converts to Apache/MIT after 2 years | None | Yes |
+| **Server Side Public License (SSPL v1)** | MongoDB | Offering SSPL-licensed software as a service must open-source entire service stack | None | Per-licensor |
+| **Commons Clause** | Redis (past), Sourcegraph (past) | Selling the software (broad) | None | No |
+| **VSAL 1.0** (this License) | VIL workflow runtime (7 crates) | Workflow-as-a-Service + translation layers | 30 days (non-Section-3) | Yes |
+
+#### 3.9.2 What VSAL Borrows From Each
+
+- **From n8n SUL:** internal-use freedom, "embedded" (Significant Business Process) exception, cure period.
+- **From Elastic 2.0:** patent grant with retaliation, anti-circumvention clause, source-available positioning.
+- **From BSL:** field-of-use restriction as the enforcement mechanism; clear permitted-use enumeration.
+- **From Apache 2.0:** attribution / notices preservation, modification disclosure, contribution terms.
+- **Original to VSAL:**
+  - **Anti-translation clause (§3.6):** competitors cannot translate n8n/Kestra/Temporal/etc. to VWFD and host as service — tighter than n8n SUL's "hosting" restriction.
+  - **Licensor Reserved Rights (§5.2):** explicit enumeration of Vastar-exclusive commercial activities (PaaS/SaaS/WaaS, AI-powered migration, Setup Projects, sublicensing).
+  - **Significant Business Process Exception (§4):** explicit "if workflow provisioning were removed, would product still have value?" test with enumerated permitted activities and ~20 example product types.
+
+#### 3.9.3 What VSAL Does NOT Include (Deliberate Choices)
+
+- **No time-based conversion to OSI-licensed** (unlike BSL/FSL). Rationale: WaaS-protection intent is long-term; VIL's commercial moat is persistent.
+- **No SSPL-style "service stack open-sourcing" copyleft.** Rationale: too disruptive to Licensee ecosystems; VSAL restricts by activity (WaaS) rather than by packaging.
+- **No Commons Clause broad "no selling" restriction.** Rationale: Licensees MUST be able to sell non-WaaS products built on VSAL crates; Commons Clause is too restrictive.
+
+#### 3.9.4 Fair-Code Alignment
+
+VSAL is philosophically aligned with the [fair-code](https://faircode.io) movement — source-available, free for most users, with commercial sustainability for the original authors. VSAL is not officially endorsed by the fair-code initiative, but reasonable parties may describe VIL's VSAL-covered crates as "fair-code" in informal contexts.
+
 ---
 
 ## 4. VFlow — Commercial License
@@ -318,7 +355,7 @@ VFlow is **not free**. Because `vil_server` with `vil_vwfd` already provides a f
 
 ### 4.4 Pricing
 
-VFlow is available under annual or multi-year license agreements. Contact [sales@vastar.id](mailto:sales@vastar.id) for pricing based on deployment scale, number of instances, and support requirements.
+VFlow is available under annual or multi-year license agreements. Contact [sales@midsolution.id](mailto:sales@midsolution.id) for pricing based on deployment scale, number of instances, and support requirements.
 
 ### 4.5 Managed VFlow Services
 
@@ -338,7 +375,7 @@ VFlow Enterprise is licensed under a commercial agreement between Vastar and the
 - Dedicated support channel
 - Security certifications and compliance documentation
 
-Contact [sales@vastar.id](mailto:sales@vastar.id) for commercial licensing inquiries.
+Contact [sales@midsolution.id](mailto:sales@midsolution.id) for commercial licensing inquiries.
 
 ---
 
@@ -425,8 +462,8 @@ Vastar reserves the right to update the terms of the VSAL for future versions of
 
 For licensing inquiries, commercial agreements, or clarification:
 
-- **Email**: [legal@vastar.id](mailto:legal@vastar.id)
-- **Sales**: [sales@vastar.id](mailto:sales@vastar.id)
+- **Email**: [legal@midsolution.id](mailto:legal@midsolution.id)
+- **Sales**: [sales@midsolution.id](mailto:sales@midsolution.id)
 - **Web**: [https://vastar.id/licensing](https://vastar.id/licensing)
 
 ---
