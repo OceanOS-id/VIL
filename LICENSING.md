@@ -239,16 +239,39 @@ These rights are codified in LICENSE-VSAL §5.2 (Licensor Reserved Rights) and �
 
 > **Why the asymmetry?** VSAL exists precisely to preserve these commercial channels as Vastar's moat. Without exclusivity, VIL could not sustain open-source development at its current scope (165+ Apache/MIT library crates). This is the same model as MongoDB SSPL, Elastic License v2, and BSL — the licensor operates the service; licensees build products.
 
+> **Important — Licensor Reserved Rights do NOT narrow the Significant Business Process Exception (§3.6).** If VIL workflows are part of a Significant Business Process, you remain fully permitted to:
+>
+> - Use all 7 VSAL crates internally, including Provisionable Mode (`.provision(true)`), to orchestrate your own business logic
+> - Expose your application to customers, even if customers interact with UI that triggers workflows underneath
+> - Accept structured customer input (forms, CSV uploads, API payloads) that your predefined workflows process — this is data flow, not workflow provisioning
+> - Ship your product to clients who deploy it themselves (software distribution, not managed service)
+>
+> The line is: **are customers uploading workflow definitions, or are they using your product?** The former is WaaS (licensee-forbidden); the latter is Significant Business Process (permitted).
+
 ### 3.8 Examples (Summary Table)
+
+Legend: **SBPE** = Significant Business Process Exception (§3.6) — product delivers substantial domain value beyond workflow hosting.
 
 | Scenario | Permitted? | Reasoning |
 |----------|:----------:|-----------|
-| Company A builds a credit scoring SaaS using VIL workflows to orchestrate scoring pipeline | ✓ | Significant business process. Product = credit scoring. |
-| Company B builds an IoT platform using VIL + Modbus/OPC-UA, internally uses `.provision(true)` | ✓ | Significant business process. Product = IoT platform. |
+| Company A builds a credit scoring SaaS using VIL workflows to orchestrate scoring pipeline | ✓ | **SBPE.** Product = credit scoring. |
+| Company B builds an IoT platform using VIL + Modbus/OPC-UA, internally uses `.provision(true)` | ✓ | **SBPE.** Product = IoT monitoring/control. |
 | Company C deploys `vil_server` with `.provision(true)` internally for their own team | ✓ | Self-Use. |
-| Company D builds a payment gateway using VIL, lets merchants configure payment routing rules | ✓ | Significant business process. Routing rules = domain config, not arbitrary workflow. |
+| Company D builds a payment gateway using VIL, lets merchants configure payment routing rules | ✓ | **SBPE.** Routing rules = domain config, not arbitrary workflow. |
 | Company E builds a product with `vil_server`. Their clients install it on-premise with `.provision(true)` | ✓ | Software distribution. Each client instance = Self-Use. |
-| Company F builds a healthcare data integration platform using VIL workflows to connect hospital systems | ✓ | Significant business process. Product = healthcare integration. |
+| Company F builds a healthcare data integration platform using VIL workflows to connect hospital systems | ✓ | **SBPE.** Product = healthcare integration. |
+| Company N builds an insurance underwriting SaaS — VIL workflows assess risk, score policies, route approvals | ✓ | **SBPE.** Product = underwriting. Customers submit applications, not workflows. |
+| Company O builds an e-commerce order fulfillment platform — VIL orchestrates pick/pack/ship across warehouses | ✓ | **SBPE.** Product = fulfillment. |
+| Company P builds a logistics/shipping platform — VIL workflows handle route optimization, customs clearance, tracking | ✓ | **SBPE.** Product = logistics. |
+| Company Q builds a banking core — VIL workflows handle AML checks, transaction posting, reconciliation | ✓ | **SBPE.** Product = banking. Regulated domain logic. |
+| Company R builds a KYC/compliance SaaS — VIL workflows run document verification, sanctions screening, PEP checks | ✓ | **SBPE.** Product = KYC. |
+| Company S builds an HR/recruitment platform — VIL workflows orchestrate application screening, interview scheduling, onboarding | ✓ | **SBPE.** Product = HR tech. |
+| Company T builds a manufacturing MES — VIL workflows coordinate machines, quality control, batch traceability | ✓ | **SBPE.** Product = manufacturing execution. |
+| Company U builds a government e-service — VIL workflows route permit applications, approval chains, document verification | ✓ | **SBPE.** Product = e-government service. |
+| Company V builds an LMS (learning platform) — VIL workflows handle enrollment, assessment, certificate issuance | ✓ | **SBPE.** Product = education. |
+| Company W builds a SaaS that exposes a "workflow builder UI" to customers but customers configure **business rules** within the product's fixed domain model (e.g., credit policy thresholds) | ✓ | **SBPE.** Customers configure domain logic, not arbitrary workflows. |
+| Company X builds a telehealth platform — VIL workflows orchestrate appointment booking, triage, prescription, pharmacy handoff | ✓ | **SBPE.** Product = telehealth. |
+| Company Y builds an insurtech claims platform — internal team uses `.provision(true)` to iterate claim-handling workflows; customers submit claims | ✓ | **SBPE.** Provisioning is internal iteration; customers submit claims (data), not workflows. |
 | Company G builds "WorkflowHub" — users sign up and deploy their own arbitrary YAML workflows to G's infrastructure | ✗ | WaaS. Primary product = workflow provisioning. |
 | Company H builds "Automate.io" using VIL as engine — general-purpose automation competing with n8n/Zapier | ✗ | WaaS. Primary product = general workflow automation. |
 | Company I builds custom provisioning layer using VIL crates (bypassing `.provision(true)`) to offer hosted workflow execution | ✗ | WaaS regardless of technical implementation. |

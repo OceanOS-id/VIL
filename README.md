@@ -275,7 +275,15 @@ VSAL permits **all internal business use**, private deployment, modification, an
 - Translation layers that accept n8n/Kestra/Airflow/Temporal workflows, emit VWFD, and host execution as a service
 - Any product whose primary value is "run customer-authored workflows for them" on top of VIL's runtime
 
-If you run **your own** workflows on VIL — even if you expose them to customers as a product feature — you are inside the permitted use. The restriction targets commodity WaaS reselling, not application-level exposure. See [LICENSING.md §3](LICENSING.md) for examples and the Significant Business Process Exception.
+If you run **your own** workflows on VIL — even if you expose them to customers as a product feature — you are inside the permitted use. The restriction targets commodity WaaS reselling, not application-level exposure.
+
+### Significant Business Process Exception
+
+**If VIL workflows are part of a significant business process in your product, you are permitted** — even when using Provisionable Mode internally. The test: *if workflow provisioning were removed, would the product still deliver substantial value?*
+
+Permitted examples (non-exhaustive): credit scoring, IoT platforms, payment gateways, insurance underwriting, e-commerce fulfillment, healthcare integration, telehealth, logistics, banking/KYC, HR tech, manufacturing MES, government e-services, learning management, insurtech claims, compliance platforms.
+
+The distinguishing line: **do your customers *upload workflow definitions*, or do they *use your product*?** The former is WaaS (not permitted); the latter is a Significant Business Process (permitted). See [LICENSING.md §3.6 and §3.8](LICENSING.md) for the full table of ~20 example scenarios.
 
 ### Vastar Commercial Services (Licensor Reserved)
 

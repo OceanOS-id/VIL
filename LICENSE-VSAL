@@ -139,21 +139,56 @@ free or for a fee.
   4. SIGNIFICANT BUSINESS PROCESS EXCEPTION
 ================================================================================
 
-The Workflow Service Restriction in Section 3 does NOT apply when workflow
-provisioning is a component of a Significant Business Process (Section 1.7),
-not the primary product itself.
+4.1 Scope. The Workflow Service Restriction in Section 3 does NOT apply when
+    workflow provisioning is a component of a Significant Business Process
+    (Section 1.7), not the primary product itself.
 
-Examples of permitted use under this exception:
+4.2 Permitted Activities Under This Exception. If Your product qualifies as
+    a Significant Business Process, You may:
 
-- A credit scoring platform using workflows to orchestrate scoring pipelines.
-- An IoT monitoring platform routing sensor data through workflows.
-- A payment processing system managing transaction routing via workflows.
-- An insurance underwriting system orchestrating risk assessment.
-- An e-commerce platform managing order fulfillment via workflows.
-- A healthcare integration platform connecting hospital systems.
+    (a) Use all VSAL-covered components internally, including Provisionable
+        Mode, to orchestrate Your own business logic.
+    (b) Expose Your product to customers through any interface (web, mobile,
+        API), even if customer actions trigger workflow execution internally.
+    (c) Accept structured customer input (forms, uploads, API payloads) that
+        Your predefined workflows process — this is data flow, not workflow
+        provisioning.
+    (d) Allow customers to configure domain-specific business rules within
+        Your product's fixed domain model (e.g., credit policy thresholds,
+        routing rules, approval chains) — this is configuration, not
+        workflow definition upload.
+    (e) Distribute the Software to clients who deploy it themselves on their
+        own infrastructure — this is software distribution, not a managed
+        service.
 
-In each case, the product delivers substantial domain-specific value beyond
-workflow execution. The workflow engine is an implementation detail.
+4.3 Examples of Permitted Use:
+
+    - A credit scoring platform using workflows to orchestrate scoring.
+    - An IoT monitoring platform routing sensor data through workflows.
+    - A payment processing system managing transaction routing.
+    - An insurance underwriting system orchestrating risk assessment.
+    - An e-commerce platform managing order fulfillment.
+    - A healthcare integration platform connecting hospital systems.
+    - A telehealth platform orchestrating appointment / triage / prescription.
+    - A logistics platform handling route optimization and customs clearance.
+    - A banking core handling AML, transaction posting, reconciliation.
+    - A KYC / compliance SaaS running verification and sanctions screening.
+    - An HR platform orchestrating application screening and onboarding.
+    - A manufacturing MES coordinating machines and quality control.
+    - A government e-service routing permit applications and approval chains.
+    - A learning management system handling enrollment and certification.
+
+4.4 The Test. Ask: "If workflow provisioning capability were removed from
+    our product, would the product still deliver substantial value?" If
+    yes, the product qualifies under this exception. The workflow engine
+    is an implementation detail, not the product.
+
+4.5 The Distinguishing Line. Customers of a Significant Business Process
+    USE Your product (submit data, configure domain rules, consume
+    results). Customers of Workflow-as-a-Service UPLOAD workflow
+    definitions. If Your customers' interaction is limited to Your
+    product's domain model, You are permitted under this exception even
+    if internally You use Provisionable Mode to iterate faster.
 
 
 ================================================================================
