@@ -2,38 +2,48 @@ version: "3.0"
 metadata:
   id: api-gateway
   name: "API Gateway (VWFD)"
+  description: "Same as standard: parse prompt → construct LLM body → SSE collect → respond"
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config:
         trigger_type: webhook
-        webhook_config: { path: /api/proxy }
+        webhook_config: { path: /api/trigger, method: POST }
         response_mode: buffered
         end_activity: respond
       output_variable: trigger_payload
-    - id: route_request
+
+    - id: call_llm
       activity_type: Connector
       connector_config:
         connector_ref: vastar.http
         operation: post
-        timeout_ms: 10000
+        streaming: true
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
       input_mappings:
         - target: url
-          source: { language: vil-expr, source: '"http://127.0.0.1:4545/v1/chat/completions"' }
+          source: { language: literal, source: "http://127.0.0.1:4545/v1/chat/completions" }
         - target: body
-          source: { language: vil-expr, source: 'trigger_payload' }
-      output_variable: backend_result
+          source:
+            language: vil-expr
+            source: '{"model": "gpt-4", "messages": [{"role": "user", "content": trigger_payload.body.prompt}], "stream": true}'
+      output_variable: llm_result
+
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
         final_response:
           language: vil-expr
-          source: '{"result": backend_result.body}'
+          source: '{"content": llm_result.content}'
+
     - id: end
       activity_type: End
+
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: route_request } }
-    - { id: f2, from: { node: route_request }, to: { node: respond } }
+    - { id: f1, from: { node: trigger }, to: { node: call_llm } }
+    - { id: f2, from: { node: call_llm }, to: { node: respond } }
     - { id: f3, from: { node: respond }, to: { node: end } }

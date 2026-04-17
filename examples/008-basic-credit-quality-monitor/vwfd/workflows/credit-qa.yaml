@@ -1,41 +1,52 @@
 version: "3.0"
 metadata:
   id: credit-qa
-  name: "Credit Data Quality Assurance (VWFD)"
+  name: "Credit Data Quality Assurance — 5 Validation Rules"
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config:
         trigger_type: webhook
-        webhook_config: { path: /api/qa/validate }
+        webhook_config: { path: /quality-check, method: POST }
         response_mode: buffered
         end_activity: respond
       output_variable: trigger_payload
-    - id: validate_schema
-      activity_type: Sidecar
-      sidecar_config: { target: validate_credit_schema }
-      output_variable: schema_result
-    - id: validate_business
-      activity_type: Rule
-      rule_config: { rule_set_id: credit_qa_rules_v1 }
-      output_variable: business_result
-    - id: validate_cross_ref
+
+    - id: fetch_credits
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: get
+        streaming: true
+        format: ndjson
+        timeout_ms: 30000
+      input_mappings:
+        - target: url
+          source: { language: literal, source: "http://127.0.0.1:18081/api/v1/credits/ndjson?count=1000&dirty_ratio=30" }
+      output_variable: credit_records
+
+    - id: validate
       activity_type: NativeCode
-      code_config: { handler_ref: cross_reference_check }
-      output_variable: cross_ref_result
+      code_config: { handler_ref: validate_quality }
+      input_mappings:
+        - target: records
+          source: { language: spv1, source: '$.credit_records' }
+      output_variable: validated
+
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: '{"schema": schema_result, "business": business_result, "cross_ref": cross_ref_result}'
+          language: spv1
+          source: '$.validated'
+
     - id: end
       activity_type: End
+
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: validate_schema } }
-    - { id: f2, from: { node: validate_schema }, to: { node: validate_business } }
-    - { id: f3, from: { node: validate_business }, to: { node: validate_cross_ref } }
-    - { id: f4, from: { node: validate_cross_ref }, to: { node: respond } }
-    - { id: f5, from: { node: respond }, to: { node: end } }
+    - { id: f1, from: { node: trigger }, to: { node: fetch_credits } }
+    - { id: f2, from: { node: fetch_credits }, to: { node: validate } }
+    - { id: f3, from: { node: validate }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }

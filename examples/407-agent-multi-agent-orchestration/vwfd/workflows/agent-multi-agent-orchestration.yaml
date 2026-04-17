@@ -9,7 +9,7 @@ metadata:
     - Tier 2: Diagnostic tools (run_diagnostic, search_logs). Resolves technical issues.
     - Tier 3: Incident management (create_incident, execute_runbook). Handles critical issues.
     Escalation is conditional: only proceeds if current tier cannot resolve.
-    Endpoint: POST /api/support/ask  { "customer_id": "...", "issue": "..." }
+    Endpoint: POST /api/support/ask  { "question": "..." }
 
 spec:
   activities:
@@ -37,14 +37,10 @@ spec:
           reason=ESCALATE. Returns {resolved: bool, answer, confidence,
           matched_faq_id, reason}.
       input_mappings:
-        - target: issue
+        - target: question
           source:
-            language: vil-expr
-            source: trigger_payload.issue
-        - target: customer_id
-          source:
-            language: vil-expr
-            source: trigger_payload.customer_id
+            language: spv1
+            source: '$.trigger_payload.body.question'
       output_variable: tier1_result
 
     # Gateway: Tier 1 resolved or escalate?
@@ -60,11 +56,10 @@ spec:
           language: vil-expr
           source: |
             {
-              "customer_id": trigger_payload.customer_id,
               "resolved_by": "tier1_faq",
               "answer": tier1_result.answer,
-              "confidence": tier1_result.confidence,
-              "matched_faq_id": tier1_result.matched_faq_id
+              "tiers_involved": [{"tier": "tier1_faq", "response": tier1_result.answer}],
+              "total_ms": 0
             }
 
     # ═══════════════════════════════════════════════
@@ -85,18 +80,14 @@ spec:
           Returns {resolved: bool, diagnosis, log_matches: [...],
           health_status, recommended_fix, reason}.
       input_mappings:
-        - target: issue
+        - target: question
           source:
-            language: vil-expr
-            source: trigger_payload.issue
-        - target: customer_id
-          source:
-            language: vil-expr
-            source: trigger_payload.customer_id
+            language: spv1
+            source: '$.trigger_payload.body.question'
         - target: tier1_context
           source:
-            language: vil-expr
-            source: tier1_result
+            language: spv1
+            source: '$.tier1_result'
       output_variable: tier2_result
 
     # Gateway: Tier 2 resolved or escalate?
@@ -112,13 +103,13 @@ spec:
           language: vil-expr
           source: |
             {
-              "customer_id": trigger_payload.customer_id,
               "resolved_by": "tier2_diagnostic",
-              "diagnosis": tier2_result.diagnosis,
-              "health_status": tier2_result.health_status,
-              "log_matches": tier2_result.log_matches,
-              "recommended_fix": tier2_result.recommended_fix,
-              "escalation_path": ["tier1_faq", "tier2_diagnostic"]
+              "answer": tier2_result.answer,
+              "tiers_involved": [
+                {"tier": "tier1_faq", "response": tier1_result.answer},
+                {"tier": "tier2_diagnostic", "response": tier2_result.answer}
+              ],
+              "total_ms": 0
             }
 
     # ═══════════════════════════════════════════════
@@ -138,22 +129,18 @@ spec:
           severity, runbook_executed, runbook_result, assigned_team,
           eta_minutes}.
       input_mappings:
-        - target: issue
+        - target: question
           source:
-            language: vil-expr
-            source: trigger_payload.issue
-        - target: customer_id
-          source:
-            language: vil-expr
-            source: trigger_payload.customer_id
+            language: spv1
+            source: '$.trigger_payload.body.question'
         - target: tier1_context
           source:
-            language: vil-expr
-            source: tier1_result
+            language: spv1
+            source: '$.tier1_result'
         - target: tier2_context
           source:
-            language: vil-expr
-            source: tier2_result
+            language: spv1
+            source: '$.tier2_result'
       output_variable: tier3_result
 
     # Tier 3 response (terminal)
@@ -165,15 +152,14 @@ spec:
           language: vil-expr
           source: |
             {
-              "customer_id": trigger_payload.customer_id,
               "resolved_by": "tier3_incident",
-              "incident_id": tier3_result.incident_id,
-              "severity": tier3_result.severity,
-              "runbook_executed": tier3_result.runbook_executed,
-              "runbook_result": tier3_result.runbook_result,
-              "assigned_team": tier3_result.assigned_team,
-              "eta_minutes": tier3_result.eta_minutes,
-              "escalation_path": ["tier1_faq", "tier2_diagnostic", "tier3_incident"]
+              "answer": tier3_result.answer,
+              "tiers_involved": [
+                {"tier": "tier1_faq", "response": tier1_result.answer},
+                {"tier": "tier2_diagnostic", "response": tier2_result.answer},
+                {"tier": "tier3_incident", "response": tier3_result.answer}
+              ],
+              "total_ms": 0
             }
 
     - id: end-t1

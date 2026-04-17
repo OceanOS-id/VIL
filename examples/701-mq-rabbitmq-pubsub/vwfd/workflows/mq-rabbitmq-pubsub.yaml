@@ -38,8 +38,8 @@ spec:
             source: "task"
         - target: payload
           source:
-            language: vil-expr
-            source: trigger_payload
+            language: spv1
+            source: '$.trigger_payload'
       output_variable: publish_result
 
     - id: respond

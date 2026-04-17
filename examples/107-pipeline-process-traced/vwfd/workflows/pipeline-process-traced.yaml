@@ -1,47 +1,37 @@
 version: "3.0"
-metadata:
-  id: traced-pipeline
-  name: "Process-Traced Supply Chain Pipeline"
-  description: "POST /traced — supply chain with per-hop latency measurement via trace macros"
-
+metadata: { id: traced-pipeline, name: "POST /traced — Supply chain trace enrichment" }
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
-      trigger_config:
-        trigger_type: webhook
-        webhook_config: { path: /traced }
-        response_mode: buffered
-        end_activity: respond
+      trigger_config: { trigger_type: webhook, webhook_config: { path: /traced, method: POST }, response_mode: buffered, end_activity: respond }
       output_variable: trigger_payload
-
-    - id: process
-      activity_type: Function
-      wasm_config:
-        module_ref: traced_supply_chain
-        function_name: execute
-        description: "POST /traced — supply chain with per-hop latency measurement via trace macros"
+    - id: fetch
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: get
+        streaming: true
+        format: ndjson
+        timeout_ms: 30000
       input_mappings:
-        - target: input
-          source: { language: vil-expr, source: trigger_payload }
+        - target: url
+          source: { language: literal, source: "http://localhost:18081/api/v1/credits/ndjson?count=100" }
+      output_variable: stream_records
+    - id: trace
+      activity_type: NativeCode
+      code_config: { handler_ref: trace_records }
+      input_mappings:
+        - target: records
+          source: { language: spv1, source: '$.stream_records' }
       output_variable: result
-
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config:
-        trigger_ref: trigger
-        final_response:
-          language: vil-expr
-          source: result
-
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: spv1, source: '$.result' } }
     - id: end
       activity_type: End
-
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: process } }
-    - { id: f2, from: { node: process }, to: { node: respond } }
-    - { id: f3, from: { node: respond }, to: { node: end } }
-
-  variables:
-    - { name: trigger_payload, type: object }
-    - { name: result, type: object }
+    - { id: f1, from: { node: trigger }, to: { node: fetch } }
+    - { id: f2, from: { node: fetch }, to: { node: trace } }
+    - { id: f3, from: { node: trace }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }

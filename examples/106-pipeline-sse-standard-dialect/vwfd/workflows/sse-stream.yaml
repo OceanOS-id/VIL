@@ -1,0 +1,30 @@
+version: "3.0"
+metadata: { id: sse-standard, name: "POST /stream — W3C SSE Standard dialect" }
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config: { trigger_type: webhook, webhook_config: { path: /stream, method: POST }, response_mode: streaming, end_activity: respond }
+      output_variable: trigger_payload
+    - id: fetch_stream
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: get
+        streaming: true
+        dialect: standard
+        done_marker: "[END]"
+        timeout_ms: 30000
+      input_mappings:
+        - target: url
+          source: { language: literal, source: "http://localhost:18081/api/v1/credits/stream" }
+      output_variable: stream_result
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: spv1, source: '$.stream_result' } }
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: fetch_stream } }
+    - { id: f2, from: { node: fetch_stream }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

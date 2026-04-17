@@ -14,7 +14,10 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 
 BATCH=10
-SKIP="vil_script_js vil_script_lua"
+# Skipped:
+#   vil_script_js, vil_script_lua — publish = false (legacy)
+#   VSAL crates (v0.4.0+) — source-available, NOT published to crates.io
+SKIP="vil_script_js vil_script_lua vil_cli vil_vwfd vil_vwfd_macros vil_cli_server vil_workflow_v2 vil_operator vil-server-provision"
 PUBLISHED=0
 RATE_LIMITED=0
 FAILED=0

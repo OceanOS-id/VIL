@@ -1,0 +1,24 @@
+version: "3.0"
+metadata: { id: credit-workflow, name: "POST /credit — Credit NDJSON stream" }
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config: { trigger_type: webhook, webhook_config: { path: /credit, method: POST }, response_mode: buffered, end_activity: respond }
+      output_variable: trigger_payload
+    - id: fetch
+      activity_type: Connector
+      connector_config: { connector_ref: vastar.http, operation: get, streaming: true, format: ndjson, timeout_ms: 30000 }
+      input_mappings:
+        - target: url
+          source: { language: literal, source: "http://127.0.0.1:18081/api/v1/credits/ndjson?count=100" }
+      output_variable: credit_records
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: spv1, source: '$.credit_records' } }
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: fetch } }
+    - { id: f2, from: { node: fetch }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

@@ -216,7 +216,7 @@ Always include at least one tool call in your first response.";
 // ── Handler: multi-turn with tool execution ─────────────────────────
 
 async fn code_review_handler(
-    ctx: ServiceCtx,
+    _ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<CodeReviewResponse>> {
     let req: CodeReviewRequest = body.json().expect("invalid JSON body");

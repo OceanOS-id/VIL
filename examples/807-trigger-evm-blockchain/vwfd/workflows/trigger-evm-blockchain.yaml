@@ -25,12 +25,12 @@ spec:
             language: vil-expr
             source: |
               {
-                "tx_hash": trigger_payload.tx_hash,
-                "block_number": trigger_payload.block_number,
-                "from_address": trigger_payload.from,
-                "to_address": trigger_payload.to,
-                "amount_wei": trigger_payload.amount,
-                "contract": trigger_payload.contract_address
+                "tx_hash": trigger_payload.body.tx_hash,
+                "block_number": trigger_payload.body.block_number,
+                "from_address": trigger_payload.body.from,
+                "to_address": trigger_payload.body.to,
+                "amount_wei": trigger_payload.body.amount,
+                "contract": trigger_payload.body.contract_address
               }
       output_variable: transfer
 
@@ -43,7 +43,7 @@ spec:
         - target: entity
           source: { language: literal, source: blockchain_events }
         - target: data
-          source: { language: vil-expr, source: transfer }
+          source: { language: spv1, source: '$.transfer' }
       output_variable: insert_result
 
     - id: end

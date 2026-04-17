@@ -20,11 +20,11 @@ spec:
         end_activity: respond
       output_variable: trigger_payload
 
-    # LoopForEach over trigger_payload.texts
+    # LoopForEach over trigger_payload.body.texts
     - id: translate-loop
       activity_type: LoopForEach
       loop_config:
-        collection: "trigger_payload.texts"
+        collection: "trigger_payload.body.texts"
         item_variable: current_text
       output_variable: loop_state
 
@@ -50,7 +50,7 @@ spec:
               {
                 "model": "gpt-4",
                 "messages": [
-                  {"role": "system", "content": "You are a translator. Translate to " + trigger_payload.target_lang + ". Return ONLY the translated text, nothing else."},
+                  {"role": "system", "content": "You are a translator. Translate to " + trigger_payload.body.target_lang + ". Return ONLY the translated text, nothing else."},
                   {"role": "user", "content": current_text}
                 ],
                 "stream": true
@@ -86,8 +86,8 @@ spec:
             language: vil-expr
             source: |
               {
-                "total": size(trigger_payload.texts),
-                "target_lang": trigger_payload.target_lang,
+                "total": size(trigger_payload.body.texts),
+                "target_lang": trigger_payload.body.target_lang,
                 "translations": _loop_results
               }
       output_variable: batch_response
@@ -97,8 +97,8 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: batch_response
+          language: spv1
+          source: '$.batch_response'
 
     - id: end
       activity_type: End

@@ -1,53 +1,52 @@
 version: "3.0"
 metadata:
   id: data-ingestion
-  name: "Core Banking Data Ingestion (VWFD)"
+  name: "Core Banking Data Ingestion — NDJSON Stream + Risk Enrichment"
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config:
         trigger_type: webhook
-        webhook_config: { path: /api/ingest }
+        webhook_config: { path: /ingest, method: POST }
         response_mode: buffered
         end_activity: respond
       output_variable: trigger_payload
-    - id: validate
-      activity_type: Function
-      wasm_config: { module_ref: validate_payload, function_name: execute }
-      input_mappings:
-        - target: data
-          source: { language: vil-expr, source: 'trigger_payload' }
-      output_variable: validated
-    - id: transform
-      activity_type: Transform
-      input_mappings:
-        - target: record
-          source:
-            language: vil-expr
-            source: '{"source": "core_banking", "data": validated, "ingested_at": "now"}'
-      output_variable: transformed
-    - id: store
+
+    - id: fetch_credits
       activity_type: Connector
       connector_config:
-        connector_ref: vastar.db.postgres
-        operation: raw_query
+        connector_ref: vastar.http
+        operation: get
+        streaming: true
+        format: ndjson
+        timeout_ms: 30000
       input_mappings:
-        - target: sql
-          source: { language: literal, source: "INSERT INTO ingested_data (payload) VALUES ($1)" }
-      output_variable: store_result
+        - target: url
+          source: { language: literal, source: "http://127.0.0.1:18081/api/v1/credits/ndjson?count=1000&dirty_ratio=30" }
+      output_variable: credit_records
+
+    - id: enrich
+      activity_type: NativeCode
+      code_config: { handler_ref: enrich_credit_records }
+      input_mappings:
+        - target: records
+          source: { language: spv1, source: '$.credit_records' }
+      output_variable: enriched
+
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: '{"status": "ingested", "record": transformed}'
+          language: spv1
+          source: '$.enriched'
+
     - id: end
       activity_type: End
+
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: validate } }
-    - { id: f2, from: { node: validate }, to: { node: transform } }
-    - { id: f3, from: { node: transform }, to: { node: store } }
-    - { id: f4, from: { node: store }, to: { node: respond } }
-    - { id: f5, from: { node: respond }, to: { node: end } }
+    - { id: f1, from: { node: trigger }, to: { node: fetch_credits } }
+    - { id: f2, from: { node: fetch_credits }, to: { node: enrich } }
+    - { id: f3, from: { node: enrich }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }

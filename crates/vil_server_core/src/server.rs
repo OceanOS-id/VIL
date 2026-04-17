@@ -243,7 +243,13 @@ impl VilServer {
             .unwrap_or_else(|| "".into());
         let (app, state, port, metrics_port, observer_collector) = self.build();
 
-        let addr = SocketAddr::from(([0, 0, 0, 0], port));
+        // PORT env overrides hardcoded port — enables bench/test port management
+        let effective_port = std::env::var("PORT")
+            .ok()
+            .and_then(|s| s.parse::<u16>().ok())
+            .unwrap_or(port);
+
+        let addr = SocketAddr::from(([0, 0, 0, 0], effective_port));
 
         system_log!(
             Info,
@@ -301,51 +307,10 @@ impl VilServer {
         println!("  Press Ctrl+C to stop");
         println!();
 
-        // Show usage guide with actual service endpoint
-        let example_path = format!("{}/trigger", first_prefix);
-
-        println!("  ─── Open another terminal ─────────────────────────────────");
-        println!();
-        let mut step = 1;
-        if observer_enabled {
-            println!("  {}. Dashboard:  http://localhost:{}/_vil/dashboard/", step, port);
-            println!();
-            step += 1;
+        // Observer dashboard hint (only if enabled)
+        if observer_enabled && !first_prefix.is_empty() {
+            eprintln!("  Dashboard: http://localhost:{}/_vil/dashboard/", port);
         }
-        println!("  {}. Test:", step);
-        println!("     curl -s -X POST http://localhost:{}{} \\", port, example_path);
-        println!("       -H 'Content-Type: application/json' \\");
-        println!("       -d '{{\"prompt\":\"hello\"}}'");
-        step += 1;
-        println!();
-        println!("  {}. Warmup (required before benchmark):", step);
-        println!("     hey -m POST -H 'Content-Type: application/json' \\");
-        println!("       -d '{{\"prompt\":\"bench\"}}' -c 300 -n 3000 \\");
-        println!("       http://localhost:{}{} > /dev/null", port, example_path);
-        step += 1;
-        println!();
-        println!("  {}. Upstream baseline:", step);
-        println!("     hey -m POST -H 'Content-Type: application/json' \\");
-        println!("       -d '{{\"model\":\"gpt-4\",\"messages\":[{{\"role\":\"user\",\"content\":\"bench\"}}]}}' \\");
-        println!("       -c 300 -n 3000 http://localhost:4545/v1/chat/completions");
-        step += 1;
-        println!();
-        println!("  {}. Gateway benchmark:", step);
-        println!("     hey -m POST -H 'Content-Type: application/json' \\");
-        println!("       -d '{{\"prompt\":\"bench\"}}' -c 300 -n 3000 \\");
-        println!("       http://localhost:{}{}", port, example_path);
-        println!();
-        let us = step - 1;
-        println!("     Compare Requests/sec between step {} vs {} to measure overhead.", us, step);
-        println!("     For dashboard view, use: -z 30s instead of -n 3000");
-        println!();
-        println!("  Alternative: vastar (faster, with SLO insight):");
-        println!("     vastar -m POST -H 'Content-Type: application/json' \\");
-        println!("       -d '{{\"prompt\":\"bench\"}}' -c 300 -n 3000 \\");
-        println!("       http://localhost:{}{}", port, example_path);
-        println!();
-        println!("  ────────────────────────────────────────────────────────────");
-        println!();
 
         // Start metrics server on separate port if configured
         if let Some(mp) = metrics_port {

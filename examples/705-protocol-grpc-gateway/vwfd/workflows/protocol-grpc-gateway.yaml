@@ -1,28 +1,27 @@
 version: "3.0"
 metadata:
   id: protocol-grpc-gateway
-  name: "Payment Gateway — Charge with Card Validation"
+  name: "Payment Gateway — gRPC Stream Charge Processing"
   description: |
-    Stateful payment gateway that validates credit card details (Luhn check,
-    expiry validation) and processes a charge. Uses NativeCode because it
-    manages in-memory payment state (ledger of processed charges) and performs
-    card-specific validation algorithms that are inherently imperative logic.
-    Endpoint: POST /charge  { "card_number": "...", "expiry": "MM/YY", "amount": 100.00, "currency": "USD" }
+    Receives payment charge requests via gRPC server-streaming from an upstream
+    payment orchestrator. Each streamed message = one charge request. Validates
+    card (Luhn + expiry), processes charge, stores to ledger via NativeCode.
+    gRPC trigger: connects to payment orchestrator stream at grpc://localhost:50051
+    Service: PaymentService, Method: StreamCharges
 
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config:
-        trigger_type: webhook
-        webhook_config:
-          path: /charge
-        response_mode: buffered
-        end_activity: respond
+        trigger_type: grpc
+        grpc:
+          endpoint: "http://localhost:50051"
+          service: "PaymentService"
+          method: "StreamCharges"
       output_variable: trigger_payload
 
     # Step 1: Validate card — Luhn algorithm + expiry date check
-    # NativeCode: Luhn checksum is iterative digit manipulation, not expressible in vil-expr
     - id: validate-card
       activity_type: Function
       wasm_config:
@@ -34,16 +33,15 @@ spec:
       input_mappings:
         - target: card_number
           source:
-            language: vil-expr
-            source: trigger_payload.card_number
+            language: spv1
+            source: '$.trigger_payload.body.card_number'
         - target: expiry
           source:
-            language: vil-expr
-            source: trigger_payload.expiry
+            language: spv1
+            source: '$.trigger_payload.body.expiry'
       output_variable: validation
 
-    # Step 2: Process payment — generate ID, store in in-memory ledger, deduct
-    # NativeCode: stateful operation (in-memory payment store) + ID generation
+    # Step 2: Process payment — generate ID, store in in-memory ledger
     - id: process-payment
       activity_type: Function
       wasm_config:
@@ -55,37 +53,40 @@ spec:
       input_mappings:
         - target: card_number
           source:
-            language: vil-expr
-            source: trigger_payload.card_number
-        - target: amount
+            language: spv1
+            source: '$.trigger_payload.body.card_number'
+        - target: amount_cents
           source:
-            language: vil-expr
-            source: trigger_payload.amount
+            language: spv1
+            source: '$.trigger_payload.body.amount_cents'
         - target: currency
           source:
-            language: vil-expr
-            source: trigger_payload.currency
+            language: spv1
+            source: '$.trigger_payload.body.currency'
+        - target: customer_id
+          source:
+            language: spv1
+            source: '$.trigger_payload.body.customer_id'
         - target: validation
           source:
-            language: vil-expr
-            source: validation
+            language: spv1
+            source: '$.validation'
       output_variable: charge_result
 
-    - id: respond
-      activity_type: EndTrigger
-      end_trigger_config:
-        trigger_ref: trigger
-        final_response:
-          language: vil-expr
-          source: |
-            {
-              "payment_id": charge_result.payment_id,
-              "status": charge_result.status,
-              "amount": trigger_payload.amount,
-              "currency": trigger_payload.currency,
-              "card_type": validation.card_type,
-              "timestamp": charge_result.timestamp
-            }
+    # Step 3: Store charge result to ledger (NativeCode for stateful write)
+    - id: store-ledger
+      activity_type: NativeCode
+      code_config: { handler_ref: store_charge }
+      input_mappings:
+        - target: charge
+          source:
+            language: spv1
+            source: '$.charge_result'
+        - target: customer_id
+          source:
+            language: spv1
+            source: '$.trigger_payload.body.customer_id'
+      output_variable: ledger_result
 
     - id: end
       activity_type: End
@@ -93,8 +94,8 @@ spec:
   flows:
     - { id: f1, from: { node: trigger }, to: { node: validate-card } }
     - { id: f2, from: { node: validate-card }, to: { node: process-payment } }
-    - { id: f3, from: { node: process-payment }, to: { node: respond } }
-    - { id: f4, from: { node: respond }, to: { node: end } }
+    - { id: f3, from: { node: process-payment }, to: { node: store-ledger } }
+    - { id: f4, from: { node: store-ledger }, to: { node: end } }
 
   variables:
     - name: trigger_payload
@@ -102,4 +103,6 @@ spec:
     - name: validation
       type: object
     - name: charge_result
+      type: object
+    - name: ledger_result
       type: object

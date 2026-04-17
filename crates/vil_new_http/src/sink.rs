@@ -267,6 +267,20 @@ impl HttpSinkBuilder {
         self
     }
 
+    /// Bind to `PORT` env var when set, otherwise fall back to `default`.
+    ///
+    /// Use on the *primary* externally-exposed sink so CI/bench drivers can
+    /// relocate the listener without patching source. Leave secondary sinks on
+    /// plain `.port(...)` so they don't collide with the primary.
+    #[doc(alias = "vil_keep")]
+    pub fn env_port(self, default: u16) -> Self {
+        let port = std::env::var("PORT")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(default);
+        self.port(port)
+    }
+
     /// Ensure the port is free before binding — kills any stale process using it.
     ///
     /// ```ignore
@@ -480,7 +494,11 @@ impl HttpSink {
         world: Arc<VastarRuntimeWorld>,
         runtime_process: vil_rt::ProcessHandle,
     ) -> std::thread::JoinHandle<()> {
-        let port = self.builder.port;
+        // PORT env overrides hardcoded port — enables bench/test port management
+        let port = std::env::var("PORT")
+            .ok()
+            .and_then(|s| s.parse::<u16>().ok())
+            .unwrap_or(self.builder.port);
         let path = self.builder.path.clone();
         let out_port = runtime_process
             .port_id(&self.builder.out_port_name)

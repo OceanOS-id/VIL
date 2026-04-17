@@ -30,16 +30,16 @@ spec:
       input_mappings:
         - target: queue_url
           source:
-            language: vil-expr
-            source: env.SQS_QUEUE_URL
+            language: spv1
+            source: '$.env.SQS_QUEUE_URL'
         - target: message_body
           source:
-            language: vil-expr
-            source: trigger_payload.body
+            language: spv1
+            source: '$.trigger_payload.body'
         - target: message_attributes
           source:
-            language: vil-expr
-            source: trigger_payload.attributes
+            language: spv1
+            source: '$.trigger_payload.body.attributes'
       output_variable: send_result
 
     - id: respond

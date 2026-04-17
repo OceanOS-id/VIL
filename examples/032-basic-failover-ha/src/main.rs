@@ -51,6 +51,7 @@ pub enum PaymentFault {
 
 /// Payment request from the customer checkout flow.
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct PaymentRequest {
     card_token: String,
     amount_cents: u64,

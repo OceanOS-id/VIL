@@ -164,7 +164,7 @@ async fn ask(
     let total_ms = total_start.elapsed().as_secs_f64() * 1000.0;
 
     // ── Track quality metrics (REAL events, not dead code) ──
-    let query_num = state.total.fetch_add(1, Ordering::Relaxed) + 1;
+    let _query_num = state.total.fetch_add(1, Ordering::Relaxed) + 1;
     state.retrieval_ms_sum.fetch_add((retrieval_ms * 1000.0) as u64, Ordering::Relaxed);
     state.generation_ms_sum.fetch_add((generation_ms * 1000.0) as u64, Ordering::Relaxed);
     if top_score < 3.0 {

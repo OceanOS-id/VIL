@@ -215,7 +215,7 @@ struct HybridResponse {
 // ── Handler ──────────────────────────────────────────────────────────
 
 async fn hybrid_handler(
-    ctx: ServiceCtx,
+    _ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<HybridResponse>> {
     let req: HybridRequest = body.json().expect("invalid JSON body");

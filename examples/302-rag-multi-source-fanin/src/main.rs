@@ -194,7 +194,7 @@ struct MultiRagResponse {
 // ── Handler ──────────────────────────────────────────────────────────
 
 async fn multi_rag_handler(
-    ctx: ServiceCtx,
+    _ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<MultiRagResponse>> {
     let req: MultiRagRequest = body.json().expect("invalid JSON body");

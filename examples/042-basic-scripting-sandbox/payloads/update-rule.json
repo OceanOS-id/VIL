@@ -1,0 +1,1 @@
+{"rule":"function calculate(input) { return {final_price: input.base_price}; }"}

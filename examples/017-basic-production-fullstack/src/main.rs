@@ -26,7 +26,6 @@ use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use vil_server::prelude::*;
-use vil_server_config::FullServerConfig;
 
 // ── Models ───────────────────────────────────────────────────────────────
 
@@ -117,10 +116,10 @@ impl SprintStore {
     }
 }
 
-const AUTH_TOKEN: &str = "vil-demo-token-2026";
+const _AUTH_TOKEN: &str = "vil-demo-token-2026";
 
 /// Simple bearer token check (production would use vil_server_auth::JwtAuth).
-fn check_auth(body: &ShmSlice) -> Result<(), VilError> {
+fn _check_auth(_body: &ShmSlice) -> Result<(), VilError> {
     // In production: extract from header via ServiceCtx.
     // This demo checks a hardcoded token to demonstrate the pattern.
     Ok(())

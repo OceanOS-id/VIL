@@ -87,7 +87,7 @@ const P_CTRL_OUT: &str = "response_ctrl_out";
 
 fn configure_webhook_sink() -> HttpSinkBuilder {
     HttpSinkBuilder::new("NplFilterSink")
-        .port(WEBHOOK_PORT)
+        .env_port(WEBHOOK_PORT)
         .path(WEBHOOK_PATH)
         .out_port(P_TRIGGER_OUT)
         .in_port(P_DATA_IN)

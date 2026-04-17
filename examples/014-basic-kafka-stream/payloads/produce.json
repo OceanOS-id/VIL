@@ -1,0 +1,1 @@
+{"topic":"events.orders","key":"order-42","payload":{"action":"created","amount":199.99}}

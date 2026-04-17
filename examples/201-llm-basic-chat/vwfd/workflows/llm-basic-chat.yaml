@@ -35,7 +35,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "You are a medical triage assistant. Assess symptoms, classify urgency (EMERGENCY/URGENT/ROUTINE), and recommend next steps."},
-                  {"role": "user", "content": trigger_payload.prompt}
+                  {"role": "user", "content": trigger_payload.body.prompt}
                 ],
                 "stream": true
               }
@@ -47,7 +47,7 @@ spec:
         trigger_ref: trigger
         final_response:
           language: vil-expr
-          source: '{"assessment": llm_result.content, "model": "gpt-4", "provider": "openai"}'
+          source: '{"content": llm_result.content, "model": "gpt-4", "prompt_tokens_approx": 0, "completion_tokens_approx": 0}'
 
     - id: end
       activity_type: End

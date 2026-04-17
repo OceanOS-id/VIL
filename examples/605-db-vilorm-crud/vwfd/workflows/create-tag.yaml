@@ -1,26 +1,34 @@
 version: "3.0"
-metadata: { id: create-tag }
+metadata: { id: create-tag, name: "POST /api/blog/tags — VilQuery insert" }
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config: { trigger_type: webhook, webhook_config: { path: /api/blog/tags, method: POST }, response_mode: buffered, end_activity: respond }
       output_variable: trigger_payload
-    - id: handler
-      activity_type: NativeCode
-      code_config: { handler_ref: create_tag }
+    - id: insert
+      activity_type: Connector
+      connector_config: { connector_ref: vastar.db.sqlite, operation: execute }
       input_mappings:
-        - target: body
-          source: { language: vil-expr, source: 'trigger_payload.body' }
-        - target: path
-          source: { language: vil-expr, source: 'trigger_payload.path' }
-      output_variable: result
+        - target: sql
+          source:
+            language: vil_query
+            source: |
+              insert("tags")
+                .columns("name")
+                .values(trigger_payload.body.name ?? "tag")
+                .on_conflict_nothing("name")
+      output_variable: insert_result
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: 'result' } }
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: vil-expr
+          source: '{"ok": true, "tag": trigger_payload.body.name}'
     - id: end
       activity_type: End
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: handler } }
-    - { id: f2, from: { node: handler }, to: { node: respond } }
+    - { id: f1, from: { node: trigger }, to: { node: insert } }
+    - { id: f2, from: { node: insert }, to: { node: respond } }
     - { id: f3, from: { node: respond }, to: { node: end } }

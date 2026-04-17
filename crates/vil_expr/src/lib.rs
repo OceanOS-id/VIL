@@ -96,7 +96,8 @@ fn check_ast(expr: &ast::Expr) -> Result<(), String> {
         ast::Expr::Unary(_, e) => check_ast(e),
         ast::Expr::Binary(_, l, r) => { check_ast(l)?; check_ast(r) }
         ast::Expr::Ternary(c, t, e) => { check_ast(c)?; check_ast(t)?; check_ast(e) }
-        ast::Expr::In(l, r) => { check_ast(l)?; check_ast(r) }
+        ast::Expr::In(l, r) | ast::Expr::NotIn(l, r) => { check_ast(l)?; check_ast(r) }
+        ast::Expr::IsNull(e) | ast::Expr::IsNotNull(e) => check_ast(e),
         ast::Expr::Field(e, _) => check_ast(e),
         ast::Expr::Index(e, i) => { check_ast(e)?; check_ast(i) }
         ast::Expr::FnCall(_, args) => { for a in args { check_ast(a)?; } Ok(()) }
@@ -224,5 +225,63 @@ mod tests {
         assert_eq!(result["customer"], "Alice");
         assert_eq!(result["amount"], 150000);
         assert_eq!(result["status"], "active");
+    }
+
+    // ── vdicl expression extensions ──
+
+    fn vdicl_vars() -> Vars {
+        let mut v = HashMap::new();
+        v.insert("nasabah".into(), json!({
+            "nik": "1234567890123456",
+            "nama": "Budi Santoso",
+            "status_kawin": "K",
+            "nik_pasangan": null,
+        }));
+        v.insert("fasilitas".into(), json!({
+            "plafon": 5000000000i64,
+            "baki_debet": 6000000000i64,
+            "kolektibilitas": "4",
+            "suku_bunga": 12.5,
+        }));
+        v.insert("tenant_id".into(), json!(null));
+        v.insert("branch_id".into(), json!(""));
+        v
+    }
+
+    // IS NULL / IS NOT NULL
+    #[test] fn test_is_null() { assert!(evaluate_bool("tenant_id IS NULL", &vdicl_vars()).unwrap()); }
+    #[test] fn test_is_not_null() { assert!(evaluate_bool("nasabah.nik IS NOT NULL", &vdicl_vars()).unwrap()); }
+    #[test] fn test_is_null_nested() { assert!(evaluate_bool("nasabah.nik_pasangan IS NULL", &vdicl_vars()).unwrap()); }
+
+    // ISBLANK / LENGTH
+    #[test] fn test_isblank_null() { assert!(evaluate_bool("ISBLANK(tenant_id)", &vdicl_vars()).unwrap()); }
+    #[test] fn test_isblank_empty() { assert!(evaluate_bool("ISBLANK(branch_id)", &vdicl_vars()).unwrap()); }
+    #[test] fn test_isblank_not() { assert!(!evaluate_bool("ISBLANK(nasabah.nik)", &vdicl_vars()).unwrap()); }
+    #[test] fn test_length() { assert_eq!(evaluate("LENGTH(nasabah.nik)", &vdicl_vars()).unwrap(), json!(16)); }
+
+    // AND / OR / NOT keywords
+    #[test] fn test_and_keyword() { assert!(evaluate_bool("nasabah.nik IS NOT NULL AND nasabah.nama IS NOT NULL", &vdicl_vars()).unwrap()); }
+    #[test] fn test_or_keyword() { assert!(evaluate_bool("tenant_id IS NULL OR nasabah.nik IS NOT NULL", &vdicl_vars()).unwrap()); }
+    #[test] fn test_not_keyword() { assert!(evaluate_bool("NOT ISBLANK(nasabah.nik)", &vdicl_vars()).unwrap()); }
+
+    // IN {set} / NOT IN
+    #[test] fn test_in_set() { assert!(evaluate_bool("fasilitas.kolektibilitas IN {'4', '5'}", &vdicl_vars()).unwrap()); }
+    #[test] fn test_not_in_set() { assert!(evaluate_bool("fasilitas.kolektibilitas NOT IN {'1', '2', '3'}", &vdicl_vars()).unwrap()); }
+
+    // Decimal suffix m
+    #[test] fn test_decimal_m() { assert!(evaluate_bool("fasilitas.plafon > 1000000000m", &vdicl_vars()).unwrap()); }
+
+    // Cross-field logic (SLIK-style)
+    #[test] fn test_slik_cross_field() {
+        assert!(evaluate_bool(
+            "nasabah.status_kawin == 'K' AND (nasabah.nik_pasangan IS NULL OR ISBLANK(nasabah.nik_pasangan))",
+            &vdicl_vars()
+        ).unwrap());
+    }
+    #[test] fn test_slik_baki_debet_gt_plafon() {
+        assert!(evaluate_bool("fasilitas.baki_debet > fasilitas.plafon", &vdicl_vars()).unwrap());
+    }
+    #[test] fn test_slik_kolektibilitas_in_bad() {
+        assert!(evaluate_bool("fasilitas.kolektibilitas IN {'4', '5'} AND fasilitas.baki_debet > 0m", &vdicl_vars()).unwrap());
     }
 }

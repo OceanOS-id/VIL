@@ -70,7 +70,7 @@ struct RouterStats {
 struct RouterState {
     router_gpt4: Arc<dyn LlmProvider>,
     router_gpt35: Arc<dyn LlmProvider>,
-    fallback_router: LlmRouter,
+    _fallback_router: LlmRouter,
     total: AtomicU64,
     gpt4_count: AtomicU64,
     gpt35_count: AtomicU64,
@@ -201,7 +201,7 @@ async fn main() {
     let state = Arc::new(RouterState {
         router_gpt4: gpt4,
         router_gpt35: gpt35,
-        fallback_router: fallback,
+        _fallback_router: fallback,
         total: AtomicU64::new(0),
         gpt4_count: AtomicU64::new(0),
         gpt35_count: AtomicU64::new(0),

@@ -33,9 +33,9 @@ spec:
             language: vil-expr
             source: |
               {
-                "event_type": trigger_payload.event_type,
-                "user_id": trigger_payload.user_id,
-                "metadata": trigger_payload.metadata,
+                "event_type": trigger_payload.body.event_type,
+                "user_id": trigger_payload.body.user_id,
+                "metadata": trigger_payload.body.metadata,
                 "created_at": now()
               }
       output_variable: inserted_event
@@ -52,7 +52,7 @@ spec:
             language: vil-expr
             source: >
               "INSERT INTO daily_stats (date, event_type, count) VALUES (date('now'), '" +
-              trigger_payload.event_type + "', 1) ON CONFLICT(date, event_type) DO UPDATE SET count = count + 1"
+              trigger_payload.body.event_type + "', 1) ON CONFLICT(date, event_type) DO UPDATE SET count = count + 1"
         - target: returning
           source:
             language: literal
@@ -68,7 +68,7 @@ spec:
           source: |
             {
               "event_id": inserted_event.id,
-              "event_type": trigger_payload.event_type,
+              "event_type": trigger_payload.body.event_type,
               "daily_count": stats_result.count,
               "date": stats_result.date
             }

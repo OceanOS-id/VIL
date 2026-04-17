@@ -28,12 +28,12 @@ spec:
       input_mappings:
         - target: applicant_age
           source:
-            language: vil-expr
-            source: trigger_payload.applicant_age
+            language: spv1
+            source: '$.trigger_payload.body.applicant_age'
         - target: coverage_cents
           source:
-            language: vil-expr
-            source: trigger_payload.coverage_cents
+            language: spv1
+            source: '$.trigger_payload.body.coverage_cents'
       output_variable: prescreen_result
 
     # Gateway: branch based on pre-screen result
@@ -49,7 +49,7 @@ spec:
           language: vil-expr
           source: |
             {
-              "applicant_age": trigger_payload.applicant_age,
+              "applicant_age": trigger_payload.body.applicant_age,
               "pre_screen": prescreen_result,
               "ai_assessment": "N/A — pre-screen rejected",
               "recommended_tier": prescreen_result.action.tier,
@@ -75,7 +75,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "You are an insurance underwriter AI. Analyze the applicant and respond with:\nTIER: [Preferred|Standard|Substandard|Decline]\nASSESSMENT: [2-3 sentence risk analysis]"},
-                  {"role": "user", "content": "Applicant: age=" + string(trigger_payload.applicant_age) + ", occupation=" + trigger_payload.occupation + ", health=" + trigger_payload.health_score + ", coverage=$" + string(trigger_payload.coverage_cents / 100)}
+                  {"role": "user", "content": "Applicant: age=" + string(trigger_payload.body.applicant_age) + ", occupation=" + trigger_payload.body.occupation + ", health=" + trigger_payload.body.health_score + ", coverage=$" + string(trigger_payload.body.coverage_cents / 100)}
                 ]
               }
       output_variable: llm_response
@@ -89,11 +89,11 @@ spec:
             language: vil-expr
             source: |
               {
-                "applicant_age": trigger_payload.applicant_age,
+                "applicant_age": trigger_payload.body.applicant_age,
                 "pre_screen": {"passed": true, "reason": "passed"},
                 "ai_assessment": llm_response,
                 "recommended_tier": "Standard",
-                "premium_estimate_cents": trigger_payload.coverage_cents / 100
+                "premium_estimate_cents": trigger_payload.body.coverage_cents / 100
               }
       output_variable: final_assessment
 
@@ -102,8 +102,8 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: final_assessment
+          language: spv1
+          source: '$.final_assessment'
 
     - id: end-rejected
       activity_type: End

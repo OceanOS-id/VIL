@@ -29,22 +29,22 @@ spec:
       input_mappings:
         - target: index
           source:
-            language: vil-expr
-            source: trigger_payload.index
+            language: spv1
+            source: '$.trigger_payload.body.index'
         - target: query
           source:
             language: vil-expr
             source: |
               {
                 "multi_match": {
-                  "query": trigger_payload.query,
+                  "query": trigger_payload.body.query,
                   "fields": ["title", "description", "content"]
                 }
               }
         - target: size
           source:
             language: vil-expr
-            source: 'trigger_payload.size != null ? trigger_payload.size : 10'
+            source: 'trigger_payload.body.size != null ? trigger_payload.body.size : 10'
       output_variable: search_result
 
     - id: respond
@@ -55,8 +55,8 @@ spec:
           language: vil-expr
           source: |
             {
-              "index": trigger_payload.index,
-              "query": trigger_payload.query,
+              "index": trigger_payload.body.index,
+              "query": trigger_payload.body.query,
               "total_hits": search_result.total,
               "hits": search_result.hits,
               "took_ms": search_result.took

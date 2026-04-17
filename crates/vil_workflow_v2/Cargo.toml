@@ -2,13 +2,15 @@
 name = "vil_workflow_v2"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+# VSAL — overrides workspace license.
+license-file = "../../LICENSE-VSAL"
+publish = false
 authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 documentation.workspace = true
 readme = "README.md"
-description = "I07 — AI Workflow Scheduler: DAG-based parallel task execution"
+description = "I07 — AI Workflow Scheduler: DAG-based parallel task execution. Source-available under VSAL — see LICENSE-VSAL. Not published to crates.io."
 
 [dependencies]
 vil_sdk          = { workspace = true }

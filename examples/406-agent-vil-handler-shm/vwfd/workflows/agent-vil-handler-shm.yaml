@@ -8,7 +8,7 @@ metadata:
     amount anomaly (deviation from user's baseline). Weighted composite
     score: 40% velocity + 35% geo + 25% amount. Decision: APPROVE (<30),
     REVIEW (30-70), BLOCK (>70). No LLM involved — deterministic scoring.
-    Endpoint: POST /api/detect  { "user_id": "...", "tx": {...}, "history": [...] }
+    Endpoint: POST /api/detect  { "card_token": "...", "merchant": "...", "amount_cents": N, "country": "...", "city": "...", "transactions_last_hour": N }
 
 spec:
   activities:
@@ -28,24 +28,21 @@ spec:
       activity_type: Sidecar
       sidecar_config:
         target: velocity_checker
+        command: "python3 examples/406-agent-vil-handler-shm/vwfd/sidecar/python/velocity_checker.py"
         description: |
           Count transactions in last 1h, 6h, 24h windows from history.
           Score: 0 if tx_1h <= 3, linear scale to 100 at tx_1h >= 20.
           Also flags burst patterns (>5 tx in 10min). Returns
           {score: 0-100, tx_1h, tx_6h, tx_24h, burst_detected: bool}.
       input_mappings:
-        - target: user_id
+        - target: card_token
           source:
-            language: vil-expr
-            source: trigger_payload.user_id
-        - target: current_tx
+            language: spv1
+            source: '$.trigger_payload.body.card_token'
+        - target: transactions_last_hour
           source:
-            language: vil-expr
-            source: trigger_payload.tx
-        - target: history
-          source:
-            language: vil-expr
-            source: trigger_payload.history
+            language: spv1
+            source: '$.trigger_payload.body.transactions_last_hour'
       output_variable: velocity_result
 
     # Scorer 2: Geo-plausibility — check location consistency
@@ -61,14 +58,14 @@ spec:
           >900 (impossible — likely fraud). Also checks if country changed.
           Returns {score: 0-100, distance_km, speed_kmh, country_changed: bool}.
       input_mappings:
-        - target: current_tx
+        - target: country
           source:
-            language: vil-expr
-            source: trigger_payload.tx
-        - target: history
+            language: spv1
+            source: '$.trigger_payload.body.country'
+        - target: city
           source:
-            language: vil-expr
-            source: trigger_payload.history
+            language: spv1
+            source: '$.trigger_payload.body.city'
       output_variable: geo_result
 
     # Scorer 3: Amount anomaly — deviation from user baseline
@@ -83,14 +80,10 @@ spec:
           linear scale 0-100 for z in [1.5, 4.0], cap at 100 for z >= 4.
           Returns {score: 0-100, z_score, user_mean, user_std, current_amount}.
       input_mappings:
-        - target: current_amount
+        - target: amount_cents
           source:
-            language: vil-expr
-            source: trigger_payload.tx.amount_cents
-        - target: history
-          source:
-            language: vil-expr
-            source: trigger_payload.history
+            language: spv1
+            source: '$.trigger_payload.body.amount_cents'
       output_variable: amount_result
 
     # Combine scores with weighted formula and make decision
@@ -102,16 +95,16 @@ spec:
             language: vil-expr
             source: |
               {
-                "composite_score": velocity_result.score * 40 / 100 + geo_result.score * 35 / 100 + amount_result.score * 25 / 100,
-                "action": (velocity_result.score * 40 / 100 + geo_result.score * 35 / 100 + amount_result.score * 25 / 100) > 70
+                "fraud_score": velocity_result.score * 0.40 + geo_result.score * 0.35 + amount_result.score * 0.25,
+                "is_fraud": (velocity_result.score * 0.40 + geo_result.score * 0.35 + amount_result.score * 0.25) > 70,
+                "recommendation": (velocity_result.score * 0.40 + geo_result.score * 0.35 + amount_result.score * 0.25) > 70
                   ? "BLOCK"
-                  : ((velocity_result.score * 40 / 100 + geo_result.score * 35 / 100 + amount_result.score * 25 / 100) >= 30 ? "REVIEW" : "APPROVE"),
-                "weights": {"velocity": 0.40, "geo": 0.35, "amount": 0.25},
-                "scores": {
-                  "velocity": velocity_result,
-                  "geo": geo_result,
-                  "amount": amount_result
-                }
+                  : ((velocity_result.score * 0.40 + geo_result.score * 0.35 + amount_result.score * 0.25) >= 30 ? "REVIEW" : "APPROVE"),
+                "tool_results": [
+                  {"tool": "velocity_checker", "score": velocity_result.score, "reasoning": "tx/hour velocity analysis"},
+                  {"tool": "geo_analyzer", "score": geo_result.score, "reasoning": "geo-plausibility check"},
+                  {"tool": "amount_calculator", "score": amount_result.score, "reasoning": "amount anomaly z-score"}
+                ]
               }
       output_variable: decision
 
@@ -123,12 +116,15 @@ spec:
           language: vil-expr
           source: |
             {
-              "user_id": trigger_payload.user_id,
-              "tx_id": trigger_payload.tx.tx_id,
-              "action": decision.action,
-              "composite_score": decision.composite_score,
-              "breakdown": decision.scores,
-              "weights": decision.weights
+              "card_token": trigger_payload.body.card_token,
+              "merchant": trigger_payload.body.merchant,
+              "amount_cents": trigger_payload.body.amount_cents,
+              "fraud_score": decision.fraud_score,
+              "is_fraud": decision.is_fraud,
+              "recommendation": decision.recommendation,
+              "tool_results": decision.tool_results,
+              "tools_used": ["velocity_checker", "geo_analyzer", "amount_calculator"],
+              "handler_mode": "vwfd"
             }
 
     - id: end

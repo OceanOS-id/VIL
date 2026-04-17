@@ -601,10 +601,9 @@ async fn execute_http_request<T: crate::sink::StreamTokenLike>(
                                     };
 
                                     if !final_data.is_empty() {
-                                        // Only apply transform to response if it wasn't
-                                        // already used for request body transformation
-                                        let emit_data = if transform_fn.is_some() && trigger_payload.is_none() {
-                                            transform_fn.as_ref().unwrap()(&final_data).map(bytes::Bytes::from)
+                                        // Apply transform to response data (enrich, filter, classify)
+                                        let emit_data = if let Some(ref tf) = transform_fn {
+                                            tf(&final_data).map(bytes::Bytes::from)
                                         } else {
                                             Some(final_data)
                                         };
@@ -672,8 +671,9 @@ async fn execute_http_request<T: crate::sink::StreamTokenLike>(
                                 };
 
                                 if !final_data.is_empty() {
-                                    let emit_data = if transform_fn.is_some() && trigger_payload.is_none() {
-                                        transform_fn.as_ref().unwrap()(&final_data).map(bytes::Bytes::from)
+                                    // Apply transform to response data (enrich, filter, classify)
+                                    let emit_data = if let Some(ref tf) = transform_fn {
+                                        tf(&final_data).map(bytes::Bytes::from)
                                     } else {
                                         Some(final_data)
                                     };

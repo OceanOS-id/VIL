@@ -1,0 +1,142 @@
+metadata:
+  rulepack_id: "credit_qa_rules_v1"
+  rulepack_name: "Credit Data Quality Assurance Rules"
+  rulepack_description: "Business validation rules for credit data — mandatory fields, value ranges, cross-field logic"
+  author: "VIL Team"
+  environment: "production"
+
+hit_policy: COLLECT
+aggregate_fn: LIST
+
+rules:
+  # ── Mandatory field checks ──
+
+  - id: "qa-r001"
+    priority: 10
+    enabled: true
+    description: "NIK wajib terisi"
+    when: "nik IS NULL OR ISBLANK(nik)"
+    then:
+      - kind: EMIT
+        severity: ERROR
+        code: NIK_MISSING
+        field: nik
+        msg: "NIK wajib diisi"
+
+  - id: "qa-r002"
+    priority: 20
+    enabled: true
+    description: "Nama lengkap wajib terisi"
+    when: "nama_lengkap IS NULL OR ISBLANK(nama_lengkap)"
+    then:
+      - kind: EMIT
+        severity: ERROR
+        code: NAMA_MISSING
+        field: nama_lengkap
+        msg: "Nama lengkap wajib diisi"
+
+  - id: "qa-r003"
+    priority: 30
+    enabled: true
+    description: "Jumlah kredit wajib terisi dan > 0"
+    when: "jumlah_kredit IS NULL OR jumlah_kredit <= 0"
+    then:
+      - kind: EMIT
+        severity: ERROR
+        code: KREDIT_INVALID
+        field: jumlah_kredit
+        msg: "Jumlah kredit harus > 0"
+
+  - id: "qa-r004"
+    priority: 40
+    enabled: true
+    description: "Kolektabilitas wajib terisi (1-5)"
+    when: "kolektabilitas IS NULL"
+    then:
+      - kind: EMIT
+        severity: ERROR
+        code: KOLEKTABILITAS_MISSING
+        field: kolektabilitas
+        msg: "Kolektabilitas wajib diisi (1-5)"
+
+  # ── NIK format validation ──
+
+  - id: "qa-r010"
+    priority: 50
+    enabled: true
+    description: "NIK harus 16 digit"
+    when: "nik IS NOT NULL AND NOT ISBLANK(nik) AND LENGTH(nik) != 16"
+    then:
+      - kind: EMIT
+        severity: ERROR
+        code: NIK_FORMAT_INVALID
+        field: nik
+        msg: "NIK harus tepat 16 digit"
+
+  # ── Value range checks ──
+
+  - id: "qa-r020"
+    priority: 60
+    enabled: true
+    description: "Jumlah kredit tidak boleh melebihi 100 miliar"
+    when: "jumlah_kredit IS NOT NULL AND jumlah_kredit > 100000000000m"
+    then:
+      - kind: EMIT
+        severity: WARNING
+        code: KREDIT_EXCEEDS_LIMIT
+        field: jumlah_kredit
+        msg: "Jumlah kredit melebihi 100 miliar — perlu review"
+      - kind: ADD_SCORE
+        score_delta: 20
+
+  # ── Risk-based rules ──
+
+  - id: "qa-r030"
+    priority: 70
+    enabled: true
+    description: "Kolektabilitas 4 atau 5 — high risk"
+    when: "kolektabilitas IS NOT NULL AND kolektabilitas >= 4"
+    then:
+      - kind: EMIT
+        severity: WARNING
+        code: HIGH_RISK_KOLEKTABILITAS
+        field: kolektabilitas
+        msg: "Kolektabilitas 4/5 — debitur bermasalah"
+      - kind: ADD_SCORE
+        score_delta: 50
+      - kind: SET_DECISION
+        decision: REVIEW
+
+  - id: "qa-r031"
+    priority: 80
+    enabled: true
+    description: "Kolektabilitas 5 — auto reject"
+    when: "kolektabilitas IS NOT NULL AND kolektabilitas == 5"
+    then:
+      - kind: SET_DECISION
+        decision: REJECT
+      - kind: ADD_SCORE
+        score_delta: 30
+      - kind: EMIT
+        severity: ERROR
+        code: MACET
+        field: kolektabilitas
+        msg: "Kolektabilitas 5 (macet) — auto reject"
+
+  # ── Cross-field logic ──
+
+  - id: "qa-r040"
+    priority: 90
+    enabled: true
+    description: "Kredit besar dengan kolektabilitas buruk"
+    when: "jumlah_kredit IS NOT NULL AND jumlah_kredit > 1000000000m AND kolektabilitas IS NOT NULL AND kolektabilitas >= 3"
+    then:
+      - kind: EMIT
+        severity: ERROR
+        code: HIGH_EXPOSURE_BAD_KOL
+        field: jumlah_kredit
+        msg: "Kredit > 1M dengan kolektabilitas >= 3 — high exposure risk"
+      - kind: ADD_SCORE
+        score_delta: 40
+      - kind: SET_DECISION
+        decision: REJECT

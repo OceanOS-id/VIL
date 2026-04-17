@@ -10,7 +10,7 @@ spec:
       activity_type: Trigger
       trigger_config:
         trigger_type: webhook
-        webhook_config: { path: /ticker/stream }
+        webhook_config: { path: /api/ticker/stream, method: GET }
         response_mode: buffered
         end_activity: respond
       output_variable: trigger_payload
@@ -18,11 +18,11 @@ spec:
     - id: process
       activity_type: NativeCode
       code_config:
-        handler_ref: sse_stock_ticker
+        handler_ref: ticker_stream_snapshot
         description: "GET /ticker/stream — real-time stock prices via SSE event builder (data/named/json/named_json variants)"
       input_mappings:
         - target: input
-          source: { language: vil-expr, source: trigger_payload }
+          source: { language: spv1, source: '$.trigger_payload' }
       output_variable: result
 
     - id: respond
@@ -30,8 +30,8 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: result
+          language: spv1
+          source: '$.result'
 
     - id: end
       activity_type: End

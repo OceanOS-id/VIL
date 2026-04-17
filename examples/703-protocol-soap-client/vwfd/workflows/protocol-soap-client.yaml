@@ -38,9 +38,8 @@ spec:
             source: "http://www.dataaccess.com/webservicesserver/"
         - target: body
           source:
-            language: vil-expr
-            source: |
-              "<ubiNum>" + string(trigger_payload.number) + "</ubiNum>"
+            language: spv1
+            source: '$.trigger_payload.body.number'
       output_variable: soap_result
 
     - id: respond
@@ -48,13 +47,8 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: |
-            {
-              "number": trigger_payload.number,
-              "words": soap_result.result,
-              "action": "NumberToWords"
-            }
+          language: spv1
+          source: '$.soap_result'
 
     - id: end
       activity_type: End

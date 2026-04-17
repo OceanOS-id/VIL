@@ -2,10 +2,6 @@
 
 use vil_server::prelude::*;
 
-use std::sync::Arc;
-
-use crate::scheduler::WorkflowScheduler;
-
 // ── Response types ──────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize)]
@@ -18,7 +14,7 @@ pub struct WorkflowStatsBody {
 // ── Handlers ────────────────────────────────────────────────────────
 
 /// GET /stats — Workflow service stats.
-pub async fn stats_handler(ctx: ServiceCtx) -> VilResponse<WorkflowStatsBody> {
+pub async fn stats_handler(_ctx: ServiceCtx) -> VilResponse<WorkflowStatsBody> {
     VilResponse::ok(WorkflowStatsBody {
         scheduler: "WorkflowScheduler".into(),
         dag_resolver: "resolve_layers".into(),

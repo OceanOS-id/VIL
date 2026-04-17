@@ -29,26 +29,26 @@ spec:
       input_mappings:
         - target: measurement
           source:
-            language: vil-expr
-            source: trigger_payload.metric
+            language: spv1
+            source: '$.trigger_payload.body.metric'
         - target: tags
           source:
             language: vil-expr
             source: |
               {
-                "device_id": trigger_payload.device_id
+                "device_id": trigger_payload.body.device_id
               }
         - target: fields
           source:
             language: vil-expr
             source: |
               {
-                "value": trigger_payload.value
+                "value": trigger_payload.body.value
               }
         - target: timestamp
           source:
             language: vil-expr
-            source: 'trigger_payload.timestamp != null ? trigger_payload.timestamp : now()'
+            source: 'trigger_payload.body.timestamp != null ? trigger_payload.body.timestamp : now()'
       output_variable: write_result
 
     - id: respond
@@ -59,11 +59,10 @@ spec:
           language: vil-expr
           source: |
             {
-              "status": "written",
-              "device_id": trigger_payload.device_id,
-              "metric": trigger_payload.metric,
-              "value": trigger_payload.value,
-              "timestamp": write_result.timestamp
+              "status": "ok",
+              "sensor_id": trigger_payload.body.sensor_id,
+              "timestamp": write_result.timestamp,
+              "total_readings": write_result.total_readings
             }
 
     - id: end

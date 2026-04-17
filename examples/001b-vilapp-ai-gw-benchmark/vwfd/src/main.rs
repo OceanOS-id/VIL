@@ -2,7 +2,7 @@
 
 #[tokio::main]
 async fn main() {
-    vil_vwfd::app("examples/001b-vilapp-ai-gw-benchmark/vwfd/workflows", 3082)
+    vil_vwfd::app("examples/001b-vilapp-ai-gw-benchmark/vwfd/workflows", 3081)
         .run()
         .await;
 }

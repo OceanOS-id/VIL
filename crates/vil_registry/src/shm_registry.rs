@@ -163,14 +163,26 @@ impl ShmRegistry {
                     let _ = ExchangeHeap::unlink_region(name);
                     heap.create_named_region(name, region_size)?
                 } else {
-                    // Clear stale sample table from previous process runs.
-                    // Samples are per-session and don't survive process restart.
+                    // Clear ALL stale tables from previous process runs.
+                    // Processes, ports, routes, and samples don't survive restart.
                     let layout_ptr = heap.get_region_ptr(id).unwrap() as *mut SharedRegistryLayout;
-                    // SAFETY: layout_ptr is valid, allocated during new(). Exclusive access for &mut is ensured by caller.
                     let layout = unsafe { &mut *layout_ptr };
+                    for slot in &mut layout.process_table {
+                        slot.active.store(false, Ordering::Release);
+                    }
+                    for slot in &mut layout.port_table {
+                        slot.active.store(false, Ordering::Release);
+                    }
+                    for slot in &mut layout.route_table {
+                        slot.active.store(false, Ordering::Release);
+                    }
                     for slot in &mut layout.sample_table {
                         slot.active.store(false, Ordering::Release);
                     }
+                    // Reset ID counters so new process gets clean IDs
+                    layout.next_process_id.store(1, Ordering::SeqCst);
+                    layout.next_port_id.store(1, Ordering::SeqCst);
+                    layout.next_sample_id.store(1, Ordering::SeqCst);
                     id
                 }
             }

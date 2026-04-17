@@ -37,12 +37,12 @@ spec:
       input_mappings:
         - target: csv_data
           source:
-            language: vil-expr
-            source: trigger_payload.csv_data
+            language: spv1
+            source: '$.trigger_payload.body.csv_data'
         - target: delimiter
           source:
             language: vil-expr
-            source: "trigger_payload.delimiter != '' ? trigger_payload.delimiter : ','"
+            source: "trigger_payload.body.delimiter != '' ? trigger_payload.body.delimiter : ','"
       output_variable: stats_result
 
     # Step 2: Generate chart specification from stats
@@ -60,12 +60,12 @@ spec:
       input_mappings:
         - target: stats
           source:
-            language: vil-expr
-            source: stats_result
+            language: spv1
+            source: '$.stats_result'
         - target: chart_preference
           source:
             language: vil-expr
-            source: "trigger_payload.chart_type != '' ? trigger_payload.chart_type : 'auto'"
+            source: "trigger_payload.body.chart_type != '' ? trigger_payload.body.chart_type : 'auto'"
       output_variable: chart_data
 
     # Step 3: Build prompt with computed stats for LLM narrative
@@ -83,7 +83,7 @@ spec:
                 },
                 {
                   "role": "user",
-                  "content": "Question: " + trigger_payload.question + "\n\nDataset: " + string(stats_result.row_count) + " rows, columns: " + string(stats_result.columns) + "\n\nStatistics:\n" + string(stats_result.stats) + "\n\nChart type: " + chart_data.chart_type
+                  "content": "Question: " + trigger_payload.body.question + "\n\nDataset: " + string(stats_result.row_count) + " rows, columns: " + string(stats_result.columns) + "\n\nStatistics:\n" + string(stats_result.stats) + "\n\nChart type: " + chart_data.chart_type
                 }
               ]
       output_variable: prompt_data
@@ -125,9 +125,8 @@ spec:
             {
               "analysis": llm_analysis,
               "stats": stats_result.stats,
-              "chart_data": chart_data.vega_lite_spec,
-              "row_count": stats_result.row_count,
-              "columns": stats_result.columns
+              "chart_data": chart_data,
+              "rows_processed": stats_result.row_count
             }
 
     - id: end

@@ -14,7 +14,7 @@ spec:
       trigger_config:
         trigger_type: webhook
         webhook_config:
-          path: /api/gw/trigger
+          path: /trigger
         response_mode: buffered
         end_activity: respond
       output_variable: trigger_payload
@@ -24,10 +24,10 @@ spec:
       connector_config:
         connector_ref: vastar.http
         operation: post
+        streaming: true
+        dialect: openai
+        json_tap: "choices[0].delta.content"
         timeout_ms: 30000
-        retry_policy:
-          max_retries: 1
-          backoff_ms: 500
       input_mappings:
         - target: url
           source:
@@ -39,8 +39,8 @@ spec:
             source: |
               {
                 "model": "gpt-4",
-                "messages": [{"role": "user", "content": trigger_payload.prompt}],
-                "stream": false
+                "messages": [{"role": "user", "content": trigger_payload.body.prompt}],
+                "stream": true
               }
         - target: headers
           source:
@@ -54,7 +54,7 @@ spec:
         trigger_ref: trigger
         final_response:
           language: vil-expr
-          source: '{"content": llm_result.body.choices[0].message.content}'
+          source: '{"content": llm_result.content}'
 
     - id: end
       activity_type: End

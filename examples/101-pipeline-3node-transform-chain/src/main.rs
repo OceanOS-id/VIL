@@ -77,7 +77,7 @@ const NDJSON_URL: &str = "http://localhost:18081/api/v1/credits/ndjson?count=100
 
 fn configure_sink() -> HttpSinkBuilder {
     HttpSinkBuilder::new("TransformGateway")
-        .port(SINK_PORT)
+        .env_port(SINK_PORT)
         .path(SINK_PATH)
         .out_port("trigger_out")
         .in_port("response_data_in")

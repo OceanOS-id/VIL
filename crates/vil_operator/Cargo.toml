@@ -2,12 +2,13 @@
 name = "vil_operator"
 version.workspace = true
 edition = "2021"
-description = "VIL Kubernetes Operator — CRD-based deployment of vil-server"
+description = "VIL Kubernetes Operator — CRD-based deployment of vil-server. Source-available under VSAL — see LICENSE-VSAL. Not published to crates.io."
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"
 documentation = "https://vastar.id/docs/vil"
 readme = "README.md"
-license = "MIT OR Apache-2.0"
+license-file = "../../LICENSE-VSAL"
+publish = false
 
 [[bin]]
 name = "vil-operator"

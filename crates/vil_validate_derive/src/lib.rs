@@ -18,7 +18,7 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, Fields, Meta, Expr, Lit};
+use syn::{parse_macro_input, DeriveInput, Data, Fields};
 
 /// Derive macro for request validation.
 ///
@@ -57,8 +57,8 @@ pub fn derive_vil_validate(input: TokenStream) -> TokenStream {
             let mut min_len: Option<usize> = None;
             let mut max_len: Option<usize> = None;
             let mut is_email = false;
-            let mut range_min: Option<i64> = None;
-            let mut range_max: Option<i64> = None;
+            let _range_min: Option<i64> = None;
+            let _range_max: Option<i64> = None;
 
             let _ = attr.parse_nested_meta(|meta| {
                 if meta.path.is_ident("optional") {

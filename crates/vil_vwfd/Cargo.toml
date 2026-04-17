@@ -2,20 +2,21 @@
 name = "vil_vwfd"
 version.workspace = true
 edition = "2021"
-description = "VIL VWFD Runtime — compile + execute VWFD workflows on vil_server"
-license = "MIT OR Apache-2.0"
+description = "VIL VWFD Runtime — compile + execute VWFD workflows on vil_server. Source-available under Vastar Source Available License (VSAL) — see LICENSE-VSAL. Not published to crates.io; install from source."
+license-file = "../../LICENSE-VSAL"
+publish = false
 
 [dependencies]
 # VIL own engines
-vil_expr = { version = "0.3", path = "../vil_expr" }
-vil_rules = { version = "0.3", path = "../vil_rules" }
+vil_expr = { version = "0.4", path = "../vil_expr" }
+vil_rules = { version = "0.4", path = "../vil_rules" }
 
 # VIL infrastructure (per dev plan §7)
-vil_server_core = { version = "0.3", path = "../vil_server_core" }
-vil_orm = { version = "0.3", path = "../vil_orm" }
-vil_new_http = { version = "0.3", path = "../vil_new_http" }
-vil_rt = { version = "0.3", path = "../vil_rt" }
-vil_types = { version = "0.3", path = "../vil_types" }
+vil_server_core = { version = "0.4", path = "../vil_server_core" }
+vil_orm = { version = "0.4", path = "../vil_orm" }
+vil_new_http = { version = "0.4", path = "../vil_new_http" }
+vil_rt = { version = "0.4", path = "../vil_rt" }
+vil_types = { version = "0.4", path = "../vil_types" }
 bytes = "1"
 
 # Serialization
@@ -30,60 +31,63 @@ tokio = { version = "1", features = ["sync", "time", "macros", "rt", "process"] 
 # WASM execution
 wasmtime = { version = "24", optional = true }
 wasmtime-wasi = { version = "24", optional = true }
-vil_capsule = { version = "0.3", path = "../vil_capsule", optional = true, features = ["wasi"] }
-vil_sidecar = { version = "0.3", path = "../vil_sidecar", optional = true }
+vil_capsule = { version = "0.4", path = "../vil_capsule", optional = true, features = ["wasi"] }
+vil_sidecar = { version = "0.4", path = "../vil_sidecar", optional = true }
 # Sidecar execution (subprocess stdin/stdout, no external dep needed)
 async-trait = { version = "0.1", optional = true }
 bson = { version = "2.13", optional = true }
+
+# Plugin loading (dlopen .so)
+libloading = "0.8"
 
 # Durability (per dev plan Phase 5)
 redb = "2.1"
 
 # VIL DB connectors (all optional)
-vil_db_sqlx = { version = "0.3", path = "../vil_db_sqlx", optional = true }
-vil_db_redis = { version = "0.3", path = "../vil_db_redis", optional = true }
-vil_db_mongo = { version = "0.3", path = "../vil_db_mongo", optional = true }
-vil_db_cassandra = { version = "0.3", path = "../vil_db_cassandra", optional = true }
-vil_db_clickhouse = { version = "0.3", path = "../vil_db_clickhouse", optional = true }
-vil_db_dynamodb = { version = "0.3", path = "../vil_db_dynamodb", optional = true }
-vil_db_elastic = { version = "0.3", path = "../vil_db_elastic", optional = true }
-vil_db_neo4j = { version = "0.3", path = "../vil_db_neo4j", optional = true }
-vil_db_timeseries = { version = "0.3", path = "../vil_db_timeseries", optional = true, features = ["influxdb"] }
+vil_db_sqlx = { version = "0.4", path = "../vil_db_sqlx", optional = true, features = ["all"] }
+vil_db_redis = { version = "0.4", path = "../vil_db_redis", optional = true }
+vil_db_mongo = { version = "0.4", path = "../vil_db_mongo", optional = true }
+vil_db_cassandra = { version = "0.4", path = "../vil_db_cassandra", optional = true }
+vil_db_clickhouse = { version = "0.4", path = "../vil_db_clickhouse", optional = true }
+vil_db_dynamodb = { version = "0.4", path = "../vil_db_dynamodb", optional = true }
+vil_db_elastic = { version = "0.4", path = "../vil_db_elastic", optional = true }
+vil_db_neo4j = { version = "0.4", path = "../vil_db_neo4j", optional = true }
+vil_db_timeseries = { version = "0.4", path = "../vil_db_timeseries", optional = true, features = ["influxdb"] }
 
 # VIL MQ connectors (all optional)
-vil_mq_nats = { version = "0.3", path = "../vil_mq_nats", optional = true }
-vil_mq_kafka = { version = "0.3", path = "../vil_mq_kafka", optional = true }
-vil_mq_mqtt = { version = "0.3", path = "../vil_mq_mqtt", optional = true }
-vil_mq_rabbitmq = { version = "0.3", path = "../vil_mq_rabbitmq", optional = true }
-vil_mq_pulsar = { version = "0.3", path = "../vil_mq_pulsar", optional = true }
-vil_mq_pubsub = { version = "0.3", path = "../vil_mq_pubsub", optional = true }
-vil_mq_sqs = { version = "0.3", path = "../vil_mq_sqs", optional = true }
+vil_mq_nats = { version = "0.4", path = "../vil_mq_nats", optional = true }
+vil_mq_kafka = { version = "0.4", path = "../vil_mq_kafka", optional = true }
+vil_mq_mqtt = { version = "0.4", path = "../vil_mq_mqtt", optional = true }
+vil_mq_rabbitmq = { version = "0.4", path = "../vil_mq_rabbitmq", optional = true }
+vil_mq_pulsar = { version = "0.4", path = "../vil_mq_pulsar", optional = true }
+vil_mq_pubsub = { version = "0.4", path = "../vil_mq_pubsub", optional = true }
+vil_mq_sqs = { version = "0.4", path = "../vil_mq_sqs", optional = true }
 
 # VIL Storage connectors (all optional)
-vil_storage_s3 = { version = "0.3", path = "../vil_storage_s3", optional = true }
-vil_storage_gcs = { version = "0.3", path = "../vil_storage_gcs", optional = true }
-vil_storage_azure = { version = "0.3", path = "../vil_storage_azure", optional = true }
+vil_storage_s3 = { version = "0.4", path = "../vil_storage_s3", optional = true }
+vil_storage_gcs = { version = "0.4", path = "../vil_storage_gcs", optional = true }
+vil_storage_azure = { version = "0.4", path = "../vil_storage_azure", optional = true }
 
 # VIL Protocol connectors (all optional)
-vil_soap = { version = "0.3", path = "../vil_soap", optional = true }
-vil_modbus = { version = "0.3", path = "../vil_modbus", optional = true }
-vil_opcua = { version = "0.3", path = "../vil_opcua", optional = true }
-vil_ws = { version = "0.3", path = "../vil_ws", optional = true }
+vil_soap = { version = "0.4", path = "../vil_soap", optional = true }
+vil_modbus = { version = "0.4", path = "../vil_modbus", optional = true }
+vil_opcua = { version = "0.4", path = "../vil_opcua", optional = true }
+vil_ws = { version = "0.4", path = "../vil_ws", optional = true }
 
 # VIL Triggers (all optional)
-vil_trigger_core = { version = "0.3", path = "../vil_trigger_core", optional = true }
-vil_trigger_cron = { version = "0.3", path = "../vil_trigger_cron", optional = true }
-vil_trigger_iot = { version = "0.3", path = "../vil_trigger_iot", optional = true }
-vil_trigger_cdc = { version = "0.3", path = "../vil_trigger_cdc", optional = true }
-vil_trigger_fs = { version = "0.3", path = "../vil_trigger_fs", optional = true }
-vil_trigger_email = { version = "0.3", path = "../vil_trigger_email", optional = true }
-vil_trigger_evm = { version = "0.3", path = "../vil_trigger_evm", optional = true }
-vil_trigger_webhook = { version = "0.3", path = "../vil_trigger_webhook", optional = true }
-vil_trigger_kafka = { version = "0.3", path = "../vil_trigger_kafka", optional = true }
-vil_trigger_s3 = { version = "0.3", path = "../vil_trigger_s3", optional = true }
-vil_trigger_sftp = { version = "0.3", path = "../vil_trigger_sftp", optional = true }
-vil_trigger_db_poll = { version = "0.3", path = "../vil_trigger_db_poll", optional = true }
-vil_trigger_grpc = { version = "0.3", path = "../vil_trigger_grpc", optional = true }
+vil_trigger_core = { version = "0.4", path = "../vil_trigger_core", optional = true }
+vil_trigger_cron = { version = "0.4", path = "../vil_trigger_cron", optional = true }
+vil_trigger_iot = { version = "0.4", path = "../vil_trigger_iot", optional = true }
+vil_trigger_cdc = { version = "0.4", path = "../vil_trigger_cdc", optional = true }
+vil_trigger_fs = { version = "0.4", path = "../vil_trigger_fs", optional = true }
+vil_trigger_email = { version = "0.4", path = "../vil_trigger_email", optional = true }
+vil_trigger_evm = { version = "0.4", path = "../vil_trigger_evm", optional = true }
+vil_trigger_webhook = { version = "0.4", path = "../vil_trigger_webhook", optional = true }
+vil_trigger_kafka = { version = "0.4", path = "../vil_trigger_kafka", optional = true }
+vil_trigger_s3 = { version = "0.4", path = "../vil_trigger_s3", optional = true }
+vil_trigger_sftp = { version = "0.4", path = "../vil_trigger_sftp", optional = true }
+vil_trigger_db_poll = { version = "0.4", path = "../vil_trigger_db_poll", optional = true }
+vil_trigger_grpc = { version = "0.4", path = "../vil_trigger_grpc", optional = true }
 
 [features]
 default = []

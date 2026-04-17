@@ -11,5 +11,5 @@ publish = false
 # Upstream: Core Banking Simulator SSE (port 18081)
 # ─────────────────────────────────────────────────────────────────────────────
 [dependencies]
-vil_sdk  = { version = "0.2" }
+vil_sdk = { version = "0.4", path = "../../crates/vil_sdk" }
 serde_json = "1.0"

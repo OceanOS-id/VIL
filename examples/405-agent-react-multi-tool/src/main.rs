@@ -157,7 +157,7 @@ fn tool_calculator(expr: &str) -> String {
     // Handle product value patterns like "49.99 * 150 + 29.99 * 200"
     // Simple tokenized evaluator for + and * chains
     let mut total = 0.0f64;
-    let mut terms: Vec<&str> = trimmed.split('+').collect();
+    let terms: Vec<&str> = trimmed.split('+').collect();
     for term in &terms {
         let factors: Vec<f64> = term
             .split('*')

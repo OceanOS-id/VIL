@@ -10,11 +10,11 @@ documentation = "https://vastar.id/docs/vil"
 readme = "README.md"
 
 [dependencies]
-vil_tokenizer = { version = "0.3", path = "../vil_tokenizer" }
-vil_sdk = { version = "0.3", path = "../vil_sdk" }
-vil_server_core = { version = "0.3", path = "../vil_server_core" }
-vil_server = { version = "0.3", path = "../vil_server" }
-vil_macros = { version = "0.3", path = "../vil_macros" }
+vil_tokenizer = { version = "0.4", path = "../vil_tokenizer" }
+vil_sdk = { version = "0.4", path = "../vil_sdk" }
+vil_server_core = { version = "0.4", path = "../vil_server_core" }
+vil_server = { version = "0.4", path = "../vil_server" }
+vil_macros = { version = "0.4", path = "../vil_macros" }
 axum = { version = "0.7", features = ["macros"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

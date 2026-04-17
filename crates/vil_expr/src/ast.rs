@@ -26,10 +26,15 @@ pub enum Expr {
     Ternary(Box<Expr>, Box<Expr>, Box<Expr>),   // cond ? then : else
 
     // ── Membership (vil-expr §3.2.3) ──
-    In(Box<Expr>, Box<Expr>),                   // x in [1,2,3]
+    In(Box<Expr>, Box<Expr>),                   // x in [1,2,3] or x IN {'a','b'}
+    NotIn(Box<Expr>, Box<Expr>),                // x NOT IN {'a','b'}
+
+    // ── Null checks (vdicl) ──
+    IsNull(Box<Expr>),                          // x IS NULL
+    IsNotNull(Box<Expr>),                       // x IS NOT NULL
 
     // ── Calls ──
-    FnCall(String, Vec<Expr>),                  // size(x), has(x), int(x)
+    FnCall(String, Vec<Expr>),                  // size(x), has(x), ISBLANK(x), LENGTH(x)
     MethodCall(Box<Expr>, String, Vec<Expr>),    // "abc".contains("b")
 }
 

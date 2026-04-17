@@ -110,14 +110,26 @@ pub fn eval(expr: &Expr, vars: &Vars) -> Result<Value, String> {
         Expr::In(item, collection) => {
             let item_val = eval(item, vars)?;
             let coll_val = eval(collection, vars)?;
-            match &coll_val {
-                Value::Array(arr) => Ok(Value::Bool(arr.contains(&item_val))),
-                Value::Object(map) => {
-                    let key = val_to_string(&item_val);
-                    Ok(Value::Bool(map.contains_key(&key)))
-                }
-                _ => Ok(Value::Bool(false)),
-            }
+            Ok(Value::Bool(val_in(&item_val, &coll_val)))
+        }
+
+        // ── Not In ──
+        Expr::NotIn(item, collection) => {
+            let item_val = eval(item, vars)?;
+            let coll_val = eval(collection, vars)?;
+            Ok(Value::Bool(!val_in(&item_val, &coll_val)))
+        }
+
+        // ── IS NULL ──
+        Expr::IsNull(e) => {
+            let v = eval(e, vars)?;
+            Ok(Value::Bool(v.is_null()))
+        }
+
+        // ── IS NOT NULL ──
+        Expr::IsNotNull(e) => {
+            let v = eval(e, vars)?;
+            Ok(Value::Bool(!v.is_null()))
         }
 
         // ── Function call ──
@@ -203,13 +215,34 @@ fn cmp_op(l: &Value, r: &Value, pred: fn(std::cmp::Ordering) -> bool) -> Result<
 
 fn eval_function(name: &str, args: &[Expr], vars: &Vars) -> Result<Value, String> {
     match name {
-        "size" => {
+        "size" | "SIZE" => {
             if args.len() != 1 { return Err("size() takes 1 argument".into()); }
             let v = eval(&args[0], vars)?;
             Ok(Value::Number(match &v {
                 Value::String(s) => s.len() as i64,
                 Value::Array(a) => a.len() as i64,
                 Value::Object(m) => m.len() as i64,
+                _ => 0,
+            }.into()))
+        }
+        // vdicl: ISBLANK(x) — true if null, empty string, or whitespace-only
+        "ISBLANK" | "isblank" => {
+            if args.len() != 1 { return Err("ISBLANK() takes 1 argument".into()); }
+            let v = eval(&args[0], vars)?;
+            Ok(Value::Bool(match &v {
+                Value::Null => true,
+                Value::String(s) => s.trim().is_empty(),
+                _ => false,
+            }))
+        }
+        // vdicl: LENGTH(x) — string/array length
+        "LENGTH" | "length" => {
+            if args.len() != 1 { return Err("LENGTH() takes 1 argument".into()); }
+            let v = eval(&args[0], vars)?;
+            Ok(Value::Number(match &v {
+                Value::String(s) => s.len() as i64,
+                Value::Array(a) => a.len() as i64,
+                Value::Null => 0,
                 _ => 0,
             }.into()))
         }
@@ -485,6 +518,17 @@ fn val_eq(a: &Value, b: &Value) -> bool {
         return x == y;
     }
     a == b
+}
+
+fn val_in(item: &Value, collection: &Value) -> bool {
+    match collection {
+        Value::Array(arr) => arr.iter().any(|v| val_eq(item, v)),
+        Value::Object(map) => {
+            let key = val_to_string(item);
+            map.contains_key(&key)
+        }
+        _ => false,
+    }
 }
 
 fn obj_type_name(v: &Value) -> &'static str {

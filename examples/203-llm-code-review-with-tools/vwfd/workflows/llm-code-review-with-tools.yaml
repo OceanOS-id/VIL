@@ -44,7 +44,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "You are a code review assistant with two tools. To use a tool, write: <tool>TOOL_NAME:INPUT</tool>. Available: calculator (lines/complexity/math), analyzer (static analysis for unwrap, unsafe, clone, missing docs). Always use analyzer first, then calculator for complexity."},
-                  {"role": "user", "content": "Review this code:\n```\n" + trigger_payload.code + "\n```"}
+                  {"role": "user", "content": "Review this code:\n```\n" + trigger_payload.body.code + "\n```"}
                 ],
                 "stream": true
               }
@@ -61,12 +61,12 @@ spec:
       input_mappings:
         - target: llm_output
           source:
-            language: vil-expr
-            source: llm_turn_1
+            language: spv1
+            source: '$.llm_turn_1'
         - target: code
           source:
-            language: vil-expr
-            source: trigger_payload.code
+            language: spv1
+            source: '$.trigger_payload.body.code'
       output_variable: tool_results
 
     # Step 3: Call LLM again with tool results for final review
@@ -92,7 +92,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "Provide your final code review incorporating tool results."},
-                  {"role": "user", "content": "Code:\n" + trigger_payload.code},
+                  {"role": "user", "content": "Code:\n" + trigger_payload.body.code},
                   {"role": "assistant", "content": llm_turn_1},
                   {"role": "user", "content": "Tool results:\n" + string(tool_results) + "\n\nNow provide your final review."}
                 ],

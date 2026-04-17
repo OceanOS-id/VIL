@@ -232,119 +232,101 @@ impl CapsuleHost {
         })
     }
 
-    /// Call a WASM function with direct memory I/O (Level 1 zero-copy).
+    /// Call a WASM function with bytes I/O via WASI stdin/stdout.
     ///
-    /// Uses `memory.data_mut()` for direct slice access to WASM linear memory,
-    /// eliminating intermediate buffers. Total: 1 copy (input → WASM memory).
-    /// Response is read as a zero-copy slice reference.
+    /// Same approach as vwfd WasmWorkerPool (proven, production-grade):
+    ///   1. Input bytes → WASI stdin as JSON: {"fn":"name","data":"input"}
+    ///   2. Call _start() — WASM binary reads stdin, processes, writes stdout
+    ///   3. Output bytes ← WASI stdout
     ///
-    /// Protocol:
-    ///   1. Direct-write `input_bytes` to WASM linear memory at offset 0
-    ///   2. Call `function_name(ptr=0, len=input_bytes.len())` → result_len
-    ///   3. Direct-read `result_len` bytes from WASM memory at offset 1024
-    ///
-    /// This is the same technique used by Fastly Compute@Edge and Cloudflare
-    /// Workers for near-zero-copy host↔WASM data transfer. The WASM linear
-    /// memory is a contiguous mmap region in the host process — `data_mut()`
-    /// returns a direct mutable slice, bypassing wasmtime's copy-based
-    /// `memory.write()` / `memory.read()` API.
-    ///
-    /// Requires `precompile()` to have been called first.
-    #[cfg(feature = "wasm")]
+    /// Runs on a **dedicated OS thread** (not tokio) because WASI P1 build_p1()
+    /// creates an internal runtime that conflicts with tokio's async executor.
+    #[cfg(all(feature = "wasm", feature = "wasi"))]
     pub fn call_with_memory(
         &self,
         function_name: &str,
         input_bytes: &[u8],
     ) -> Result<Vec<u8>, CapsuleError> {
-        let engine = self.engine.as_ref().ok_or_else(|| {
-            CapsuleError::ExecutionFailed("not precompiled — call precompile() first".into())
-        })?;
-        let module = self.module.as_ref().ok_or_else(|| {
-            CapsuleError::ExecutionFailed("not precompiled — call precompile() first".into())
-        })?;
+        let wasm_bytes = self.config.wasm_bytes.clone();
+        let max_fuel = self.config.max_fuel;
+        let func = function_name.to_string();
+        let input = input_bytes.to_vec();
 
-        let mut store = wasmtime::Store::new(engine, ());
+        // Execute on dedicated OS thread — WASI P1 cannot run inside tokio runtime
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let result = Self::execute_wasi_sync(&wasm_bytes, max_fuel, &func, &input);
+            let _ = tx.send(result);
+        });
 
-        let mut linker = wasmtime::Linker::new(engine);
-        linker
-            .func_wrap("env", "vil_log", |_: i32, _: i32| {})
-            .map_err(|e| CapsuleError::InstantiateFailed(e.to_string()))?;
+        rx.recv()
+            .map_err(|_| CapsuleError::ExecutionFailed("wasi worker thread dropped".into()))?
+    }
+
+    #[cfg(all(feature = "wasm", feature = "wasi"))]
+    fn execute_wasi_sync(
+        wasm_bytes: &[u8],
+        max_fuel: u64,
+        function_name: &str,
+        input_bytes: &[u8],
+    ) -> Result<Vec<u8>, CapsuleError> {
+        let mut wasm_config = wasmtime::Config::new();
+        if max_fuel > 0 {
+            wasm_config.consume_fuel(true);
+        }
+        let engine = wasmtime::Engine::new(&wasm_config)
+            .map_err(|e| CapsuleError::CompileFailed(e.to_string()))?;
+        let module = wasmtime::Module::new(&engine, wasm_bytes)
+            .map_err(|e| CapsuleError::CompileFailed(e.to_string()))?;
+
+        let envelope = serde_json::json!({
+            "fn": function_name,
+            "data": String::from_utf8_lossy(input_bytes),
+        });
+        let payload = serde_json::to_vec(&envelope)
+            .map_err(|e| CapsuleError::ExecutionFailed(format!("json encode: {}", e)))?;
+
+        let stdin_pipe = wasmtime_wasi::pipe::MemoryInputPipe::new(bytes::Bytes::from(payload));
+        let stdout_pipe = wasmtime_wasi::pipe::MemoryOutputPipe::new(4096);
+
+        let wasi_ctx = wasmtime_wasi::WasiCtxBuilder::new()
+            .stdin(stdin_pipe)
+            .stdout(stdout_pipe.clone())
+            .build_p1();
+
+        let mut store = wasmtime::Store::new(&engine, wasi_ctx);
+        if max_fuel > 0 {
+            let _ = store.set_fuel(max_fuel);
+        }
+
+        let mut linker = wasmtime::Linker::<wasmtime_wasi::preview1::WasiP1Ctx>::new(&engine);
+        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |ctx| ctx)
+            .map_err(|e| CapsuleError::InstantiateFailed(format!("wasi link: {}", e)))?;
 
         let instance = linker
-            .instantiate(&mut store, module)
+            .instantiate(&mut store, &module)
             .map_err(|e| CapsuleError::InstantiateFailed(e.to_string()))?;
 
-        // Get the memory export from the WASM module
-        let memory = instance.get_memory(&mut store, "memory").ok_or_else(|| {
-            CapsuleError::ExecutionFailed("WASM module has no 'memory' export".into())
-        })?;
-
-        // ── Level 1 Zero-Copy: Direct slice access ──────────────────
-        //
-        // WASM linear memory is a contiguous mmap region in host address space.
-        // memory.data_mut() returns &mut [u8] — a direct mutable slice.
-        // This bypasses wasmtime's memory.write() which does an extra memcpy
-        // through an intermediate buffer.
-        //
-        // Copy count:
-        //   OLD: input_bytes → staging buffer → WASM memory (2 copies for input)
-        //   NEW: input_bytes → WASM memory directly (1 copy for input)
-
-        let wasm_mem = memory.data_mut(&mut store);
-
-        // Bounds check: ensure WASM memory is large enough
-        let input_end = input_bytes.len();
-        if input_end > wasm_mem.len() {
-            return Err(CapsuleError::ExecutionFailed(format!(
-                "Input ({} bytes) exceeds WASM memory ({} bytes)",
-                input_bytes.len(),
-                wasm_mem.len()
-            )));
-        }
-
-        // SINGLE COPY: input bytes directly into WASM linear memory at offset 0.
-        // This is the only copy in the entire host→WASM path.
-        wasm_mem[0..input_end].copy_from_slice(input_bytes);
-
-        // Call WASM function: function_name(ptr=0, len=input_bytes.len()) → result_len
-        let func = instance
-            .get_typed_func::<(i32, i32), i32>(&mut store, function_name)
-            .map_err(|e| {
-                CapsuleError::ExecutionFailed(format!(
-                    "function '{}' not found: {}",
-                    function_name, e
-                ))
-            })?;
-
-        let result_len = func
-            .call(&mut store, (0, input_bytes.len() as i32))
+        let start = instance
+            .get_typed_func::<(), ()>(&mut store, "_start")
+            .map_err(|e| CapsuleError::ExecutionFailed(format!("no _start: {}", e)))?;
+        start
+            .call(&mut store, ())
             .map_err(|e| CapsuleError::ExecutionFailed(e.to_string()))?;
 
-        // ── Zero-copy read: direct slice from WASM memory ───────────
-        //
-        // WASM wrote its output at offset 1024. We read it as a direct
-        // slice reference — no intermediate buffer, no memcpy.
-        // The .to_vec() at the end is needed because the slice borrows
-        // from Store which we're returning from. In a pooled scenario
-        // (VFlow Level 2), this could be eliminated entirely.
+        Ok(stdout_pipe.contents().to_vec())
+    }
 
-        let result_start = 1024usize;
-        let result_end = result_start + result_len as usize;
-
-        let wasm_mem = memory.data(&store);
-        if result_end > wasm_mem.len() {
-            return Err(CapsuleError::ExecutionFailed(format!(
-                "Result region ({}-{}) exceeds WASM memory ({} bytes)",
-                result_start,
-                result_end,
-                wasm_mem.len()
-            )));
-        }
-
-        // Direct slice read — zero copy within host. The final .to_vec()
-        // is the ownership boundary (caller needs owned data). In VFlow
-        // Level 2, this is eliminated via MemoryCreator + SHM mapping.
-        Ok(wasm_mem[result_start..result_end].to_vec())
+    /// Fallback when wasi feature not enabled
+    #[cfg(all(feature = "wasm", not(feature = "wasi")))]
+    pub fn call_with_memory(
+        &self,
+        _function_name: &str,
+        _input_bytes: &[u8],
+    ) -> Result<Vec<u8>, CapsuleError> {
+        Err(CapsuleError::ExecutionFailed(
+            "call_with_memory requires 'wasi' feature".into(),
+        ))
     }
 
     /// Legacy call path — creates Engine + Module per invocation.

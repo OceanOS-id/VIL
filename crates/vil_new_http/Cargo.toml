@@ -14,7 +14,7 @@ readme = "README.md"
 crate-type = ["rlib", "staticlib"]
 
 [dependencies]
-vil_json = { version = "0.3", path = "../vil_json", features = ["simd"] }
+vil_json = { version = "0.4", path = "../vil_json", features = ["simd"] }
 vil_types = { workspace = true }
 vil_rt    = { workspace = true }
 vil_ir    = { workspace = true }

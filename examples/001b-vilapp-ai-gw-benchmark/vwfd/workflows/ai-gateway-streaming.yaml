@@ -39,7 +39,7 @@ spec:
             source: |
               {
                 "model": "gpt-4",
-                "messages": [{"role": "user", "content": trigger_payload.prompt}],
+                "messages": [{"role": "user", "content": trigger_payload.body.prompt}],
                 "stream": true
               }
         - target: headers

@@ -1,24 +1,47 @@
 version: "3.0"
-metadata: { id: create-order }
+metadata: { id: create-order, name: "POST /api/shop/orders — VilQuery insert" }
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config: { trigger_type: webhook, webhook_config: { path: /api/shop/orders, method: POST }, response_mode: buffered, end_activity: respond }
       output_variable: trigger_payload
-    - id: handler
-      activity_type: NativeCode
-      code_config: { handler_ref: create_order }
+    - id: insert-order
+      activity_type: Connector
+      connector_config: { connector_ref: vastar.db.sqlite, operation: execute }
       input_mappings:
-        - target: body
-          source: { language: vil-expr, source: 'trigger_payload.body' }
+        - target: sql
+          source:
+            language: vil_query
+            source: |
+              insert("orders")
+                .columns("id, customer_name")
+                .values(_uuid(), trigger_payload.body.customer_name ?? "Guest")
+      output_variable: order_result
+    - id: fetch-order
+      activity_type: Connector
+      connector_config: { connector_ref: vastar.db.sqlite, operation: query }
+      input_mappings:
+        - target: sql
+          source:
+            language: vil_query
+            source: |
+              select("orders")
+                .columns("id, customer_name, status, created_at")
+                .order_by("created_at DESC")
+                .limit(1)
       output_variable: result
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: 'result' } }
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: spv1
+          source: '$.result'
     - id: end
       activity_type: End
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: handler } }
-    - { id: f2, from: { node: handler }, to: { node: respond } }
-    - { id: f3, from: { node: respond }, to: { node: end } }
+    - { id: f1, from: { node: trigger }, to: { node: insert-order } }
+    - { id: f2, from: { node: insert-order }, to: { node: fetch-order } }
+    - { id: f3, from: { node: fetch-order }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }

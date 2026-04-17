@@ -1,26 +1,47 @@
 version: "3.0"
-metadata: { id: create-author }
+metadata: { id: create-author, name: "POST /api/blog/authors — VilQuery insert" }
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config: { trigger_type: webhook, webhook_config: { path: /api/blog/authors, method: POST }, response_mode: buffered, end_activity: respond }
       output_variable: trigger_payload
-    - id: handler
-      activity_type: NativeCode
-      code_config: { handler_ref: create_author }
+    - id: insert
+      activity_type: Connector
+      connector_config: { connector_ref: vastar.db.sqlite, operation: execute }
       input_mappings:
-        - target: body
-          source: { language: vil-expr, source: 'trigger_payload.body' }
-        - target: path
-          source: { language: vil-expr, source: 'trigger_payload.path' }
+        - target: sql
+          source:
+            language: vil_query
+            source: |
+              insert("authors")
+                .columns("id, name, bio")
+                .values(_uuid(), trigger_payload.body.name, trigger_payload.body.bio)
+      output_variable: insert_result
+    - id: fetch
+      activity_type: Connector
+      connector_config: { connector_ref: vastar.db.sqlite, operation: query }
+      input_mappings:
+        - target: sql
+          source:
+            language: vil_query
+            source: |
+              select("authors")
+                .columns("id, name, bio, created_at")
+                .order_by("created_at DESC")
+                .limit(1)
       output_variable: result
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: 'result' } }
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: spv1
+          source: '$.result'
     - id: end
       activity_type: End
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: handler } }
-    - { id: f2, from: { node: handler }, to: { node: respond } }
-    - { id: f3, from: { node: respond }, to: { node: end } }
+    - { id: f1, from: { node: trigger }, to: { node: insert } }
+    - { id: f2, from: { node: insert }, to: { node: fetch } }
+    - { id: f3, from: { node: fetch }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }

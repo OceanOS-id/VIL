@@ -1,0 +1,18 @@
+[package]
+name = "vil-server-provision"
+version.workspace = true
+edition.workspace = true
+# VSAL — overrides workspace license.
+license-file = "../../LICENSE-VSAL"
+authors.workspace = true
+description = "VIL provisionable server — starts empty, accepts workflow uploads at runtime. Source-available under Vastar Source Available License (VSAL) — hot-reload provisioning makes this the PRIMARY WaaS vector, covered by Workflow Service Restriction. Not published to crates.io."
+publish = false
+
+[[bin]]
+name = "vil-server"
+path = "src/main.rs"
+
+[dependencies]
+vil_vwfd = { path = "../vil_vwfd", features = ["all"] }
+tokio = { version = "1", features = ["full"] }
+serde_json = "1.0"

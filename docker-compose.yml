@@ -1,0 +1,287 @@
+# =============================================================================
+# VIL — Docker Compose (Full Stack)
+# =============================================================================
+# Profiles:
+#   (default)    — VIL provisionable server only
+#   infra        — + databases, MQ, storage (12 services)
+#   simulators   — + AI, credit, FaaS simulators
+#   full         — everything
+#
+# Quick start:
+#   docker compose up -d                                    # server only
+#   docker compose --profile infra up -d                    # + infra
+#   docker compose --profile infra --profile simulators up -d  # + simulators
+#
+# Test:
+#   curl http://localhost:3080/api/admin/health
+#   curl -X POST -H 'Content-Type: application/x-yaml' \
+#     -d @workflow.yaml http://localhost:3080/api/admin/upload
+# =============================================================================
+
+services:
+  # ════════════════════════════════════════════════════════════════
+  # VIL Provisionable Server
+  # ════════════════════════════════════════════════════════════════
+
+  vil:
+    build: .
+    image: vastarid/vil:0.3.0
+    container_name: vil
+    network_mode: host
+    environment:
+      - PORT=3080
+      - ADMIN_KEY=${VIL_ADMIN_KEY:-}
+      - WORKFLOWS_DIR=/var/lib/vil/workflows
+      - VIL_PLUGIN_DIR=/var/lib/vil/plugins
+      - VIL_WASM_DIR=/var/lib/vil/modules
+      - VIL_LOG=info
+    volumes:
+      - vil-workflows:/var/lib/vil/workflows
+      - vil-plugins:/var/lib/vil/plugins
+      - vil-modules:/var/lib/vil/modules
+    restart: unless-stopped
+
+  # ════════════════════════════════════════════════════════════════
+  # Simulators — mock backends for workflow testing
+  # ════════════════════════════════════════════════════════════════
+
+  ai-simulator:
+    image: vilfounder/ai-endpoint-simulator:latest
+    container_name: vil-ai-simulator
+    network_mode: host
+    # NOTE: latest image may still have Redis dep — rebuild from source:
+    #   cd ~/Community/ai-endpoint-simulator && docker build -t vilfounder/ai-endpoint-simulator:latest .
+    profiles: [simulators, full]
+    restart: unless-stopped
+
+  credit-simulator:
+    image: vilfounder/credit-data-simulator:latest
+    container_name: vil-credit-simulator
+    network_mode: host
+    profiles: [simulators, full]
+    restart: unless-stopped
+
+  faas-simulator:
+    image: vilfounder/faas-test-simulator:latest
+    container_name: vil-faas-simulator
+    network_mode: host
+    profiles: [simulators, full]
+    restart: unless-stopped
+
+  # ════════════════════════════════════════════════════════════════
+  # Infrastructure — databases, MQ, storage
+  # Port range: 19xxx (same as vil-testsuite/infra)
+  # ════════════════════════════════════════════════════════════════
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: vil-postgres
+    environment:
+      POSTGRES_USER: viltest
+      POSTGRES_PASSWORD: viltest123
+      POSTGRES_DB: vil_demo
+    ports:
+      - "19432:5432"
+    command: >
+      postgres
+        -c wal_level=logical
+        -c max_replication_slots=4
+        -c max_wal_senders=4
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U viltest"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    tmpfs:
+      - /var/lib/postgresql/data
+    profiles: [infra, full]
+
+  redis:
+    image: redis:7-alpine
+    container_name: vil-redis
+    ports:
+      - "19379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    tmpfs:
+      - /data
+    profiles: [infra, full]
+
+  mongo:
+    image: mongo:7
+    container_name: vil-mongo
+    ports:
+      - "19017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    tmpfs:
+      - /data/db
+    profiles: [infra, full]
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: vil-clickhouse
+    ports:
+      - "19123:8123"
+      - "19000:9000"
+    environment:
+      CLICKHOUSE_USER: viltest
+      CLICKHOUSE_PASSWORD: viltest123
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "clickhouse-client --query 'SELECT 1' || wget -qO- http://localhost:8123/ping",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    tmpfs:
+      - /var/lib/clickhouse
+    profiles: [infra, full]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: vil-elastic
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    ports:
+      - "19200:9200"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://localhost:9200/_cluster/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    tmpfs:
+      - /usr/share/elasticsearch/data
+    profiles: [infra, full]
+
+  nats:
+    image: nats:latest
+    container_name: vil-nats
+    ports:
+      - "19222:4222"
+      - "19223:8222"
+    command: ["--js", "--http_port", "8222"]
+    profiles: [infra, full]
+
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: vil-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://vil-kafka:9092,EXTERNAL://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      CLUSTER_ID: vil-kafka-cluster-001
+    ports:
+      - "19092:9094"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    profiles: [infra, full]
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: vil-rabbitmq
+    ports:
+      - "19672:5672"
+      - "19673:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: viltest
+      RABBITMQ_DEFAULT_PASS: viltest123
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    profiles: [infra, full]
+
+  localstack:
+    image: localstack/localstack:3.8
+    container_name: vil-localstack
+    environment:
+      - SERVICES=sqs
+      - DEFAULT_REGION=us-east-1
+      - LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1
+    ports:
+      - "19566:4566"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://localhost:4566/_localstack/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    profiles: [infra, full]
+
+  minio:
+    image: minio/minio:latest
+    container_name: vil-minio
+    environment:
+      MINIO_ROOT_USER: viltest
+      MINIO_ROOT_PASSWORD: viltest123
+    ports:
+      - "19900:9000"
+      - "19901:9001"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mc ready local || curl -sf http://localhost:9000/minio/health/live",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    tmpfs:
+      - /data
+    profiles: [infra, full]
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: vil-mosquitto
+    ports:
+      - "19883:1883"
+    command: ["mosquitto", "-p", "1883"]
+    environment:
+      - MOSQUITTO_NO_AUTH=true
+    profiles: [infra, full]
+
+  modbus:
+    image: oitc/modbus-server:latest
+    container_name: vil-modbus
+    ports:
+      - "19502:5020"
+    profiles: [infra, full]
+
+volumes:
+  vil-workflows:
+  vil-plugins:
+  vil-modules:

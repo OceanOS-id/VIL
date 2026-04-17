@@ -1,0 +1,235 @@
+                    Vastar Source Available License (VSAL)
+                           Version 1.0 — April 2026
+
+                    Copyright (c) 2024-2026 PT RAG Mid Solution
+                                  vastar.id
+
+
+================================================================================
+  0. PREAMBLE
+================================================================================
+
+This license applies to the following software components (collectively, the
+"Software"):
+
+    - vil_server              the runtime server binary
+    - vil_server_provision    hot-reload provisioning engine
+    - vil_vwfd                VWFD workflow compiler and executor
+    - vil_vwfd_macros         VWFD proc macros
+    - vil_cli_server          CLI tooling for VilApp backends
+    - vil_workflow_v2         DAG-based workflow scheduler
+    - vil_operator            Kubernetes Operator for vil-server
+
+The Software is source-available and free to use for the purposes permitted
+below. It is NOT open-source software under the Open Source Initiative (OSI)
+definition: the Workflow Service Restriction in Section 3 imposes a field-of-
+use limitation inconsistent with OSI criteria.
+
+Refer to LICENSING.md in the repository root for the complete licensing guide,
+examples, and the broader ecosystem context.
+
+
+================================================================================
+  1. DEFINITIONS
+================================================================================
+
+1.1 "Licensor" means PT RAG Mid Solution, a company registered in the Republic
+    of Indonesia, doing business as Vastar.
+
+1.2 "You" (or "Your") means an individual or Legal Entity exercising rights
+    granted by this License.
+
+1.3 "Software" means the source code, object code, documentation, and related
+    artifacts of the components listed in the Preamble, including modified
+    and derivative works thereof.
+
+1.4 "Workflow Definition" means a declarative or imperative description of a
+    computational workflow, including but not limited to VWFD YAML, JSON,
+    proprietary DSLs, or definitions originating from third-party systems
+    (n8n, Kestra, Airflow, Prefect, Dagster, Temporal, Zapier, and similar).
+
+1.5 "Provisionable Mode" means operation of the Software with dynamic
+    acceptance, registration, and execution of user-uploaded Workflow
+    Definitions, WASM modules, Sidecar configurations, or native plugins
+    (.so) via hot-reload provisioning.
+
+1.6 "Workflow-as-a-Service" (or "WaaS") means any product, platform, or
+    service whose primary purpose is enabling third parties to create,
+    deploy, provision, execute, or manage Workflow Definitions. The
+    technical implementation is irrelevant: this includes services that
+    accept third-party Workflow Definitions (whether in their native format
+    or converted to VWFD) and host their execution on infrastructure You
+    operate.
+
+1.7 "Significant Business Process" means a product that delivers substantial
+    domain-specific value beyond workflow execution. The workflow engine is
+    an implementation detail, not the product's core value. The test: if
+    workflow provisioning were removed, would the product still have
+    substantial value? If yes, it is a Significant Business Process.
+
+1.8 "Self-Use" means deploying and operating the Software on infrastructure
+    owned or controlled by You, for Your own internal purposes — including
+    internal applications, internal automation, internal development, and
+    production workloads serving Your own customers through applications
+    You build.
+
+
+================================================================================
+  2. GRANT OF RIGHTS
+================================================================================
+
+Subject to the terms and conditions of this License, Licensor hereby grants
+You a worldwide, royalty-free, non-exclusive, non-transferable license to:
+
+2.1 Use, reproduce, modify, and distribute the Software source code, in whole
+    or in part, in Source or Object form.
+
+2.2 Create derivative works of the Software, provided that such derivatives
+    remain subject to Section 3 (Workflow Service Restriction).
+
+2.3 Deploy and operate the Software in Standard Server Mode for any purpose,
+    including commercial SaaS offerings that are NOT Workflow-as-a-Service
+    under Section 1.6.
+
+2.4 Deploy and operate the Software in Provisionable Mode for Self-Use
+    (Section 1.8), including production workloads.
+
+2.5 Distribute the Software (modified or unmodified) to third parties,
+    provided that the Software, when installed and operated by the
+    recipient, remains subject to this License.
+
+
+================================================================================
+  3. WORKFLOW SERVICE RESTRICTION
+================================================================================
+
+You may NOT use the Software, or any derivative work thereof, to build,
+operate, or offer Workflow-as-a-Service as a primary product. This
+restriction applies regardless of the technical implementation.
+
+Without limiting the foregoing, You may NOT:
+
+3.1 Operate a managed service whose primary purpose is allowing third
+    parties to upload, deploy, execute, or manage Workflow Definitions.
+
+3.2 Build a platform-as-a-service (PaaS) or Workflow-as-a-Service (WaaS)
+    where the core value proposition is workflow provisioning and execution.
+
+3.3 Re-package, re-brand, or white-label the Software's workflow engine
+    capabilities as a hosted workflow platform.
+
+3.4 Offer "managed VIL", "hosted VIL workflows", or any equivalent service
+    where third parties provision workflows to infrastructure You operate.
+
+3.5 Build a competing workflow orchestration cloud service using the
+    Software as the engine.
+
+3.6 Accept third-party Workflow Definitions (n8n, Kestra, Airflow, Prefect,
+    Dagster, Temporal, Zapier, or any similar system) and translate them
+    (whether automatically or manually) to VWFD or equivalent format for
+    execution on Software-based infrastructure operated by You as a
+    managed service. The translation layer does NOT exempt the service
+    from Workflow-as-a-Service classification.
+
+This restriction applies regardless of whether the service is offered for
+free or for a fee.
+
+
+================================================================================
+  4. SIGNIFICANT BUSINESS PROCESS EXCEPTION
+================================================================================
+
+The Workflow Service Restriction in Section 3 does NOT apply when workflow
+provisioning is a component of a Significant Business Process (Section 1.7),
+not the primary product itself.
+
+Examples of permitted use under this exception:
+
+- A credit scoring platform using workflows to orchestrate scoring pipelines.
+- An IoT monitoring platform routing sensor data through workflows.
+- A payment processing system managing transaction routing via workflows.
+- An insurance underwriting system orchestrating risk assessment.
+- An e-commerce platform managing order fulfillment via workflows.
+- A healthcare integration platform connecting hospital systems.
+
+In each case, the product delivers substantial domain-specific value beyond
+workflow execution. The workflow engine is an implementation detail.
+
+
+================================================================================
+  5. RESERVATION OF RIGHTS
+================================================================================
+
+5.1 Only Licensor may operate managed cloud services that provide
+    Provisionable Mode execution of VIL-based workflows.
+
+5.2 Licensor reserves all rights not expressly granted herein.
+
+5.3 Trademarks — "VIL", "vil_server", "VFlow", "VFlow Enterprise", "VWFD",
+    "V-CEL", "VDICL", "VilQuery", "TriLaneKernel", "Galaxy Bimasakti", and
+    "Vastar" are trademarks of PT RAG Mid Solution. No trademark license is
+    granted under this License. Use of these trademarks is subject to
+    Licensor's trademark guidelines (see TRADEMARK.md).
+
+
+================================================================================
+  6. CONTRIBUTIONS
+================================================================================
+
+6.1 Unless You explicitly state otherwise, any Contribution intentionally
+    submitted for inclusion in the Software by You shall be under the terms
+    of this License, without any additional terms or conditions.
+
+6.2 You retain the copyright to Your Contributions. By submitting a
+    Contribution, You grant Licensor a perpetual, worldwide, royalty-free,
+    irrevocable license to use, reproduce, modify, sublicense, and
+    distribute Your Contribution as part of the Software.
+
+
+================================================================================
+  7. DISCLAIMER OF WARRANTY
+================================================================================
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+================================================================================
+  8. TERMINATION
+================================================================================
+
+8.1 If You breach Section 3 (Workflow Service Restriction), Your rights
+    under this License terminate automatically and immediately.
+
+8.2 Upon termination, You must cease all use, distribution, and operation
+    of the Software and any derivative works thereof.
+
+8.3 Sections 1, 5, 7, 8, and 9 survive termination of this License.
+
+
+================================================================================
+  9. GOVERNING LAW
+================================================================================
+
+This License shall be governed by and construed in accordance with the laws
+of the Republic of Indonesia. Any dispute arising under or in connection
+with this License shall be subject to the exclusive jurisdiction of the
+courts of Jakarta, Indonesia.
+
+
+================================================================================
+  10. CONTACT
+================================================================================
+
+For licensing inquiries, commercial agreements, or clarification:
+
+    Email:  legal@vastar.id
+    Sales:  sales@vastar.id
+    Web:    https://vastar.id/licensing
+
+PT RAG Mid Solution
+Jakarta, Indonesia

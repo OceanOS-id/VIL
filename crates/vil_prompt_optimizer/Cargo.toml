@@ -16,10 +16,10 @@ serde_json = { workspace = true }
 tokio = { workspace = true }
 async-trait = "0.1"
 
-vil_sdk = { version = "0.3", path = "../vil_sdk" }
-vil_server_core = { version = "0.3", path = "../vil_server_core" }
-vil_server = { version = "0.3", path = "../vil_server" }
-vil_macros = { version = "0.3", path = "../vil_macros" }
+vil_sdk = { version = "0.4", path = "../vil_sdk" }
+vil_server_core = { version = "0.4", path = "../vil_server_core" }
+vil_server = { version = "0.4", path = "../vil_server" }
+vil_macros = { version = "0.4", path = "../vil_macros" }
 axum = { version = "0.7", features = ["macros"] }
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }

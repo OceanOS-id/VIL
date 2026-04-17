@@ -212,7 +212,7 @@ struct CitedRagResponse {
 
 /// POST /api/legal — research query with citation extraction from legal corpus
 async fn cited_rag_handler(
-    ctx: ServiceCtx,
+    _ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<CitedRagResponse>> {
     let req: CitedRagRequest = body.json().expect("invalid JSON body");

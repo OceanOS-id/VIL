@@ -10,13 +10,13 @@ documentation = "https://vastar.id/docs/vil"
 readme = "README.md"
 
 [dependencies]
-vil_sdk = { version = "0.3", path = "../vil_sdk" }
-vil_server_core = { version = "0.3", path = "../vil_server_core" }
-vil_server = { version = "0.3", path = "../vil_server" }
-vil_llm = { version = "0.3", path = "../vil_llm" }
-vil_rag = { version = "0.3", path = "../vil_rag" }
-vil_json = { version = "0.3", path = "../vil_json" }
-vil_macros = { version = "0.3", path = "../vil_macros" }
+vil_sdk = { version = "0.4", path = "../vil_sdk" }
+vil_server_core = { version = "0.4", path = "../vil_server_core" }
+vil_server = { version = "0.4", path = "../vil_server" }
+vil_llm = { version = "0.4", path = "../vil_llm" }
+vil_rag = { version = "0.4", path = "../vil_rag" }
+vil_json = { version = "0.4", path = "../vil_json" }
+vil_macros = { version = "0.4", path = "../vil_macros" }
 vil_log = { workspace = true }
 tracing = { workspace = true }
 

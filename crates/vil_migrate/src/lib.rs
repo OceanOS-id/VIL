@@ -11,7 +11,7 @@
 
 use sqlx::{Any, Pool};
 type AnyPool = Pool<Any>;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// Migration status for a single migration.
 #[derive(Debug, Clone)]

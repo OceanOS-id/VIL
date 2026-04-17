@@ -14,8 +14,8 @@ spec:
       trigger_config:
         trigger_type: cdc
         cdc_config:
-          publication: "vil_changes"
-          slot: "vil_slot"
+          publication: "vil_pub"
+          slot: "vil_cdc_slot"
       output_variable: trigger_payload
 
     - id: extract-change
@@ -26,10 +26,10 @@ spec:
             language: vil-expr
             source: |
               {
-                "table": trigger_payload.table,
-                "operation": trigger_payload.operation,
-                "row_data": trigger_payload.row,
-                "lsn": trigger_payload.lsn
+                "table": trigger_payload.body.table,
+                "operation": trigger_payload.body.operation,
+                "row_data": trigger_payload.body.row,
+                "lsn": trigger_payload.body.lsn
               }
       output_variable: change_event
 
@@ -42,7 +42,7 @@ spec:
         - target: entity
           source: { language: literal, source: change_log }
         - target: data
-          source: { language: vil-expr, source: change_event }
+          source: { language: spv1, source: '$.change_event' }
       output_variable: insert_result
 
     - id: end

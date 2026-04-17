@@ -24,8 +24,8 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: 'stats'
+          language: spv1
+          source: '$.stats'
 
     - id: end
       activity_type: End

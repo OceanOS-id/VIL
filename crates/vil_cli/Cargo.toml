@@ -2,12 +2,13 @@
 name = "vil_cli"
 version.workspace = true
 edition = "2021"
-license = "MIT OR Apache-2.0"
-description = "VIL CLI - Vastar Intermediate Language zero-copy streaming pipelines for Rust"
+license-file = "../../LICENSE-VSAL"
+description = "VIL CLI — vil init / dev / gen / deploy entry point. Source-available under VSAL — see LICENSE-VSAL. Not published to crates.io; install from source."
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"
 documentation = "https://vastar.id/docs/vil"
 readme = "README.md"
+publish = false
 
 [features]
 default = ["server", "compile", "sdk", "pipeline", "vwfd"]
@@ -19,22 +20,22 @@ vwfd = ["dep:vil_vwfd"]
 
 [dependencies]
 # Sub-crates (feature-gated)
-vil_cli_core = { version = "0.3", path = "../vil_cli_core" }
-vil_cli_server = { version = "0.3", path = "../vil_cli_server", optional = true }
-vil_cli_compile = { version = "0.3", path = "../vil_cli_compile", optional = true }
-vil_cli_sdk = { version = "0.3", path = "../vil_cli_sdk", optional = true }
-vil_cli_pipeline = { version = "0.3", path = "../vil_cli_pipeline", optional = true }
-vil_vwfd = { version = "0.3", path = "../vil_vwfd", optional = true }
+vil_cli_core = { version = "0.4", path = "../vil_cli_core" }
+vil_cli_server = { version = "0.4", path = "../vil_cli_server", optional = true }
+vil_cli_compile = { version = "0.4", path = "../vil_cli_compile", optional = true }
+vil_cli_sdk = { version = "0.4", path = "../vil_cli_sdk", optional = true }
+vil_cli_pipeline = { version = "0.4", path = "../vil_cli_pipeline", optional = true }
+vil_vwfd = { version = "0.4", path = "../vil_vwfd", optional = true }
 
 # Existing deps (kept for main.rs dispatch + shared)
-vil_rt = { version = "0.3", path = "../vil_rt" }
-vil_shm = { version = "0.3", path = "../vil_shm" }
-vil_registry = { version = "0.3", path = "../vil_registry" }
-vil_types = { version = "0.3", path = "../vil_types" }
-vil_net = { version = "0.3", path = "../vil_net" }
-vil_sdk = { version = "0.3", path = "../vil_sdk" }
-vil_obs = { version = "0.3", path = "../vil_obs" }
-vil_viz = { version = "0.3", path = "../vil_viz" }
+vil_rt = { version = "0.4", path = "../vil_rt" }
+vil_shm = { version = "0.4", path = "../vil_shm" }
+vil_registry = { version = "0.4", path = "../vil_registry" }
+vil_types = { version = "0.4", path = "../vil_types" }
+vil_net = { version = "0.4", path = "../vil_net" }
+vil_sdk = { version = "0.4", path = "../vil_sdk" }
+vil_obs = { version = "0.4", path = "../vil_obs" }
+vil_viz = { version = "0.4", path = "../vil_viz" }
 
 clap = { version = "4.4", features = ["derive"] }
 tiny_http = "0.12"

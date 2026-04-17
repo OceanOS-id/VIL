@@ -77,7 +77,7 @@ const CORE_BANKING_NDJSON: &str = "http://localhost:18081/api/v1/credits/ndjson?
 /// Configure the regulatory data submission gateway endpoint.
 fn configure_sink() -> HttpSinkBuilder {
     HttpSinkBuilder::new("RegulatorySink")
-        .port(WEBHOOK_PORT)
+        .env_port(WEBHOOK_PORT)
         .path(WEBHOOK_PATH)
         .out_port("trigger_out")
         .in_port("response_data_in")

@@ -167,7 +167,7 @@ struct RagResponse {
 // hallucination by constraining the LLM to only use provided context.
 
 /// POST /api/rag — semantic search with LLM-generated answer
-async fn rag_handler(ctx: ServiceCtx, body: ShmSlice) -> HandlerResult<VilResponse<RagResponse>> {
+async fn rag_handler(_ctx: ServiceCtx, body: ShmSlice) -> HandlerResult<VilResponse<RagResponse>> {
     let req: RagRequest = body.json().expect("invalid JSON body");
     // Step 1: Embed query and compute similarities
     let query_emb = mock_embed_query(&req.prompt);

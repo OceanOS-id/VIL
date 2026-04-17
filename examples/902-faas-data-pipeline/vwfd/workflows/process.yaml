@@ -24,13 +24,17 @@ spec:
           source: { language: vil-expr, source: 'mean(trigger_payload.body.scores)' }
         - target: scores_stdev
           source: { language: vil-expr, source: 'stdev(trigger_payload.body.scores)' }
+        - target: xml_result
+          source: { language: vil-expr, source: 'parse_xml(trigger_payload.body.xml_data)' }
+        - target: reshaped
+          source: { language: vil-expr, source: 'reshape(trigger_payload.body.data, trigger_payload.body.shape)' }
       output_variable: result
 
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: vil-expr, source: 'result' }
+        final_response: { language: spv1, source: '$.result' }
     - id: end
       activity_type: End
   flows:

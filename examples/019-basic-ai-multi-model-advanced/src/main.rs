@@ -55,7 +55,7 @@ struct TriageStats {
 
 struct TriageState {
     router: LlmRouter,
-    primary_name: String,
+    _primary_name: String,
     total: AtomicU64,
     primary_count: AtomicU64,
     fallback_count: AtomicU64,
@@ -155,7 +155,7 @@ async fn main() {
 
     let state = Arc::new(TriageState {
         router,
-        primary_name: "gpt-4".into(),
+        _primary_name: "gpt-4".into(),
         total: AtomicU64::new(0),
         primary_count: AtomicU64::new(0),
         fallback_count: AtomicU64::new(0),

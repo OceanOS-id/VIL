@@ -25,10 +25,10 @@ spec:
             language: vil-expr
             source: |
               {
-                "subject": trigger_payload.subject,
-                "from": trigger_payload.from,
-                "body_snippet": trigger_payload.body_snippet,
-                "received_at": trigger_payload.timestamp
+                "subject": trigger_payload.body.subject,
+                "from": trigger_payload.body.from,
+                "body_snippet": trigger_payload.body.body_snippet,
+                "received_at": trigger_payload.body.timestamp
               }
       output_variable: email_entry
 
@@ -41,7 +41,7 @@ spec:
         - target: entity
           source: { language: literal, source: email_inbox }
         - target: data
-          source: { language: vil-expr, source: email_entry }
+          source: { language: spv1, source: '$.email_entry' }
       output_variable: insert_result
 
     - id: end

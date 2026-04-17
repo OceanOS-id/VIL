@@ -30,8 +30,8 @@ spec:
       input_mappings:
         - target: query
           source:
-            language: vil-expr
-            source: trigger_payload.query
+            language: spv1
+            source: '$.trigger_payload.body.query'
         - target: top_k
           source:
             language: literal
@@ -45,9 +45,9 @@ spec:
         connector_ref: vastar.http
         operation: post
         streaming: true
-        format: sse
         dialect: openai
         json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
       input_mappings:
         - target: url
           source:
@@ -61,7 +61,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "Answer the question using ONLY the provided context. Do not include personal information like emails, phone numbers, or ID numbers in your response."},
-                  {"role": "user", "content": "Context:\n" + rag_context.context_text + "\n\nQuestion: " + trigger_payload.query}
+                  {"role": "user", "content": "Context:\n" + rag_context.context_text + "\n\nQuestion: " + trigger_payload.body.query}
                 ],
                 "stream": true
               }
@@ -69,15 +69,13 @@ spec:
 
     # Step 3: PII check — regex scan for email, phone, NIK
     - id: pii-check
-      activity_type: Function
-      wasm_config:
-        module_ref: guardrail_pii_detector
-        description: "Scan LLM output for PII using regex patterns: email ([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+), phone (\\d{10,13} with optional +/- separators), NIK (16-digit Indonesian ID number). Returns {has_pii: bool, pii_types: [], redacted_text: string} where detected PII is replaced with [REDACTED]."
+      activity_type: Sidecar
+      sidecar_config: { target: guardrail_pii_detector, command: "python3 -u examples/305-rag-guardrail-pipeline/vwfd/sidecar/python/guardrail_pii_detector.py", method: execute }
       input_mappings:
         - target: text
           source:
-            language: vil-expr
-            source: llm_answer
+            language: spv1
+            source: '$.llm_answer'
       output_variable: pii_result
 
     # Step 4: Hallucination detection — 5 markers
@@ -89,12 +87,12 @@ spec:
       input_mappings:
         - target: answer_text
           source:
-            language: vil-expr
-            source: pii_result.redacted_text
+            language: spv1
+            source: '$.pii_result.redacted_text'
         - target: context_chunks
           source:
-            language: vil-expr
-            source: rag_context.chunks
+            language: spv1
+            source: '$.rag_context.results'
       output_variable: hallucination_result
 
     # Step 5: Final status determination
@@ -123,15 +121,13 @@ spec:
           language: vil-expr
           source: |
             {
-              "answer": guardrail_output.status == "BLOCKED" ? "[Response blocked due to hallucination risk]" : guardrail_output.safe_answer,
-              "status": guardrail_output.status,
-              "confidence": guardrail_output.confidence,
-              "guardrails": {
-                "pii": pii_result.pii_types,
-                "hallucination_score": hallucination_result.score,
-                "hallucination_markers": hallucination_result.markers_found
-              },
-              "query": trigger_payload.query
+              "content": guardrail_output.status == "BLOCKED" ? "[Response blocked due to hallucination risk]" : guardrail_output.safe_answer,
+              "guardrail_status": guardrail_output.status,
+              "confidence_score": guardrail_output.confidence,
+              "pii_detections": pii_result.detections,
+              "hallucination_markers": hallucination_result.markers_found,
+              "hallucination_score": hallucination_result.score,
+              "disclaimer": "This information is AI-generated and should not be used as a substitute for professional medical advice."
             }
 
     - id: end

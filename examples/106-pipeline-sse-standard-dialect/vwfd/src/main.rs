@@ -1,13 +1,11 @@
-// 106-pipeline-sse-standard-dialect — VWFD mode
-use serde_json::{json, Value};
+// 106 — SSE Standard Dialect (W3C) (VWFD)
+// Business logic identical to standard:
+//   - Upstream: SSE from credit-sim :18081 /credits/stream
+//   - Dialect: W3C Standard (not OpenAI), done_marker: [END]
+//   - Streaming response back to client
 
 #[tokio::main]
 async fn main() {
     vil_vwfd::app("examples/106-pipeline-sse-standard-dialect/vwfd/workflows", 3208)
-        .native("sse_standard_stream", |input| {
-            // 106-pipeline-sse-standard-dialect: sse_standard_stream
-            Ok(serde_json::json!({"_handler": "sse_standard_stream", "input_keys": input.as_object().map(|o| o.keys().collect::<Vec<_>>())}))
-        })
-        .run()
-        .await;
+        .run().await;
 }

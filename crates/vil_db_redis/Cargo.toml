@@ -10,8 +10,8 @@ readme = "README.md"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-vil_server_db = { version = "0.3", path = "../vil_server_db" }
-vil_server_core = { version = "0.3", path = "../vil_server_core" }
+vil_server_db = { version = "0.4", path = "../vil_server_db" }
+vil_server_core = { version = "0.4", path = "../vil_server_core" }
 
 tokio = { version = "1", features = ["full"] }
 redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }

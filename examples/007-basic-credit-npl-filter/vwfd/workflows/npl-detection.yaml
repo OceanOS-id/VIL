@@ -1,63 +1,52 @@
 version: "3.0"
 metadata:
   id: npl-detection
-  name: "Non-Performing Loan Detection (VWFD)"
+  name: "Non-Performing Loan Filter — NDJSON Stream (kolektabilitas >= 3)"
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config:
         trigger_type: webhook
-        webhook_config: { path: /api/credit/check }
+        webhook_config: { path: /filter-npl, method: POST }
         response_mode: buffered
         end_activity: respond
       output_variable: trigger_payload
-    - id: fetch_data
+
+    - id: fetch_credits
       activity_type: Connector
       connector_config:
-        connector_ref: vastar.db.postgres
-        operation: raw_query
+        connector_ref: vastar.http
+        operation: get
+        streaming: true
+        format: ndjson
+        timeout_ms: 30000
       input_mappings:
-        - target: sql
-          source:
-            language: vil_query
-            source: |
-              select("credit_accounts")
-                .columns("*")
-                .where_eq("customer_id", trigger_payload.customer_id)
-      output_variable: credit_data
-    - id: score_risk
-      activity_type: Rule
-      rule_config:
-        rule_set_id: npl_scoring_v1
-      output_variable: risk_result
-    - id: gateway
-      activity_type: ExclusiveGateway
-    - id: flag_npl
-      activity_type: Sidecar
-      sidecar_config: { target: flag_npl_account, method: execute }
-      output_variable: flag_result
-    - id: pass_clean
-      activity_type: Transform
+        - target: url
+          source: { language: literal, source: "http://127.0.0.1:18081/api/v1/credits/ndjson?count=1000&dirty_ratio=30" }
+      output_variable: credit_records
+
+    - id: filter_npl
+      activity_type: NativeCode
+      code_config: { handler_ref: filter_npl_records }
       input_mappings:
-        - target: status
-          source: { language: literal, source: "clean" }
-      output_variable: clean_result
+        - target: records
+          source: { language: spv1, source: '$.credit_records' }
+      output_variable: npl_records
+
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: '{"customer_id": trigger_payload.customer_id, "risk": risk_result, "action": _last_output}'
+          language: spv1
+          source: '$.npl_records'
+
     - id: end
       activity_type: End
+
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: fetch_data } }
-    - { id: f2, from: { node: fetch_data }, to: { node: score_risk } }
-    - { id: f3, from: { node: score_risk }, to: { node: gateway } }
-    - { id: f4, from: { node: gateway }, to: { node: flag_npl }, condition: "risk_result.risk_level == \"high\"", priority: 1 }
-    - { id: f5, from: { node: gateway }, to: { node: pass_clean }, priority: 0 }
-    - { id: f6, from: { node: flag_npl }, to: { node: respond } }
-    - { id: f7, from: { node: pass_clean }, to: { node: respond } }
-    - { id: f8, from: { node: respond }, to: { node: end } }
+    - { id: f1, from: { node: trigger }, to: { node: fetch_credits } }
+    - { id: f2, from: { node: fetch_credits }, to: { node: filter_npl } }
+    - { id: f3, from: { node: filter_npl }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }

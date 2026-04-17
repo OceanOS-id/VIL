@@ -1,29 +1,36 @@
 version: "3.0"
 metadata:
   id: vilapp-pipeline-bench
-  name: "VilApp Multi-Pipeline Benchmark"
-  description: "POST /trigger — same as 101b but VilApp pattern, observer toggle"
-
+  name: "VilApp Multi-Pipeline Benchmark (VWFD)"
+  description: "SSE collect from AI sim → buffered response (same as standard 101c)"
 spec:
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config:
         trigger_type: webhook
-        webhook_config: { path: /trigger }
+        webhook_config: { path: /trigger, method: POST }
         response_mode: buffered
         end_activity: respond
       output_variable: trigger_payload
 
-    - id: process
-      activity_type: NativeCode
-      code_config:
-        handler_ref: vilapp_pipeline_benchmark
-        description: "POST /trigger — same as 101b but VilApp pattern, observer toggle"
+    - id: call_llm
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
       input_mappings:
-        - target: input
-          source: { language: vil-expr, source: trigger_payload }
-      output_variable: result
+        - target: url
+          source: { language: literal, source: "http://127.0.0.1:4545/v1/chat/completions" }
+        - target: body
+          source:
+            language: literal
+            source: '{"model":"gpt-4","messages":[{"role":"user","content":"benchmark multi-pipeline"}],"stream":true}'
+      output_variable: llm_result
 
     - id: respond
       activity_type: EndTrigger
@@ -31,16 +38,12 @@ spec:
         trigger_ref: trigger
         final_response:
           language: vil-expr
-          source: result
+          source: '{"content": llm_result.content}'
 
     - id: end
       activity_type: End
 
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: process } }
-    - { id: f2, from: { node: process }, to: { node: respond } }
+    - { id: f1, from: { node: trigger }, to: { node: call_llm } }
+    - { id: f2, from: { node: call_llm }, to: { node: respond } }
     - { id: f3, from: { node: respond }, to: { node: end } }
-
-  variables:
-    - { name: trigger_payload, type: object }
-    - { name: result, type: object }

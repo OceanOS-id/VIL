@@ -32,14 +32,17 @@ spec:
         - target: phone_masked
           source: { language: vil-expr, source: 'mask_pii(trigger_payload.body.phone, "phone")' }
         - target: name
-          source: { language: vil-expr, source: 'trigger_payload.body.name' }
+          source: { language: spv1, source: '$.trigger_payload.body.name' }
+        # status — approved if both phone and email valid
+        - target: status
+          source: { language: vil-expr, source: 'parse_phone(trigger_payload.body.phone, "ID").valid && validate_email(trigger_payload.body.email).valid ? "approved" : "needs_review"' }
       output_variable: result
 
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: vil-expr, source: 'result' }
+        final_response: { language: spv1, source: '$.result' }
 
     - id: end
       activity_type: End

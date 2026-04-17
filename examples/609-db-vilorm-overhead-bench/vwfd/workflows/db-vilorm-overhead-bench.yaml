@@ -32,7 +32,7 @@ spec:
         - target: limit
           source:
             language: vil-expr
-            source: 'trigger_payload.limit != null ? trigger_payload.limit : 100'
+            source: 'trigger_payload.body.limit != null ? trigger_payload.body.limit : 100'
       output_variable: items
 
     - id: respond

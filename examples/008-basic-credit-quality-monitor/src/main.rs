@@ -69,7 +69,7 @@ const CORE_BANKING_NDJSON: &str =
 
 fn configure_sink() -> HttpSinkBuilder {
     HttpSinkBuilder::new("QualityMonitorSink")
-        .port(WEBHOOK_PORT)
+        .env_port(WEBHOOK_PORT)
         .path(WEBHOOK_PATH)
         .out_port("trigger_out")
         .in_port("response_data_in")

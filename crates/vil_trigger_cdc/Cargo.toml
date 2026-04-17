@@ -14,7 +14,7 @@ readme = "README.md"
 vil_log              = { workspace = true }
 tracing = { workspace = true }
 vil_connector_macros = { workspace = true }
-vil_trigger_core = { version = "0.3", path = "../vil_trigger_core" }
+vil_trigger_core = { version = "0.4", path = "../vil_trigger_core" }
 tokio            = { workspace = true }
 tokio-postgres   = { version = "0.7", features = ["with-serde_json-1"] }
 async-trait      = { workspace = true }

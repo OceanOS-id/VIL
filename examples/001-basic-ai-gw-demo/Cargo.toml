@@ -9,6 +9,6 @@ license = "MIT OR Apache-2.0"
 # vil_sdk sudah re-export semua yang diperlukan via prelude::*
 # ─────────────────────────────────────────────────────────────────────────────
 [dependencies]
-vil_sdk  = { version = "0.2" }
-vil_observer = { version = "0.2", features = ["runtime"] }
+vil_sdk = { version = "0.4", path = "../../crates/vil_sdk" }
+vil_observer = { version = "0.4", path = "../../crates/vil_observer", features = ["runtime"] }
 serde_json = "1.0"

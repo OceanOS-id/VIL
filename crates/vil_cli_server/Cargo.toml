@@ -2,14 +2,15 @@
 name = "vil_cli_server"
 version.workspace = true
 edition = "2021"
-license = "MIT OR Apache-2.0"
-description = "VIL CLI Server — init, dev, gen, deploy for VilApp backends"
+license-file = "../../LICENSE-VSAL"
+publish = false
+description = "VIL CLI Server — init, dev, gen, deploy for VilApp backends. Source-available under VSAL — see LICENSE-VSAL. Not published to crates.io."
 repository = "https://github.com/OceanOS-id/VIL"
 homepage = "https://vastar.id/products/vil"
 documentation = "https://vastar.id/docs/vil"
 
 [dependencies]
-vil_cli_core = { version = "0.3", path = "../vil_cli_core" }
+vil_cli_core = { version = "0.4", path = "../vil_cli_core" }
 clap = { version = "4.4", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

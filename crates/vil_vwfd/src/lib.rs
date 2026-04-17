@@ -20,6 +20,8 @@ pub mod mcp;
 pub mod registry;
 pub mod provision;
 pub mod provision_admin;
+pub mod plugin_loader;
+pub mod handler_provision;
 pub mod app;
 
 pub use compiler::compile;

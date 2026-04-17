@@ -2,8 +2,9 @@
 name = "vil_vwfd_macros"
 version.workspace = true
 edition = "2021"
-description = "VIL VWFD Macro — declarative workflow definition in Rust"
-license = "MIT OR Apache-2.0"
+description = "VIL VWFD Macro — declarative workflow definition in Rust. Source-available under VSAL — see LICENSE-VSAL. Not published to crates.io."
+license-file = "../../LICENSE-VSAL"
+publish = false
 
 [lib]
 proc-macro = true

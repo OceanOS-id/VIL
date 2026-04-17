@@ -29,12 +29,12 @@ spec:
       input_mappings:
         - target: collection
           source:
-            language: vil-expr
-            source: trigger_payload.collection
+            language: spv1
+            source: '$.trigger_payload.body.collection'
         - target: document
           source:
-            language: vil-expr
-            source: trigger_payload.document
+            language: spv1
+            source: '$.trigger_payload.body.document'
       output_variable: insert_result
 
     - id: respond
@@ -46,7 +46,7 @@ spec:
           source: |
             {
               "status": "inserted",
-              "collection": trigger_payload.collection,
+              "collection": trigger_payload.body.collection,
               "inserted_id": insert_result.inserted_id,
               "acknowledged": insert_result.acknowledged
             }

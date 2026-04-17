@@ -1,85 +1,52 @@
 version: "3.0"
 metadata:
   id: slik-reporting
-  name: "OJK SLIK Regulatory Reporting (VWFD)"
+  name: "OJK SLIK v2.1 Regulatory Mapping — NDJSON Stream"
 spec:
-  durability:
-    enabled: true
-    default_mode: immediate
   activities:
     - id: trigger
       activity_type: Trigger
       trigger_config:
         trigger_type: webhook
-        webhook_config: { path: /api/slik/report }
+        webhook_config: { path: /regulatory-stream, method: POST }
         response_mode: buffered
         end_activity: respond
       output_variable: trigger_payload
-    - id: error_boundary
-      activity_type: ErrorBoundary
-    - id: fetch_debtor
-      activity_type: Connector
-      connector_config:
-        connector_ref: vastar.db.postgres
-        operation: raw_query
-        timeout_ms: 10000
-      input_mappings:
-        - target: sql
-          source:
-            language: vil_query
-            source: |
-              select("debtors")
-                .columns("*")
-                .where_eq("nik", trigger_payload.nik)
-      output_variable: debtor_data
-      durability: immediate
-    - id: validate_slik
-      activity_type: Rule
-      rule_config: { rule_set_id: slik_validation_v1 }
-      output_variable: validation_result
-    - id: format_report
-      activity_type: Function
-      wasm_config: { module_ref: format_slik_report }
-      output_variable: report
-    - id: submit_ojk
+
+    - id: fetch_credits
       activity_type: Connector
       connector_config:
         connector_ref: vastar.http
-        operation: post
+        operation: get
+        streaming: true
+        format: ndjson
         timeout_ms: 30000
-        retry_policy: { max_attempts: 3, base_delay_ms: 2000 }
       input_mappings:
         - target: url
-          source: { language: literal, source: "https://slik-api.ojk.go.id/v1/submit" }
-        - target: body
-          source: { language: vil-expr, source: 'report' }
-      output_variable: submit_result
-      compensation:
-        connector_ref: vastar.http
-        operation: post
-        input_mappings:
-          - target: url
-            source: { language: literal, source: "https://slik-api.ojk.go.id/v1/rollback" }
-    - id: error_handler
+          source: { language: literal, source: "http://127.0.0.1:18081/api/v1/credits/ndjson?count=1000" }
+      output_variable: credit_records
+
+    - id: map_slik
       activity_type: NativeCode
-      code_config: { handler_ref: handle_slik_error }
-      output_variable: error_response
+      code_config: { handler_ref: map_to_slik_v21 }
+      input_mappings:
+        - target: records
+          source: { language: spv1, source: '$.credit_records' }
+      output_variable: slik_records
+
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: '{"status": "submitted", "result": submit_result}'
+          language: spv1
+          source: '$.slik_records'
+
     - id: end
       activity_type: End
+
   flows:
-    - { id: f1, from: { node: trigger }, to: { node: error_boundary } }
-    - { id: f2, from: { node: error_boundary }, to: { node: fetch_debtor } }
-    - { id: f3, from: { node: fetch_debtor }, to: { node: validate_slik } }
-    - { id: f4, from: { node: validate_slik }, to: { node: format_report } }
-    - { id: f5, from: { node: format_report }, to: { node: submit_ojk } }
-    - { id: f6, from: { node: submit_ojk }, to: { node: respond } }
-    - { id: f7, from: { node: error_boundary }, to: { node: error_handler }, condition: "_error" }
-    - { id: f8, from: { node: error_handler }, to: { node: respond } }
-    - { id: f9, from: { node: respond }, to: { node: end } }
+    - { id: f1, from: { node: trigger }, to: { node: fetch_credits } }
+    - { id: f2, from: { node: fetch_credits }, to: { node: map_slik } }
+    - { id: f3, from: { node: map_slik }, to: { node: respond } }
+    - { id: f4, from: { node: respond }, to: { node: end } }

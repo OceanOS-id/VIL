@@ -1,0 +1,32 @@
+version: "3.0"
+metadata: { id: ai-workflow, name: "POST /ai — AI SSE proxy" }
+spec:
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config: { trigger_type: webhook, webhook_config: { path: /ai, method: POST }, response_mode: buffered, end_activity: respond }
+      output_variable: trigger_payload
+    - id: call_llm
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        dialect: openai
+        json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
+      input_mappings:
+        - target: url
+          source: { language: literal, source: "http://127.0.0.1:4545/v1/chat/completions" }
+        - target: body
+          source: { language: literal, source: '{"model":"gpt-4","messages":[{"role":"user","content":"multi-workflow AI bench"}],"stream":true}' }
+      output_variable: llm_result
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: '{"content": llm_result.content}' } }
+    - id: end
+      activity_type: End
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: call_llm } }
+    - { id: f2, from: { node: call_llm }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

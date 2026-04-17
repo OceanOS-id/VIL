@@ -8,6 +8,9 @@ pub enum Token {
     Str(String),
     True, False, Null,
     In,                     // keyword `in`
+    // vdicl keywords
+    And, Or, Not,           // AND, OR, NOT (aliases for &&, ||, !)
+    Is,                     // IS (for IS NULL, IS NOT NULL)
 
     // Operators
     Plus, Minus, Star, Slash, Percent,
@@ -64,7 +67,7 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
             continue;
         }
 
-        // Number
+        // Number (with optional decimal suffix `m` for monetary/decimal128)
         if b.is_ascii_digit() {
             let start = i;
             while i < len && bytes[i].is_ascii_digit() { i += 1; }
@@ -72,10 +75,18 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
                 i += 1; // skip dot
                 while i < len && bytes[i].is_ascii_digit() { i += 1; }
                 let s: String = input[start..i].into();
+                // Skip trailing `m` suffix (decimal/monetary marker)
+                if i < len && bytes[i] == b'm' { i += 1; }
                 tokens.push(Token::Float(s.parse().map_err(|_| format!("bad float: {}", s))?));
             } else {
                 let s: String = input[start..i].into();
-                tokens.push(Token::Int(s.parse().map_err(|_| format!("bad int: {}", s))?));
+                // Skip trailing `m` suffix — treat as float for monetary values
+                if i < len && bytes[i] == b'm' {
+                    i += 1;
+                    tokens.push(Token::Float(s.parse::<f64>().map_err(|_| format!("bad decimal: {}", s))?));
+                } else {
+                    tokens.push(Token::Int(s.parse().map_err(|_| format!("bad int: {}", s))?));
+                }
             }
             continue;
         }
@@ -88,8 +99,12 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
             tokens.push(match word.as_str() {
                 "true" => Token::True,
                 "false" => Token::False,
-                "null" => Token::Null,
-                "in" => Token::In,
+                "null" | "NULL" => Token::Null,
+                "in" | "IN" => Token::In,
+                "AND" => Token::And,
+                "OR" => Token::Or,
+                "NOT" => Token::Not,
+                "IS" => Token::Is,
                 _ => Token::Ident(word),
             });
             continue;

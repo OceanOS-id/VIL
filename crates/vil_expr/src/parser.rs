@@ -62,7 +62,7 @@ impl Parser {
 
     fn parse_or(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_and()?;
-        while *self.peek() == Token::PipePipe {
+        while matches!(self.peek(), Token::PipePipe | Token::Or) {
             self.advance();
             let right = self.parse_and()?;
             left = Expr::Binary(BinaryOp::Or, Box::new(left), Box::new(right));
@@ -72,7 +72,7 @@ impl Parser {
 
     fn parse_and(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_equality()?;
-        while *self.peek() == Token::AmpAmp {
+        while matches!(self.peek(), Token::AmpAmp | Token::And) {
             self.advance();
             let right = self.parse_equality()?;
             left = Expr::Binary(BinaryOp::And, Box::new(left), Box::new(right));
@@ -108,12 +108,87 @@ impl Parser {
 
     fn parse_membership(&mut self) -> Result<Expr, String> {
         let left = self.parse_additive()?;
-        if *self.peek() == Token::In {
+        match self.peek() {
+            Token::In => {
+                self.advance();
+                let right = self.parse_set_or_additive()?;
+                Ok(Expr::In(Box::new(left), Box::new(right)))
+            }
+            Token::Not => {
+                // NOT IN
+                let saved = self.pos;
+                self.advance();
+                if *self.peek() == Token::In {
+                    self.advance();
+                    let right = self.parse_set_or_additive()?;
+                    Ok(Expr::NotIn(Box::new(left), Box::new(right)))
+                } else {
+                    self.pos = saved; // backtrack
+                    Ok(left)
+                }
+            }
+            Token::Is => {
+                // IS NULL / IS NOT NULL
+                self.advance();
+                if *self.peek() == Token::Not {
+                    self.advance();
+                    // IS NOT NULL
+                    if *self.peek() == Token::Null {
+                        self.advance();
+                        Ok(Expr::IsNotNull(Box::new(left)))
+                    } else {
+                        Err("expected NULL after IS NOT".into())
+                    }
+                } else if *self.peek() == Token::Null {
+                    self.advance();
+                    Ok(Expr::IsNull(Box::new(left)))
+                } else {
+                    Err("expected NULL or NOT NULL after IS".into())
+                }
+            }
+            _ => Ok(left),
+        }
+    }
+
+    /// Parse a set literal {a, b, c}, map {key: value}, or a regular additive expr.
+    fn parse_set_or_additive(&mut self) -> Result<Expr, String> {
+        if *self.peek() == Token::LBrace {
             self.advance();
-            let right = self.parse_additive()?;
-            Ok(Expr::In(Box::new(left), Box::new(right)))
+            // Empty: {}
+            if *self.peek() == Token::RBrace {
+                self.advance();
+                return Ok(Expr::Map(Vec::new()));
+            }
+            // Parse first item to determine: Map {key: value} vs Set {a, b, c}
+            let first = self.parse_ternary()?;
+            if *self.peek() == Token::Colon {
+                // Map: {key: value, ...}
+                self.advance();
+                let val = self.parse_ternary()?;
+                let mut entries = vec![(first, val)];
+                while *self.peek() == Token::Comma {
+                    self.advance();
+                    if *self.peek() == Token::RBrace { break; }
+                    let key = self.parse_ternary()?;
+                    self.expect(&Token::Colon)?;
+                    let val = self.parse_ternary()?;
+                    entries.push((key, val));
+                }
+                self.expect(&Token::RBrace)?;
+                Ok(Expr::Map(entries))
+            } else {
+                // Set: {a, b, c} → List for IN/NOT IN
+                let mut items = vec![first];
+                while *self.peek() == Token::Comma {
+                    self.advance();
+                    if *self.peek() == Token::RBrace { break; }
+                    items.push(self.parse_ternary()?);
+                }
+                self.expect(&Token::RBrace)?;
+                Ok(Expr::List(items))
+            }
         } else {
-            Ok(left)
+            self.parse_additive()
         }
     }
 
@@ -144,7 +219,7 @@ impl Parser {
 
     fn parse_unary(&mut self) -> Result<Expr, String> {
         match self.peek() {
-            Token::Bang => { self.advance(); let e = self.parse_unary()?; Ok(Expr::Unary(UnaryOp::Not, Box::new(e))) }
+            Token::Bang | Token::Not => { self.advance(); let e = self.parse_unary()?; Ok(Expr::Unary(UnaryOp::Not, Box::new(e))) }
             Token::Minus => { self.advance(); let e = self.parse_unary()?; Ok(Expr::Unary(UnaryOp::Neg, Box::new(e))) }
             _ => self.parse_postfix(),
         }
@@ -216,23 +291,39 @@ impl Parser {
                 Ok(Expr::List(items))
             }
 
-            // Map: {key: value, ...}
+            // Map/Set handled by parse_set_or_additive — should not reach here
+            // But keep as fallback for direct parse_primary calls
             Token::LBrace => {
                 self.advance();
-                let mut entries = Vec::new();
-                if *self.peek() != Token::RBrace {
-                    loop {
-                        let key = self.parse_ternary()?;
-                        self.expect(&Token::Colon)?;
-                        let val = self.parse_ternary()?;
-                        entries.push((key, val));
-                        if *self.peek() != Token::Comma { break; }
+                if *self.peek() == Token::RBrace {
+                    self.advance();
+                    return Ok(Expr::Map(Vec::new()));
+                }
+                let first = self.parse_ternary()?;
+                if *self.peek() == Token::Colon {
+                    self.advance();
+                    let val = self.parse_ternary()?;
+                    let mut entries = vec![(first, val)];
+                    while *self.peek() == Token::Comma {
                         self.advance();
                         if *self.peek() == Token::RBrace { break; }
+                        let key = self.parse_ternary()?;
+                        self.expect(&Token::Colon)?;
+                        let v = self.parse_ternary()?;
+                        entries.push((key, v));
                     }
+                    self.expect(&Token::RBrace)?;
+                    Ok(Expr::Map(entries))
+                } else {
+                    let mut items = vec![first];
+                    while *self.peek() == Token::Comma {
+                        self.advance();
+                        if *self.peek() == Token::RBrace { break; }
+                        items.push(self.parse_ternary()?);
+                    }
+                    self.expect(&Token::RBrace)?;
+                    Ok(Expr::List(items))
                 }
-                self.expect(&Token::RBrace)?;
-                Ok(Expr::Map(entries))
             }
 
             // Ident → variable, or function call: name(args)

@@ -32,7 +32,7 @@ spec:
               {
                 "messages": [
                   {"role": "system", "content": "You are a research agent. You have two tools:\n\n1. <tool>fetch_products:SEARCH_QUERY</tool> — HTTP GET to search products, returns JSON array\n2. <tool>calculator:EXPRESSION</tool> — evaluate math expression\n\nUse tools to research the user's query. When you have enough info, respond with DONE: followed by your final answer."},
-                  {"role": "user", "content": trigger_payload.query}
+                  {"role": "user", "content": trigger_payload.body.query}
                 ],
                 "iterations": 0,
                 "done": false
@@ -86,8 +86,8 @@ spec:
       input_mappings:
         - target: llm_output
           source:
-            language: vil-expr
-            source: llm_output
+            language: spv1
+            source: '$.llm_output'
         - target: api_base
           source:
             language: literal
@@ -140,8 +140,8 @@ spec:
           language: vil-expr
           source: |
             {
-              "query": trigger_payload.query,
               "answer": agent_state.final_answer,
+              "tools_used": ["fetch_products", "calculator"],
               "iterations": agent_state.iterations
             }
 

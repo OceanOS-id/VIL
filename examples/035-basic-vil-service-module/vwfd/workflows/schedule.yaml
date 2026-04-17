@@ -4,18 +4,18 @@ spec:
   activities:
     - id: trigger
       activity_type: Trigger
-      trigger_config: { trigger_type: webhook, webhook_config: { path: /api/hospital-appointment-system/appointments/schedule, method: POST }, response_mode: buffered, end_activity: respond }
+      trigger_config: { trigger_type: webhook, webhook_config: { path: /appointments/schedule, method: POST }, response_mode: buffered, end_activity: respond }
       output_variable: trigger_payload
     - id: handler
-      activity_type: Sidecar
-      sidecar_config: { target: scheduler, method: execute }
+      activity_type: NativeCode
+      code_config: { handler_ref: schedule_appointment }
       input_mappings:
         - target: body
-          source: { language: vil-expr, source: 'trigger_payload.body' }
+          source: { language: spv1, source: '$.trigger_payload.body' }
       output_variable: result
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: 'result' } }
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: spv1, source: '$.result' } }
     - id: end
       activity_type: End
   flows:

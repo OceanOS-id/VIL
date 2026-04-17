@@ -35,6 +35,7 @@ pub struct ActivityDef {
     pub trigger_ref: Option<String>,
 }
 
+#[allow(dead_code)]
 pub enum ActivityKind {
     Connector,
     EndTrigger,
@@ -48,6 +49,7 @@ pub struct MappingDef {
     pub source: String,
 }
 
+#[allow(dead_code)]
 pub struct CompensationDef {
     pub connector_ref: String,
     pub operation: String,

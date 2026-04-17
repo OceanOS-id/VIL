@@ -220,9 +220,8 @@ impl WorkflowRegistry {
             if let Some((graph, entry, _)) = slot.versions.get(&slot.active_revision) {
                 if !entry.active { continue; }
                 if let Some(ref path) = slot.webhook_path {
-                    let route_key = ns_key(&entry.tenant, path);
                     let method = graph.webhook_method.clone();
-                    router.register(method, route_key, graph.clone());
+                    router.register(method, path.clone(), graph.clone());
                 }
             }
         }
@@ -301,6 +300,15 @@ impl WorkflowRegistry {
 
     pub fn count(&self) -> usize {
         self.slots.read().unwrap().len()
+    }
+
+    /// Get a compiled VilwGraph for a specific workflow version.
+    pub fn get_graph(&self, tenant: &str, workflow_id: &str, revision: u32) -> Option<Arc<crate::graph::VilwGraph>> {
+        let key = ns_key(tenant, workflow_id);
+        let slots = self.slots.read().unwrap();
+        let slot = slots.get(&key)?;
+        let (graph, _, _) = slot.versions.get(&revision)?;
+        Some(graph.clone())
     }
 }
 

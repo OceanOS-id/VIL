@@ -6,8 +6,8 @@ version.workspace = true
 publish = false
 
 [dependencies]
-vil_server   = { version = "0.2" }
-vil_observer = { version = "0.2" }
+vil_server = { version = "0.4", path = "../../crates/vil_server" }
+vil_observer = { version = "0.4", path = "../../crates/vil_observer" }
 vil_log      = { workspace = true }
 tokio        = { workspace = true }
 serde        = { workspace = true }

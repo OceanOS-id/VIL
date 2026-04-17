@@ -7,6 +7,13 @@ use std::collections::HashMap;
 use vil_server_core::axum::{self, extract::{Extension, Query}, response::IntoResponse, http::StatusCode, Json};
 use crate::provision::WorkflowRegistry;
 use crate::handler::WorkflowRouter;
+use crate::plugin_loader::PluginRegistry;
+use crate::app::SidecarPool;
+
+#[cfg(feature = "wasm")]
+type WasmReg = Arc<std::sync::RwLock<HashMap<String, Arc<crate::app::WasmWorkerPool>>>>;
+#[cfg(not(feature = "wasm"))]
+type WasmReg = Arc<std::sync::RwLock<HashMap<String, ()>>>;
 
 fn check_auth(headers: &axum::http::HeaderMap, admin_key: &Option<String>) -> bool {
     match admin_key {
@@ -25,11 +32,14 @@ fn extract_tenant(headers: &axum::http::HeaderMap) -> String {
         .to_string()
 }
 
-/// POST /api/admin/upload
+/// POST /api/admin/upload — Upload YAML workflow + auto-provision handlers
 pub async fn upload_workflow(
     Extension(reg): Extension<Arc<WorkflowRegistry>>,
     Extension(router): Extension<Arc<WorkflowRouter>>,
     Extension(admin_key): Extension<Arc<Option<String>>>,
+    Extension(plugin_reg): Extension<Arc<PluginRegistry>>,
+    #[allow(unused)] Extension(wasm_reg): Extension<WasmReg>,
+    Extension(sidecar_pool): Extension<Arc<std::sync::RwLock<SidecarPool>>>,
     headers: axum::http::HeaderMap,
     body: axum::body::Bytes,
 ) -> impl IntoResponse {
@@ -41,6 +51,20 @@ pub async fn upload_workflow(
 
     match reg.upload(&tenant, &yaml) {
         Ok(entry) => {
+            // Auto-provision handlers from .so/.wasm/sidecar
+            if let Some(graph) = reg.get_graph(&tenant, &entry.id, entry.revision) {
+                let provision_result = crate::handler_provision::provision_handlers(
+                    &graph,
+                    &plugin_reg,
+                    #[cfg(feature = "wasm")]
+                    &wasm_reg,
+                    &sidecar_pool,
+                );
+                if !provision_result.provisioned.is_empty() {
+                    tracing::info!("Auto-provisioned for '{}': {:?}", entry.id, provision_result.provisioned);
+                }
+            }
+
             // Auto-activate first version
             if entry.revision == 1 {
                 let _ = reg.activate(&tenant, &entry.id, 1);
@@ -50,6 +74,136 @@ pub async fn upload_workflow(
         }
         Err(e) => (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": e}))),
     }
+}
+
+/// POST /api/admin/upload/plugin — Upload .so plugin binary
+pub async fn upload_plugin(
+    Extension(admin_key): Extension<Arc<Option<String>>>,
+    Extension(plugin_reg): Extension<Arc<PluginRegistry>>,
+    headers: axum::http::HeaderMap,
+    body: axum::body::Bytes,
+) -> impl IntoResponse {
+    if !check_auth(&headers, &admin_key) {
+        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "unauthorized"})));
+    }
+
+    let handler_ref = headers.get("x-handler-ref")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+    if handler_ref.is_empty() {
+        return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "X-Handler-Ref header required"})));
+    }
+
+    // Save to plugin dir — write to temp file first, then atomic rename
+    // to avoid corrupting a currently-dlopen'd .so (causes SEGFAULT).
+    let plugin_dir = std::env::var("VIL_PLUGIN_DIR")
+        .unwrap_or_else(|_| "/var/lib/vil/plugins".to_string());
+    let _ = std::fs::create_dir_all(&plugin_dir);
+    let so_path = std::path::Path::new(&plugin_dir).join(format!("{}.so", handler_ref));
+    let tmp_path = std::path::Path::new(&plugin_dir).join(format!(".{}.so.tmp", handler_ref));
+    if let Err(e) = std::fs::write(&tmp_path, &body) {
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": format!("write: {}", e)})));
+    }
+    if let Err(e) = std::fs::rename(&tmp_path, &so_path) {
+        let _ = std::fs::remove_file(&tmp_path);
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": format!("rename: {}", e)})));
+    }
+
+    // Load via dlopen (safe: atomic rename preserves old inode for existing dlopen)
+    match plugin_reg.load(&so_path) {
+        Ok(name) => (StatusCode::OK, Json(serde_json::json!({
+            "handler": name,
+            "path": so_path.display().to_string(),
+            "size_bytes": body.len(),
+        }))),
+        Err(e) => {
+            let _ = std::fs::remove_file(&so_path);
+            (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": e})))
+        }
+    }
+}
+
+/// POST /api/admin/upload/wasm — Upload .wasm module binary
+pub async fn upload_wasm(
+    Extension(admin_key): Extension<Arc<Option<String>>>,
+    #[allow(unused)] Extension(wasm_reg): Extension<WasmReg>,
+    headers: axum::http::HeaderMap,
+    body: axum::body::Bytes,
+) -> impl IntoResponse {
+    if !check_auth(&headers, &admin_key) {
+        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "unauthorized"})));
+    }
+
+    let module_ref = headers.get("x-module-ref")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+    if module_ref.is_empty() {
+        return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "X-Module-Ref header required"})));
+    }
+
+    // Save to wasm dir — atomic write to avoid corrupting loaded modules
+    let wasm_dir = std::env::var("VIL_WASM_DIR")
+        .unwrap_or_else(|_| "/var/lib/vil/modules".to_string());
+    let _ = std::fs::create_dir_all(&wasm_dir);
+    let wasm_path = std::path::Path::new(&wasm_dir).join(format!("{}.wasm", module_ref));
+    let tmp_path = std::path::Path::new(&wasm_dir).join(format!(".{}.wasm.tmp", module_ref));
+    if let Err(e) = std::fs::write(&tmp_path, &body) {
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": format!("write: {}", e)})));
+    }
+    if let Err(e) = std::fs::rename(&tmp_path, &wasm_path) {
+        let _ = std::fs::remove_file(&tmp_path);
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": format!("rename: {}", e)})));
+    }
+
+    // Register via wasmtime
+    #[cfg(feature = "wasm")]
+    {
+        match crate::handler_provision::register_wasm_from_file(&wasm_reg, &wasm_path, &module_ref) {
+            Ok(()) => return (StatusCode::OK, Json(serde_json::json!({
+                "module": module_ref,
+                "path": wasm_path.display().to_string(),
+                "size_bytes": body.len(),
+            }))),
+            Err(e) => {
+                let _ = std::fs::remove_file(&wasm_path);
+                return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": e})));
+            }
+        }
+    }
+
+    #[cfg(not(feature = "wasm"))]
+    {
+        let _ = std::fs::remove_file(&wasm_path);
+        (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "WASM feature not enabled"})))
+    }
+}
+
+/// GET /api/admin/handlers — List all registered handlers
+pub async fn list_handlers(
+    Extension(plugin_reg): Extension<Arc<PluginRegistry>>,
+    #[allow(unused)] Extension(wasm_reg): Extension<WasmReg>,
+    Extension(sidecar_pool): Extension<Arc<std::sync::RwLock<SidecarPool>>>,
+) -> impl IntoResponse {
+    let plugins = plugin_reg.names();
+
+    #[cfg(feature = "wasm")]
+    let wasm_modules: Vec<String> = wasm_reg.read().unwrap().keys().cloned().collect();
+    #[cfg(not(feature = "wasm"))]
+    let wasm_modules: Vec<String> = Vec::new();
+
+    let sidecars: Vec<String> = {
+        let pool = sidecar_pool.read().unwrap();
+        pool.targets()
+    };
+
+    Json(serde_json::json!({
+        "plugins": plugins,
+        "wasm_modules": wasm_modules,
+        "sidecars": sidecars,
+        "total": plugins.len() + wasm_modules.len() + sidecars.len(),
+    }))
 }
 
 /// POST /api/admin/workflow/activate

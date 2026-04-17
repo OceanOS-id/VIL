@@ -34,10 +34,10 @@ spec:
             language: vil-expr
             source: |
               {
-                "_tenant_id": trigger_payload.params.tenant_id,
-                "name": trigger_payload.name,
-                "email": trigger_payload.email,
-                "role": trigger_payload.role,
+                "_tenant_id": trigger_payload.body.params.tenant_id,
+                "name": trigger_payload.body.name,
+                "email": trigger_payload.body.email,
+                "role": trigger_payload.body.role,
                 "created_at": now()
               }
       output_variable: created_user
@@ -51,7 +51,7 @@ spec:
           source: |
             {
               "status": "created",
-              "tenant_id": trigger_payload.params.tenant_id,
+              "tenant_id": trigger_payload.body.params.tenant_id,
               "user": created_user
             }
 

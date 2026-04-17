@@ -8,11 +8,11 @@ spec:
       output_variable: trigger_payload
     - id: process_message
       activity_type: Sidecar
-      sidecar_config: { target: process_chat_message, method: execute }
+      sidecar_config: { target: process_chat_message, command: "node examples/010-basic-websocket-chat/vwfd/sidecar/nodejs/chat_processor.js", method: execute }
       output_variable: response
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: 'response' } }
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: spv1, source: '$.response' } }
     - id: end
       activity_type: End
   flows:

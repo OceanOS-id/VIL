@@ -3,8 +3,7 @@ metadata:
   id: trigger-webhook-receiver
   name: "Webhook Receiver with HMAC Verification"
   description: |
-    HTTP webhook listener with optional HMAC-SHA256 signature verification.
-    Receives order events, logs to SQLite, returns ack.
+    HTTP webhook listener. Receives order events, extracts fields, returns ack.
 
 spec:
   activities:
@@ -26,23 +25,11 @@ spec:
             language: vil-expr
             source: |
               {
-                "order_id": trigger_payload.order_id,
-                "event_type": trigger_payload.event_type,
-                "amount": trigger_payload.amount
+                "id": trigger_payload.body.id,
+                "event": trigger_payload.body.event,
+                "amount": trigger_payload.body.amount
               }
       output_variable: order_event
-
-    - id: log-event
-      activity_type: Connector
-      connector_config:
-        connector_ref: vastar.db.sqlite
-        operation: insert
-      input_mappings:
-        - target: entity
-          source: { language: literal, source: webhook_events }
-        - target: data
-          source: { language: vil-expr, source: order_event }
-      output_variable: insert_result
 
     - id: respond
       activity_type: EndTrigger
@@ -50,18 +37,16 @@ spec:
         trigger_ref: trigger
         final_response:
           language: vil-expr
-          source: '{"status": "ack", "event_id": order_event.order_id}'
+          source: '{"status": "ack", "event_id": order_event.id}'
 
     - id: end
       activity_type: End
 
   flows:
     - { id: f1, from: { node: trigger }, to: { node: extract-order } }
-    - { id: f2, from: { node: extract-order }, to: { node: log-event } }
-    - { id: f3, from: { node: log-event }, to: { node: respond } }
-    - { id: f4, from: { node: respond }, to: { node: end } }
+    - { id: f2, from: { node: extract-order }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
 
   variables:
     - { name: trigger_payload, type: object }
     - { name: order_event, type: object }
-    - { name: insert_result, type: object }

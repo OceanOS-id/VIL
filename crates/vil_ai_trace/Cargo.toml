@@ -18,6 +18,6 @@ serde_json = { workspace = true }
 dashmap = { workspace = true }
 parking_lot = "0.12"
 
-vil_sdk = { version = "0.3", path = "../vil_sdk" }
-vil_server = { version = "0.3", path = "../vil_server" }
+vil_sdk = { version = "0.4", path = "../vil_sdk" }
+vil_server = { version = "0.4", path = "../vil_server" }
 axum = { version = "0.7", features = ["macros"] }

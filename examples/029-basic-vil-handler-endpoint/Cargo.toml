@@ -5,11 +5,11 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-vil_server = { version = "0.2" }
-vil_server_core = { version = "0.2" }
-vil_server_macros = { version = "0.2" }
-vil_sdk = { version = "0.2" }
-vil_json = { version = "0.2" }
+vil_server = { version = "0.4", path = "../../crates/vil_server" }
+vil_server_core = { version = "0.4", path = "../../crates/vil_server_core" }
+vil_server_macros = { version = "0.4", path = "../../crates/vil_server_macros" }
+vil_sdk = { version = "0.4", path = "../../crates/vil_sdk" }
+vil_json = { version = "0.4", path = "../../crates/vil_json" }
 bytes = "1"
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

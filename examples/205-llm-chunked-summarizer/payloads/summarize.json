@@ -1,0 +1,1 @@
+{"text":"Rust is a systems programming language focused on safety and performance. It prevents memory errors at compile time. The borrow checker ensures memory safety without garbage collection.","max_chunk_size":200}

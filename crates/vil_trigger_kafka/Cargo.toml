@@ -11,7 +11,7 @@ documentation.workspace = true
 
 [dependencies]
 vil_trigger_core = { workspace = true }
-vil_mq_kafka = { version = "0.3", path = "../vil_mq_kafka" }
+vil_mq_kafka = { version = "0.4", path = "../vil_mq_kafka" }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 tracing = { workspace = true }

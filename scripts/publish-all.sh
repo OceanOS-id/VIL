@@ -41,7 +41,12 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-SKIP_CRATES="vil_script_js vil_script_lua"
+# Skipped crates:
+#   vil_script_js, vil_script_lua — publish = false (legacy)
+#   VSAL crates (v0.4.0+) — source-available, not published to crates.io:
+#     vil_cli, vil_vwfd, vil_vwfd_macros, vil_cli_server,
+#     vil_workflow_v2, vil_operator, vil-server-provision
+SKIP_CRATES="vil_script_js vil_script_lua vil_cli vil_vwfd vil_vwfd_macros vil_cli_server vil_workflow_v2 vil_operator vil-server-provision"
 WAIT_SECONDS=45
 BATCH_SIZE=5
 BATCH_COOLDOWN=660  # 11 min

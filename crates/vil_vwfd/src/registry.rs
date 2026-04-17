@@ -166,6 +166,66 @@ impl ConnectorPools {
             }
         }
 
+        // ── Remaining DB connectors ──
+
+        #[cfg(feature = "connectors-db")]
+        if let Ok(url) = std::env::var("VIL_CLICKHOUSE_URL") {
+            let mut cfg = vil_db_clickhouse::ClickHouseConfig::default();
+            cfg.url = url;
+            let client = vil_db_clickhouse::ChClient::new(cfg);
+            self.clickhouse_client = Some(Arc::new(client));
+        }
+
+        #[cfg(feature = "connectors-db")]
+        if let Ok(url) = std::env::var("VIL_ELASTIC_URL") {
+            let mut cfg = vil_db_elastic::ElasticConfig::default();
+            cfg.url = url;
+            match vil_db_elastic::ElasticClient::new(cfg) {
+                Ok(client) => self.elastic_client = Some(Arc::new(client)),
+                Err(e) => errors.push(format!("elastic: {}", e)),
+            }
+        }
+
+        #[cfg(feature = "connectors-db")]
+        if let Ok(url) = std::env::var("VIL_TIMESERIES_URL") {
+            let cfg = vil_db_timeseries::TimeseriesConfig::new(
+                &url, "vil", "", "vil_metrics",
+            );
+            match vil_db_timeseries::TimeseriesClient::new(cfg).await {
+                Ok(client) => self.timeseries_client = Some(Arc::new(client)),
+                Err(e) => errors.push(format!("timeseries: {}", e)),
+            }
+        }
+
+        // ── Remaining MQ connectors ──
+
+        #[cfg(feature = "connectors-mq")]
+        if let Ok(url) = std::env::var("VIL_RABBITMQ_URL") {
+            let cfg = vil_mq_rabbitmq::RabbitConfig::new(&url, "vil_exchange", "vil_queue");
+            match vil_mq_rabbitmq::RabbitClient::connect(cfg).await {
+                Ok(client) => self.rabbitmq_client = Some(Arc::new(client)),
+                Err(e) => errors.push(format!("rabbitmq: {}", e)),
+            }
+        }
+
+        #[cfg(feature = "connectors-mq")]
+        if let Ok(url) = std::env::var("VIL_MQTT_URL") {
+            let cfg = vil_mq_mqtt::MqttConfig::new(&url);
+            match vil_mq_mqtt::MqttClient::new(cfg).await {
+                Ok(client) => self.mqtt_client = Some(Arc::new(client)),
+                Err(e) => errors.push(format!("mqtt: {}", e)),
+            }
+        }
+
+        #[cfg(feature = "connectors-mq")]
+        if let Ok(endpoint) = std::env::var("VIL_SQS_ENDPOINT") {
+            let cfg = vil_mq_sqs::SqsConfig::new("us-east-1", &endpoint);
+            match vil_mq_sqs::process::create_client(cfg).await {
+                Ok(client) => self.sqs_client = Some(client),
+                Err(e) => errors.push(format!("sqs: {}", e)),
+            }
+        }
+
         errors
     }
 }
@@ -900,7 +960,7 @@ async fn dispatch_ws(_operation: &str, input: &Value, pools: &ConnectorPools) ->
 async fn dispatch_sftp(operation: &str, input: &Value) -> ConnectorResult {
     let host = input.get("host").and_then(|v| v.as_str()).unwrap_or("localhost");
     let port = input.get("port").and_then(|v| v.as_u64()).unwrap_or(22) as u16;
-    let user = input.get("username").and_then(|v| v.as_str()).unwrap_or("");
+    let _user = input.get("username").and_then(|v| v.as_str()).unwrap_or("");
     let path = input.get("path").and_then(|v| v.as_str()).unwrap_or("/");
 
     match operation {
@@ -955,7 +1015,7 @@ async fn dispatch_codec_protobuf(operation: &str, input: &Value) -> ConnectorRes
     let schema = input.get("schema").and_then(|v| v.as_str()).unwrap_or("");
     match operation {
         "encode" => {
-            let data = input.get("data").cloned().unwrap_or(Value::Null);
+            let _data = input.get("data").cloned().unwrap_or(Value::Null);
             Ok(serde_json::json!({"encoded": true, "schema": schema, "format": "protobuf"}))
         }
         "decode" => {

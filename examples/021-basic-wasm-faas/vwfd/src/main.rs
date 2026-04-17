@@ -7,7 +7,7 @@
 #[tokio::main]
 async fn main() {
     vil_vwfd::app("examples/021-basic-wasm-faas/vwfd/workflows", 3121)
-        .wasm("pricing", "modules/pricing.wasm")
+        .wasm("pricing", "examples/021-basic-wasm-faas/vwfd/wasm/pricing.wasm")
         .run()
         .await;
 }

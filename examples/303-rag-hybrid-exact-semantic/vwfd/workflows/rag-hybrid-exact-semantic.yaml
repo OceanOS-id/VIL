@@ -22,15 +22,13 @@ spec:
 
     # Step 1: Exact match check on FAQ triggers
     - id: exact-match
-      activity_type: Function
-      wasm_config:
-        module_ref: rag_exact_match_check
-        description: "Check user query against a table of FAQ trigger phrases using normalized exact matching (lowercased, trimmed, punctuation-stripped). Returns {matched: bool, answer: string|null, faq_id: string|null}."
+      activity_type: Sidecar
+      sidecar_config: { target: rag_exact_match_check, command: "python3 -u examples/303-rag-hybrid-exact-semantic/vwfd/sidecar/python/rag_hybrid_search.py", method: execute }
       input_mappings:
         - target: query
           source:
-            language: vil-expr
-            source: trigger_payload.query
+            language: spv1
+            source: '$.trigger_payload.body.query'
       output_variable: exact_result
 
     # Gateway: exact hit or semantic fallback
@@ -46,10 +44,10 @@ spec:
           language: vil-expr
           source: |
             {
-              "answer": exact_result.answer,
-              "source": "exact_match",
-              "faq_id": exact_result.faq_id,
-              "query": trigger_payload.query
+              "content": exact_result.answer,
+              "search_tier": "exact",
+              "llm_used": false,
+              "matched_faq": exact_result.faq_id
             }
 
     - id: end-exact
@@ -57,15 +55,13 @@ spec:
 
     # Branch B: No exact match — keyword scoring + LLM augment
     - id: keyword-search
-      activity_type: Function
-      wasm_config:
-        module_ref: rag_keyword_score
-        description: "BM25-style keyword scoring against the knowledge base. Tokenizes query, computes TF-IDF scores, returns top-3 chunks with relevance scores. Used as fallback when exact match fails."
+      activity_type: Sidecar
+      sidecar_config: { target: rag_keyword_score, command: "python3 -u examples/303-rag-hybrid-exact-semantic/vwfd/sidecar/python/rag_hybrid_search.py", method: execute }
       input_mappings:
         - target: query
           source:
-            language: vil-expr
-            source: trigger_payload.query
+            language: spv1
+            source: '$.trigger_payload.body.query'
         - target: top_k
           source:
             language: literal
@@ -79,9 +75,9 @@ spec:
         connector_ref: vastar.http
         operation: post
         streaming: true
-        format: sse
         dialect: openai
         json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
       input_mappings:
         - target: url
           source:
@@ -95,7 +91,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "You are a helpful assistant. Synthesize the provided context into a clear answer. If context is insufficient, say so."},
-                  {"role": "user", "content": "Context:\n" + keyword_results.context_text + "\n\nQuestion: " + trigger_payload.query}
+                  {"role": "user", "content": "Context:\n" + keyword_results.context_text + "\n\nQuestion: " + trigger_payload.body.query}
                 ],
                 "stream": true
               }
@@ -109,10 +105,10 @@ spec:
           language: vil-expr
           source: |
             {
-              "answer": llm_answer,
-              "source": "semantic_fallback",
-              "chunks_used": keyword_results.chunks,
-              "query": trigger_payload.query
+              "content": llm_answer,
+              "search_tier": "semantic+llm",
+              "llm_used": true,
+              "matched_faq": null
             }
 
     - id: end-semantic

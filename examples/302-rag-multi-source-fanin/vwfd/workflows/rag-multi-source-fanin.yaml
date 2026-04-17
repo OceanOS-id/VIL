@@ -22,32 +22,28 @@ spec:
 
     # Step 1: Search both KBs independently
     - id: search-sources
-      activity_type: Function
-      wasm_config:
-        module_ref: rag_multi_source_search
-        description: "Embed query and search two knowledge bases independently: tech_docs (API references, guides) and faq (frequently asked questions). Returns raw results from both sources with scores."
+      activity_type: Sidecar
+      sidecar_config: { target: rag_multi_source_search, command: "python3 -u examples/302-rag-multi-source-fanin/vwfd/sidecar/python/rag_multi_source.py", method: execute }
       input_mappings:
         - target: query
           source:
-            language: vil-expr
-            source: trigger_payload.query
+            language: spv1
+            source: '$.trigger_payload.body.query'
       output_variable: raw_results
 
     # Step 2: Cross-rank and merge top-3
     - id: cross-rank
-      activity_type: Function
-      wasm_config:
-        module_ref: rag_cross_rank_merge
-        description: "Cross-rank results from tech_docs and faq sources using reciprocal rank fusion (RRF). Normalizes scores across collections, deduplicates, and returns the top-3 most relevant chunks with source attribution."
+      activity_type: Sidecar
+      sidecar_config: { target: rag_cross_rank_merge, command: "python3 -u examples/302-rag-multi-source-fanin/vwfd/sidecar/python/rag_multi_source.py", method: execute }
       input_mappings:
         - target: tech_results
           source:
-            language: vil-expr
-            source: raw_results.tech_docs
+            language: spv1
+            source: '$.raw_results.tech_docs'
         - target: faq_results
           source:
-            language: vil-expr
-            source: raw_results.faq
+            language: spv1
+            source: '$.raw_results.faq'
         - target: top_k
           source:
             language: literal
@@ -66,7 +62,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "You are a technical support assistant. Answer using ONLY the provided context from multiple sources. Indicate which source (tech_docs or faq) each part of your answer comes from."},
-                  {"role": "user", "content": "Context:\n[1] (" + merged_top3.chunks[0].source + ") " + merged_top3.chunks[0].text + "\n[2] (" + merged_top3.chunks[1].source + ") " + merged_top3.chunks[1].text + "\n[3] (" + merged_top3.chunks[2].source + ") " + merged_top3.chunks[2].text + "\n\nQuestion: " + trigger_payload.query}
+                  {"role": "user", "content": "Context:\n[1] (" + merged_top3.results[0].source + ") " + merged_top3.results[0].content + "\n[2] (" + merged_top3.results[1].source + ") " + merged_top3.results[1].content + "\n[3] (" + merged_top3.results[2].source + ") " + merged_top3.results[2].content + "\n\nQuestion: " + trigger_payload.body.query}
                 ],
                 "stream": true
               }
@@ -79,9 +75,9 @@ spec:
         connector_ref: vastar.http
         operation: post
         streaming: true
-        format: sse
         dialect: openai
         json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
       input_mappings:
         - target: url
           source:
@@ -89,8 +85,8 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: vil-expr
-            source: rag_prompt
+            language: spv1
+            source: '$.rag_prompt'
       output_variable: llm_answer
 
     # Step 5: Respond
@@ -102,13 +98,9 @@ spec:
           language: vil-expr
           source: |
             {
-              "answer": llm_answer,
-              "sources": merged_top3.chunks,
-              "source_counts": {
-                "tech_docs": merged_top3.tech_count,
-                "faq": merged_top3.faq_count
-              },
-              "query": trigger_payload.query
+              "content": llm_answer,
+              "sources_searched": 2,
+              "results_merged": merged_top3.results
             }
 
     - id: end

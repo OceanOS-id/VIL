@@ -34,16 +34,16 @@ spec:
       input_mappings:
         - target: bucket
           source:
-            language: vil-expr
-            source: trigger_payload.bucket
+            language: spv1
+            source: '$.trigger_payload.body.bucket'
         - target: key
           source:
-            language: vil-expr
-            source: trigger_payload.key
+            language: spv1
+            source: '$.trigger_payload.body.key'
         - target: body
           source:
-            language: vil-expr
-            source: trigger_payload.body
+            language: spv1
+            source: '$.trigger_payload.body'
       output_variable: upload_result
 
     # Branch B: Google Cloud Storage
@@ -55,16 +55,16 @@ spec:
       input_mappings:
         - target: bucket
           source:
-            language: vil-expr
-            source: trigger_payload.bucket
+            language: spv1
+            source: '$.trigger_payload.body.bucket'
         - target: object_name
           source:
-            language: vil-expr
-            source: trigger_payload.key
+            language: spv1
+            source: '$.trigger_payload.body.key'
         - target: body
           source:
-            language: vil-expr
-            source: trigger_payload.body
+            language: spv1
+            source: '$.trigger_payload.body'
       output_variable: upload_result
 
     # Branch C: Azure Blob Storage
@@ -76,16 +76,16 @@ spec:
       input_mappings:
         - target: container
           source:
-            language: vil-expr
-            source: trigger_payload.bucket
+            language: spv1
+            source: '$.trigger_payload.body.bucket'
         - target: blob_name
           source:
-            language: vil-expr
-            source: trigger_payload.key
+            language: spv1
+            source: '$.trigger_payload.body.key'
         - target: body
           source:
-            language: vil-expr
-            source: trigger_payload.body
+            language: spv1
+            source: '$.trigger_payload.body'
       output_variable: upload_result
 
     # Merge point
@@ -101,10 +101,15 @@ spec:
           source: |
             {
               "status": "uploaded",
-              "provider": trigger_payload.provider,
-              "bucket": trigger_payload.bucket,
-              "key": trigger_payload.key,
-              "result": upload_result
+              "asset": {
+                "id": trigger_payload.body.key,
+                "filename": trigger_payload.body.key,
+                "content_type": "application/octet-stream",
+                "size_bytes": 0,
+                "provider": trigger_payload.body.provider,
+                "created_at": ""
+              },
+              "provider_note": "Uploaded to " + trigger_payload.body.provider + "://" + trigger_payload.body.bucket + "/" + trigger_payload.body.key
             }
 
     - id: end
@@ -116,13 +121,13 @@ spec:
     - id: f2-s3
       from: { node: provider-gate }
       to: { node: upload-s3 }
-      condition: "trigger_payload.provider == 's3'"
+      condition: "trigger_payload.body.provider == 's3'"
       priority: 2
     # GCS branch
     - id: f3-gcs
       from: { node: provider-gate }
       to: { node: upload-gcs }
-      condition: "trigger_payload.provider == 'gcs'"
+      condition: "trigger_payload.body.provider == 'gcs'"
       priority: 1
     # Azure branch (default fallback)
     - id: f4-azure

@@ -44,7 +44,6 @@
 
 use std::sync::Arc;
 use vil_capsule::{WasmFaaSConfig, WasmFaaSRegistry};
-use vil_server::axum::extract::Extension;
 use vil_server::prelude::*;
 
 // ── Semantic Types ──
@@ -246,6 +245,7 @@ async fn invoke_transform(
 // Load pre-compiled WASM module bytes from disk. Build with: cd wasm-modules && bash build-wasm.sh
 fn load_wasm_bytes(module_name: &str) -> Vec<u8> {
     let paths = [
+        format!("examples/021-basic-wasm-faas/wasm-modules/out/{}.wasm", module_name),
         format!("wasm-modules/out/{}.wasm", module_name),
         format!("../../wasm-modules/out/{}.wasm", module_name),
     ];

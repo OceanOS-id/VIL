@@ -22,16 +22,13 @@ spec:
 
     # Step 1: Keyword search across 12 support articles, top-3
     - id: article-search
-      activity_type: Function
-      wasm_config:
-        module_ref: rag_keyword_article_search
-        function_name: execute
-        description: "Keyword-based search across 12 support articles. Tokenizes query, scores articles using BM25 ranking, returns top-3 matches with article_id, title, snippet, and relevance score. Also records retrieval_start_ms timestamp for metrics."
+      activity_type: Sidecar
+      sidecar_config: { target: rag_keyword_article_search, command: "python3 -u examples/306-rag-ai-event-tracking/vwfd/sidecar/python/rag_keyword_search.py", method: execute }
       input_mappings:
         - target: query
           source:
-            language: vil-expr
-            source: trigger_payload.question
+            language: spv1
+            source: '$.trigger_payload.body.question'
         - target: top_k
           source:
             language: literal
@@ -45,9 +42,9 @@ spec:
         connector_ref: vastar.http
         operation: post
         streaming: true
-        format: sse
         dialect: openai
         json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
       input_mappings:
         - target: url
           source:
@@ -61,7 +58,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "You are a customer support assistant. Answer the question using the provided support articles. Be concise and helpful. Reference article titles when relevant."},
-                  {"role": "user", "content": "Support articles:\n" + search_results.context_text + "\n\nCustomer question: " + trigger_payload.question}
+                  {"role": "user", "content": "Support articles:\n" + search_results.context_text + "\n\nCustomer question: " + trigger_payload.body.question}
                 ],
                 "stream": true
               }
@@ -71,7 +68,7 @@ spec:
     - id: track-metrics
       activity_type: transform
       input_mappings:
-        - target: metrics
+        - target: quality
           source:
             language: vil-expr
             source: |
@@ -79,10 +76,10 @@ spec:
                 "retrieval_ms": search_results.retrieval_ms,
                 "generation_ms": search_results.generation_start_ms > 0 ? _elapsed_ms - search_results.generation_start_ms : _elapsed_ms - search_results.retrieval_ms,
                 "total_ms": _elapsed_ms,
-                "articles_searched": 12,
-                "articles_matched": size(search_results.articles)
+                "top_score": search_results.top_score,
+                "docs_retrieved": size(search_results.articles)
               }
-      output_variable: metrics
+      output_variable: quality
 
     # Step 4: Respond
     - id: respond
@@ -94,9 +91,8 @@ spec:
           source: |
             {
               "answer": llm_answer,
-              "articles": search_results.articles,
-              "metrics": metrics,
-              "question": trigger_payload.question
+              "sources": search_results.articles,
+              "quality": quality
             }
 
     - id: end
@@ -116,5 +112,5 @@ spec:
       type: object
     - name: llm_answer
       type: string
-    - name: metrics
+    - name: quality
       type: object

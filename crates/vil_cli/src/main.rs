@@ -610,6 +610,101 @@ enum GenerateAction {
 
 #[derive(Subcommand)]
 enum ProvisionAction {
+    // ── New: vil-server provision commands ──────────────────────
+
+    /// Inspect workflow YAML — list required handlers (NativeCode, WASM, Sidecar)
+    Inspect {
+        /// Path to workflow YAML file, workflows/ dir, or project dir
+        path: String,
+        /// Cross-reference with plugin-dir/wasm-dir to show ready vs missing
+        #[arg(long)]
+        check_dir: bool,
+        /// Output format
+        #[arg(long, default_value = "table")]
+        format: String,
+        /// Directory containing .so plugin files [env: VIL_PLUGIN_DIR]
+        #[arg(long, default_value = "/tmp/vil-plugins")]
+        plugin_dir: String,
+        /// Directory containing .wasm module files [env: VIL_WASM_DIR]
+        #[arg(long, default_value = "/tmp/vil-wasm")]
+        wasm_dir: String,
+    },
+
+    /// Prepare handlers — extract .native() from source, compile .so + .wasm
+    Prepare {
+        /// Project dir (containing src/main.rs) or path to main.rs
+        path: String,
+        /// Output directory for .so plugin files [env: VIL_PLUGIN_DIR]
+        #[arg(long, default_value = "/tmp/vil-plugins")]
+        plugin_dir: String,
+        /// Output directory for .wasm module files [env: VIL_WASM_DIR]
+        #[arg(long, default_value = "/tmp/vil-wasm")]
+        wasm_dir: String,
+        /// Temp cargo workspace directory
+        #[arg(long, default_value = "/tmp/vil-handler-build")]
+        build_dir: String,
+        /// Only compile NativeCode .so (skip WASM)
+        #[arg(long)]
+        so_only: bool,
+        /// Only compile/collect WASM (skip .so)
+        #[arg(long)]
+        wasm_only: bool,
+        /// Clean build-dir before generating
+        #[arg(long)]
+        clean: bool,
+        /// Parse + list what will be compiled, without compiling
+        #[arg(long)]
+        dry_run: bool,
+        /// Cargo parallel jobs
+        #[arg(long)]
+        jobs: Option<usize>,
+    },
+
+    /// Upload handlers (.so, .wasm) and workflow YAML to running vil-server
+    Upload {
+        /// Project dir or workflows/ directory
+        path: String,
+        /// vil-server host URL [env: VIL_PROVISION_HOST]
+        #[arg(long, default_value = "http://localhost:3080")]
+        host: String,
+        /// Admin API key [env: VIL_PROVISION_KEY]
+        #[arg(long)]
+        key: Option<String>,
+        /// Directory containing .so plugin files [env: VIL_PLUGIN_DIR]
+        #[arg(long, default_value = "/tmp/vil-plugins")]
+        plugin_dir: String,
+        /// Directory containing .wasm module files [env: VIL_WASM_DIR]
+        #[arg(long, default_value = "/tmp/vil-wasm")]
+        wasm_dir: String,
+        /// Upload handlers (.so + .wasm) only, skip workflows
+        #[arg(long)]
+        handlers_only: bool,
+        /// Upload workflows only, skip handlers
+        #[arg(long)]
+        workflows_only: bool,
+        /// Do not auto-activate after upload
+        #[arg(long)]
+        no_activate: bool,
+        /// Per-upload timeout in seconds
+        #[arg(long, default_value = "15")]
+        timeout: u64,
+    },
+
+    /// Show provisioned inventory — workflows, NativeCode, WASM, Sidecars on server
+    Status {
+        /// vil-server host URL [env: VIL_PROVISION_HOST]
+        #[arg(long, default_value = "http://localhost:3080")]
+        host: String,
+        /// Admin API key [env: VIL_PROVISION_KEY]
+        #[arg(long)]
+        key: Option<String>,
+        /// Output format
+        #[arg(long, default_value = "table")]
+        format: String,
+    },
+
+    // ── Legacy: vflow-server commands ───────────────────────────
+
     /// Push a .vlb artifact to vflow-server
     Push {
         /// vflow-server host URL
@@ -746,6 +841,7 @@ mod node_types;
 mod pipeline_init;
 mod project_init;
 mod provision;
+mod provision_prepare;
 mod runner;
 mod sdk_manager;
 mod server_dev;
@@ -1241,34 +1337,108 @@ fn main() {
         }
 
         Commands::Provision { action } => {
-            let paction = match action {
-                ProvisionAction::Push { host, artifact } => provision::Action::Push {
-                    host: host.clone(),
-                    artifact: artifact.clone(),
-                },
-                ProvisionAction::Activate { host, service } => provision::Action::Activate {
-                    host: host.clone(),
-                    service: service.clone(),
-                },
-                ProvisionAction::Drain { host, service } => provision::Action::Drain {
-                    host: host.clone(),
-                    service: service.clone(),
-                },
-                ProvisionAction::Deactivate { host, service } => provision::Action::Deactivate {
-                    host: host.clone(),
-                    service: service.clone(),
-                },
-                ProvisionAction::List { host } => provision::Action::List { host: host.clone() },
-                ProvisionAction::Contract { host } => {
-                    provision::Action::Contract { host: host.clone() }
-                }
-                ProvisionAction::Health { host } => {
-                    provision::Action::Health { host: host.clone() }
+            // Helper: resolve value with env var fallback
+            let env_or = |val: &str, env_key: &str| -> String {
+                if val != "/tmp/vil-plugins" && val != "/tmp/vil-wasm" && val != "http://localhost:3080" {
+                    val.to_string() // user explicitly set via CLI
+                } else {
+                    std::env::var(env_key).unwrap_or_else(|_| val.to_string())
                 }
             };
-            if let Err(e) = provision::run_provision(paction) {
-                eprintln!("{} {}", "Error:".red().bold(), e);
-                std::process::exit(1);
+
+            match action {
+                // ── New vil-server provision commands ──
+                ProvisionAction::Inspect { path, check_dir, format, plugin_dir, wasm_dir } => {
+                    let pd = env_or(plugin_dir, "VIL_PLUGIN_DIR");
+                    let wd = env_or(wasm_dir, "VIL_WASM_DIR");
+                    if let Err(e) = provision::run_inspect(path, *check_dir, format, &pd, &wd) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+                ProvisionAction::Prepare { path, plugin_dir, wasm_dir, build_dir, so_only, wasm_only, clean, dry_run, jobs } => {
+                    let pd = env_or(plugin_dir, "VIL_PLUGIN_DIR");
+                    let wd = env_or(wasm_dir, "VIL_WASM_DIR");
+                    if let Err(e) = provision_prepare::run_prepare(
+                        path, &pd, &wd, build_dir,
+                        *so_only, *wasm_only, *clean, *dry_run, *jobs,
+                    ) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+                ProvisionAction::Upload { path, host, key, plugin_dir, wasm_dir, handlers_only, workflows_only, no_activate, timeout } => {
+                    let h = env_or(host, "VIL_PROVISION_HOST");
+                    let key_resolved: Option<String> = key.clone().or_else(|| std::env::var("VIL_PROVISION_KEY").ok());
+                    let pd = env_or(plugin_dir, "VIL_PLUGIN_DIR");
+                    let wd = env_or(wasm_dir, "VIL_WASM_DIR");
+                    if let Err(e) = provision::run_upload(
+                        path, &h, key_resolved.as_deref(), &pd, &wd,
+                        *handlers_only, *workflows_only, !*no_activate, *timeout,
+                    ) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+                ProvisionAction::Status { host, key, format } => {
+                    let h = env_or(host, "VIL_PROVISION_HOST");
+                    let key_resolved: Option<String> = key.clone().or_else(|| std::env::var("VIL_PROVISION_KEY").ok());
+                    if let Err(e) = provision::run_status(&h, key_resolved.as_deref(), format) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+
+                // ── Legacy vflow-server commands ──
+                ProvisionAction::Push { host, artifact } => {
+                    let paction = provision::Action::Push { host: host.clone(), artifact: artifact.clone() };
+                    if let Err(e) = provision::run_provision(paction) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+                ProvisionAction::Activate { host, service } => {
+                    let paction = provision::Action::Activate { host: host.clone(), service: service.clone() };
+                    if let Err(e) = provision::run_provision(paction) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+                ProvisionAction::Drain { host, service } => {
+                    let paction = provision::Action::Drain { host: host.clone(), service: service.clone() };
+                    if let Err(e) = provision::run_provision(paction) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+                ProvisionAction::Deactivate { host, service } => {
+                    let paction = provision::Action::Deactivate { host: host.clone(), service: service.clone() };
+                    if let Err(e) = provision::run_provision(paction) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+                ProvisionAction::List { host } => {
+                    let paction = provision::Action::List { host: host.clone() };
+                    if let Err(e) = provision::run_provision(paction) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+                ProvisionAction::Contract { host } => {
+                    let paction = provision::Action::Contract { host: host.clone() };
+                    if let Err(e) = provision::run_provision(paction) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
+                ProvisionAction::Health { host } => {
+                    let paction = provision::Action::Health { host: host.clone() };
+                    if let Err(e) = provision::run_provision(paction) {
+                        eprintln!("{} {}", "Error:".red().bold(), e);
+                        std::process::exit(1);
+                    }
+                }
             }
         }
 

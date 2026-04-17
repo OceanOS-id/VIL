@@ -16,7 +16,7 @@ const EVENTS: u32 = 500_000;
 
 fn bench_tracing_file() -> (std::time::Duration, PathBuf) {
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.into_path();
+    let path = dir.keep();
 
     let file_appender = tracing_appender::rolling::never(&path, "tracing.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
@@ -47,7 +47,7 @@ fn bench_tracing_file() -> (std::time::Duration, PathBuf) {
 
 async fn bench_vil_file() -> (std::time::Duration, PathBuf) {
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.into_path();
+    let path = dir.keep();
 
     let drain = FileDrain::new(
         &path,

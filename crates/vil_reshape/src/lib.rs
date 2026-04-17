@@ -1,4 +1,4 @@
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value};
 
 pub fn reshape(args: &[Value]) -> Result<Value, String> {
     let data = args.get(0).ok_or("reshape: data required")?;

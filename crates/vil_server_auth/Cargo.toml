@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-vil_server_core = { version = "0.3", path = "../vil_server_core" }
+vil_server_core = { version = "0.4", path = "../vil_server_core" }
 vil_log = { workspace = true }
 tracing = { workspace = true }
 

@@ -14,7 +14,7 @@ spec:
       trigger_config:
         trigger_type: fs_watcher
         fs_config:
-          path: "/tmp/watch"
+          path: "/tmp/vil-802-watch"
           pattern: "*.log"
           debounce_ms: 100
       output_variable: trigger_payload
@@ -27,10 +27,10 @@ spec:
             language: vil-expr
             source: |
               {
-                "filename": trigger_payload.filename,
-                "event_type": trigger_payload.event_type,
-                "timestamp": trigger_payload.timestamp,
-                "size_bytes": trigger_payload.size_bytes
+                "filename": trigger_payload.body.filename,
+                "event_type": trigger_payload.body.event_type,
+                "timestamp": trigger_payload.body.timestamp,
+                "size_bytes": trigger_payload.body.size_bytes
               }
       output_variable: file_event
 
@@ -43,7 +43,7 @@ spec:
         - target: entity
           source: { language: literal, source: file_events }
         - target: data
-          source: { language: vil-expr, source: file_event }
+          source: { language: spv1, source: '$.file_event' }
       output_variable: insert_result
 
     - id: end

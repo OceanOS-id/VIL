@@ -157,6 +157,7 @@ fn walk_subgraph<'a>(
 
             NodeKind::Transform => {
                 let result = execute_transform(node, vars)?;
+                tracing::debug!("Transform '{}' output_var={:?} result={}", node.id, node.output_variable, result);
                 store_output(node, &result, vars);
                 if let Some(ref store) = config.durability {
                     store.checkpoint(exec_id, &node.id, *steps, vars);
@@ -248,6 +249,7 @@ fn walk_subgraph<'a>(
 
             NodeKind::Sidecar => {
                 let result = execute_sidecar(node, vars, config).await?;
+                tracing::debug!("Sidecar '{}' output_var={:?} result={}", node.id, node.output_variable, result);
                 store_output(node, &result, vars);
                 if let Some(ref store) = config.durability {
                     store.checkpoint(exec_id, &node.id, *steps, vars);
@@ -272,6 +274,7 @@ fn walk_subgraph<'a>(
 
             NodeKind::NativeCode => {
                 let result = execute_native_code(node, vars, config).await?;
+                tracing::debug!("NativeCode '{}' output_var={:?} result={}", node.id, node.output_variable, result);
                 store_output(node, &result, vars);
                 if let Some(ref store) = config.durability {
                     store.checkpoint(exec_id, &node.id, *steps, vars);
@@ -475,7 +478,7 @@ fn find_exit_edge(loop_idx: usize, graph: &VilwGraph) -> Result<usize, ExecError
 
 /// Find the Join node that corresponds to a Parallel fork.
 /// Walks outgoing edges from Parallel → follows first branch → looks for Join node.
-fn find_join_for_parallel(parallel_idx: usize, graph: &VilwGraph) -> Option<usize> {
+fn find_join_for_parallel(_parallel_idx: usize, graph: &VilwGraph) -> Option<usize> {
     // Simple heuristic: scan all nodes for a Join that has edges coming from
     // branches that start at this Parallel.
     for (i, node) in graph.nodes.iter().enumerate() {
@@ -544,6 +547,21 @@ fn execute_transform(
 ) -> Result<Value, ExecError> {
     let result = eval_bridge::eval_all_mappings(&node.mappings, vars)
         .map_err(|e| ExecError { message: e, node_id: Some(node.id.clone()) })?;
+
+    // Unwrap single-mapping transforms: if there's exactly one mapping and its
+    // target matches the output_variable, return the value directly instead of
+    // wrapping it as {"target_name": value}. This prevents double nesting when
+    // downstream nodes reference output_variable.field.
+    if node.mappings.len() == 1 {
+        if let Some(ref out_var) = node.output_variable {
+            if node.mappings[0].target == *out_var {
+                if let Some(val) = result.get(out_var) {
+                    return Ok(val.clone());
+                }
+            }
+        }
+    }
+
     Ok(serde_json::to_value(&result).unwrap_or(Value::Null))
 }
 

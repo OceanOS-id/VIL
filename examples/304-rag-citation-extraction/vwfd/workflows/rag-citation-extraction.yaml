@@ -29,8 +29,8 @@ spec:
       input_mappings:
         - target: query
           source:
-            language: vil-expr
-            source: trigger_payload.query
+            language: spv1
+            source: '$.trigger_payload.body.query'
         - target: top_k
           source:
             language: literal
@@ -49,7 +49,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "You are a legal research assistant. Answer the question using ONLY the provided documents. You MUST cite every claim using [Doc1], [Doc2], etc. corresponding to the document labels below. Do not invent information."},
-                  {"role": "user", "content": "Documents:\n" + legal_docs.formatted_context + "\n\nQuestion: " + trigger_payload.query}
+                  {"role": "user", "content": "Documents:\n" + legal_docs.formatted_context + "\n\nQuestion: " + trigger_payload.body.query}
                 ],
                 "stream": true
               }
@@ -72,8 +72,8 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: vil-expr
-            source: rag_prompt
+            language: spv1
+            source: '$.rag_prompt'
       output_variable: llm_answer
 
     # Step 4: Extract [DocN] refs and build Citation structs
@@ -81,16 +81,17 @@ spec:
       activity_type: Sidecar
       sidecar_config:
         target: rag_citation_extractor
+        command: "Rscript examples/304-rag-citation-extraction/vwfd/sidecar/r/citation_extractor.R"
         description: "Parse the LLM answer text for [Doc1]..[DocN] citation markers using regex. For each unique marker found, look up the corresponding document metadata from legal_docs and build a Citation struct {label, doc_id, title, section, page}. Returns the answer text plus an ordered citations array."
       input_mappings:
         - target: answer_text
           source:
-            language: vil-expr
-            source: llm_answer
+            language: spv1
+            source: '$.llm_answer'
         - target: doc_metadata
           source:
-            language: vil-expr
-            source: legal_docs.chunks
+            language: spv1
+            source: '$.legal_docs.chunks'
       output_variable: cited_response
 
     # Step 5: Respond with structured citations
@@ -104,8 +105,8 @@ spec:
             {
               "answer": cited_response.answer,
               "citations": cited_response.citations,
-              "citation_count": cited_response.citation_count,
-              "query": trigger_payload.query
+              "total_docs_in_context": legal_docs.total_chunks,
+              "citation_count": cited_response.citation_count
             }
 
     - id: end

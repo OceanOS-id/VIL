@@ -17,8 +17,8 @@ sqlite = ["sea-orm/sqlx-sqlite"]
 all = ["postgres", "mysql", "sqlite"]
 
 [dependencies]
-vil_server_db = { version = "0.3", path = "../vil_server_db" }
-vil_server_core = { version = "0.3", path = "../vil_server_core" }
+vil_server_db = { version = "0.4", path = "../vil_server_db" }
+vil_server_core = { version = "0.4", path = "../vil_server_core" }
 
 sea-orm = { version = "1", features = ["runtime-tokio-rustls"] }
 tokio = { version = "1", features = ["full"] }

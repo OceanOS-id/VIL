@@ -93,6 +93,7 @@ impl TimeseriesClient {
 // =============================================================================
 
 /// Emit a `db_log!` entry for any time-series operation.
+#[allow(dead_code)]
 pub(crate) fn emit_db_log(
     db_hash: u32,
     query: &str,
@@ -122,6 +123,7 @@ pub(crate) fn emit_db_log(
 // Internal helper — stable numeric code from any error
 // =============================================================================
 
+#[allow(dead_code)]
 pub(crate) fn fault_code_from_err<E: std::fmt::Debug>(e: &E) -> u32 {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};

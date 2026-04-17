@@ -240,8 +240,14 @@ impl VilApp {
     }
 
     /// Set the HTTP listening port.
+    ///
+    /// The `PORT` environment variable takes precedence when set and parseable,
+    /// so CI/bench drivers can relocate the listener without patching source.
     pub fn port(mut self, port: u16) -> Self {
-        self.ingress.port = port;
+        self.ingress.port = std::env::var("PORT")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(port);
         self
     }
 

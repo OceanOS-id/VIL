@@ -48,7 +48,7 @@ async fn translate(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<TranslateResponse>> {
     let req: TranslateRequest = body.json()
-        .map_err(|_| VilError::bad_request("invalid JSON"))?;
+        .map_err(|e| VilError::bad_request(format!("invalid JSON: {}", e)))?;
 
     let state = ctx.state::<Arc<TranslateState>>()
         .map_err(|_| VilError::internal("state not found"))?;

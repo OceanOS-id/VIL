@@ -84,7 +84,7 @@ const CORE_BANKING_NDJSON: &str =
 
 fn configure_gateway() -> HttpSinkBuilder {
     HttpSinkBuilder::new("Gateway")
-        .port(GATEWAY_PORT)
+        .env_port(GATEWAY_PORT)
         .path(GATEWAY_PATH)
         .out_port("trigger_out")
         .in_port("response_data_in")

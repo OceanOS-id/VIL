@@ -7,17 +7,15 @@ spec:
       trigger_config: { trigger_type: webhook, webhook_config: { path: /api/score/predict, method: POST }, response_mode: buffered, end_activity: respond }
       output_variable: trigger_payload
     - id: score
-      activity_type: Sidecar
-      sidecar_config: { target: ml_scorer, method: execute }
+      activity_type: NativeCode
+      code_config: { handler_ref: predict_handler }
       input_mappings:
-        - target: operation
-          source: { language: literal, source: "predict" }
         - target: body
-          source: { language: vil-expr, source: 'trigger_payload.body' }
+          source: { language: spv1, source: '$.trigger_payload.body' }
       output_variable: result
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: 'result' } }
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: spv1, source: '$.result' } }
     - id: end
       activity_type: End
   flows:

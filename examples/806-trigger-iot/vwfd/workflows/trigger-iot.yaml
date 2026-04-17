@@ -25,10 +25,10 @@ spec:
             language: vil-expr
             source: |
               {
-                "sensor_id": trigger_payload.sensor_id,
-                "value": trigger_payload.value,
-                "unit": trigger_payload.unit,
-                "severity": trigger_payload.value > 90 ? "CRITICAL" : (trigger_payload.value > 70 ? "WARNING" : "NORMAL")
+                "sensor_id": trigger_payload.body.sensor_id,
+                "value": trigger_payload.body.value,
+                "unit": trigger_payload.body.unit,
+                "severity": trigger_payload.body.value > 90 ? "CRITICAL" : (trigger_payload.body.value > 70 ? "WARNING" : "NORMAL")
               }
       output_variable: reading
 

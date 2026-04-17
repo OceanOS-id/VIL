@@ -249,7 +249,7 @@ struct SafeRagResponse {
 // ── Handler ──────────────────────────────────────────────────────────
 
 async fn safe_rag_handler(
-    ctx: ServiceCtx,
+    _ctx: ServiceCtx,
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<SafeRagResponse>> {
     let req: SafeRagRequest = body.json().expect("invalid JSON body");

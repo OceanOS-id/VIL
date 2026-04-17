@@ -30,15 +30,15 @@ spec:
           source:
             language: vil-expr
             source: >
-              "CREATE TABLE IF NOT EXISTS " + trigger_payload.table +
-              " (" + trigger_payload.columns.join(", ") + ") ENGINE = MergeTree() ORDER BY tuple()"
+              "CREATE TABLE IF NOT EXISTS " + trigger_payload.body.table +
+              " (" + trigger_payload.body.columns.join(", ") + ") ENGINE = MergeTree() ORDER BY tuple()"
       output_variable: create_result
 
     # Step 2: Loop over each row for insertion
     - id: insert-loop
       activity_type: LoopForEach
       loop_config:
-        collection: "trigger_payload.rows"
+        collection: "trigger_payload.body.rows"
         item_variable: current_row
       output_variable: loop_state
 
@@ -53,7 +53,7 @@ spec:
           source:
             language: vil-expr
             source: >
-              "INSERT INTO " + trigger_payload.table + " VALUES (" +
+              "INSERT INTO " + trigger_payload.body.table + " VALUES (" +
               current_row.join(", ") + ")"
       output_variable: row_result
 
@@ -70,8 +70,8 @@ spec:
             source: |
               {
                 "status": "batch_complete",
-                "table": trigger_payload.table,
-                "rows_inserted": size(trigger_payload.rows)
+                "table": trigger_payload.body.table,
+                "rows_inserted": size(trigger_payload.body.rows)
               }
       output_variable: batch_summary
 
@@ -80,8 +80,8 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: batch_summary
+          language: spv1
+          source: '$.batch_summary'
 
     - id: end
       activity_type: End

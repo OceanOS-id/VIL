@@ -250,7 +250,9 @@ async fn kafka_produce(
     body: ShmSlice,
 ) -> HandlerResult<VilResponse<ProduceResponse>> {
     let state = ctx.state::<KafkaState>().expect("state type mismatch");
-    let req: ProduceRequest = body.json().expect("invalid JSON body");
+    let req: ProduceRequest = body
+        .json()
+        .map_err(|e| VilError::bad_request(format!("invalid JSON body: {}", e)))?;
     let payload_bytes = serde_json::to_vec(&req.payload)
         .map_err(|e| VilError::bad_request(format!("Invalid payload: {}", e)))?;
 
@@ -399,14 +401,16 @@ async fn bridge_status(ctx: ServiceCtx) -> VilResponse<BridgeStatusResponse> {
 
 #[tokio::main]
 async fn main() {
-    // Producer config
-    let producer_config = KafkaConfig::new("localhost:9092,localhost:9093,localhost:9094");
+    // Producer config (reads KAFKA_BROKERS env var, default localhost:9092)
+    let brokers = std::env::var("KAFKA_BROKERS")
+        .unwrap_or_else(|_| "localhost:9092".to_string());
+    let producer_config = KafkaConfig::new(&brokers);
     let producer = KafkaProducer::new(producer_config.clone())
         .await
         .expect("Kafka producer creation should succeed (implementation mode)");
 
     // Consumer config
-    let consumer_config = KafkaConfig::new("localhost:9092,localhost:9093,localhost:9094")
+    let consumer_config = KafkaConfig::new(&brokers)
         .group("order-processor-group")
         .topic("events.orders");
 

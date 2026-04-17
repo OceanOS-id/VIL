@@ -31,9 +31,9 @@ spec:
             source: |
               {
                 "event_type": "TransactionEvent",
-                "type": trigger_payload.type,
-                "amount": trigger_payload.amount,
-                "currency": trigger_payload.currency,
+                "type": trigger_payload.body.type,
+                "amount": trigger_payload.body.amount,
+                "currency": trigger_payload.body.currency,
                 "timestamp": now()
               }
       output_variable: transaction_event
@@ -51,8 +51,8 @@ spec:
             source: "transactions"
         - target: payload
           source:
-            language: vil-expr
-            source: transaction_event.event
+            language: spv1
+            source: '$.transaction_event.event'
       output_variable: publish_result
 
     - id: respond
@@ -64,10 +64,9 @@ spec:
           source: |
             {
               "status": "published",
-              "topic": "transactions",
-              "event_type": "TransactionEvent",
-              "message_id": publish_result.message_id,
-              "timestamp": transaction_event.event.timestamp
+              "event_id": publish_result.message_id,
+              "topic": "persistent://fintech/txn/" + transaction_event.event.type,
+              "queue_depth": 0
             }
 
     - id: end

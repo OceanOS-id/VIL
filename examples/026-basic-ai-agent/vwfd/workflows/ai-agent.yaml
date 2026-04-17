@@ -29,7 +29,7 @@ spec:
           repeat until FINAL_ANSWER or max 5 iterations.
       input_mappings:
         - target: question
-          source: { language: vil-expr, source: trigger_payload.question }
+          source: { language: spv1, source: '$.trigger_payload.body.question' }
       output_variable: agent_result
 
     - id: respond

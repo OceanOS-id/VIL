@@ -7,15 +7,13 @@ spec:
       trigger_config: { trigger_type: webhook, webhook_config: { path: /api/score/health, method: GET }, response_mode: buffered, end_activity: respond }
       output_variable: trigger_payload
     - id: check
-      activity_type: Sidecar
-      sidecar_config: { target: ml_scorer, method: execute }
-      input_mappings:
-        - target: operation
-          source: { language: literal, source: "health" }
+      activity_type: NativeCode
+      code_config: { handler_ref: health_handler }
+      input_mappings: []
       output_variable: result
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: 'result' } }
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: spv1, source: '$.result' } }
     - id: end
       activity_type: End
   flows:

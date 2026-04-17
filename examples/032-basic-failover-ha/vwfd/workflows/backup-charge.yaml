@@ -14,14 +14,14 @@ spec:
       output_variable: trigger_payload
     - id: handler
       activity_type: Sidecar
-      sidecar_config: { target: payment_ha, method: execute }
+      sidecar_config: { target: payment_ha, command: "dotnet-script examples/032-basic-failover-ha/vwfd/sidecar/csharp/PaymentHA.cs", method: execute }
       input_mappings:
         - target: body
-          source: { language: vil-expr, source: trigger_payload.body }
+          source: { language: spv1, source: '$.trigger_payload.body' }
       output_variable: result
     - id: respond
       activity_type: EndTrigger
-      end_trigger_config: { trigger_ref: trigger, final_response: { language: vil-expr, source: result } }
+      end_trigger_config: { trigger_ref: trigger, final_response: { language: spv1, source: '$.result' } }
     - id: end
       activity_type: End
   flows:

@@ -19,7 +19,7 @@ impl KafkaBridge {
 
     /// Bridge a Kafka message to the Tri-Lane mesh.
     /// Write payload to SHM → send descriptor via Trigger Lane.
-    pub async fn bridge(&self, msg: &KafkaMessage) {
+    pub async fn bridge(&self, _msg: &KafkaMessage) {
         self.bridged_count.fetch_add(1, Ordering::Relaxed);
     }
 

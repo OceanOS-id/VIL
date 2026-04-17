@@ -22,16 +22,13 @@ spec:
 
     # Step 1: Embed query + cosine search top-2 from static KB
     - id: vector-search
-      activity_type: Function
-      wasm_config:
-        module_ref: rag_embed_and_search
-        function_name: execute
-        description: "Embed the user query into a vector, then cosine-similarity search against the static knowledge base. Returns top-2 most relevant chunks with their scores and source metadata."
+      activity_type: Sidecar
+      sidecar_config: { target: rag_embed_and_search, command: "python3 -u examples/301-rag-basic-vector-search/vwfd/sidecar/python/rag_embed_and_search.py", method: execute }
       input_mappings:
         - target: query
           source:
-            language: vil-expr
-            source: trigger_payload.query
+            language: spv1
+            source: '$.trigger_payload.body.query'
         - target: top_k
           source:
             language: literal
@@ -50,7 +47,7 @@ spec:
                 "model": "gpt-4",
                 "messages": [
                   {"role": "system", "content": "You are a helpful assistant. Answer the user question using ONLY the provided context. Cite sources as [Source N]. If the context does not contain the answer, say so."},
-                  {"role": "user", "content": "Context:\n[Source 1] " + retrieved_docs.chunks[0].text + "\n[Source 2] " + retrieved_docs.chunks[1].text + "\n\nQuestion: " + trigger_payload.query}
+                  {"role": "user", "content": "Context:\n[Source 1] " + retrieved_docs.results[0].content + "\n[Source 2] " + retrieved_docs.results[1].content + "\n\nQuestion: " + trigger_payload.body.query}
                 ],
                 "stream": true
               }
@@ -63,9 +60,9 @@ spec:
         connector_ref: vastar.http
         operation: post
         streaming: true
-        format: sse
         dialect: openai
         json_tap: "choices[0].delta.content"
+        timeout_ms: 30000
       input_mappings:
         - target: url
           source:
@@ -73,8 +70,8 @@ spec:
             source: "http://127.0.0.1:4545/v1/chat/completions"
         - target: body
           source:
-            language: vil-expr
-            source: rag_prompt
+            language: spv1
+            source: '$.rag_prompt'
       output_variable: llm_answer
 
     # Step 4: Respond with answer + citations
@@ -86,9 +83,9 @@ spec:
           language: vil-expr
           source: |
             {
-              "answer": llm_answer,
-              "sources": retrieved_docs.chunks,
-              "query": trigger_payload.query
+              "content": llm_answer,
+              "docs_used": retrieved_docs.results,
+              "similarity_scores": retrieved_docs.scores
             }
 
     - id: end

@@ -36,12 +36,12 @@ spec:
       input_mappings:
         - target: files
           source:
-            language: vil-expr
-            source: trigger_payload.files
+            language: spv1
+            source: '$.trigger_payload.body.files'
         - target: patterns
           source:
             language: vil-expr
-            source: "size(trigger_payload.patterns) > 0 ? trigger_payload.patterns : [\"unwrap\", \"unsafe\", \"clone\", \"TODO\"]"
+            source: "size(trigger_payload.body.patterns) > 0 ? trigger_payload.body.patterns : [\"unwrap\", \"unsafe\", \"clone\", \"TODO\"]"
       output_variable: tool_outputs
 
     # Step 2: Build a system prompt that includes all tool results
@@ -99,9 +99,9 @@ spec:
           language: vil-expr
           source: |
             {
-              "review": review_text,
-              "files_analyzed": size(tool_outputs.files),
-              "tool_results": tool_outputs
+              "content": review_text,
+              "tools_executed": tool_outputs.results,
+              "files_available": trigger_payload.body.files
             }
 
     - id: end

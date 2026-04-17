@@ -14,10 +14,10 @@ readme = "README.md"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 parking_lot = "0.12"
-vil_macros = { version = "0.3", path = "../vil_macros" }
-vil_server_core = { version = "0.3", path = "../vil_server_core" }
-vil_sdk = { version = "0.3", path = "../vil_sdk" }
-vil_server = { version = "0.3", path = "../vil_server" }
+vil_macros = { version = "0.4", path = "../vil_macros" }
+vil_server_core = { version = "0.4", path = "../vil_server_core" }
+vil_sdk = { version = "0.4", path = "../vil_sdk" }
+vil_server = { version = "0.4", path = "../vil_server" }
 axum = { version = "0.7", features = ["macros"] }
 
 [dev-dependencies]

@@ -77,8 +77,8 @@ spec:
       end_trigger_config:
         trigger_ref: trigger
         final_response:
-          language: vil-expr
-          source: device_state.device_state
+          language: spv1
+          source: '$.device_state.device_state'
 
     - id: end
       activity_type: End

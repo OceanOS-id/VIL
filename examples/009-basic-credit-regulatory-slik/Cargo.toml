@@ -7,5 +7,5 @@ publish = false
 
 # 008 — Credit Regulatory Stream Pipeline (SLIK/OJK, ShmToken pipeline)
 [dependencies]
-vil_sdk  = { version = "0.2" }
+vil_sdk = { version = "0.4", path = "../../crates/vil_sdk" }
 serde_json = "1.0"

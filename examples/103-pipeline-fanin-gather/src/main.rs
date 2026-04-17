@@ -87,7 +87,7 @@ const INVENTORY_REST_URL: &str = "http://localhost:18092/api/v1/products";
 
 fn configure_credit_sink() -> HttpSinkBuilder {
     HttpSinkBuilder::new("CreditGatherSink")
-        .port(CREDIT_SINK_PORT)
+        .env_port(CREDIT_SINK_PORT)
         .path(CREDIT_SINK_PATH)
         .out_port("trigger_out")
         .in_port("response_data_in")

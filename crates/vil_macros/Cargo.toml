@@ -17,13 +17,13 @@ proc-macro = true
 quote = "1.0"
 syn = { version = "2.0", features = ["full", "parsing"] }
 proc-macro2 = "1.0"
-vil_ir = { version = "0.3", path = "../vil_ir", features = ["proc-macro"] }
-vil_validate = { version = "0.3", path = "../vil_validate" }
-vil_types = { version = "0.3", path = "../vil_types" }
+vil_ir = { version = "0.4", path = "../vil_ir", features = ["proc-macro"] }
+vil_validate = { version = "0.4", path = "../vil_validate" }
+vil_types = { version = "0.4", path = "../vil_types" }
 
 [dev-dependencies]
-vil_server_core = { version = "0.3", path = "../vil_server_core" }
-vil_json = { version = "0.3", path = "../vil_json" }
+vil_server_core = { version = "0.4", path = "../vil_server_core" }
+vil_json = { version = "0.4", path = "../vil_json" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 bytes = "1.0"

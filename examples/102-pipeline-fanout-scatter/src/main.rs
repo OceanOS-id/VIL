@@ -84,7 +84,7 @@ const NDJSON_URL: &str = "http://localhost:18081/api/v1/credits/ndjson?count=100
 
 fn configure_npl_sink() -> HttpSinkBuilder {
     HttpSinkBuilder::new("NplSink")
-        .port(NPL_SINK_PORT)
+        .env_port(NPL_SINK_PORT)
         .path(NPL_SINK_PATH)
         .out_port("trigger_out")
         .in_port("response_data_in")

@@ -24,7 +24,7 @@ pub struct KafkaMessage {
 
 pub struct KafkaConsumer {
     consumer: Arc<StreamConsumer>,
-    config: KafkaConfig,
+    _config: KafkaConfig,
     messages_received: AtomicU64,
     running: AtomicBool,
     tx: mpsc::Sender<KafkaMessage>,
@@ -70,7 +70,7 @@ impl KafkaConsumer {
 
         Ok(Self {
             consumer: Arc::new(consumer),
-            config,
+            _config: config,
             messages_received: AtomicU64::new(0),
             running: AtomicBool::new(false),
             tx,

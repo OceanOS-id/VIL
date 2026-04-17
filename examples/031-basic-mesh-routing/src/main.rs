@@ -35,6 +35,7 @@ use vil_server::prelude::*;
 /// Transaction submitted by a bank teller at the counter.
 /// In production, this would include branch_id, teller_id, auth tokens, etc.
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct TransactionRequest {
     from_account: String,
     to_account: String,

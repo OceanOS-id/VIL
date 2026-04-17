@@ -87,7 +87,7 @@ struct WasmRequest {
 #[cfg(feature = "wasm")]
 impl WasmWorkerPool {
     /// Spawn N dedicated worker threads — pure sync, no tokio runtime inside.
-    fn new(
+    pub fn new(
         engine: Arc<wasmtime::Engine>,
         instance_pre: Arc<wasmtime::InstancePre<wasmtime_wasi::preview1::WasiP1Ctx>>,
         workers: usize,
@@ -169,7 +169,7 @@ struct SidecarWorkerPool {
     counter: std::sync::atomic::AtomicUsize,
 }
 
-struct SidecarWorker {
+pub(crate) struct SidecarWorker {
     command: String,
     child: Option<tokio::process::Child>,
     stdin: Option<tokio::process::ChildStdin>,
@@ -263,6 +263,22 @@ impl SidecarWorker {
 impl SidecarPool {
     pub fn new() -> Self {
         Self { workers: HashMap::new() }
+    }
+
+    pub fn has(&self, target: &str) -> bool {
+        self.workers.contains_key(target)
+    }
+
+    pub fn targets(&self) -> Vec<String> {
+        self.workers.keys().cloned().collect()
+    }
+
+    /// Get a round-robin slot for the target (returns Arc<Mutex<SidecarWorker>>).
+    /// Caller can lock + call without holding the RwLock across await.
+    pub(crate) fn get_slot(&self, target: &str) -> Option<Arc<tokio::sync::Mutex<SidecarWorker>>> {
+        let pool = self.workers.get(target)?;
+        let idx = pool.counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed) % pool.slots.len();
+        Some(pool.slots[idx].clone())
     }
 
     pub fn register(&mut self, target: String, command: String) {
@@ -386,16 +402,24 @@ impl VwfdApp {
         }
     }
 
-    async fn run_inner(self) -> Result<(), String> {
+    async fn run_inner(mut self) -> Result<(), String> {
         use vil_server_core::{
             axum::{self, extract::Extension, body::Bytes, response::IntoResponse, http::Method},
             axum::routing::post,
             Json, StatusCode, ServiceProcess, VilApp,
         };
 
+        // Auto-enable provision via env var (no code change needed)
+        if std::env::var("VIL_PROVISION").is_ok() {
+            self.provision_enabled = true;
+            if let Ok(key) = std::env::var("VIL_PROVISION_KEY") {
+                self.provision_key = Some(key);
+            }
+        }
+
         // Load workflows from directory
         let load_result = crate::loader::load_dir(&self.workflow_dir);
-        if load_result.graphs.is_empty() && !load_result.errors.is_empty() {
+        if load_result.graphs.is_empty() && !load_result.errors.is_empty() && !self.provision_enabled {
             return Err(format!("no workflows loaded: {:?}",
                 load_result.errors.iter().map(|e| &e.error).collect::<Vec<_>>()));
         }
@@ -438,9 +462,18 @@ impl VwfdApp {
         }
         let pools = Arc::new(pools);
 
+        // ── Plugin Registry (runtime .so loading) ──
+        let plugin_registry = Arc::new(crate::plugin_loader::PluginRegistry::new());
+
+        // Scan plugin dir at startup
+        let plugin_dir = std::env::var("VIL_PLUGIN_DIR")
+            .unwrap_or_else(|_| "/var/lib/vil/plugins".to_string());
+        let loaded_plugins = plugin_registry.scan_dir(std::path::Path::new(&plugin_dir));
+        if !loaded_plugins.is_empty() {
+            eprintln!("  Plugins loaded: {:?}", loaded_plugins);
+        }
+
         // ── WASM: PoolingAllocator + InstancePre — sub-5μs instantiation ──
-        // PoolingAllocator pre-allocates memory slots → instantiation = pointer bump
-        // Engine(cranelift Speed + pooling) → Module → Linker(WASI) → InstancePre
         #[cfg(feature = "wasm")]
         let wasm_registry = {
             let mut wasm_cfg = wasmtime::Config::new();
@@ -459,7 +492,6 @@ impl VwfdApp {
                         eprintln!("  WASM compile failed: {}: {}", module_ref, e);
                     }).ok()?;
 
-                    // Pre-link WASI into Linker, then create InstancePre
                     let mut linker = wasmtime::Linker::<wasmtime_wasi::preview1::WasiP1Ctx>::new(&engine);
                     wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |ctx| ctx).map_err(|e| {
                         eprintln!("  WASM link failed: {}: {}", module_ref, e);
@@ -468,16 +500,16 @@ impl VwfdApp {
                         eprintln!("  WASM instantiate_pre failed: {}: {}", module_ref, e);
                     }).ok()?;
 
-                    // Create worker pool: N dedicated threads per module
                     let pool = WasmWorkerPool::new(engine.clone(), Arc::new(instance_pre), num_workers);
                     eprintln!("  WASM pool ready: {} ({} bytes, {} workers)", module_ref, bytes.len(), num_workers);
                     Some((module_ref.clone(), Arc::new(pool)))
                 })
                 .collect();
-            Arc::new(reg)
+            // RwLock for runtime WASM module registration via provision
+            Arc::new(std::sync::RwLock::new(reg))
         };
         #[cfg(not(feature = "wasm"))]
-        let wasm_registry: Arc<HashMap<String, ()>> = Arc::new(HashMap::new());
+        let wasm_registry: Arc<std::sync::RwLock<HashMap<String, ()>>> = Arc::new(std::sync::RwLock::new(HashMap::new()));
 
         // ── Sidecar: UDS+SHM via vil_sidecar (feature=sidecar) or stdin/stdout pool ──
         #[cfg(feature = "sidecar")]
@@ -512,21 +544,23 @@ impl VwfdApp {
         }
 
         // Fallback: stdin/stdout pool (when sidecar feature disabled or UDS unavailable)
+        // RwLock for runtime sidecar registration via provision
         let sidecar_pool = {
             let mut pool = SidecarPool::new();
             for (target, command) in &self.sidecar_commands {
                 eprintln!("  Sidecar fallback (stdin/stdout pool x4): {} → {}", target, command);
                 pool.register(target.clone(), command.clone());
             }
-            Arc::new(pool)
+            Arc::new(std::sync::RwLock::new(pool))
         };
 
-        // Build unified ConnectorFn: pools + native handlers + wasm + sidecar
+        // Build unified ConnectorFn: pools + native handlers + plugins + wasm + sidecar
         let native_registry = Arc::new(self.native_registry);
 
         let connector_fn: ConnectorFn = {
             let pools = pools.clone();
             let native = native_registry.clone();
+            let plugins = plugin_registry.clone();
             let wasm_reg = wasm_registry.clone();
             let sidecar_pool = sidecar_pool.clone();
             #[cfg(feature = "sidecar")]
@@ -535,6 +569,8 @@ impl VwfdApp {
             Arc::new(move |connector_ref: &str, operation: &str, input: &Value| {
                 let pools = pools.clone();
                 let native = native.clone();
+                let plugins = plugins.clone();
+                #[allow(unused_variables)]
                 let wasm_reg = wasm_reg.clone();
                 let sidecar_pool = sidecar_pool.clone();
                 #[cfg(feature = "sidecar")]
@@ -545,20 +581,33 @@ impl VwfdApp {
 
                 Box::pin(async move {
                     // NativeCode: vastar.code.{handler_ref}
+                    // Dispatch chain: 1) NativeRegistry (boot-time) → 2) PluginRegistry (.so runtime)
                     if let Some(handler_ref) = connector_ref.strip_prefix("vastar.code.") {
-                        return native.dispatch(handler_ref, &input);
+                        // Try boot-time native handlers first
+                        if let Ok(result) = native.dispatch(handler_ref, &input) {
+                            return Ok(result);
+                        }
+                        // Fallback: runtime-loaded .so plugins
+                        if plugins.has(handler_ref) {
+                            return plugins.call(handler_ref, &input);
+                        }
+                        return Err(format!("native handler '{}' not registered. Available: {:?} + plugins: {:?}",
+                            handler_ref, native.names(), plugins.names()));
                     }
 
                     // WASM: vastar.wasm.{module_ref} — Worker pool fast path
+                    #[allow(unused_variables)]
                     if let Some(module_ref) = connector_ref.strip_prefix("vastar.wasm.") {
                         #[cfg(feature = "wasm")]
                         {
-                            if let Some(pool) = wasm_reg.get(module_ref) {
+                            // Clone Arc out of RwLock before any await
+                            let pool = {
+                                let reg = wasm_reg.read().unwrap();
+                                reg.get(module_ref).cloned()
+                            };
+                            if let Some(pool) = pool {
                                 let payload = serde_json::to_vec(&input).unwrap_or_default();
-
-                                // Dispatch to dedicated WASM worker thread via channel
                                 let result = pool.call(payload).await;
-
                                 match result {
                                     Ok(output_bytes) => {
                                         match serde_json::from_slice::<Value>(&output_bytes) {
@@ -580,9 +629,9 @@ impl VwfdApp {
 
                     // Sidecar: vastar.sidecar.{target}
                     if let Some(target) = connector_ref.strip_prefix("vastar.sidecar.") {
-                        // Try UDS+SHM path first (vil_sidecar, ~12μs)
+                        // Try UDS+SHM path first — only if target is registered in UDS registry
                         #[cfg(feature = "sidecar")]
-                        {
+                        if vil_sc_reg.get(target).is_some() {
                             let request_data = serde_json::to_vec(&input).unwrap_or_default();
                             match vil_sidecar::invoke(&vil_sc_reg, target, "execute", &request_data).await {
                                 Ok(resp) => {
@@ -595,7 +644,18 @@ impl VwfdApp {
                             }
                         }
                         // Fallback: stdin/stdout pool (line-delimited JSON)
-                        return sidecar_pool.call(target, &input).await;
+                        // Clone the pool slot before await to avoid holding RwLockReadGuard across await
+                        let pool_slot = {
+                            let pool = sidecar_pool.read().unwrap();
+                            pool.get_slot(target)
+                        };
+                        return match pool_slot {
+                            Some(slot) => {
+                                let mut guard = slot.lock().await;
+                                guard.call(&input).await
+                            }
+                            None => Err(format!("sidecar '{}' not registered", target)),
+                        };
                     }
 
                     // Everything else → pool dispatch (HTTP, DB, MQ, Storage)
@@ -604,8 +664,36 @@ impl VwfdApp {
             })
         };
 
+        // ── Rule Engine: load rule sets from VIL_RULES_DIR ──
+        let rule_fn: Option<crate::executor::RuleFn> = {
+            let rules_dir = std::env::var("VIL_RULES_DIR")
+                .unwrap_or_else(|_| "/var/lib/vil/rules".to_string());
+            let rule_sets = load_rule_sets(&rules_dir);
+            if !rule_sets.is_empty() {
+                eprintln!("  Rule sets loaded: {:?}", rule_sets.keys().collect::<Vec<_>>());
+                let rule_sets = Arc::new(rule_sets);
+                Some(Box::new(move |rule_set_id: &str, input: &Value| {
+                    if let Some(rs) = rule_sets.get(rule_set_id) {
+                        let result = rs.evaluate(input)
+                            .map_err(|e| format!("rule '{}': {}", rule_set_id, e))?;
+                        // Return first action or full result
+                        Ok(result.first_action.unwrap_or_else(|| serde_json::json!({
+                            "matched": result.matched.len(),
+                            "all_actions": result.all_actions,
+                        })))
+                    } else {
+                        // Rule set not found — return stub (backward compatible)
+                        Ok(serde_json::json!({"_stub": true, "_rule": rule_set_id}))
+                    }
+                }))
+            } else {
+                None
+            }
+        };
+
         let config = ExecConfig {
             connector_fn: Some(connector_fn),
+            rule_fn,
             durability: self.durability.clone(),
             ..Default::default()
         };
@@ -720,7 +808,19 @@ impl VwfdApp {
             vwfd_dispatch(&router, &config, path, "DELETE", serde_json::json!({}), &headers).await
         }
 
-        let svc = ServiceProcess::new("vwfd")
+        // PORT env overrides hardcoded port — enables bench/test port management
+        let effective_port = std::env::var("PORT")
+            .ok()
+            .and_then(|s| s.parse::<u16>().ok())
+            .unwrap_or(self.port);
+
+        let mut app = VilApp::new("vil-vwfd")
+            .port(effective_port)
+            .observer(self.observer_enabled);
+
+        // Build vwfd wildcard service — registered AFTER admin to prevent
+        // /*path from intercepting /api/admin/* routes.
+        let vwfd_svc = ServiceProcess::new("vwfd")
             .prefix("")
             .endpoint(Method::POST, "/*path", post(vwfd_post_handler))
             .endpoint(Method::GET, "/*path", axum::routing::get(vwfd_get_handler))
@@ -730,12 +830,7 @@ impl VwfdApp {
             .extension(router_ext.clone())
             .extension(config_ext);
 
-        let mut app = VilApp::new("vil-vwfd")
-            .port(self.port)
-            .observer(self.observer_enabled)
-            .service(svc);
-
-        // Provisioning admin API
+        // Provisioning admin API — must register BEFORE vwfd catch-all
         if self.provision_enabled {
             let provision_reg = Arc::new(crate::provision::WorkflowRegistry::new(&self.workflow_dir));
             // Load existing workflows into provision registry
@@ -750,8 +845,16 @@ impl VwfdApp {
                 .extension(provision_reg.clone())
                 .extension(router_ext.clone())
                 .extension(provision_key)
+                .extension(plugin_registry.clone())
+                .extension(wasm_registry.clone())
+                .extension(sidecar_pool.clone())
                 .endpoint(Method::GET, "/health", axum::routing::get(crate::provision_admin::health))
                 .endpoint(Method::POST, "/upload", post(crate::provision_admin::upload_workflow))
+                .endpoint(Method::POST, "/upload/plugin", post(crate::provision_admin::upload_plugin)
+                    .layer(axum::extract::DefaultBodyLimit::max(50 * 1024 * 1024)))
+                .endpoint(Method::POST, "/upload/wasm", post(crate::provision_admin::upload_wasm)
+                    .layer(axum::extract::DefaultBodyLimit::max(50 * 1024 * 1024)))
+                .endpoint(Method::GET, "/handlers", axum::routing::get(crate::provision_admin::list_handlers))
                 .endpoint(Method::GET, "/workflows", axum::routing::get(crate::provision_admin::list_workflows))
                 .endpoint(Method::POST, "/workflow/activate", post(crate::provision_admin::activate_workflow))
                 .endpoint(Method::POST, "/workflow/deactivate", post(crate::provision_admin::deactivate_workflow))
@@ -761,7 +864,52 @@ impl VwfdApp {
 
             app = app.service(admin_svc);
             eprintln!("  Provision: admin API enabled at /api/admin/");
+
+            // Show provision usage guide
+            let key_header = if self.provision_key.is_some() {
+                "\n       -H 'X-Api-Key: <your-key>' \\"
+            } else {
+                ""
+            };
+            eprintln!();
+            eprintln!("  ─── Provision Guide ───────────────────────────────────────");
+            eprintln!();
+            eprintln!("  1. Upload workflow:");
+            eprintln!("     curl -X POST http://localhost:{}/api/admin/upload \\", self.port);
+            if !key_header.is_empty() {
+                eprintln!("       -H 'X-Api-Key: <your-key>' \\");
+            }
+            eprintln!("       -H 'Content-Type: application/json' \\");
+            eprintln!("       -d @my-workflow.vil.yaml");
+            eprintln!();
+            eprintln!("  2. List workflows:");
+            eprintln!("     curl http://localhost:{}/api/admin/workflows", self.port);
+            eprintln!();
+            eprintln!("  3. Activate workflow:");
+            eprintln!("     curl -X POST http://localhost:{}/api/admin/workflow/activate \\", self.port);
+            if !key_header.is_empty() {
+                eprintln!("       -H 'X-Api-Key: <your-key>' \\");
+            }
+            eprintln!("       -H 'Content-Type: application/json' \\");
+            eprintln!("       -d '{{\"id\":\"my-workflow\"}}'");
+            eprintln!();
+            eprintln!("  4. Deactivate workflow:");
+            eprintln!("     curl -X POST http://localhost:{}/api/admin/workflow/deactivate \\", self.port);
+            if !key_header.is_empty() {
+                eprintln!("       -H 'X-Api-Key: <your-key>' \\");
+            }
+            eprintln!("       -H 'Content-Type: application/json' \\");
+            eprintln!("       -d '{{\"id\":\"my-workflow\"}}'");
+            eprintln!();
+            eprintln!("  5. Health check:");
+            eprintln!("     curl http://localhost:{}/api/admin/health", self.port);
+            eprintln!();
+            eprintln!("  ────────────────────────────────────────────────────────────");
+            eprintln!();
         }
+
+        // Register vwfd catch-all LAST so /api/admin/* routes take priority
+        app = app.service(vwfd_svc);
 
         app.run().await;
 
@@ -780,9 +928,15 @@ impl VwfdApp {
 ///     .await;
 /// ```
 pub fn app(workflow_dir: impl Into<String>, port: u16) -> VwfdApp {
+    // `PORT` env var overrides the argument when set, so CI/bench drivers can
+    // relocate the listener without patching the example.
+    let resolved_port = std::env::var("PORT")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(port);
     VwfdApp {
         workflow_dir: workflow_dir.into(),
-        port,
+        port: resolved_port,
         observer_enabled: false,
         native_registry: NativeRegistry::new(),
         wasm_modules: HashMap::new(),
@@ -816,6 +970,39 @@ mod tests {
         let result = reg.dispatch("double", &json!({"n": 5})).unwrap();
         assert_eq!(result["result"], 10);
     }
+
+}
+
+/// Load all rule set YAML files from a directory.
+/// Returns HashMap<rule_set_id, RuleSet>.
+fn load_rule_sets(dir: &str) -> std::collections::HashMap<String, vil_rules::RuleSet> {
+    let mut sets = std::collections::HashMap::new();
+    let path = std::path::Path::new(dir);
+    if !path.is_dir() { return sets; }
+    let entries = match std::fs::read_dir(path) {
+        Ok(e) => e,
+        Err(_) => return sets,
+    };
+    for entry in entries.flatten() {
+        let p = entry.path();
+        if !p.extension().map_or(false, |e| e == "yaml" || e == "yml") { continue; }
+        match vil_rules::RuleSet::from_file(&p.to_string_lossy()) {
+            Ok(rs) => {
+                let id = rs.id.clone();
+                sets.insert(id, rs);
+            }
+            Err(e) => {
+                eprintln!("  Rule load '{}': {}", p.display(), e);
+            }
+        }
+    }
+    sets
+}
+
+#[cfg(test)]
+mod tests_appendix {
+    use super::*;
+    use serde_json::json;
 
     #[test]
     fn test_native_registry_not_found() {

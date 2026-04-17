@@ -18,14 +18,14 @@ spec:
       code_config: { handler_ref: triage_assess }
       input_mappings:
         - target: body
-          source: { language: vil-expr, source: 'trigger_payload.body' }
+          source: { language: spv1, source: '$.trigger_payload.body' }
       output_variable: result
 
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: vil-expr, source: 'result' }
+        final_response: { language: spv1, source: '$.result' }
 
     - id: end
       activity_type: End

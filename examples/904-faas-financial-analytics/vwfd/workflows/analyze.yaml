@@ -23,6 +23,8 @@ spec:
           source: { language: vil-expr, source: 'is_anomaly(trigger_payload.body.latest_amount, trigger_payload.body.transactions, "zscore", 2.0)' }
         - target: branch_distance
           source: { language: vil-expr, source: 'geo_distance(-6.2088, 106.8456, -7.7956, 110.3695, "km")' }
+        - target: p95_amount
+          source: { language: vil-expr, source: 'percentile(trigger_payload.body.transactions, 95)' }
         - target: timestamp
           source: { language: vil-expr, source: 'now()' }
       output_variable: result
@@ -30,7 +32,7 @@ spec:
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: vil-expr, source: 'result' }
+        final_response: { language: spv1, source: '$.result' }
     - id: end
       activity_type: End
   flows:

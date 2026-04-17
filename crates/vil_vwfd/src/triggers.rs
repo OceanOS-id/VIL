@@ -22,6 +22,7 @@ impl TriggerHandle {
 }
 
 /// Start all non-webhook triggers for a workflow graph.
+#[allow(unused_mut, unused_variables)]
 pub async fn start_triggers(
     graph: Arc<VilwGraph>,
     config: Arc<ExecConfig>,
@@ -222,7 +223,7 @@ pub async fn start_triggers(
             let bucket = trigger_node.config.get("s3").and_then(|c| c.get("bucket")).and_then(|v| v.as_str()).unwrap_or("default");
             let prefix = trigger_node.config.get("s3").and_then(|c| c.get("prefix")).and_then(|v| v.as_str()).unwrap_or("");
             let trigger = vil_trigger_s3::create_trigger(vil_trigger_s3::S3Config::new(bucket, prefix, 30));
-            let (cancel_tx, _cancel_rx) = tokio::sync::oneshot::channel();
+            let (cancel_tx, mut cancel_rx) = tokio::sync::oneshot::channel();
             let g = graph.clone();
             tokio::spawn(async move {
                 use vil_trigger_core::TriggerSource;
@@ -240,7 +241,7 @@ pub async fn start_triggers(
             let pass = trigger_node.config.get("sftp").and_then(|c| c.get("password")).and_then(|v| v.as_str()).unwrap_or("");
             let dir = trigger_node.config.get("sftp").and_then(|c| c.get("remote_dir")).and_then(|v| v.as_str()).unwrap_or("/upload");
             let trigger = vil_trigger_sftp::create_trigger(vil_trigger_sftp::SftpConfig::new(host, port, user, pass, dir, 60));
-            let (cancel_tx, _cancel_rx) = tokio::sync::oneshot::channel();
+            let (cancel_tx, mut cancel_rx) = tokio::sync::oneshot::channel();
             let g = graph.clone();
             tokio::spawn(async move {
                 use vil_trigger_core::TriggerSource;
@@ -256,7 +257,7 @@ pub async fn start_triggers(
             let table = trigger_node.config.get("db_poll").and_then(|c| c.get("table")).and_then(|v| v.as_str()).unwrap_or("events");
             let id_col = trigger_node.config.get("db_poll").and_then(|c| c.get("id_column")).and_then(|v| v.as_str()).unwrap_or("id");
             let trigger = vil_trigger_db_poll::create_trigger(vil_trigger_db_poll::DbPollConfig::new(db_url, table, id_col, 10));
-            let (cancel_tx, _cancel_rx) = tokio::sync::oneshot::channel();
+            let (cancel_tx, mut cancel_rx) = tokio::sync::oneshot::channel();
             let g = graph.clone();
             tokio::spawn(async move {
                 use vil_trigger_core::TriggerSource;
@@ -272,7 +273,7 @@ pub async fn start_triggers(
             let service = trigger_node.config.get("grpc").and_then(|c| c.get("service")).and_then(|v| v.as_str()).unwrap_or("events");
             let method = trigger_node.config.get("grpc").and_then(|c| c.get("method")).and_then(|v| v.as_str()).unwrap_or("stream");
             let trigger = vil_trigger_grpc::create_trigger(vil_trigger_grpc::GrpcConfig::new(endpoint, service, method));
-            let (cancel_tx, _cancel_rx) = tokio::sync::oneshot::channel();
+            let (cancel_tx, mut cancel_rx) = tokio::sync::oneshot::channel();
             let g = graph.clone();
             tokio::spawn(async move {
                 use vil_trigger_core::TriggerSource;

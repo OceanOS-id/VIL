@@ -18,10 +18,12 @@ wasm = ["dep:wasmtime"]
 wasi = ["wasm", "dep:wasmtime-wasi"]
 
 [dependencies]
-vil_types = { version = "0.3", path = "../vil_types" }
-vil_ir = { version = "0.3", path = "../vil_ir" }
+vil_types = { version = "0.4", path = "../vil_types" }
+vil_ir = { version = "0.4", path = "../vil_ir" }
 
 # Feature-gated WASM runtime
 wasmtime = { version = "24", optional = true }
 wasmtime-wasi = { version = "24", optional = true }
 dashmap = "5.5"
+serde_json = "1.0"
+bytes = "1"

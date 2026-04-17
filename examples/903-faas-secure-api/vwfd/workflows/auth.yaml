@@ -21,12 +21,16 @@ spec:
           source: { language: vil-expr, source: 'jwt_sign(trigger_payload.body, "secret-key")' }
         - target: welcome
           source: { language: vil-expr, source: 'render_template("Welcome {{name}}", trigger_payload.body)' }
+        - target: encrypted
+          source: { language: vil-expr, source: 'aes_encrypt(trigger_payload.body.secret_data, "aes-256-key-here")' }
+        - target: jwt_verified
+          source: { language: vil-expr, source: 'jwt_verify(trigger_payload.body.existing_token, "secret-key")' }
       output_variable: result
     - id: respond
       activity_type: EndTrigger
       end_trigger_config:
         trigger_ref: trigger
-        final_response: { language: vil-expr, source: 'result' }
+        final_response: { language: spv1, source: '$.result' }
     - id: end
       activity_type: End
   flows:

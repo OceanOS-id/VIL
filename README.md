@@ -13,16 +13,17 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License"></a>
+  <a href="LICENSE-APACHE"><img src="https://img.shields.io/badge/libraries-Apache--2.0%20%2F%20MIT-blue" alt="Libraries License"></a>
+  <a href="LICENSE-VSAL"><img src="https://img.shields.io/badge/runtime-VSAL-orange" alt="Runtime License"></a>
   <img src="https://img.shields.io/badge/crates-171-green" alt="Crates">
   <img src="https://img.shields.io/badge/examples-234-orange" alt="Examples">
   <img src="https://img.shields.io/badge/built--in_FaaS-20-cyan" alt="FaaS">
-  <img src="https://img.shields.io/badge/v0.3.0-latest-brightgreen" alt="Version">
+  <img src="https://img.shields.io/badge/v0.4.0-latest-brightgreen" alt="Version">
 </p>
 
 VIL combines a **semantic language layer** (compiler, IR, macros, codegen) with a **server framework** (VilApp, ServiceProcess, Tri-Lane mesh) — generating all plumbing so developers write only business logic and intent.
 
-**v0.3.0:** Two development patterns (Standard + Workflow), WASM at 83K req/s, Sidecar at 59K req/s, 20 built-in FaaS functions.
+**v0.4.0:** Two development patterns (Standard + Workflow), WASM at 83K req/s, Sidecar at 59K req/s, 20 built-in FaaS functions. Licensing restructured — see [License](#license).
 
 ## Two Patterns, One Runtime
 
@@ -167,8 +168,8 @@ cargo run --release -p vil-vwfd-currency-exchange
 ## Quick Start
 
 ```bash
-# Install CLI
-cargo install vil-cli
+# Install CLI (VSAL — source-available, installed from GitHub)
+cargo install --git https://github.com/OceanOS-id/VIL --tag v0.4.0 vil_cli
 
 # Create project
 vil init my-api --template vwfd
@@ -178,6 +179,8 @@ cd my-api
 cargo run --release
 curl http://localhost:8080/api/hello
 ```
+
+> The `vil` CLI drives the VWFD development loop (`init / dev / gen / deploy`) and is therefore part of the VSAL runtime surface — not published to crates.io. See [License](#license).
 
 ## Connectors & Triggers
 
@@ -228,7 +231,53 @@ Webhook, Cron, Kafka Consumer, S3 Bucket Event, SFTP Directory, PostgreSQL CDC, 
 
 ## License
 
-Licensed under either of [Apache License 2.0](LICENSE-APACHE) or [MIT License](LICENSE-MIT) at your option.
+VIL uses a **two-tier licensing model** to keep libraries broadly usable while protecting the workflow-runtime surface from commodity Workflow-as-a-Service (WaaS) reselling. See [LICENSING.md](LICENSING.md) for the full guide.
+
+### Library Crates — Apache 2.0 / MIT (dual)
+
+**~165 crates** — compiler, IR, expression engine, connectors, triggers, codecs, FaaS, observability, AI plugins, SDKs, `vil_cli_core` + CLI sub-crates, and server framework including `vil_server` (the Axum-based VilApp umbrella) and `vil_server_core`.
+
+- Published to [crates.io](https://crates.io/users/oceanos-id)
+- Licensed under [Apache 2.0](LICENSE-APACHE) **or** [MIT](LICENSE-MIT) at your option
+- Install with `cargo add <crate-name>`
+
+### Runtime Crates — VSAL (source-available)
+
+**7 crates** covering the VWFD workflow runtime + provisioning + operator surface + the `vil` CLI — the actual Workflow-as-a-Service vectors:
+
+| Crate | Role |
+|-------|------|
+| `vil_vwfd` | VWFD compiler + executor (workflow runtime) |
+| `vil_vwfd_macros` | `vil_workflow!` declarative macro |
+| `vil_server_provision` | Provisionable server — runtime workflow upload (**primary WaaS vector**) |
+| `vil_cli` | `vil` binary — dispatcher for `init / dev / gen / deploy` |
+| `vil_cli_server` | `vil dev / gen / deploy` backend |
+| `vil_workflow_v2` | Next-gen workflow engine (preview) |
+| `vil_operator` | Kubernetes operator for VIL deployments |
+
+- **Not published to crates.io.** Install from GitHub:
+  ```toml
+  # In your Cargo.toml
+  vil_vwfd = { git = "https://github.com/OceanOS-id/VIL", tag = "v0.4.0" }
+  ```
+  For the CLI binary:
+  ```bash
+  cargo install --git https://github.com/OceanOS-id/VIL --tag v0.4.0 vil_cli
+  ```
+  or clone and path-depend for local development.
+- Licensed under [Vastar Source Available License (VSAL)](LICENSE-VSAL) — see [LICENSE-VSAL](LICENSE-VSAL).
+
+### What VSAL Restricts
+
+VSAL permits **all internal business use**, private deployment, modification, and self-hosting for your own workflows. What it forbids is **Workflow-as-a-Service** — reselling the VWFD runtime as a hosted workflow execution platform to third parties, including:
+
+- Multi-tenant VWFD hosting (n8n/Kestra/Temporal-style service)
+- Translation layers that accept n8n/Kestra/Airflow/Temporal workflows, emit VWFD, and host execution as a service
+- Any product whose primary value is "run customer-authored workflows for them" on top of VIL's runtime
+
+If you run **your own** workflows on VIL — even if you expose them to customers as a product feature — you are inside the permitted use. The restriction targets commodity WaaS reselling, not application-level exposure. See [LICENSING.md §3](LICENSING.md) for examples and the Significant Business Process Exception.
+
+For commercial WaaS licensing, contact **legal@vastar.id**.
 
 ## Links
 

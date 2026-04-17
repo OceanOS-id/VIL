@@ -32,7 +32,7 @@ spec:
               {
                 "messages": [
                   {"role": "system", "content": "You are a ReAct agent. You MUST follow this exact format:\n\nThought: <reasoning about what to do next>\nAction: <search OR calculator>\nAction Input: <input for the action>\n\nAvailable actions:\n- search: look up factual information. Input is a search query string.\n- calculator: evaluate a math expression. Input is a math expression.\n\nWhen you have the final answer, respond with:\nThought: I now have enough information.\nFINAL_ANSWER: <your complete answer>"},
-                  {"role": "user", "content": trigger_payload.question}
+                  {"role": "user", "content": trigger_payload.body.question}
                 ],
                 "reasoning_trace": [],
                 "iterations": 0,
@@ -92,8 +92,8 @@ spec:
       input_mappings:
         - target: llm_output
           source:
-            language: vil-expr
-            source: llm_output
+            language: spv1
+            source: '$.llm_output'
       output_variable: step_result
 
     # Step C: Append observation to conversation and update trace
@@ -134,10 +134,10 @@ spec:
           language: vil-expr
           source: |
             {
-              "question": trigger_payload.question,
               "answer": react_state.final_answer,
               "reasoning_trace": react_state.reasoning_trace,
-              "iterations": react_state.iterations
+              "iterations": react_state.iterations,
+              "max_iter_reached": react_state.iterations >= 5
             }
 
     - id: end
