@@ -12,11 +12,11 @@
 This license applies to the following software components (collectively, the
 "Software"):
 
-    - vil_server              the runtime server binary
-    - vil_server_provision    hot-reload provisioning engine
     - vil_vwfd                VWFD workflow compiler and executor
     - vil_vwfd_macros         VWFD proc macros
-    - vil_cli_server          CLI tooling for VilApp backends
+    - vil_server_provision    hot-reload provisioning engine
+    - vil_cli                 the `vil` binary (init / dev / gen / deploy)
+    - vil_cli_server          backend for vil dev / gen / deploy
     - vil_workflow_v2         DAG-based workflow scheduler
     - vil_operator            Kubernetes Operator for vil-server
 
@@ -160,12 +160,49 @@ workflow execution. The workflow engine is an implementation detail.
   5. RESERVATION OF RIGHTS
 ================================================================================
 
-5.1 Only Licensor may operate managed cloud services that provide
-    Provisionable Mode execution of VIL-based workflows.
+5.1 Licensor reserves all rights not expressly granted herein.
 
-5.2 Licensor reserves all rights not expressly granted herein.
+5.2 Licensor Reserved Rights. The restrictions in Section 3 (Workflow Service
+    Restriction) and Section 1.6 (Workflow-as-a-Service definition) apply to
+    You as a Licensee. They do NOT apply to the Licensor. Notwithstanding any
+    provision of this License, the Licensor may engage in any commercial
+    activity involving the Software, including without limitation:
 
-5.3 Trademarks — "VIL", "vil_server", "VFlow", "VFlow Enterprise", "VWFD",
+    (a) Operating the Software and any derivative work thereof as a
+        Platform-as-a-Service (PaaS), Software-as-a-Service (SaaS), or
+        Workflow-as-a-Service (WaaS) offering.
+
+    (b) Operating the Software in Provisionable Mode (Section 1.5) as a
+        multi-tenant commercial service, including accepting, executing,
+        and managing Workflow Definitions uploaded by third parties.
+
+    (c) Offering migration services, whether automated (AI-powered) or
+        manual, that translate, transform, convert, synthesize, or compile
+        third-party Workflow Definitions, specifications, Requests for
+        Comments (RFCs), design documents, code, or any other source
+        artifact into VWFD, VIL Projects, or any equivalent format, and
+        hosting the resulting artifacts on infrastructure operated by
+        Licensor.
+
+    (d) Licensing, sublicensing, white-labeling, or otherwise commercially
+        exploiting the Software and any derivative work thereof under
+        separate commercial terms.
+
+5.3 Exclusive Commercial Operation. Only Licensor may operate managed
+    cloud services — including PaaS, SaaS, WaaS, and migration services —
+    that provide Provisionable Mode execution of the Software, whether
+    accepting VWFD directly or accepting third-party Workflow Definitions
+    and translating them to VWFD. This exclusivity is the commercial
+    foundation for which the Workflow Service Restriction exists.
+
+5.4 No Implied Grant to Licensee. Nothing in this License grants You any
+    right to engage in the activities reserved to the Licensor under
+    Section 5.2 or Section 5.3. Commercial arrangements for WaaS
+    operation, migration services, or equivalent activities may be
+    obtained separately by written agreement with the Licensor (contact
+    legal@vastar.id).
+
+5.5 Trademarks — "VIL", "vil_server", "VFlow", "VFlow Enterprise", "VWFD",
     "V-CEL", "VDICL", "VilQuery", "TriLaneKernel", "Galaxy Bimasakti", and
     "Vastar" are trademarks of PT RAG Mid Solution. No trademark license is
     granted under this License. Use of these trademarks is subject to

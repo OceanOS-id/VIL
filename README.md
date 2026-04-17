@@ -277,7 +277,16 @@ VSAL permits **all internal business use**, private deployment, modification, an
 
 If you run **your own** workflows on VIL — even if you expose them to customers as a product feature — you are inside the permitted use. The restriction targets commodity WaaS reselling, not application-level exposure. See [LICENSING.md §3](LICENSING.md) for examples and the Significant Business Process Exception.
 
-For commercial WaaS licensing, contact **legal@vastar.id**.
+### Vastar Commercial Services (Licensor Reserved)
+
+The activities VSAL restricts for licensees are **exclusively available through Vastar Cloud**:
+
+- **VIL Cloud WaaS** — multi-tenant managed workflow hosting
+- **VIL Cloud Migration** — AI-powered migration from n8n / Kestra / Temporal / Airflow / Prefect / Dagster / Zapier / BPMN / RFCs / specifications / design documents → VIL Projects, hosted on Vastar Cloud
+- **VIL Cloud Setup Project** — on-demand VIL Project generation from customer specs, delivered as a hosted deployment
+- **Commercial WaaS Sublicensing** — separate agreement for organizations that need to offer workflow hosting legitimately
+
+See [LICENSING.md §3.7.5](LICENSING.md) and [LICENSE-VSAL §5.2](LICENSE-VSAL) for the formal Licensor Reserved Rights. Contact **legal@vastar.id** for commercial arrangements.
 
 ## Links
 

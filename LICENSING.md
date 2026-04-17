@@ -166,7 +166,7 @@ Subject to the terms of this License, Vastar grants you a worldwide, royalty-fre
 
 ### 3.5 Workflow Service Restriction
 
-You may **NOT** use the VSAL workflow-runtime crates (`vil_vwfd`, `vil_vwfd_macros`, `vil_server_provision`, `vil_cli_server`, `vil_workflow_v2`, `vil_operator`, or any derivative) to build, operate, or offer Workflow-as-a-Service as a primary product. This restriction applies regardless of technical implementation — including when these crates are combined with `vil_server` (Apache/MIT) or any other component.
+You may **NOT** use the VSAL workflow-runtime crates (`vil_vwfd`, `vil_vwfd_macros`, `vil_server_provision`, `vil_cli`, `vil_cli_server`, `vil_workflow_v2`, `vil_operator`, or any derivative) to build, operate, or offer Workflow-as-a-Service as a primary product. This restriction applies regardless of technical implementation — including when these crates are combined with `vil_server` (Apache/MIT) or any other component.
 
 Specifically, you may **not**:
 
@@ -223,6 +223,22 @@ If you build a product that includes `vil_server` and your clients deploy it on 
 
 You may fork, modify, and contribute to VIL and `vil_server`. Derivative works carry the same Workflow Service Restriction.
 
+#### 3.7.5 Licensor Reserved Rights (Vastar-Only Activities)
+
+The Workflow Service Restriction in §3.5 applies to Licensees, **not to the Licensor**. Vastar (PT RAG Mid Solution) exclusively reserves the following commercial activities — these are Vastar's business model and are **not available** to third parties under VSAL:
+
+1. **Managed PaaS / SaaS / WaaS** — Operating the VSAL crates (including `vil_vwfd`, `vil_server_provision`, `vil_workflow_v2`, `vil_operator`) as managed cloud services in Provisionable Mode, including multi-tenant workflow execution for third-party customers.
+
+2. **AI-Powered Cloud Migration** — Accepting any source artifact (third-party workflow definitions such as n8n/Kestra/Temporal/Airflow/Prefect/Dagster/Zapier/ServiceNow/BPMN; specifications; Requests for Comments; design documents; legacy code; natural-language descriptions; or any other input) and translating, transforming, synthesizing, or compiling it into VWFD, VIL Projects, or equivalent format — whether by AI (ADE) or human-assisted — and hosting the resulting execution on Vastar infrastructure.
+
+3. **Setup Project Services** — On-demand generation of VIL Projects from customer specifications, with Vastar-hosted execution as a deliverable.
+
+4. **Commercial Sublicensing** — Licensing, sublicensing, white-labeling, or OEM embedding of the VSAL crates under separate negotiated commercial terms (for parties that need to offer WaaS legitimately).
+
+These rights are codified in LICENSE-VSAL §5.2 (Licensor Reserved Rights) and §5.3 (Exclusive Commercial Operation). Third parties seeking any of these capabilities must negotiate a separate commercial agreement with Vastar (contact legal@vastar.id).
+
+> **Why the asymmetry?** VSAL exists precisely to preserve these commercial channels as Vastar's moat. Without exclusivity, VIL could not sustain open-source development at its current scope (165+ Apache/MIT library crates). This is the same model as MongoDB SSPL, Elastic License v2, and BSL — the licensor operates the service; licensees build products.
+
 ### 3.8 Examples (Summary Table)
 
 | Scenario | Permitted? | Reasoning |
@@ -238,6 +254,11 @@ You may fork, modify, and contribute to VIL and `vil_server`. Derivative works c
 | Company I builds custom provisioning layer using VIL crates (bypassing `.provision(true)`) to offer hosted workflow execution | ✗ | WaaS regardless of technical implementation. |
 | Company J builds an n8n/Kestra compatibility layer that translates their workflows into VWFD and hosts on VIL Server as a managed service | ✗ | **WaaS. Format conversion does not exempt the service.** |
 | AWS/GCP/Azure offers "Managed VIL Runtime" or "VIL Workflow Service" as a cloud product | ✗ | WaaS. Cloud provider workflow hosting is exclusively reserved for Vastar. |
+| Company K builds "RFC → Workflow" service: customers submit PDFs/RFCs, Company K generates VIL projects and hosts execution | ✗ | WaaS + migration service. Both are Vastar-reserved (see §3.7.5). |
+| Company L uses Vastar's AI-powered migration (ADE) to convert their Temporal workflows → VIL Project, then self-hosts on their own infra | ✓ | Licensee paid Vastar for migration; resulting VIL Project is Licensee's Self-Use. |
+| **Vastar** offers "VIL Cloud Migration" — AI converts customer RFCs/n8n/Temporal/docs → VIL Projects, hosts on Vastar Cloud as PaaS/SaaS/WaaS | ✓ | **Licensor Reserved Right** (§3.7.5 / LICENSE-VSAL §5.2). |
+| **Vastar** operates multi-tenant Provisionable Mode for third-party customers on Vastar Cloud | ✓ | **Licensor Reserved Right.** Same activity by any other party = ✗. |
+| Company M contracts with Vastar for a commercial WaaS sublicense, then operates managed workflow hosting for their vertical (e.g., healthcare compliance) | ✓ | Permitted via separate commercial agreement with Vastar (§3.7.5 item 4). |
 
 ---
 
@@ -302,31 +323,55 @@ Contact [sales@vastar.id](mailto:sales@vastar.id) for commercial licensing inqui
 
 Vastar cloud services are governed by the Vastar Terms of Service and applicable service-level agreements. These are the **exclusive managed offerings for VIL/VFlow runtime**:
 
-| Service | Description | Pricing |
-|---------|-------------|---------|
-| **VIL Cloud** | Managed `vil_server` runtime | Subscription ($5–30/month) |
-| **VFlow Cloud** | Managed VFlow runtime with hot-reload, multi-tenancy, versioning | Subscription ($40–100/month) |
-| **VFlow Enterprise Cloud** | Vastar-managed enterprise deployment with HA, SSO, SLA | Custom agreement |
-| **ADE** | AI-powered project setup (`vil init --advance`, `vil agent`) | Pay-per-use (Compilation Units) |
-| **Galaxy Bimasakti** | Marketplace for templates, connectors, learning modules | 15% commission on paid items |
+| Service | Tier | Description | Pricing |
+|---------|------|-------------|---------|
+| **VIL Cloud** | PaaS | Managed `vil_server` runtime — single-tenant deployment of VIL applications | Subscription ($5–30/month) |
+| **VIL Cloud Workflow** | SaaS | Hosted VWFD runtime in Provisionable Mode — customer uploads workflows, Vastar hosts execution | Subscription / usage-based |
+| **VIL Cloud WaaS** | WaaS | Multi-tenant managed Workflow-as-a-Service for third-party end-users (Vastar-exclusive per LICENSE-VSAL §5.3) | Usage-based / enterprise |
+| **VIL Cloud Migration** | Migration-as-a-Service | AI-powered migration (ADE) — accepts n8n / Kestra / Airflow / Temporal / Prefect / Dagster / Zapier / ServiceNow / BPMN / RFCs / specifications / legacy code / design documents → outputs VIL Projects hosted on Vastar Cloud | Pay-per-project + hosting |
+| **VIL Cloud Setup Project** | Professional Services + SaaS | On-demand VIL Project generation from customer specifications — deliverable is a provisionable VIL deployment hosted by Vastar | Fixed project fee + subscription |
+| **VFlow Cloud** | PaaS | Managed VFlow runtime with hot-reload, multi-tenancy, versioning | Subscription ($40–100/month) |
+| **VFlow Enterprise Cloud** | Managed / SLA | Vastar-managed enterprise deployment with HA, SSO, SLA | Custom agreement |
+| **ADE** (Advanced Development Environment) | AI Service | AI-powered project setup (`vil init --advance`, `vil agent`) — standalone or feeds VIL Cloud Migration | Pay-per-use (Compilation Units) |
+| **Galaxy Bimasakti** | Marketplace | Marketplace for templates, connectors, learning modules | 15% commission on paid items |
 
-**Only Vastar may operate managed cloud services that provide Provisionable Mode workflow execution.** This exclusivity is the commercial foundation of Vastar's cloud business and is protected by the VSAL applied to `vil_vwfd`, `vil_server_provision`, and the workflow-runtime crates listed in §3.2.
+**Only Vastar may operate managed cloud services — including PaaS, SaaS, WaaS, and AI-powered Migration Services — that provide Provisionable Mode workflow execution.** This exclusivity is codified in LICENSE-VSAL §5.3 (Exclusive Commercial Operation) and protected by the VSAL applied to `vil_vwfd`, `vil_server_provision`, `vil_workflow_v2`, `vil_operator`, `vil_cli`, `vil_cli_server`, and `vil_vwfd_macros` (§3.2).
+
+### 6.1 Vastar's AI-Powered Cloud Migration — The Commercial Moat
+
+Vastar Cloud Migration is the **flagship commercial service** enabled by VSAL's §3.3.1 anti-translation clause. Third parties are forbidden from building "competitor-workflow → VWFD → hosted" translation pipelines (§3.5 + §3.8 Example J/K); only Vastar may operate this service.
+
+**Accepted input formats** (non-exhaustive):
+
+- **Workflow systems:** n8n, Kestra, Airflow, Prefect, Dagster, Temporal, Argo Workflows, Zapier, Make.com, ServiceNow Flow Designer, BPMN 2.0 XML, Camunda DMN, Appian, OutSystems
+- **Specifications:** Requests for Comments (RFCs), system design documents, architecture diagrams, OpenAPI/Swagger specs, AsyncAPI, protobuf definitions
+- **Legacy artifacts:** Legacy Java/Python/Go/COBOL business logic, stored procedures, mainframe JCL
+- **Natural language:** English/Bahasa Indonesia prose descriptions of business processes
+- **Hybrid:** Any combination of the above, with AI reconciliation
+
+**Deliverable:** A provisionable VIL Project, deployed on Vastar Cloud (PaaS / SaaS / WaaS tier), with ongoing hosting and operational support.
+
+**Why this is defensible:** The combination of (a) VSAL anti-translation restriction on licensees, (b) Vastar-exclusive Licensor Reserved Rights (§3.7.5, LICENSE-VSAL §5.2), and (c) AI-powered ADE tooling creates a durable commercial moat. Competitors cannot offer equivalent "bring your workflow, we host it" services on VIL infrastructure without a separate commercial agreement with Vastar.
 
 ---
 
 ## 7. Quick Reference
 
-| Use Case | VIL Libraries (Apache/MIT) | VSAL Runtime | VFlow |
-|----------|:--------------------------:|:------------:|:-----:|
-| Build any app/service using VIL as framework | ✓ Free | ✓ Free | N/A |
-| Sell SaaS built with VIL (non-WaaS) | ✓ Free | ✓ Free | N/A |
-| Self-host workflow engine (internal) | ✓ Free | ✓ Free | Paid license |
-| Deploy to production (self-managed, non-WaaS) | ✓ Free | ✓ Free | Paid license |
-| Build WaaS / general workflow platform | ✗ | ✗ | ✗ |
-| Offer managed workflow hosting to third parties | N/A | ✗ Vastar only | ✗ Vastar only |
-| Modify source code | ✓ Yes | ✓ Yes (VSAL) | ✗ No (closed) |
-| Build SaaS with significant business process + workflow | ✓ Yes | ✓ Yes | Paid license |
-| **Translate n8n/Kestra/Airflow workflows to VWFD and host as a service** | ✗ WaaS | ✗ WaaS | ✗ WaaS |
+| Use Case | VIL Libraries (Apache/MIT) | VSAL Runtime | VFlow | Vastar-Operated |
+|----------|:--------------------------:|:------------:|:-----:|:---------------:|
+| Build any app/service using VIL as framework | ✓ Free | ✓ Free | N/A | N/A |
+| Sell SaaS built with VIL (non-WaaS) | ✓ Free | ✓ Free | N/A | N/A |
+| Self-host workflow engine (internal) | ✓ Free | ✓ Free | Paid license | N/A |
+| Deploy to production (self-managed, non-WaaS) | ✓ Free | ✓ Free | Paid license | N/A |
+| Build WaaS / general workflow platform | ✗ | ✗ Licensee | ✗ Licensee | ✓ Vastar-only |
+| Offer managed workflow hosting to third parties | N/A | ✗ Licensee | ✗ Licensee | ✓ Vastar-only |
+| Modify source code | ✓ Yes | ✓ Yes (VSAL) | ✗ No (closed) | N/A |
+| Build SaaS with significant business process + workflow | ✓ Yes | ✓ Yes | Paid license | N/A |
+| **Translate n8n/Kestra/Airflow/Temporal → VWFD and host as a service** | ✗ WaaS | ✗ Licensee | ✗ Licensee | ✓ **VIL Cloud Migration** |
+| AI-powered migration from RFC/docs/specs → VIL Project + hosting | ✗ | ✗ Licensee | ✗ Licensee | ✓ **VIL Cloud Migration + Setup Project** |
+| Multi-tenant Provisionable Mode WaaS | ✗ | ✗ Licensee | ✗ Licensee | ✓ **VIL Cloud WaaS** |
+
+**Reading the table:** "Licensee" rows are activities forbidden to Licensees (third parties using VSAL crates). The "Vastar-Operated" column shows the same activities as Licensor Reserved Rights (§3.7.5, LICENSE-VSAL §5.2) — exclusively available through Vastar Cloud.
 
 ### One-Sentence Summary
 
