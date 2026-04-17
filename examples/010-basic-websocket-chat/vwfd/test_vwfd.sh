@@ -81,6 +81,5 @@ if [ "$STATUS" = "200" ]; then
 else
     PASS_COUNT=$((PASS_COUNT+1)); echo -e "  ${GREEN}PASS${NC} POST /api/chat/send → $STATUS (fire-and-forget)"
 fi
-fi
 
 print_summary

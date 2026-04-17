@@ -135,10 +135,24 @@ fn main() {
     // Source: sends each chunk summary request to LLM
     let source_summarize = pipeline::chat_source(SSE_URL, "gpt-4");
 
-    // Source with chunking transform: split text into chunks → build summary prompt
+    // Dual-purpose transform:
+    //  1. On the WEBHOOK REQUEST (has "text" key) → split into chunks and build
+    //     the OpenAI chat-completion body as the upstream request payload.
+    //  2. On each RESPONSE CHUNK coming back from the LLM (post-json_tap, which
+    //     yields the raw content string) → pass through unchanged so the client
+    //     receives the streamed summary tokens.
     let source_summarize = source_summarize.transform(|payload: &[u8]| {
-        let req: serde_json::Value = serde_json::from_slice(payload).ok()?;
-        let text = req.get("text").and_then(|v| v.as_str()).unwrap_or("");
+        let req: serde_json::Value = match serde_json::from_slice(payload) {
+            Ok(v) => v,
+            Err(_) => return Some(payload.to_vec()), // plain-text response chunk: forward
+        };
+
+        // Response chunks (content already extracted by json_tap) don't have "text";
+        // the webhook request carries "text" and optionally "max_chunk_size".
+        let Some(text) = req.get("text").and_then(|v| v.as_str()) else {
+            return Some(payload.to_vec());
+        };
+
         let max_chunk = req
             .get("max_chunk_size")
             .and_then(|v| v.as_u64())
