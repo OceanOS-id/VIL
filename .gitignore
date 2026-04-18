@@ -45,6 +45,7 @@ scripts/*
 !scripts/package-samples.sh
 !scripts/publish-all.sh
 !scripts/publish-batch.sh
+!scripts/publish-common.sh
 !scripts/publish-remaining.sh
 !scripts/normalize-versions.sh
 .memory/

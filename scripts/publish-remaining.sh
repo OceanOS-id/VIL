@@ -1,33 +1,57 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Publish remaining 5 crates in correct dependency order
+# Publish a specific subset of crates in dependency order.
+# Use this after `publish-all.sh` rate-limited, or for cherry-pick releases.
 # =============================================================================
 # Run manually:  ./scripts/publish-remaining.sh
 # Each crate waits 2 min after publish for crates.io index propagation.
+#
+# Override which crates to ship via env:
+#   PUBLISH_ONLY="vil_sdk vil_server" ./scripts/publish-remaining.sh
 # =============================================================================
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-CRATES=(
-    vil_new_http       # L8a: deps all on crates.io (vil_rt, vil_ir, vil_json, vil_types)
-    vil_sdk            # L8b: needs vil_new_http
-    vil_plugin_sdk     # L8c: needs vil_server_core (already published)
-    vil_server         # L9a: umbrella crate (Apache/MIT)
-    vil_server_test    # L9b: needs vil_server
-    vil_viz            # L-1: needed by vil_cli (publish=false removed)
-    # vil_cli          # VSAL (v0.4.0+) — NOT published to crates.io
-)
+source scripts/publish-common.sh
+publish_preflight_version || exit 1
 
-echo "=== Publish Remaining — $(date) ==="
-echo "Crates to publish: ${CRATES[*]}"
+# Resolve target version for already-published check
+TARGET_VERSION="${VIL_PUBLISH_VERSION:-0.4.0}"
+
+# Default = curated dependency-tail; override via PUBLISH_ONLY env
+if [[ -n "${PUBLISH_ONLY:-}" ]]; then
+    read -r -a CRATES <<<"$PUBLISH_ONLY"
+else
+    CRATES=(
+        vil_new_http       # L8a: deps on vil_rt, vil_ir, vil_json, vil_types
+        vil_sdk            # L8b: needs vil_new_http
+        vil_plugin_sdk     # L8c: needs vil_server_core
+        vil_server         # L9a: umbrella crate (Apache/MIT, not VSAL)
+        vil_server_test    # L9b: needs vil_server
+        vil_viz            # L-1
+        # vil_cli is VSAL (v0.4.0+) — NOT on crates.io
+    )
+fi
+
+echo "=== Publish Remaining (v${TARGET_VERSION}) — $(date) ==="
+echo "Crates: ${CRATES[*]}"
 echo ""
 
 for crate in "${CRATES[@]}"; do
-    # Check if already published
-    status=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/$crate/0.1.0")
+    # VSAL / legacy guard — refuse to publish unpublishable crates
+    for skip in $PUBLISH_SKIP_CRATES; do
+        if [[ "$crate" == "$skip" ]]; then
+            echo "  $crate ... ⏭ skipped (VSAL or publish=false)"
+            continue 2
+        fi
+    done
+
+    # Check if already published at TARGET version
+    status=$(curl -s -o /dev/null -w "%{http_code}" \
+      "https://crates.io/api/v1/crates/$crate/$TARGET_VERSION")
     if [[ "$status" == "200" ]]; then
-        echo "  $crate ... ⏭ already published"
+        echo "  $crate ... ⏭ already published at v${TARGET_VERSION}"
         continue
     fi
 
@@ -57,6 +81,4 @@ for crate in "${CRATES[@]}"; do
 done
 
 echo ""
-echo "=== All remaining crates published! ==="
-echo ""
-echo "=== Done! All remaining crates published. ==="
+echo "=== All selected crates published at v${TARGET_VERSION}. ==="

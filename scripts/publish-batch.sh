@@ -13,11 +13,15 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
+# Load shared CRATES + SKIP + version check helpers
+# shellcheck source=./publish-common.sh
+source scripts/publish-common.sh
+
+# Version preflight
+publish_preflight_version || exit 1
+
 BATCH=10
-# Skipped:
-#   vil_script_js, vil_script_lua — publish = false (legacy)
-#   VSAL crates (v0.4.0+) — source-available, NOT published to crates.io
-SKIP="vil_script_js vil_script_lua vil_cli vil_vwfd vil_vwfd_macros vil_cli_server vil_workflow_v2 vil_operator vil-server-provision"
+SKIP="$PUBLISH_SKIP_CRATES"
 PUBLISHED=0
 RATE_LIMITED=0
 FAILED=0
@@ -33,99 +37,8 @@ REMAINING=0
 #   - vil_new_http + vil_sdk BEFORE vil_server (was wrong before)
 #   - vil_plugin_sdk BEFORE vil_server (only needs server_core)
 # ─────────────────────────────────────────────────────────────────────────────
-CRATES=(
-    # L0: zero VIL deps
-    vil_types vil_connector_macros vil_log vil_diag vil_topo vil_db_macros
-
-    # L1: depends on vil_types only
-    vil_json vil_shm vil_obs vil_ir vil_net
-
-    # L2: depends on L0-1
-    vil_queue vil_validate
-    vil_registry  # shm + obs
-
-    # L3: depends on L0-2
-    vil_rt  # types+shm+queue+registry+obs
-    vil_codegen_rust vil_codegen_c
-
-    # L4: pre-server (NO server_core dep)
-    vil_capsule   # types+ir
-    vil_sidecar   # types+log
-    vil_engine    # types+shm+queue+registry+rt
-
-    # L5: observer (log + connector_macros only — NO server_core dep)
-    vil_observer  # 0.1.1: added vil_log + vil_connector_macros
-
-    # L6: server_core (capsule+sidecar+rt+obs+shm+json+log+observer)
-    vil_server_core  # 0.1.1: observer wiring
-    vil_server_config vil_server_format
-
-    # L7: server sub-crates (need server_core)
-    vil_server_web vil_server_mesh vil_server_auth vil_server_db
-    vil_server_macros
-
-    # L8: macros (needs server_core+ir+validate+types+json)
-    vil_macros
-
-    # L9: SDK + HTTP (must come BEFORE vil_server!)
-    vil_new_http    # rt+ir+json — NO server dep
-    vil_sdk         # engine+types+new_http+macros+ir+validate
-    vil_plugin_sdk  # server_core only
-
-    # L10: server umbrella
-    vil_server      # server_core+server_web+mesh+auth+db+macros+sdk
-
-    # L11: DB layer (before server_test and cache!)
-    vil_db_redis    # server_core+server_db
-    vil_db_semantic # server_db
-    vil_db_sqlx vil_db_sea_orm
-
-    # L12: server_test + cache (need DB crates above)
-    vil_server_test # server + db_semantic
-    vil_cache       # db_redis
-
-    # L12: connectors + triggers + AI (need server_core or standalone)
-    vil_mq_kafka vil_mq_mqtt vil_mq_nats
-    vil_storage_s3 vil_storage_gcs vil_storage_azure
-    vil_db_mongo vil_db_clickhouse vil_db_dynamodb
-    vil_db_cassandra vil_db_timeseries vil_db_neo4j vil_db_elastic
-    vil_mq_rabbitmq vil_mq_sqs vil_mq_pulsar vil_mq_pubsub
-    vil_soap vil_opcua vil_modbus vil_ws
-    vil_trigger_core vil_trigger_cron vil_trigger_fs
-    vil_trigger_cdc vil_trigger_email vil_trigger_iot
-    vil_trigger_evm vil_trigger_webhook
-    vil_otel vil_edge_deploy
-
-    # L13: AI/LLM stack
-    vil_tokenizer vil_embedder vil_chunker vil_doc_parser
-    vil_llm vil_rag vil_vectordb vil_reranker
-    vil_llm_cache vil_llm_proxy vil_prompts vil_output_parser
-    vil_guardrails vil_prompt_shield vil_ai_trace vil_cost_tracker
-    vil_inference vil_model_serving vil_model_registry
-    vil_quantized vil_speculative vil_tensor_shm
-    vil_ai_gateway vil_semantic_router vil_context_optimizer
-    vil_audio vil_vision vil_multimodal
-    vil_doc_layout vil_doc_extract
-    vil_crawler vil_index_updater
-    vil_memory_graph vil_graphrag
-    vil_realtime_rag vil_streaming_rag
-    vil_federated_rag vil_private_rag
-    vil_data_prep vil_synthetic vil_rlhf_data
-    vil_bench_llm vil_eval vil_ab_test
-    vil_feature_store vil_sql_agent
-    vil_edge vil_consensus
-    vil_workflow_v2
-    vil_agent vil_multi_agent
-    vil_ai_compiler vil_prompt_optimizer
-
-    # L-extra: misc (some have server_core dep)
-    vil_operator vil_lsp vil_grpc vil_graphql
-
-    # L-last: viz + CLI
-    vil_viz
-    vil_script_lua vil_script_js  # still publish=false — skipped
-    vil_cli
-)
+# CRATES list delegated to scripts/publish-common.sh (single source)
+CRATES=("${PUBLISH_CRATES[@]}")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper: read version from crate's Cargo.toml
