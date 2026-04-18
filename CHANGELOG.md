@@ -5,6 +5,68 @@ All notable changes to VIL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-04-18
+
+This release ships a major licensing restructure, a pre-built Docker image, runtime workflow provisioning, and a verified polyglot language matrix. Upgrade notes below.
+
+### Licensing — breaking for WaaS operators only
+
+- **Added**: Vastar Source Available License (VSAL) — formal license text at [`LICENSE-VSAL`](LICENSE-VSAL). A source-available license in the Sustainable Use family (n8n SUL, Elastic 2.0, BSL). Internal business use remains free; commodity Workflow-as-a-Service hosting requires a separate commercial agreement.
+- **Added**: [`LICENSING.md`](LICENSING.md) — ecosystem licensing guide covering two-tier model, §3.3.1 anti-translation clause, §3.7.5 Licensor Reserved Rights, §3.8 example matrix (~24 scenarios), §3.9 SUL family comparison, §6 Cloud Services commercial moat.
+- **Changed**: 7 crates moved from Apache/MIT to VSAL — `vil_vwfd`, `vil_vwfd_macros`, `vil_server_provision`, `vil_cli`, `vil_cli_server`, `vil_workflow_v2`, `vil_operator`. Each has `publish = false` — install from GitHub or the Docker image.
+- **Unchanged**: ~165 library crates remain Apache 2.0 / MIT (dual), including `vil_server` (umbrella), `vil_server_core`, all connectors, triggers, FaaS, AI/LLM plugins, SDK, observability.
+- **Significant Business Process Exception** (§3.6): if VIL workflows are a component of a product with substantial domain value (credit scoring, IoT, banking, KYC, telehealth, HR, manufacturing MES, e-government, LMS, insurance, e-commerce fulfillment, etc.), usage is permitted without any commercial agreement.
+
+### Added
+
+- **`vil-server` Docker image** — pre-built provisionable server published at [`vilfounder/vil:0.4.0`](https://hub.docker.com/r/vilfounder/vil). Multi-arch (linux/amd64, linux/arm64). Two variants:
+  - `0.4.0` / `0.4` / `latest` — debian-slim (~180 MB, shell available for debugging)
+  - `0.4.0-slim` / `0.4-slim` / `slim` — distroless (~50 MB, smallest pull, production-ideal)
+  OCI labels include explicit VSAL metadata + WaaS restriction warning.
+- **`.provision(true)` API** — any `VilApp` / `VwfdApp` can mount the admin API at `/api/admin/*` with a single builder flag. Supports runtime workflow upload, hot-reload in ~200ms, optional `.provision_key()` auth. See [`public/docs/vil/guides/provisionable-workflow.md`](public/docs/vil/guides/provisionable-workflow.md).
+- **Sample workflow bundles** — pre-built `.tar.gz` artifacts uploadable via 3 curl commands (no cargo, no git clone). AI gateway sample published at `releases/sample-ai-gateway.tar.gz`. GitHub Actions workflow at [`.github/workflows/release-samples.yml`](.github/workflows/release-samples.yml) auto-uploads on tag push.
+- **Polyglot language matrix verified** — 12 languages now production-tested:
+  - WASM (4): Rust, AssemblyScript, C, Java (TeaVM)
+  - Sidecar (9): Python, Node.js, Java, Go, C#, PHP, Lua, Ruby, R
+- **Docker tooling**:
+  - `Dockerfile` (debian-slim) + `Dockerfile.slim` (distroless) at repo root
+  - `docker-compose.yml` — vil + simulators + 12-service infra profile
+  - `scripts/docker-publish.sh` — multi-arch buildx wrapper
+  - `scripts/package-samples.sh` — registry-driven sample bundler
+  - `docker/DOCKER_HUB_README.md` — Docker Hub long description with VSAL + WaaS prominent
+- VWFD validator rejects YAML where sidecar/wasm activities reference `vastar.db.*` / `vastar.mq.*` / `vastar.trigger.*` — enforces "connectors + triggers are Rust-only" discipline.
+
+### Changed
+
+- **Workspace version**: `0.3.0` → `0.4.0` across root + ~180 `Cargo.toml` files. All VIL-internal deps updated to `version = "0.4"`.
+- **`vil_cli` moved to VSAL** — the `vil` binary dispatcher is part of the VWFD dev loop. Install from source: `cargo install --git https://github.com/OceanOS-id/VIL --tag v0.4.0 vil_cli`.
+- **`LICENSE-VSAL` preamble** — enumerates all 7 VSAL crates.
+- **`README.md`**:
+  - Added two-tier license section with ~165 Apache/MIT + 7 VSAL split
+  - Significant Business Process Exception block with ~15 permitted product examples
+  - Quick Start updated for `cargo install --git` (VSAL) vs `cargo add <crate>` (Apache/MIT)
+  - Hero badges: replaced "15 Languages" claim with "4 WASM + 9 Sidecar Langs" + "Provisionable" pill
+
+### Fixed
+
+- **`examples/010-basic-websocket-chat/vwfd/test_vwfd.sh`**: removed stray `fi` on line 84 that aborted the script before `print_summary`.
+- **`examples/205-llm-chunked-summarizer`**: chat-source transform made dual-purpose — previously returned `None` on response chunks (json_tap content) so SSE body arrived empty; now pass-throughs non-request payloads. POST `/summarize` returns 1696+ chars (was 0).
+- **Bulk sed collateral** from the 0.3 → 0.4 bump: reverted over-matched third-party dep versions in Cargo.toml files (`tracing-subscriber`, `futures`, `sonic-rs` back to `0.3`).
+
+### Removed
+
+- Nothing removed in v0.4.0.
+
+### Migration from 0.3.x
+
+1. **If you run VIL workflows internally** (your own workflow definitions, any product feature): no action needed. Your use remains free under VSAL. Update to `version = "0.4"` in your `Cargo.toml` or pull the new Docker image.
+2. **If you host third-party workflows as a primary product (WaaS)**: contact `legal@midsolution.id` for a commercial agreement before deploying v0.4.0.
+3. **If you depend on `vil_cli` via `cargo install`**: switch to `cargo install --git https://github.com/OceanOS-id/VIL --tag v0.4.0 vil_cli` (it's no longer on crates.io).
+4. **If you depend on `vil_vwfd` from crates.io**: switch to `vil_vwfd = { git = "https://github.com/OceanOS-id/VIL", tag = "v0.4.0" }` in your `Cargo.toml`.
+5. **All other library crates** remain on crates.io with unchanged Apache/MIT terms — just bump their version constraint to `0.4`.
+
+---
+
 ## [0.1.2] - 2026-03-29
 
 ### Security

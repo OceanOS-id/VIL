@@ -6,6 +6,7 @@ logs/
 docs/
 docs-dev/
 docs-dev-jangan-ditrack/
+docker/
 *.md
 !README.md
 .cargo/

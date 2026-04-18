@@ -1,0 +1,196 @@
+# Multi-arch Docker image publish — MANUAL trigger only.
+#
+# GitHub-hosted runners have Docker + buildx + QEMU preinstalled, so arm64
+# builds work via QEMU emulation. Typical end-to-end time: 25-40 minutes for
+# both variants (debian-slim + distroless) × both arches.
+#
+# Required secrets (Repository Settings → Secrets and variables → Actions):
+#   DOCKERHUB_USERNAME  — "vilfounder"
+#   DOCKERHUB_TOKEN     — access token from https://hub.docker.com/settings/security
+#                         (use "Read, Write, Delete" scope; do NOT use your password)
+#
+# Usage:
+#   1. Go to Actions → "Docker Publish" → Run workflow
+#   2. Pick version (e.g. 0.4.0) and options
+#   3. Wait 25-40 min for completion
+#   4. Verify: docker pull vilfounder/vil:<version>
+
+name: Docker Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (without v prefix, e.g. 0.4.0)'
+        required: true
+        default: '0.4.0'
+      variant:
+        description: 'Which variants to build'
+        type: choice
+        options:
+          - both
+          - debian-slim
+          - distroless
+        default: both
+      tag_latest:
+        description: 'Also tag with :latest / :slim (default) — set false for prereleases'
+        type: boolean
+        default: true
+      push:
+        description: 'Push to Docker Hub (false = build only, verify success first)'
+        type: boolean
+        default: true
+
+concurrency:
+  group: docker-publish-${{ github.event.inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Variant 1: debian-slim (default image) — tags 0.4.0, 0.4, latest
+  # ─────────────────────────────────────────────────────────────────────────
+  debian-slim:
+    if: ${{ github.event.inputs.variant == 'both' || github.event.inputs.variant == 'debian-slim' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set derived tag values
+        id: tags
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          MINOR="${VERSION%.*}"
+          TAGS="vilfounder/vil:${VERSION},vilfounder/vil:${MINOR}"
+          if [[ "${{ github.event.inputs.tag_latest }}" == "true" ]]; then
+            TAGS="${TAGS},vilfounder/vil:latest"
+          fi
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "Debian-slim tags: ${TAGS}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: ${{ github.event.inputs.push == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build (and push) debian-slim
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event.inputs.push == 'true' }}
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ github.event.inputs.version }}
+          cache-from: type=gha,scope=vil-debian-slim
+          cache-to: type=gha,scope=vil-debian-slim,mode=max
+
+      - name: Summary
+        run: |
+          echo "## Debian-slim build result" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tags: \`${{ steps.tags.outputs.tags }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Push: \`${{ github.event.inputs.push }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Platforms: \`linux/amd64, linux/arm64\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Variant 2: distroless — tags 0.4.0-slim, 0.4-slim, slim
+  # ─────────────────────────────────────────────────────────────────────────
+  distroless:
+    if: ${{ github.event.inputs.variant == 'both' || github.event.inputs.variant == 'distroless' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set derived tag values
+        id: tags
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          MINOR="${VERSION%.*}"
+          TAGS="vilfounder/vil:${VERSION}-slim,vilfounder/vil:${MINOR}-slim"
+          if [[ "${{ github.event.inputs.tag_latest }}" == "true" ]]; then
+            TAGS="${TAGS},vilfounder/vil:slim"
+          fi
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "Distroless tags: ${TAGS}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: ${{ github.event.inputs.push == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build (and push) distroless
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.slim
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event.inputs.push == 'true' }}
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ github.event.inputs.version }}
+          cache-from: type=gha,scope=vil-distroless
+          cache-to: type=gha,scope=vil-distroless,mode=max
+
+      - name: Summary
+        run: |
+          echo "## Distroless build result" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tags: \`${{ steps.tags.outputs.tags }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Push: \`${{ github.event.inputs.push }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Platforms: \`linux/amd64, linux/arm64\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Post-job verification — if both pushed, do a quick pull to confirm
+  # ─────────────────────────────────────────────────────────────────────────
+  verify:
+    if: ${{ github.event.inputs.push == 'true' && always() }}
+    needs: [debian-slim, distroless]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Pull and inspect
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          for tag in "${VERSION}" "${VERSION}-slim"; do
+            if docker pull "vilfounder/vil:${tag}" 2>/dev/null; then
+              echo "✓ vilfounder/vil:${tag} pullable"
+              docker inspect "vilfounder/vil:${tag}" --format '{{ .Config.Labels }}' | tr ' ' '\n' | grep -i vastar || true
+            else
+              echo "⚠ vilfounder/vil:${tag} not found on Docker Hub"
+            fi
+          done
+
+      - name: Final summary
+        run: |
+          echo "## Release artifacts — vilfounder/vil" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Remember to:" >> "$GITHUB_STEP_SUMMARY"
+          echo "1. Update Docker Hub description from \`docker/DOCKER_HUB_README.md\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "2. Paste the contents at https://hub.docker.com/r/vilfounder/vil/manage/description" >> "$GITHUB_STEP_SUMMARY"
+          echo "3. Test end-to-end: \`docker run -p 3080:3080 vilfounder/vil:${{ github.event.inputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"

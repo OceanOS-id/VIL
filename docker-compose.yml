@@ -25,7 +25,7 @@ services:
 
   vil:
     build: .
-    image: vastarid/vil:0.3.0
+    image: vilfounder/vil:0.4.0
     container_name: vil
     network_mode: host
     environment:

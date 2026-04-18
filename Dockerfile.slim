@@ -1,0 +1,118 @@
+# =============================================================================
+# VIL — Provisionable Server (distroless, smallest image)
+# =============================================================================
+# Same binary as Dockerfile, different runtime base:
+#   - gcr.io/distroless/cc-debian12 — no shell, no package manager, ~20 MB base
+#   - final image ~45-55 MB (vs ~180 MB for the debian-slim variant)
+#   - smaller pull = better 60-second demo first-impression
+#   - smaller attack surface = production-preferred
+#
+# Trade-offs vs Dockerfile (debian-slim):
+#   - No `docker exec -it <c> /bin/sh` for debugging — distroless has no shell
+#   - Need to pre-stage dirs + deps in the builder since distroless can't RUN
+#
+# Tags:
+#   vilfounder/vil:0.4.0-slim · :0.4-slim · :slim
+#
+# Usage:
+#   docker build -f Dockerfile.slim -t vilfounder/vil:0.4.0-slim .
+#   docker run -p 3080:3080 vilfounder/vil:0.4.0-slim
+# =============================================================================
+
+# ── Builder ─────────────────────────────────────────────────────────────────
+
+FROM rust:1.93-bookworm AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake libssl-dev libsasl2-dev librdkafka-dev protobuf-compiler pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ crates/
+
+RUN grep -oP '"examples/[^"]+' Cargo.toml | tr -d '"' | sort -u | while read d; do \
+      mkdir -p "$d/src"; \
+      echo 'fn main(){}' > "$d/src/main.rs"; \
+      [ -f "$d/Cargo.toml" ] || printf '[package]\nname = "stub-%s"\nversion = "0.0.0"\nedition = "2021"\n' \
+        "$(echo "$d" | tr '/' '-')" > "$d/Cargo.toml"; \
+    done
+
+RUN cargo build --release -p vil-server-provision
+
+# ── Rootfs assembly — prepare dirs with nonroot ownership, collect extra libs
+# so distroless can COPY everything over in one layer.
+# distroless/cc-debian12:nonroot uses uid:gid 65532:65532.
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM debian:bookworm-slim AS rootfs
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsasl2-2 librdkafka1 && rm -rf /var/lib/apt/lists/*
+
+# Create runtime dirs owned by the distroless nonroot uid (65532:65532).
+RUN mkdir -p /out/var/lib/vil/workflows \
+             /out/var/lib/vil/plugins \
+             /out/var/lib/vil/modules \
+             /out/usr/local/bin \
+             /out/lib-extra \
+    && chown -R 65532:65532 /out/var/lib/vil
+
+# Collect shared libs NOT in the distroless/cc base:
+#   libsasl2.so + librdkafka.so are only needed if the Kafka connector is live;
+#   copying anyway keeps feature parity with the debian-slim image.
+# Lib path varies per arch — handle both amd64 and arm64.
+RUN arch="$(uname -m)"; \
+    case "$arch" in \
+      x86_64)  libdir=/usr/lib/x86_64-linux-gnu ;; \
+      aarch64) libdir=/usr/lib/aarch64-linux-gnu ;; \
+      *)       echo "unsupported arch: $arch" >&2; exit 1 ;; \
+    esac; \
+    for f in libsasl2.so.2 librdkafka.so.1; do \
+        if [ -e "$libdir/$f" ]; then \
+            cp -Pv "$libdir/$f"* /out/lib-extra/; \
+        fi; \
+    done
+
+COPY --from=builder /build/target/release/vil-server /out/usr/local/bin/vil-server
+RUN chown 65532:65532 /out/usr/local/bin/vil-server
+
+# ── Runtime — distroless ─────────────────────────────────────────────────────
+
+FROM gcr.io/distroless/cc-debian12:nonroot
+
+LABEL org.opencontainers.image.title="VIL Provisionable Server (slim)"
+LABEL org.opencontainers.image.description="VIL — Vastar Intermediate Language. Provisionable server that starts empty and accepts workflow uploads at runtime via /api/admin/*. Distroless build (no shell) for minimal attack surface and fast pulls."
+LABEL org.opencontainers.image.vendor="PT RAG Mid Solution (Vastar)"
+LABEL org.opencontainers.image.source="https://github.com/OceanOS-id/VIL"
+LABEL org.opencontainers.image.documentation="https://vastar.id/docs/vil"
+LABEL org.opencontainers.image.url="https://vastar.id/products/vil"
+LABEL org.opencontainers.image.version="0.4.0"
+LABEL org.opencontainers.image.licenses="VSAL"
+LABEL id.vastar.license.type="source-available"
+LABEL id.vastar.license.name="Vastar Source Available License"
+LABEL id.vastar.license.url="https://github.com/OceanOS-id/VIL/blob/main/LICENSE-VSAL"
+LABEL id.vastar.license.waas-restriction="Operating this image as a multi-tenant Workflow-as-a-Service requires a commercial agreement with Vastar. Contact legal@midsolution.id."
+LABEL id.vastar.image.variant="distroless"
+
+# Copy pre-assembled rootfs: binary + writable dirs (with nonroot ownership)
+COPY --from=rootfs /out/var/lib/vil /var/lib/vil
+COPY --from=rootfs /out/usr/local/bin/vil-server /usr/local/bin/vil-server
+# Extra libs alongside glibc path — distroless/cc already ships libssl, libstdc++,
+# libc, libgcc_s; we add the Kafka-related ones for feature parity.
+COPY --from=rootfs /out/lib-extra/ /usr/lib/
+
+ENV PORT=3080
+ENV WORKFLOWS_DIR=/var/lib/vil/workflows
+ENV VIL_PLUGIN_DIR=/var/lib/vil/plugins
+ENV VIL_WASM_DIR=/var/lib/vil/modules
+ENV VIL_LOG=info
+ENV RUST_BACKTRACE=1
+
+EXPOSE 3080
+
+VOLUME ["/var/lib/vil/workflows", "/var/lib/vil/plugins", "/var/lib/vil/modules"]
+
+# distroless/cc-debian12:nonroot already sets USER 65532:65532 and WORKDIR /
+ENTRYPOINT ["/usr/local/bin/vil-server"]

@@ -1,0 +1,77 @@
+# Release-samples — builds workflow sample bundles and attaches them to a GitHub release.
+#
+# Trigger: push a tag matching v*, e.g. `git tag v0.4.0 && git push origin v0.4.0`.
+# The workflow:
+#   1. Checks out the repo
+#   2. Installs Rust + cargo (needed to compile .wasm modules in examples that have them)
+#   3. Compiles every example's wasm sources via scripts/package-samples.sh
+#   4. Uploads the resulting releases/sample-*.tar.gz as release assets
+#
+# NOTE: the AI-gateway sample has no .wasm — it's pure Connector. Adding more samples
+# to scripts/package-samples.sh that DO have .wasm will automatically require Rust
+# wasm target + any language toolchain (asc / tinygo / teavm) at runtime.
+
+name: Release samples
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to attach samples to (e.g. v0.4.0)'
+        required: true
+        default: 'v0.4.0'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Rust is needed IF any sample in the registry has WASM handler sources
+      # that need compiling. Safe to install even when the current samples are
+      # pure-Connector — small overhead.
+      - name: Install Rust + wasm32 target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1, wasm32-unknown-unknown
+
+      - name: Cache cargo registry + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-release-samples-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Package samples
+        run: |
+          chmod +x scripts/package-samples.sh
+          ./scripts/package-samples.sh
+
+      - name: List outputs
+        run: ls -la releases/
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload samples to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: releases/sample-*.tar.gz
+          # Don't overwrite existing release body or assets — just add these files
+          fail_on_unmatched_files: true
+          append_body: false

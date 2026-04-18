@@ -38,7 +38,15 @@ tarpaulin-report.html
 docs-internal/
 docs-marketing/
 docs-dev/
-scripts/
+# scripts/ is ignored by default for local dev scripts, but release-relevant
+# scripts are explicitly allowlisted below
+scripts/*
+!scripts/docker-publish.sh
+!scripts/package-samples.sh
+!scripts/publish-all.sh
+!scripts/publish-batch.sh
+!scripts/publish-remaining.sh
+!scripts/normalize-versions.sh
 .memory/
 
 # Compiled example binaries
