@@ -1,0 +1,85 @@
+version: "3.0"
+metadata:
+  id: ai-gw-vwfd-report
+  name: "AI Gateway Report (VWFD) — aggregate + chunked transport for large payloads"
+  description: |
+    Business scenario: AI generates a large compliance/research report.
+    Pipeline accumulates the full LLM response for business-level analysis
+    (e.g., fraud scoring, policy enforcement, citation extraction). The
+    resulting composed JSON report is large (10-500 KB), so we stream it
+    back to the client using chunked transfer-encoding — clients avoid
+    allocating a single huge buffer even though the body is fully known
+    server-side.
+    Config axes:
+      • connector.streaming = true              → fetch upstream SSE early
+      • connector.json_tap  = delta.content     → per-chunk extract
+      • activity.aggregate  = true              → collect into full text
+      • trigger.response_framing = chunked      → chunked HTTP to client
+      • EndTrigger.final_response wraps aggregated content into a report
+        envelope via vil-expr — no quick_transform needed since the
+        structural reshape lives at the EndTrigger.
+    This combination IS meaningful: internal data-flow is aggregated
+    (downstream analysis needs full payload), but transport stays chunked
+    because the composed report is too large for Content-Length framing
+    to be friendly to the client.
+
+spec:
+  durability:
+    enabled: false
+
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/gw/report
+        response_framing: chunked           # transport: chunked (large body)
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: call_llm
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true                     # upstream: SSE (low TTFB)
+        dialect: openai
+        json_tap: "choices[0].delta.content" # per-chunk extract at connector
+        timeout_ms: 60000
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: vil-expr
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [{"role": "user", "content": trigger_payload.body.prompt}],
+                "stream": true
+              }
+        - target: headers
+          source:
+            language: vil-expr
+            source: '{"Content-Type": "application/json"}'
+      output_variable: llm_result
+      aggregate: true                       # pipeline sees full composed text
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: vil-expr
+          source: '{"report": {"body": llm_result.content, "schema": "ai-gateway/v1"}}'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: call_llm } }
+    - { id: f2, from: { node: call_llm }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }

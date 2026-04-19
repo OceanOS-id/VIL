@@ -1,14 +1,21 @@
 version: "3.0"
 metadata:
-  id: ai-gw-vwfd-streaming
-  name: "AI Gateway SSE (VWFD) — end-to-end streaming"
+  id: ai-gw-vwfd-completion
+  name: "AI Gateway Completion (VWFD) — stream-hit + aggregate-emit"
   description: |
-    Business scenario: chat UI client — render tokens progressively.
+    Business scenario: REST/JSON client that does not handle SSE.
+    Typical call: curl | jq, Postman, non-browser clients that expect a
+    single JSON body with Content-Length.
     Config axes:
-      • connector.streaming = true              → open SSE to upstream LLM
-      • activity.aggregate  = false (default)   → forward chunks per-event
-      • trigger.response_framing = chunked      → HTTP Transfer-Encoding: chunked
-      • connector.json_tap  = delta.content     → extract content field per chunk
+      • connector.streaming = true              → fetch upstream SSE early (low TTFB)
+      • activity.aggregate  = true              → collect all chunks, emit ONE payload
+      • trigger.response_framing = length_prefixed → Content-Length header, no chunking
+      • connector.json_tap  = delta.content     → per-chunk extraction (filter noise)
+      • quick_transform wraps the aggregated content in a JSON envelope at the
+        end — ordering: json_tap (per-chunk) → aggregate (build full payload)
+        → quick_transform (reshape final). See vflow_io::quick_transform.
+    Tradeoff: upstream SSE latency is absorbed (TTFB dominated by full response
+    time), but client API is a simple { "content": "..." } JSON blob.
 
 spec:
   durability:
@@ -20,8 +27,8 @@ spec:
       trigger_config:
         trigger_type: webhook
         webhook_config:
-          path: /api/gw/stream
-        response_framing: chunked          # transport: Transfer-Encoding: chunked
+          path: /api/gw/completion
+        response_framing: length_prefixed   # transport: Content-Length: N
         end_activity: respond
       output_variable: trigger_payload
 
@@ -30,9 +37,9 @@ spec:
       connector_config:
         connector_ref: vastar.http
         operation: post
-        streaming: true
+        streaming: true                     # upstream: hit SSE
         dialect: openai
-        json_tap: "choices[0].delta.content"
+        json_tap: "choices[0].delta.content" # per-chunk filter (stream mode)
         timeout_ms: 30000
       input_mappings:
         - target: url
@@ -53,6 +60,7 @@ spec:
             language: vil-expr
             source: '{"Content-Type": "application/json"}'
       output_variable: llm_result
+      aggregate: true                       # emit: collect chunks → full payload
 
     - id: respond
       activity_type: EndTrigger

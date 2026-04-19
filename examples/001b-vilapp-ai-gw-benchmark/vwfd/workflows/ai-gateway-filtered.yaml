@@ -1,0 +1,87 @@
+version: "3.0"
+metadata:
+  id: ai-gw-vwfd-filtered
+  name: "AI Gateway Filtered Stream (VWFD) — SPv1 extract (alt to json_tap)"
+  description: |
+    Business scenario: alternative content-extraction strategy — instead of
+    using the connector's SSE-aware byte-level `json_tap`, we let raw JSON
+    SSE chunks flow to the activity layer and apply SPv1 selector via
+    `quick_transform`. Useful when the extraction path differs per workflow
+    (same connector, different selection) or when the expression uses
+    features beyond json_tap's leaf-scan (wildcards, slices, filters).
+    Config axes:
+      • connector.streaming = true              → SSE upstream, low TTFB
+      • connector.json_tap  = NOT SET           → raw SSE JSON chunks emit
+      • activity.aggregate  = false (default)   → per-chunk pipeline
+      • trigger.response_framing = chunked
+      • quick_transform.select = "$.choices[0].delta.content"
+                                               → SPv1 per-chunk extract
+    Performance: SPv1 is ~50× slower than leaf-scan on the happy path.
+    Prefer `json_tap` for static OpenAI-dialect workflows; use
+    `quick_transform` when you need SPv1 features or activity-level hook.
+    Demonstrates that the same extraction is achievable through two
+    independent mechanisms.
+
+spec:
+  durability:
+    enabled: false
+
+  activities:
+    - id: trigger
+      activity_type: Trigger
+      trigger_config:
+        trigger_type: webhook
+        webhook_config:
+          path: /api/gw/filtered
+        response_framing: chunked
+        end_activity: respond
+      output_variable: trigger_payload
+
+    - id: call_llm
+      activity_type: Connector
+      connector_config:
+        connector_ref: vastar.http
+        operation: post
+        streaming: true
+        dialect: openai
+        # NO json_tap — raw JSON chunks emit; SPv1 handles extraction at
+        # the activity level below.
+        timeout_ms: 30000
+      input_mappings:
+        - target: url
+          source:
+            language: literal
+            source: "http://127.0.0.1:4545/v1/chat/completions"
+        - target: body
+          source:
+            language: vil-expr
+            source: |
+              {
+                "model": "gpt-4",
+                "messages": [{"role": "user", "content": trigger_payload.body.prompt}],
+                "stream": true
+              }
+        - target: headers
+          source:
+            language: vil-expr
+            source: '{"Content-Type": "application/json"}'
+      output_variable: llm_result
+      quick_transform:
+        select: "$.choices[0].delta.content"  # SPv1 per-chunk extract
+        on_empty: drop                         # skip chunks with no content
+
+    - id: respond
+      activity_type: EndTrigger
+      end_trigger_config:
+        trigger_ref: trigger
+        final_response:
+          language: vil-expr
+          source: '{"content": llm_result.content}'
+
+    - id: end
+      activity_type: End
+
+  flows:
+    - { id: f1, from: { node: trigger }, to: { node: call_llm } }
+    - { id: f2, from: { node: call_llm }, to: { node: respond } }
+    - { id: f3, from: { node: respond }, to: { node: end } }
