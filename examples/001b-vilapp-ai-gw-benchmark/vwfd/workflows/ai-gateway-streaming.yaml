@@ -1,14 +1,8 @@
 version: "3.0"
 metadata:
   id: ai-gw-vwfd-streaming
-  name: "AI Gateway SSE (VWFD) — end-to-end streaming"
-  description: |
-    Business scenario: chat UI client — render tokens progressively.
-    Config axes:
-      • connector.streaming = true              → open SSE to upstream LLM
-      • activity.aggregate  = false (default)   → forward chunks per-event
-      • trigger.response_framing = chunked      → HTTP Transfer-Encoding: chunked
-      • connector.json_tap  = delta.content     → extract content field per chunk
+  name: "AI Gateway SSE (VWFD)"
+  description: "SSE streaming proxy — same as 001b VilApp but via VWFD"
 
 spec:
   durability:
@@ -21,7 +15,7 @@ spec:
         trigger_type: webhook
         webhook_config:
           path: /api/gw/stream
-        response_framing: chunked          # transport: Transfer-Encoding: chunked
+        response_mode: buffered
         end_activity: respond
       output_variable: trigger_payload
 
